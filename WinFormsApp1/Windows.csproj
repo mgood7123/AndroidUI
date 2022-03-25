@@ -6,7 +6,8 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
-    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <GenerateDocumentationFile>False</GenerateDocumentationFile>
+    <StartupObject>WinFormsApp1.Program</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,5 +18,4 @@
   <ItemGroup>
     <ProjectReference Include="..\MainApp\MainApp.csproj" />
   </ItemGroup>
-
 </Project>
