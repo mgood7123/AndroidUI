@@ -6996,6 +6996,11 @@ namespace AndroidUI
 
         private void cancelTouchTarget(View view)
         {
+            if (true)
+            {
+                cancelTouchTarget_Tracking(view);
+                return;
+            }
             TouchTarget predecessor = null;
             TouchTarget target = mFirstTouchTarget;
             while (target != null)
@@ -7021,6 +7026,37 @@ namespace AndroidUI
                 predecessor = target;
                 target = next;
                 Log.d(VIEW_LOG_TAG, "cancelTouchTarget target: " + stringOrNull(target));
+            }
+        }
+
+        private void cancelTouchTarget_Tracking(View view)
+        {
+            (View v, Touch t)? target = null;
+            // for each view, update the associated touch pointer
+            foreach ((View View, Touch Touch) pair in trackedViews)
+            {
+                if (view == pair.View)
+                {
+                    target = pair;
+                    pair.Touch.cancelTouch();
+                    if (pair.View.mChildrenCount == 0)
+                    {
+                        pair.View.onTouch(pair.Touch);
+                    }
+                    else
+                    {
+                        float offsetX = mScrollX - pair.View.mLeft;
+                        float offsetY = mScrollY - pair.View.mTop;
+                        pair.Touch.offsetLocation(offsetX, offsetY);
+                        pair.View.dispatchTouchEvent__Tracking(pair.Touch);
+                        pair.Touch.offsetLocation(-offsetX, -offsetY);
+                    }
+                    break;
+                }
+            }
+            if (target.HasValue)
+            {
+                trackedViews.Remove(target.Value);
             }
         }
 
@@ -7103,19 +7139,455 @@ namespace AndroidUI
             point[0] += mScrollX - child.mLeft;
             point[1] += mScrollY - child.mTop;
 
-            if (!child.hasIdentityMatrix())
+            //if (!child.hasIdentityMatrix())
+            //{
+            //    SKPoint[] points = new SKPoint[1];
+            //    points[0].X = point[0];
+            //    points[0].Y = point[1];
+            //    child.getInverseMatrix().MapPoints(points);
+            //    point[0] = points[0].X;
+            //    point[1] = points[0].Y;
+            //}
+        }
+
+        readonly List<(View View, Touch Touch)> trackedViews = new();
+
+        private bool stealed_touch__Tracking(Touch ev, int currentTouchCount, Touch.Data currentData, Touch.State currentState)
+        {
+            // Check for interception.
+            bool intercepted;
+            if ((currentState == Touch.State.TOUCH_DOWN && currentTouchCount == 1)
+                    || trackedViews.Count != 0)
             {
-                SKPoint[] points = new SKPoint[1];
-                points[0].X = point[0];
-                points[0].Y = point[1];
-                //child.getInverseMatrix().MapPoints(points);
-                point[0] = points[0].X;
-                point[1] = points[0].Y;
+                bool disallowIntercept = (mGroupFlags & FLAG_DISALLOW_INTERCEPT) != 0;
+                if (!disallowIntercept)
+                {
+                    intercepted = onInterceptTouchEvent(ev);
+                    currentData.state = currentState; // restore action in case it was changed
+                }
+                else
+                {
+                    intercepted = false;
+                }
             }
+            else
+            {
+                // There are no touch targets and this action is not an initial down
+                // so this view group continues to intercept touches.
+                intercepted = true;
+            }
+
+            return intercepted;
+        }
+
+        bool intercepting = false;
+
+        bool dispatchTouchEvent__Tracking(Touch ev)
+        {
+            bool handled = false;
+            if (onFilterTouchEventForSecurity(ev))
+            {
+                int currentTouchCount = ev.getTouchCount();
+                Touch.Data currentData = ev.getTouchAtCurrentIndex();
+                Touch.State currentState = currentData.state;
+
+                bool intercepted = stealed_touch__Tracking(ev, currentTouchCount, currentData, currentState);
+                bool cancelled = resetCancelNextUpFlag(this) || currentState == Touch.State.TOUCH_CANCELLED;
+
+                View found = null;
+
+                if (!intercepting)
+                {
+                    // If the event is targeting accessibility focus we give it to the
+                    // view that has accessibility focus and if it does not handle it
+                    // we clear the flag and dispatch the event to all children as usual.
+                    // We are looking up the accessibility focused host to avoid keeping
+                    // state since these events are very rare.
+                    View childWithAccessibilityFocus = null;
+
+                    // touch down/up is ALWAYS sent sequentially
+                    Touch.Data down_event = null;
+                    View down_event_view = null;
+                    Touch down_event_touch = null;
+
+                    if (currentState == Touch.State.TOUCH_DOWN)
+                    {
+
+                        float x = 0;
+                        float y = 0;
+
+                        if (currentData.hasLocation)
+                        {
+                            x = currentData.location.x;
+                            y = currentData.location.y;
+                        }
+                        else
+                        {
+                            bool found_ = false;
+                            foreach ((View View, Touch Touch) pair in trackedViews)
+                            {
+                                var it = pair.Touch.getIterator();
+                                while (it.hasNext())
+                                {
+                                    Touch.Data touchData = it.next();
+                                    if (touchData.hasLocation)
+                                    {
+                                        found_ = true;
+                                        x = touchData.location.x;
+                                        y = touchData.location.y;
+                                        break;
+                                    }
+                                }
+                                if (found_) break;
+                            }
+                            if (!found_)
+                            {
+                                throw new Exception("could not obtain a valid cursor position");
+                            }
+                        }
+
+                        int childrenCount = mChildrenCount;
+                        if (childrenCount != 0)
+                        {
+
+                            // Find a child that can receive the event.
+                            // Scan children from front to back.
+                            List<View> preorderedList = buildTouchDispatchChildList();
+                            bool customOrder = preorderedList == null
+                                    && isChildrenDrawingOrderEnabled();
+                            View[] children = mChildren;
+                            for (int i = childrenCount - 1; i >= 0; i--)
+                            {
+                                int childIndex = getAndVerifyPreorderedIndex(
+                                        childrenCount, i, customOrder);
+                                View child = getAndVerifyPreorderedView(
+                                        preorderedList, children, childIndex);
+
+                                // If there is a view that has accessibility focus we want it
+                                // to get the event first and if not handled we will perform a
+                                // normal dispatch. We may do a double iteration but this is
+                                // safer given the timeframe.
+                                if (childWithAccessibilityFocus != null)
+                                {
+                                    if (childWithAccessibilityFocus != child)
+                                    {
+                                        continue;
+                                    }
+                                    childWithAccessibilityFocus = null;
+                                    i = childrenCount - 1;
+                                }
+
+                                if (!child.canReceivePointerEvents()
+                                        || !isTransformedTouchPointInView(x, y, child, null))
+                                {
+                                    //ev.setTargetAccessibilityFocus(false);
+                                    continue;
+                                }
+
+                                if (trackedViews.Count != 0)
+                                {
+                                    foreach ((View View, Touch Touch) pair in trackedViews)
+                                    {
+                                        if (pair.View == child)
+                                        {
+                                            found = child;
+
+                                            bool exists = false;
+
+                                            // check if touch exists
+                                            var it2 = pair.Touch.getIterator();
+                                            while (it2.hasNext())
+                                            {
+                                                if (it2.next().identity == currentData.identity)
+                                                {
+                                                    exists = true;
+                                                    break;
+                                                }
+                                            }
+
+                                            // store copy of touch data if it doesnt exist
+                                            if (!exists)
+                                            {
+                                                Log.d(ToString(), "touch with identity " + currentData.identity + " does not exist, adding to view at " + Touch.Data.Position.ToString(child.getX(), child.getY()));
+                                                down_event = (Touch.Data)currentData.Clone();
+                                                down_event_view = pair.View;
+                                                down_event_touch = pair.Touch;
+                                                handled = true;
+                                            }
+                                            else
+                                            {
+                                                Log.d(ToString(), "touch with identity " + currentData.identity + " exists in view at " + Touch.Data.Position.ToString(child.getX(), child.getY()) + ", skipping");
+                                            }
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                if (trackedViews.Count == 0 || found == null)
+                                {
+                                    Log.d(ToString(), "tracking view at " + Touch.Data.Position.ToString(child.getX(), child.getY()));
+
+                                    (View View, Touch Touch) pair = new(child, new Touch());
+                                    pair.Touch.setMaxSupportedTouches(ev.getMaxSupportedTouches());
+
+                                    // store copy of touch data
+                                    down_event = (Touch.Data)currentData.Clone();
+                                    down_event_view = pair.View;
+                                    down_event_touch = pair.Touch;
+                                    found = pair.View;
+                                    trackedViews.Add(pair);
+                                    handled = true;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // no children
+                            if (trackedViews.Count == 0 || found == null)
+                            {
+                                Log.d(ToString(), "tracking view at " + Touch.Data.Position.ToString(getX(), getY()));
+
+                                (View View, Touch Touch) pair = new(this, new Touch());
+                                pair.Touch.setMaxSupportedTouches(ev.getMaxSupportedTouches());
+
+                                // store copy of touch data
+                                down_event = (Touch.Data)currentData.Clone();
+                                down_event_view = pair.View;
+                                down_event_touch = pair.Touch;
+                                found = pair.View;
+                                trackedViews.Add(pair);
+                                handled = true;
+                            }
+                        }
+                    }
+
+                    List<(View View, Touch Touch)> views_to_untrack = new();
+
+                    // for each view, update the associated touch pointer
+                    foreach ((View View, Touch Touch) pair in trackedViews)
+                    {
+                        bool matches = false;
+                        bool needs_move = false;
+                        bool needs_up = false;
+                        bool lastUp = false;
+
+                        // touch up/down are guaranteed to always be sent as separate events
+                        List<Touch.Data> pointer_ups = new();
+
+                        // check if we match any associated touch pointers
+                        if (down_event_touch == pair.Touch)
+                        {
+                            matches = true;
+                        }
+                        var it = pair.Touch.getIterator();
+                        while (it.hasNext())
+                        {
+                            Touch.Data touchData = it.next();
+
+                            // check against available touch pointers
+                            var it2 = ev.getIterator();
+                            while (it2.hasNext())
+                            {
+                                Touch.Data touchData2 = it2.next();
+
+                                // if touch matches view's associated touch
+                                if (touchData2.identity == touchData.identity)
+                                {
+                                    matches = true;
+
+                                    // update touch data
+                                    if (touchData2.state == Touch.State.TOUCH_MOVE)
+                                    {
+                                        ev.copyHistory(pair.Touch, touchData.identity);
+                                        pair.Touch.moveTouch((Touch.Data)touchData2.Clone());
+                                        needs_move = true;
+                                    }
+
+                                    // handle touch up
+                                    if (touchData2.state == Touch.State.TOUCH_UP)
+                                    {
+                                        pointer_ups.Add((Touch.Data)touchData2.Clone());
+                                        needs_move = true;
+                                    }
+                                }
+                            }
+                        }
+
+                        // skip this view if no touches match this view
+                        // can this ever happen?
+                        if (!matches)
+                        {
+                            Log.d(ToString(), "DOES NOT MATCH! THIS MIGHT BE A BUG!");
+                            continue;
+                        }
+
+                        // issue move if needed
+                        if (needs_move)
+                        {
+                            // issue touch event
+                            if (pair.View.mChildrenCount == 0)
+                            {
+                                if (pair.View.onTouch(pair.Touch))
+                                {
+                                    handled = true;
+                                }
+                            }
+                            else
+                            {
+                                float offsetX = mScrollX - pair.View.mLeft;
+                                float offsetY = mScrollY - pair.View.mTop;
+                                pair.Touch.offsetLocation(offsetX, offsetY);
+                                if (pair.View.dispatchTouchEvent__Tracking(pair.Touch))
+                                {
+                                    handled = true;
+                                }
+                                pair.Touch.offsetLocation(-offsetX, -offsetY);
+                            }
+                        }
+
+                        // issue pointer up event after pointer move
+                        if (pointer_ups.Count > 1)
+                        {
+                            throw new Exception("pointer ups is greater than 1, THIS SHOULD NOT HAPPEN!!!");
+                        }
+
+                        foreach (Touch.Data touchUp in pointer_ups)
+                        {
+                            pair.Touch.removeTouch(touchUp);
+
+                            // if touch count is 1, the last touch has gone up
+                            lastUp = pair.Touch.getTouchCount() == 1;
+
+                            // issue touch event
+                            if (pair.View.mChildrenCount == 0)
+                            {
+                                if (pair.View.onTouch(pair.Touch))
+                                {
+                                    handled = true;
+                                }
+                            }
+                            else
+                            {
+                                float offsetX = mScrollX - pair.View.mLeft;
+                                float offsetY = mScrollY - pair.View.mTop;
+                                pair.Touch.offsetLocation(offsetX, offsetY);
+                                if (pair.View.dispatchTouchEvent__Tracking(pair.Touch))
+                                {
+                                    handled = true;
+                                }
+                                pair.Touch.offsetLocation(-offsetX, -offsetY);
+                            }
+                        }
+
+                        // issue pointer down event after pointer up
+                        // pointer down will always be in a different view
+                        if (down_event != null)
+                        {
+                            down_event_touch.addTouch(down_event);
+
+                            // issue touch event
+                            if (pair.View.mChildrenCount == 0)
+                            {
+                                if (down_event_view.onTouch(down_event_touch))
+                                {
+                                    handled = true;
+                                }
+                            }
+                            else
+                            {
+                                float offsetX = mScrollX - pair.View.mLeft;
+                                float offsetY = mScrollY - pair.View.mTop;
+                                pair.Touch.offsetLocation(offsetX, offsetY);
+                                if (down_event_view.dispatchTouchEvent__Tracking(down_event_touch))
+                                {
+                                    handled = true;
+                                }
+                                pair.Touch.offsetLocation(-offsetX, -offsetY);
+                            }
+
+                            down_event = null;
+                            down_event_view = null;
+                            down_event_touch = null;
+                        }
+
+                        // issue cancellation as last event
+
+                        if (cancelled || resetCancelNextUpFlag(pair.View) || intercepted)
+                        {
+                            pair.Touch.cancelTouch();
+                            lastUp = true;
+                            if (pair.View.mChildrenCount == 0)
+                            {
+                                if (pair.View.onTouch(pair.Touch))
+                                {
+                                    handled = true;
+                                }
+                            }
+                            else
+                            {
+                                float offsetX = mScrollX - pair.View.mLeft;
+                                float offsetY = mScrollY - pair.View.mTop;
+                                pair.Touch.offsetLocation(offsetX, offsetY);
+                                if (pair.View.dispatchTouchEvent__Tracking(pair.Touch))
+                                {
+                                    handled = true;
+                                }
+                                pair.Touch.offsetLocation(-offsetX, -offsetY);
+                            }
+                        }
+
+                        // if the last touch has gone up, untrack the view
+                        if (lastUp)
+                        {
+                            Log.d(ToString(), "untracking view at " + Touch.Data.Position.ToString(pair.View.getX(), pair.View.getY()));
+                            views_to_untrack.Add(pair);
+                        }
+                    }
+
+                    // untrack views that need to be untracked
+                    foreach ((View View, Touch Touch) pair in views_to_untrack)
+                    {
+                        // TrackingData has no internal allocation
+                        // it is safe to delete primary allocation
+                        trackedViews.Remove(pair);
+                    }
+
+                    if (intercepting || intercepted)
+                    {
+                        // intercept all following events
+                        intercepting = true;
+                        if (dispatchTouchEvent_(ev))
+                        {
+                            handled = true;
+                        }
+                        if (cancelled || currentState == Touch.State.TOUCH_UP)
+                        {
+                            intercepting = false;
+                        }
+                    }
+                }
+                else
+                {
+                    // intercept all following events
+                    if (dispatchTouchEvent_(ev))
+                    {
+                        handled = true;
+                    }
+                    if (cancelled || currentState == Touch.State.TOUCH_UP)
+                    {
+                        intercepting = false;
+                    }
+                }
+            }
+            return handled;
         }
 
         public bool dispatchTouchEvent(Touch ev)
         {
+            if (true)
+            {
+                return dispatchTouchEvent__Tracking(ev);
+            }
 
             bool handled = false;
             if (onFilterTouchEventForSecurity(ev))
@@ -7166,14 +7638,14 @@ namespace AndroidUI
                 }
 
                 // Check for cancelation.
-                bool canceled = resetCancelNextUpFlag(this)
+                bool cancelled = resetCancelNextUpFlag(this)
                         || currentState == Touch.State.TOUCH_CANCELLED;
 
                 // Update list of touch targets for pointer down, if needed.
                 bool split = (mGroupFlags & FLAG_SPLIT_MOTION_EVENTS) != 0 && currentTouchCount > 1;
                 TouchTarget newTouchTarget = null;
                 bool alreadyDispatchedToNewTouchTarget = false;
-                if (!canceled && !intercepted)
+                if (!cancelled && !intercepted)
                 {
                     // If the event is targeting accessibility focus we give it to the
                     // view that has accessibility focus and if it does not handle it
@@ -7303,7 +7775,7 @@ namespace AndroidUI
                 {
                     // No touch targets so treat this as an ordinary view.
                     BitwiseList<object> a = new(TouchTarget.ALL_POINTER_IDS);
-                    handled = dispatchTransformedTouchEvent(ev, canceled, null,
+                    handled = dispatchTransformedTouchEvent(ev, cancelled, null,
                             ref a);
                 }
                 else
@@ -7353,7 +7825,7 @@ namespace AndroidUI
                 // Update list of touch targets for pointer up or cancel, if needed.
                 if (currentState == Touch.State.TOUCH_UP)
                 {
-                    if (currentTouchCount == 1 || canceled)
+                    if (currentTouchCount == 1 || cancelled)
                     {
                         Log.d(VIEW_LOG_TAG, "dispatchTouchEvent reset touch state");
                         resetTouchState();

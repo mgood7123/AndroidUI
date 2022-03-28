@@ -25,10 +25,18 @@ namespace AndroidUI
         {
             get => application; set
             {
-                application?.OnPause();
-                application?.SetDelegate(null);
+                if (application != null)
+                {
+                    application.OnPause();
+                    application.SetDelegate(null);
+                    multiTouch.onTouch -= application.onTouch;
+                }
                 application = value;
-                application?.SetDelegate(this);
+                if (application != null)
+                {
+                    application.SetDelegate(this);
+                    multiTouch.onTouch += application.onTouch;
+                }
             }
         }
 

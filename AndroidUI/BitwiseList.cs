@@ -87,22 +87,9 @@
                         if (Count != other.Count) return false;
                         for (int i = 0; i < Count; i++)
                         {
-                            T a = this.ElementAt(i);
-                            T b = other.ElementAt(i);
-                            if (shouldCheckInstanceEquality || other.shouldCheckInstanceEquality)
-                            {
-                                if (a.GetType().IsClass && b.GetType().IsClass)
-                                {
-                                    if ((object)a != (object)b)
-                                    {
-                                        return false;
-                                    }
-                                }
-                            }
-                            if (!a.Equals(b))
-                            {
-                                return false;
-                            }
+                            T a_ = this.ElementAt(i);
+                            object b = other.ElementAt(i);
+                            return ElementEquals(ref a_, ref b, shouldCheckInstanceEquality || other.shouldCheckInstanceEquality);
                         }
                         return true;
                     }
@@ -115,50 +102,61 @@
                         if (Count != other.Count()) return false;
                         for (int i = 0; i < Count; i++)
                         {
-                            T a = this.ElementAt(i);
-                            T b = other.ElementAt(i);
-                            if (shouldCheckInstanceEquality)
-                            {
-                                if (a.GetType().IsClass && b.GetType().IsClass)
-                                {
-                                    if ((object)a != (object)b)
-                                    {
-                                        return false;
-                                    }
-                                }
-                            }
-                            if (!a.Equals(b))
-                            {
-                                return false;
-                            }
+                            T a_ = this.ElementAt(i);
+                            object b = other.ElementAt(i);
+                            return ElementEquals(ref a_, ref b, shouldCheckInstanceEquality);
                         }
                         return true;
                     }
+                default:
+                    if (Count != 1) return false;
+                    T a = this.ElementAt(0);
+                    return ElementEquals(ref a, ref obj, shouldCheckInstanceEquality);
+            }
+        }
 
-                // comparing against single object
+        private static bool ElementEquals(ref T a, ref object b, bool should_check)
+        {
+            switch (b)
+            {
+                case short:
+                    return bitwise_EQUALS__value_type_a_b<short>(ref a, ref b);
+                case int:
+                    return bitwise_EQUALS__value_type_a_b<int>(ref a, ref b);
+                case long:
+                    return bitwise_EQUALS__value_type_a_b<long>(ref a, ref b);
+                case float:
+                    return bitwise_EQUALS__value_type_a_b<float>(ref a, ref b);
+                case double:
+                    return bitwise_EQUALS__value_type_a_b<double>(ref a, ref b);
+                case char:
+                    return bitwise_EQUALS__value_type_a_b<char>(ref a, ref b);
+                case string:
+                    return bitwise_EQUALS__value_type_a_b<string>(ref a, ref b);
                 case T:
                     {
-                        if (Count != 1) return false;
-                        T a = this.ElementAt(0);
-                        if (shouldCheckInstanceEquality && a.GetType().IsClass && obj.GetType().IsClass)
+                        if (should_check)
                         {
-                            if ((object)a != (object)obj)
+                            if (a.GetType().IsClass && b.GetType().IsClass)
                             {
-                                return false;
+                                if ((object)a != b)
+                                {
+                                    return false;
+                                }
                             }
                         }
-
-                        if (!a.Equals(obj))
-                        {
-                            return false;
-                        }
-
-                        return false;
+                        return a.Equals(b);
                     }
-
                 default:
                     return false;
             }
+        }
+
+        private static bool bitwise_EQUALS__value_type_a_b<T1>(ref T a, ref object obj)
+        {
+            T1 a_ = (T1)(object)a;
+
+            return a_.Equals(obj);
         }
 
         /// <summary>
@@ -242,24 +240,13 @@
         {
             if (Count == 0) return false;
 
-            bool isClass = false;
-
-            if (this.shouldCheckInstanceEquality || shouldCheckInstanceEquality)
-            {
-                isClass = element.GetType().IsClass;
-            }
-
             for (int i = 0; i < Count; i++)
             {
-                T b = this.ElementAt(i);
-                if (shouldCheckInstanceEquality || this.shouldCheckInstanceEquality)
+                object b = this.ElementAt(i);
+                if (ElementEquals(ref element, ref b, shouldCheckInstanceEquality || this.shouldCheckInstanceEquality))
                 {
-                    if (isClass && b.GetType().IsClass)
-                    {
-                        return (object)element == (object)b;
-                    }
+                    return true;
                 }
-                return element.Equals(b);
             }
             return false;
         }
@@ -267,32 +254,14 @@
         static bool IEnumerableContainsElement(ref IEnumerable<T> this_, ref T element, bool shouldCheckInstanceEquality = false)
         {
             int count = this_.Count();
-            if (count == 0) return false;
-
-            bool isClass = false;
-
-            bool e = false;
-            if (this_ is BitwiseList<T>)
-            {
-                e = ((BitwiseList<T>)this_).shouldCheckInstanceEquality;
-            }
-
-            if (e || shouldCheckInstanceEquality)
-            {
-                isClass = element.GetType().IsClass;
-            }
 
             for (int i = 0; i < count; i++)
             {
-                T b = this_.ElementAt(i);
-                if (shouldCheckInstanceEquality)
+                object b = this_.ElementAt(i);
+                if (ElementEquals(ref element, ref b, shouldCheckInstanceEquality))
                 {
-                    if (isClass && b.GetType().IsClass)
-                    {
-                        return (object)element == (object)b;
-                    }
+                    return true;
                 }
-                return element.Equals(b);
             }
             return false;
         }
@@ -346,7 +315,18 @@
                 throw new ArgumentException("ZERO is not valid for a bitwise AND operation");
             }
 
-            if (right is not NegativeOne) assertType(ref right);
+            if (right is not NegativeOne)
+            {
+                assertType(ref right);
+
+                // an empty list cannot be bitwise AND against
+                if (left.Count == 0)
+                {
+                    BitwiseList<T> t = new();
+                    t.shouldCheckInstanceEquality = left.shouldCheckInstanceEquality;
+                    return t;
+                }
+            }
 
             switch (right)
             {
@@ -427,37 +407,29 @@
                         }
                         return tmp;
                     }
+
+                // bitwise AND against single value
+                case short:
+                case int:
+                case long:
+                case float:
+                case double:
+                case char:
+                case string:
                 case T:
                     {
-                        if (left.Count != 1)
-                        {
-                            BitwiseList<T> t = new();
-                            t.shouldCheckInstanceEquality = left.shouldCheckInstanceEquality;
-                            return t;
-                        }
+                        BitwiseList<T> tmp = new();
+                        tmp.shouldCheckInstanceEquality = left.shouldCheckInstanceEquality;
 
-                        T A = left.ElementAt(0);
-
-                        if (left.shouldCheckInstanceEquality)
+                        for (int i = 0; i < left.Count; i++)
                         {
-                            if ((object)A != (object)right)
+                            T b = left.ElementAt(i);
+                            if (ElementEquals(ref b, ref right, left.shouldCheckInstanceEquality))
                             {
-                                BitwiseList<T> t = new();
-                                t.shouldCheckInstanceEquality = left.shouldCheckInstanceEquality;
-                                return t;
+                                tmp.Add(b);
                             }
                         }
-
-                        if (!A.Equals(right))
-                        {
-                            BitwiseList<T> t = new();
-                            t.shouldCheckInstanceEquality = left.shouldCheckInstanceEquality;
-                            return t;
-                        }
-
-                        BitwiseList<T> t_ = new(left);
-                        t_.shouldCheckInstanceEquality = left.shouldCheckInstanceEquality;
-                        return t_;
+                        return tmp;
                     }
                 default:
                     throw new ArrayTypeMismatchException();
@@ -574,6 +546,14 @@
                         return tmp;
                     }
 
+                // bitwise OR against single value
+                case short:
+                case int:
+                case long:
+                case float:
+                case double:
+                case char:
+                case string:
                 case T:
                     {
                         BitwiseList<T> tmp = new(left);

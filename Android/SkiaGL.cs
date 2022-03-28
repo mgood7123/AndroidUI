@@ -72,17 +72,12 @@ namespace Android
                         float normalized_Y = y / height;
                         float size = e.GetSize(pointerIndex);
                         float pressure = e.GetPressure(pointerIndex);
-                        if (host.getMultiTouch().tryForcePump())
-                        {
-                            host.onTouch();
-                        }
                         host.getMultiTouch().addTouch(
                             identity, time,
                             x, y,
                             normalized_X, normalized_Y,
                             size, pressure
                         );
-                        host.onTouch();
                         break;
                     }
                 case MotionEventActions.Move:
@@ -101,15 +96,12 @@ namespace Android
                                 float normalized_Y = y / height;
                                 float size = e.GetHistoricalSize(p, h);
                                 float pressure = e.GetHistoricalPressure(p, h);
-                                if (host.getMultiTouch().moveTouchBatched(
+                                host.getMultiTouch().moveTouchBatched(
                                     identity, time,
                                     x, y,
                                     normalized_X, normalized_Y,
                                     size, pressure
-                                ))
-                                {
-                                    host.onTouch();
-                                }
+                                );
                             }
                         }
 
@@ -123,20 +115,12 @@ namespace Android
                             float normalized_Y = y / height;
                             float size = e.GetSize(p);
                             float pressure = e.GetPressure(p);
-                            if (host.getMultiTouch().moveTouchBatched(
+                            host.getMultiTouch().moveTouchBatched(
                                 identity, time_,
                                 x, y,
                                 normalized_X, normalized_Y,
                                 size, pressure
-                            ))
-                            {
-                                host.onTouch();
-                            }
-                        }
-
-                        if (host.getMultiTouch().tryForcePump())
-                        {
-                            host.onTouch();
+                            );
                         }
                         break;
                     }
@@ -151,17 +135,12 @@ namespace Android
                         float normalized_Y = y / height;
                         float size = e.GetSize(pointerIndex);
                         float pressure = e.GetPressure(pointerIndex);
-                        if (host.getMultiTouch().tryForcePump())
-                        {
-                            host.onTouch();
-                        }
                         host.getMultiTouch().removeTouch(
                             identity, time,
                             x, y,
                             normalized_X, normalized_Y,
                             size, pressure
                         );
-                        host.onTouch();
                         break;
                     }
                 case MotionEventActions.Cancel:
@@ -174,17 +153,12 @@ namespace Android
                         float normalized_Y = y / height;
                         float size = e.GetSize(pointerIndex);
                         float pressure = e.GetPressure(pointerIndex);
-                        if (host.getMultiTouch().tryForcePump())
-                        {
-                            host.onTouch();
-                        }
                         host.getMultiTouch().cancelTouch(
                             identity, time,
                             x, y,
                             normalized_X, normalized_Y,
                             size, pressure
                         );
-                        host.onTouch();
                         break;
                     }
             }

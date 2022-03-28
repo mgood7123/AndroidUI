@@ -8,6 +8,255 @@ namespace AndroidUI
     {
         private const string TAG = "MultiTouch";
 
+        /// <summary>
+        /// an Identity class useful for comparing/identifying an object by reference or value
+        /// <br/>
+        /// read the description for Identity.Equals for more information
+        /// </summary>
+        public class Identity : IEquatable<Identity>
+        {
+            private object identity;
+
+            public Identity(object identity)
+            {
+                this.identity = identity ?? throw new ArgumentNullException(nameof(identity));
+            }
+
+            public Identity(Identity identity)
+            {
+                if (identity == null) throw new ArgumentNullException(nameof(identity));
+                this.identity = identity.identity ?? throw new ArgumentNullException(nameof(identity) + ".identity ( THIS SHOULD NEVER HAPPEN!!! )");
+            }
+
+            /// <summary>
+            /// compares the identity of this.identity and obj
+            /// <br/>
+            /// if both objects's underlying types do not match, then it returns false
+            /// <br/>
+            /// if any of the following types
+            /// <br/>
+            /// short, int, long, float, double, char, string
+            /// <br/>
+            /// matches the type of the object,
+            /// then it returns the result of value equality comparison (with additional checks for floating point cases)
+            /// <br/>
+            /// otherwise if both objects are a reference type.
+            /// then it checks the result of a instance equality via the == operator and returns true upon success
+            /// <br/>
+            /// otherwise if both objects are not a reference type, or the instance equality check fails,
+            /// it returns the result of value equality comparison
+            /// </summary>
+            public override bool Equals(object obj)
+            {
+                return Equals(obj is Identity identity ? identity : new Identity(obj));
+            }
+
+            bool floating_point_type_value_equals<T>(ref object a, ref object b, Func<T, bool> isNaN, Func<T, bool> isInfinity)
+            {
+                T va = (T)a;
+                T vb = (T)b;
+                return isNaN(va) ? isNaN(vb) : isInfinity(va) ? isInfinity(vb) : va.Equals(vb);
+            }
+
+            bool type_value_equals<T>(ref object a, ref object b)
+            {
+                switch (a)
+                {
+                    case float:
+                        return floating_point_type_value_equals<float>(ref a, ref b, float.IsNaN, float.IsInfinity);
+                    case double:
+                        return floating_point_type_value_equals<double>(ref a, ref b, double.IsNaN, double.IsInfinity);
+                    default:
+                        {
+                            T va = (T)a;
+                            T vb = (T)b;
+                            return va.Equals(vb);
+                        }
+                }
+            }
+
+            /// <summary>
+            /// compares the identity of left and right
+            /// <br/>
+            /// if both objects's underlying types do not match, then it returns false
+            /// <br/>
+            /// if any of the following types
+            /// <br/>
+            /// short, int, long, float, double, char, string
+            /// <br/>
+            /// matches the type of the object,
+            /// then it returns the result of value equality comparison (with additional checks for floating point cases)
+            /// <br/>
+            /// otherwise if both objects are a reference type.
+            /// then it checks the result of a instance equality via the == operator and returns true upon success
+            /// <br/>
+            /// otherwise if both objects are not a reference type, or the instance equality check fails,
+            /// it returns the result of value equality comparison
+            /// </summary>
+            public bool Equals(Identity other)
+            {
+                Type a = identity.GetType();
+                Type b = other.identity.GetType();
+
+                if (a != b) return false;
+
+                switch (identity)
+                {
+                    case short:
+                        return type_value_equals<short>(ref identity, ref other.identity);
+                    case int:
+                        return type_value_equals<int>(ref identity, ref other.identity);
+                    case long:
+                        return type_value_equals<long>(ref identity, ref other.identity);
+                    case float:
+                        return type_value_equals<float>(ref identity, ref other.identity);
+                    case double:
+                        return type_value_equals<double>(ref identity, ref other.identity);
+                    case char:
+                        return type_value_equals<char>(ref identity, ref other.identity);
+                    case string:
+                        return type_value_equals<string>(ref identity, ref other.identity);
+                    default:
+                        bool sameInstance = (a.IsClass && b.IsClass && identity == other.identity);
+                        return sameInstance || identity.Equals(other.identity);
+                }
+            }
+
+            public override int GetHashCode()
+            {
+                return 1963189203 + EqualityComparer<object>.Default.GetHashCode(identity);
+            }
+
+            /// <summary>
+            /// compares the identity of left and right
+            /// <br/>
+            /// if both objects's underlying types do not match, then it returns false
+            /// <br/>
+            /// if any of the following types
+            /// <br/>
+            /// short, int, long, float, double, char, string
+            /// <br/>
+            /// matches the type of the object,
+            /// then it returns the result of value equality comparison (with additional checks for floating point cases)
+            /// <br/>
+            /// otherwise if both objects are a reference type.
+            /// then it checks the result of a instance equality via the == operator and returns true upon success
+            /// <br/>
+            /// otherwise if both objects are not a reference type, or the instance equality check fails,
+            /// it returns the result of value equality comparison
+            /// </summary>
+            public static bool operator ==(Identity left, Identity right)
+            {
+                return EqualityComparer<Identity>.Default.Equals(left, right);
+            }
+
+            /// <summary>
+            /// compares the identity of left and right
+            /// <br/>
+            /// if both objects's underlying types do not match, then it returns false
+            /// <br/>
+            /// if any of the following types
+            /// <br/>
+            /// short, int, long, float, double, char, string
+            /// <br/>
+            /// matches the type of the object,
+            /// then it returns the result of value equality comparison (with additional checks for floating point cases)
+            /// <br/>
+            /// otherwise if both objects are a reference type.
+            /// then it checks the result of a instance equality via the == operator and returns true upon success
+            /// <br/>
+            /// otherwise if both objects are not a reference type, or the instance equality check fails,
+            /// it returns the result of value equality comparison
+            /// </summary>
+            public static bool operator ==(Identity left, object right)
+            {
+                return EqualityComparer<Identity>.Default.Equals(left, right is Identity r_id ? r_id : new Identity(right));
+            }
+
+            /// <summary>
+            /// compares the identity of left and right
+            /// <br/>
+            /// if both objects's underlying types matchs, then it returns false
+            /// <br/>
+            /// if any of the following types
+            /// <br/>
+            /// short, int, long, float, double, char, string
+            /// <br/>
+            /// matches the type of the object,
+            /// then it returns the inverse result of value equality comparison (with additional checks for floating point cases)
+            /// <br/>
+            /// otherwise if both objects are a reference type
+            /// then it checks the result of a instance equality via the == operator and returns false upon success
+            /// <br/>
+            /// otherwise if both objects are not a reference type, or the instance equality check fails,
+            /// it returns the inverse result of value equality comparison
+            /// <br/>
+            /// an inverse result of an equality comparison is the following:
+            /// <list type="table">
+            /// <listheader>
+            /// <term>Value</term>
+            /// <term>Inverse Value</term>
+            /// </listheader>
+            /// <item>
+            /// <term>True</term>
+            /// <term>False</term>
+            /// </item>
+            /// <item>
+            /// <term>False</term>
+            /// <term>True</term>
+            /// </item>
+            /// </list>
+            /// </summary>
+            public static bool operator !=(Identity left, Identity right)
+            {
+                return !(left == right);
+            }
+
+            /// <summary>
+            /// compares the identity of left and right
+            /// <br/>
+            /// if both objects's underlying types matchs, then it returns false
+            /// <br/>
+            /// if any of the following types
+            /// <br/>
+            /// short, int, long, float, double, char, string
+            /// <br/>
+            /// matches the type of the object,
+            /// then it returns the inverse result of value equality comparison (with additional checks for floating point cases)
+            /// <br/>
+            /// otherwise if both objects are a reference type
+            /// then it checks the result of a instance equality via the == operator and returns false upon success
+            /// <br/>
+            /// otherwise if both objects are not a reference type, or the instance equality check fails,
+            /// it returns the inverse result of value equality comparison
+            /// <br/>
+            /// an inverse result of an equality comparison is the following:
+            /// <list type="table">
+            /// <listheader>
+            /// <term>Value</term>
+            /// <term>Inverse Value</term>
+            /// </listheader>
+            /// <item>
+            /// <term>True</term>
+            /// <term>False</term>
+            /// </item>
+            /// <item>
+            /// <term>False</term>
+            /// <term>True</term>
+            /// </item>
+            /// </list>
+            /// </summary>
+            public static bool operator !=(Identity left, object right)
+            {
+                return !(left == right);
+            }
+
+            public override string ToString()
+            {
+                return "[ this: " + base.ToString() + ", identity: " + identity + " ]";
+            }
+        }
+
         public enum State
         {
             NONE,
@@ -23,15 +272,32 @@ namespace AndroidUI
             {
                 public float x, y;
 
+                public Position(float x, float y)
+                {
+                    this.x = x;
+                    this.y = y;
+                }
+
+                public Position()
+                {
+                }
+
                 public object Clone()
                 {
-                    Position tmp = new();
-                    tmp.x = x;
-                    tmp.y = y;
-                    return tmp;
+                    return new Position(x, y);
+                }
+
+                public override string ToString()
+                {
+                    return ToString(x, y);
+                }
+
+                internal static string ToString(float x, float y)
+                {
+                    return "" + x + ", " + y;
                 }
             }
-            public object identity;
+            public Identity identity;
             public long timestamp;
             public long timestamp_TOUCH_DOWN;
             public long timestamp_TOUCH_MOVE;
@@ -58,13 +324,15 @@ namespace AndroidUI
                 : this(identity, timestamp_milliseconds, x, y, normalized_X, normalized_Y, size, 1, state) { }
             public Data(object identity, long timestamp_milliseconds, float x, float y, float normalized_X, float normalized_Y, float size, float pressure, State state)
             {
-                this.identity = identity;
+                this.identity = identity is Identity id ? id : new Identity(identity);
+
                 this.timestamp = timestamp_milliseconds;
                 timestamp_TOUCH_UP = 0;
                 timestamp_TOUCH_MOVE = 0;
                 timestamp_TOUCH_DOWN = 0;
                 timestamp_TOUCH_CANCELLED = 0;
-                if (float.IsNaN(x) && float.IsNaN(y))
+
+                if (float.IsNaN(x) || float.IsNaN(y) || float.IsInfinity(x) || float.IsInfinity(y))
                 {
                     hasLocation = false;
                     location = null;
@@ -72,42 +340,46 @@ namespace AndroidUI
                 else
                 {
                     hasLocation = true;
-                    location = new();
-                    location.x = x;
-                    location.y = y;
+                    location = new(x, y);
                 }
+                location_moved = false;
 
-                normalized_location_on_input_surface = new();
-                normalized_location_on_input_surface.x = normalized_X;
-                normalized_location_on_input_surface.y = normalized_Y;
+                normalized_location_on_input_surface = new(normalized_X, normalized_Y);
+                normalized_location_on_input_surface_moved = false;
+
+                location_moved_or_normalized_location_on_input_surface_moved = false;
 
                 this.size = size;
                 this.pressure = pressure;
                 this.state = state;
-                location_moved = false;
-                normalized_location_on_input_surface_moved = false;
-                location_moved_or_normalized_location_on_input_surface_moved = false;
             }
 
-            internal void reset()
+            internal void resetAndKeepIdentity()
             {
-                identity = null;
                 timestamp = 0;
                 timestamp_TOUCH_UP = 0;
                 timestamp_TOUCH_MOVE = 0;
                 timestamp_TOUCH_DOWN = 0;
                 timestamp_TOUCH_CANCELLED = 0;
+
                 hasLocation = false;
                 location = null;
+                location_moved = false;
 
                 normalized_location_on_input_surface = null;
+                normalized_location_on_input_surface_moved = false;
+
+                location_moved_or_normalized_location_on_input_surface_moved = false;
 
                 size = 0;
                 pressure = 0;
                 state = State.NONE;
-                location_moved = false;
-                normalized_location_on_input_surface_moved = false;
-                location_moved_or_normalized_location_on_input_surface_moved = false;
+            }
+
+            internal void resetAndLooseIdentity()
+            {
+                identity = null;
+                resetAndKeepIdentity();
             }
 
             public object Clone()
@@ -115,26 +387,37 @@ namespace AndroidUI
                 Data tmp = new();
 
                 tmp.identity = identity;
+
                 tmp.timestamp = timestamp;
                 tmp.timestamp_TOUCH_DOWN = timestamp_TOUCH_DOWN;
                 tmp.timestamp_TOUCH_MOVE = timestamp_TOUCH_MOVE;
                 tmp.timestamp_TOUCH_UP = timestamp_TOUCH_UP;
                 tmp.timestamp_TOUCH_CANCELLED = timestamp_TOUCH_CANCELLED;
+
+                tmp.hasLocation = hasLocation;
                 if (hasLocation)
                 {
                     tmp.location = (Position)location.Clone();
                 }
-                tmp.hasLocation = hasLocation;
                 tmp.location_moved = location_moved;
+
+                tmp.normalized_location_on_input_surface = (Position)normalized_location_on_input_surface.Clone();
+                tmp.normalized_location_on_input_surface_moved = normalized_location_on_input_surface_moved;
+
+                tmp.location_moved_or_normalized_location_on_input_surface_moved = location_moved_or_normalized_location_on_input_surface_moved;
+
                 tmp.size = size;
                 tmp.pressure = pressure;
                 tmp.state = state;
-                tmp.normalized_location_on_input_surface = (Position)normalized_location_on_input_surface.Clone();
-                tmp.normalized_location_on_input_surface_moved = normalized_location_on_input_surface_moved;
-                tmp.location_moved_or_normalized_location_on_input_surface_moved = location_moved_or_normalized_location_on_input_surface_moved;
 
                 return tmp;
             }
+        }
+
+        public Action<Touch> onTouch = do_nothing;
+
+        private static void do_nothing(Touch t)
+        {
         }
 
         public bool tryForcePump()
@@ -257,7 +540,7 @@ namespace AndroidUI
             listResize(data, maxSupportedTouches);
         }
 
-        public long getMaxSupportedTouches()
+        public int getMaxSupportedTouches()
         {
             return maxSupportedTouches;
         }
@@ -293,11 +576,11 @@ namespace AndroidUI
                     // 1: TOUCH_CANCELLED
                     //
                     //
-                    touchContainer.touch.reset();
+                    touchContainer.touch.resetAndKeepIdentity();
                 }
                 else
                 {
-                    touchContainer.touch.reset();
+                    touchContainer.touch.resetAndKeepIdentity();
                     if (touchCount > 0)
                     {
                         touchCount--;
@@ -322,6 +605,7 @@ namespace AndroidUI
 
         public void addTouch(Data touchData)
         {
+            tryForcePump();
             if (debug) Console.WriteLine("adding touch with identity: " + touchData.identity);
             bool found = false;
             for (int i = 0; i < maxSupportedTouches; i++)
@@ -339,18 +623,6 @@ namespace AndroidUI
                     touchCount++;
                     index = i;
                     if (debug) Console.WriteLine("TOUCH_DOWN: INDEX: " + i);
-                }
-                if (touchContainer.used && touchContainer.touch.state == State.NONE)
-                {
-                    if (throw_on_error)
-                    {
-                        throw new InvalidOperationException("touch cannot be active with a state of NONE");
-                    }
-                    else
-                    {
-                        Console.WriteLine("touch cannot be active with a state of NONE, cancelling touch");
-                        cancelTouch();
-                    }
                 }
             }
             if (!found)
@@ -370,8 +642,11 @@ namespace AndroidUI
                             maxSupportedTouches + " has been reached.\n" +
                             "please call setMaxSupportedTouches(long), cancelling touch"
                     );
-                    cancelTouch();
                 }
+            }
+            else
+            {
+                onTouch.Invoke(this);
             }
         }
 
@@ -392,6 +667,38 @@ namespace AndroidUI
             addTouch(new Data(identity, time, x, y, normalized_X, normalized_Y, size, pressure, State.TOUCH_DOWN));
         }
 
+        bool batching = false;
+
+        List<Data> history = new();
+
+        Data getHistoryTouch(int historyIndex)
+        {
+            return history.ElementAt(historyIndex);
+        }
+
+        int getHistorySize => history.Count;
+
+        public void copyAllHistory(Touch destination)
+        {
+            destination.history.Clear();
+            foreach (Data data in history)
+            {
+                destination.history.Add((Data)data.Clone());
+            }
+        }
+
+        public void copyHistory(Touch destination, object identityFilter)
+        {
+            destination.history.Clear();
+            foreach (Data data in history)
+            {
+                if (data.identity == identityFilter)
+                {
+                    destination.history.Add((Data)data.Clone());
+                }
+            }
+        }
+
         public void moveTouch(Data touchData)
         {
             if (debug && printMoved) Console.WriteLine("moving touch with identity: " + touchData.identity);
@@ -402,26 +709,12 @@ namespace AndroidUI
                 if (!tryPurgeTouch(touchContainer)) found = true;
                 if (!found && touchContainer.used)
                 {
-                    bool identityMatches;
-
-                    switch (touchData.identity)
-                    {
-                        case short:
-                            identityMatches = (short)touchContainer.touch.identity == (short)touchData.identity;
-                            break;
-                        case int:
-                            identityMatches = (int)touchContainer.touch.identity == (int)touchData.identity;
-                            break;
-                        case long:
-                            identityMatches = (long)touchContainer.touch.identity == (long)touchData.identity;
-                            break;
-                        default:
-                            identityMatches = touchContainer.touch.identity == touchData.identity;
-                            break;
-                    }
-                    if (identityMatches)
+                    if (touchContainer.touch.identity == touchData.identity)
                     {
                         found = true;
+
+                        // always update this container's data so that the current batch is correctly updated
+
                         Data previous = touchContainer.touch;
 
                         if (touchData.hasLocation)
@@ -437,19 +730,13 @@ namespace AndroidUI
                         touchContainer.touch.timestamp_TOUCH_UP = previous.timestamp_TOUCH_UP;
                         touchContainer.touch.timestamp_TOUCH_CANCELLED = previous.timestamp_TOUCH_CANCELLED;
                         index = i;
+
+                        if (batching)
+                        {
+                            history.Add(touchContainer.touch);
+                        }
+
                         if (debug && printMoved) Console.WriteLine("TOUCH_MOVE: INDEX: " + i);
-                    }
-                }
-                if (touchContainer.used && touchContainer.touch.state == State.NONE)
-                {
-                    if (throw_on_error)
-                    {
-                        throw new InvalidOperationException("touch cannot be active with a state of NONE");
-                    }
-                    else
-                    {
-                        Console.WriteLine("touch cannot be active with a state of NONE, cancelling touch");
-                        cancelTouch();
                     }
                 }
             }
@@ -463,6 +750,14 @@ namespace AndroidUI
                 {
                     Console.WriteLine("cannot move a touch that has not been registered, cancelling touch");
                     cancelTouch();
+                }
+            }
+            else
+            {
+                if (!batching)
+                {
+                    onTouch.Invoke(this);
+                    history.Clear();
                 }
             }
         }
@@ -509,6 +804,7 @@ namespace AndroidUI
 
         public void removeTouch(Data touchData)
         {
+            tryForcePump();
             if (debug) Console.WriteLine("removing touch with identity: " + touchData.identity);
             bool found = false;
             for (int i = 0; i < maxSupportedTouches; i++)
@@ -517,10 +813,7 @@ namespace AndroidUI
                 if (!tryPurgeTouch(touchContainer)) found = true;
                 if (!found && touchContainer.used)
                 {
-                    bool identityMatches;
-
-                    identityMatches = IdentityMatches(touchData, touchContainer);
-                    if (identityMatches)
+                    if (touchContainer.touch.identity == touchData.identity)
                     {
                         found = true;
                         Data previous = touchContainer.touch;
@@ -541,18 +834,6 @@ namespace AndroidUI
                         if (debug) Console.WriteLine("TOUCH_UP: INDEX: " + i);
                     }
                 }
-                if (touchContainer.used && touchContainer.touch.state == State.NONE)
-                {
-                    if (throw_on_error)
-                    {
-                        throw new InvalidOperationException("touch cannot be active with a state of NONE");
-                    }
-                    else
-                    {
-                        Console.WriteLine("touch cannot be active with a state of NONE, cancelling touch");
-                        cancelTouch();
-                    }
-                }
             }
             if (!found)
             {
@@ -566,31 +847,10 @@ namespace AndroidUI
                     cancelTouch();
                 }
             }
-        }
-
-        private static bool IdentityMatches(Data touchData, TouchContainer touchContainer)
-        {
-            bool identityMatches;
-            switch (touchData.identity)
+            else
             {
-                case short:
-                    identityMatches = (short)touchContainer.touch.identity == (short)touchData.identity;
-                    break;
-                case int:
-                    identityMatches = (int)touchContainer.touch.identity == (int)touchData.identity;
-                    break;
-                case long:
-                    identityMatches = (long)touchContainer.touch.identity == (long)touchData.identity;
-                    break;
-                case string:
-                    identityMatches = (string)touchContainer.touch.identity == (string)touchData.identity;
-                    break;
-                default:
-                    identityMatches = touchContainer.touch.identity == touchData.identity;
-                    break;
+                onTouch.Invoke(this);
             }
-
-            return identityMatches;
         }
 
         public void removeTouch(object identity, float x, float y, float normalized_X, float normalized_Y)
@@ -612,6 +872,7 @@ namespace AndroidUI
 
         public void cancelTouch()
         {
+            tryForcePump();
             long timestamp = currentTimeMillis();
             // cancel the first touch
             if (maxSupportedTouches <= 0)
@@ -633,16 +894,18 @@ namespace AndroidUI
                 {
                     TouchContainer touchContainer_ = data[i];
                     touchContainer_.used = false;
-                    touchContainer_.touch.reset();
+                    touchContainer_.touch.resetAndKeepIdentity();
                 }
             }
             index = 0;
             if (debug) Console.WriteLine("TOUCH_CANCEL: INDEX: " + 0);
             touchCount = 0;
+            onTouch.Invoke(this);
         }
 
         public void cancelTouch(Data touchData)
         {
+            tryForcePump();
             if (debug) Console.WriteLine("cancelling touch");
             bool found = false;
             for (int i = 0; i < maxSupportedTouches; i++)
@@ -652,20 +915,6 @@ namespace AndroidUI
                 // the identity may not match at all
                 if (touchContainer.used)
                 {
-                    if (touchContainer.touch.state == State.NONE)
-                    {
-                        if (throw_on_error)
-                        {
-                            throw new InvalidOperationException("touch cannot be active with a state of NONE");
-                        }
-                        else
-                        {
-                            Console.WriteLine("touch cannot be active with a state of NONE, cancelling touch");
-                            cancelTouch();
-                            return;
-                        }
-                    }
-
                     if (!found)
                     {
                         found = true;
@@ -692,7 +941,7 @@ namespace AndroidUI
                     else
                     {
                         touchContainer.used = false;
-                        touchContainer.touch.reset();
+                        touchContainer.touch.resetAndKeepIdentity();
                     }
                 }
             }
@@ -727,6 +976,7 @@ namespace AndroidUI
                 index = 0;
             }
             touchCount = 0;
+            onTouch.Invoke(this);
         }
 
         public void cancelTouch(object identity, float x, float y, float normalized_X, float normalized_Y)
@@ -864,29 +1114,26 @@ namespace AndroidUI
                 while (i.hasNext())
                 {
                     Data data = i.next();
-                    if ((idBits & data.identity) == BitwiseList<object>.ZERO)
+                    if ((idBits & data.identity) != BitwiseList<object>.ZERO)
                     {
                         bool cancelled = false;
                         for (int i_ = 0; i_ < ev.maxSupportedTouches; i_++)
                         {
                             TouchContainer touchContainer = ev.data.ElementAt(i_);
-                            if (!touchContainer.used)
+                            touchContainer.used = true;
+                            touchContainer.touch = (Data)data.Clone();
+                            ev.index = i_;
+                            if (touchContainer.touch.state == State.TOUCH_CANCELLED)
                             {
-                                touchContainer.used = true;
-                                touchContainer.touch = (Data)data.Clone();
-                                ev.index = i_;
-                                if (touchContainer.touch.state == State.TOUCH_CANCELLED)
-                                {
-                                    cancelled = true;
-                                }
-                                if (cancelled)
-                                {
-                                    ev.touchCount = 0;
-                                }
-                                else
-                                {
-                                    ev.touchCount++;
-                                }
+                                cancelled = true;
+                            }
+                            if (cancelled)
+                            {
+                                ev.touchCount = 0;
+                            }
+                            else
+                            {
+                                ev.touchCount++;
                             }
                         }
                     }
@@ -906,8 +1153,10 @@ namespace AndroidUI
         internal class Batcher
         {
             internal Queue<Data> events = new();
-            long batchTime;
-            long pumpTime;
+            long batchTime = 0;
+            long pumpTime = 0;
+            long batch_time_ms = 20;
+            bool pumpActive = false;
 
             internal void addBatch(Data touchData)
             {
@@ -925,30 +1174,46 @@ namespace AndroidUI
 
             internal bool pump(in Touch touch, bool force_pump)
             {
-                int c = events.Count;
-                if (c == 0) return false;
+                if (pumpActive)
+                {
+                    throw new Exception("Attempting to pump while already pumping a batch");
+                }
 
+                pumpActive = true;
+                int c = events.Count;
                 pumpTime = currentTimeMillis();
 
-                if (force_pump || (pumpTime - batchTime) > 1000)
+                bool handled = false;
+
+                if (c != 0 && (force_pump || (pumpTime - batchTime) >= batch_time_ms))
                 {
-                    bool old = touch.debug;
-                    touch.debug = true;
                     if (touch.debug) Console.WriteLine("batch time : " + batchTime);
                     if (touch.debug) Console.WriteLine("pump time  : " + pumpTime);
 
                     string s = c == 1 ? "" : "s";
 
-                    if (touch.debug) Console.WriteLine("processing " + c + " queued event" + s);
-                    while (events.Count > 0)
-                    {
-                        touch.moveTouch(events.Dequeue());
-                    }
                     if (touch.debug) Console.WriteLine("batched " + c + " event" + s);
-                    touch.debug = old;
-                    return true;
+                    try
+                    {
+                        touch.batching = true;
+                        while (events.Count > 1)
+                        {
+                            touch.moveTouch(events.Dequeue());
+                        }
+                        touch.batching = false;
+                        touch.moveTouch(events.Dequeue());
+                    } catch (Exception e) {
+                        touch.batching = false;
+                        touch.history.Clear();
+                        pumpActive = false;
+                        // rethrow exception and hope we can be recovered earlier up
+                        throw e;
+                    }
+                    if (touch.debug) Console.WriteLine("processed " + c + " queued event" + s);
+                    handled = true;
                 }
-                return false;
+                pumpActive = false;
+                return handled;
             }
         }
     }

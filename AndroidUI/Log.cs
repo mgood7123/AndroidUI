@@ -33,5 +33,6 @@ namespace AndroidUI
         public static void i(string tag, string message) => log_internal(tag, message);
         public static void d(string tag, string message) => log_internal(tag, message);
         public static void w(string tag, string message) => log_internal(tag, message);
+        public static void e(string tag, string message) => log_internal(tag, message);
     }
 }

@@ -51,16 +51,11 @@ namespace WinFormsApp1
             float y = m.Y;
             float normalized_X = x / Width;
             float normalized_Y = y / Height;
-            if (host.getMultiTouch().tryForcePump())
-            {
-                host.onTouch();
-            }
             host.getMultiTouch().addTouch(
                 identity,
                 x, y,
                 normalized_X, normalized_Y
             );
-            host.onTouch();
         }
 
         protected override void OnMouseMove(MouseEventArgs e)
@@ -73,14 +68,11 @@ namespace WinFormsApp1
             float y = m.Y;
             float normalized_X = x / Width;
             float normalized_Y = y / Height;
-            if (host.getMultiTouch().moveTouchBatched(
+            host.getMultiTouch().moveTouchBatched(
                 identity,
                 x, y,
                 normalized_X, normalized_Y
-            ))
-            {
-                host.onTouch();
-            }
+            );
         }
 
         protected override void OnMouseUp(MouseEventArgs e)
@@ -98,7 +90,6 @@ namespace WinFormsApp1
                 x, y,
                 normalized_X, normalized_Y
             );
-            host.onTouch();
         }
 
 
