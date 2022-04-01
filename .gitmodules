@@ -1,0 +1,3 @@
+[submodule "AndroidUI-Test-Framework"]
+	path = AndroidUI-Test-Framework
+	url = https://github.com/mgood7123/AndroidUI-Test-Framework.git

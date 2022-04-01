@@ -10,7 +10,7 @@
          *
          * @return a ViewParent or null if this ViewParent does not have a parent
          */
-        abstract public Parent getParent();
+        public abstract Parent getParent();
 
         /**
          * Unbuffered dispatch has been requested by a child of this view parent.

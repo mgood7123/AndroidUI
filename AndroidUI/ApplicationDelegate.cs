@@ -48,7 +48,7 @@ namespace AndroidUI
         public ApplicationDelegate()
         {
             multiTouch = new Touch();
-            multiTouch.setMaxSupportedTouches(10);
+            multiTouch.MaxSupportedTouches = 10;
             multiTouch.throw_on_error = false;
         }
 

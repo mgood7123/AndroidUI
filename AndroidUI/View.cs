@@ -6683,7 +6683,7 @@ namespace AndroidUI
         private class TouchTarget
         {
             private static int MAX_RECYCLED = 32;
-            private static Object sRecycleLock = new Object[0];
+            private static object sRecycleLock = new object[0];
             private static TouchTarget sRecycleBin;
             private static int sRecycledCount;
 
@@ -7328,7 +7328,7 @@ namespace AndroidUI
                                     Log.d(ToString(), "tracking view at " + Touch.Data.Position.ToString(child.getX(), child.getY()));
 
                                     (View View, Touch Touch) pair = new(child, new Touch());
-                                    pair.Touch.setMaxSupportedTouches(ev.getMaxSupportedTouches());
+                                    pair.Touch.MaxSupportedTouches = ev.MaxSupportedTouches;
 
                                     // store copy of touch data
                                     down_event = (Touch.Data)currentData.Clone();
@@ -7348,7 +7348,7 @@ namespace AndroidUI
                                 Log.d(ToString(), "tracking view at " + Touch.Data.Position.ToString(getX(), getY()));
 
                                 (View View, Touch Touch) pair = new(this, new Touch());
-                                pair.Touch.setMaxSupportedTouches(ev.getMaxSupportedTouches());
+                                pair.Touch.MaxSupportedTouches = ev.MaxSupportedTouches;
 
                                 // store copy of touch data
                                 down_event = (Touch.Data)currentData.Clone();

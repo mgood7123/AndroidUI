@@ -1,0 +1,1 @@
+﻿AndroidUITestFramework.Main.Run(nameof(AndroidUITest));

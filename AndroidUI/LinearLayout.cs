@@ -2058,7 +2058,7 @@ namespace AndroidUI
          * @attr ref android.R.styleable#LinearLayout_Layout_layout_weight
          * @attr ref android.R.styleable#LinearLayout_Layout_layout_gravity
          */
-        new public class LayoutParams : MarginLayoutParams
+        public new class LayoutParams : MarginLayoutParams
         {
             /**
              * Indicates how much of the extra space in the LinearLayout will be
