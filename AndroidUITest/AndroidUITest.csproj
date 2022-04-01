@@ -12,7 +12,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AndroidUITestFramework\AndroidUITestFramework.csproj" />
+    <ProjectReference Include="..\AndroidUI-Test-Framework\AndroidUITestFramework.csproj" />
     <ProjectReference Include="..\AndroidUI\AndroidUI.csproj" />
   </ItemGroup>
 
