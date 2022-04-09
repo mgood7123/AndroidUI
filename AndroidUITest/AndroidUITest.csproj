@@ -9,6 +9,7 @@
     <AssemblyName>AndroidUITest</AssemblyName>
     <RootNamespace>AndroidUITest</RootNamespace>
     <ProduceReferenceAssembly>False</ProduceReferenceAssembly>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>

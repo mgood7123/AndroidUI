@@ -1,4 +1,5 @@
-﻿using SkiaSharp;
+﻿using AndroidUI.Extensions;
+using SkiaSharp;
 using Topten.RichTextKit;
 
 namespace AndroidUI

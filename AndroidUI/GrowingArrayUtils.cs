@@ -45,7 +45,7 @@ namespace AndroidUI
                 if (currentSize + 1 > array.Length)
                 {
                     T[] newArray = new T[growSize(currentSize)];
-                    Array.ConstrainedCopy(array, 0, newArray, 0, currentSize);
+                    Arrays.arraycopy(array, 0, newArray, 0, currentSize);
                     array = newArray;
                 }
                 array[currentSize] = element;
@@ -67,7 +67,7 @@ namespace AndroidUI
                 if (currentSize + 1 > array.Length)
                 {
                     int[] newArray = new int[growSize(currentSize)];
-                    Array.ConstrainedCopy(array, 0, newArray, 0, currentSize);
+                    Arrays.arraycopy(array, 0, newArray, 0, currentSize);
                     array = newArray;
                 }
                 array[currentSize] = element;
@@ -89,7 +89,7 @@ namespace AndroidUI
                 if (currentSize + 1 > array.Length)
                 {
                     long[] newArray = new long[growSize(currentSize)];
-                    Array.ConstrainedCopy(array, 0, newArray, 0, currentSize);
+                    Arrays.arraycopy(array, 0, newArray, 0, currentSize);
                     array = newArray;
                 }
                 array[currentSize] = element;
@@ -111,7 +111,7 @@ namespace AndroidUI
                 if (currentSize + 1 > array.Length)
                 {
                     bool[] newArray = new bool[growSize(currentSize)];
-                    Array.ConstrainedCopy(array, 0, newArray, 0, currentSize);
+                    Arrays.arraycopy(array, 0, newArray, 0, currentSize);
                     array = newArray;
                 }
                 array[currentSize] = element;
@@ -133,7 +133,7 @@ namespace AndroidUI
                 if (currentSize + 1 > array.Length)
                 {
                     float[] newArray = new float[growSize(currentSize)];
-                    Array.ConstrainedCopy(array, 0, newArray, 0, currentSize);
+                    Arrays.arraycopy(array, 0, newArray, 0, currentSize);
                     array = newArray;
                 }
                 array[currentSize] = element;
@@ -162,15 +162,15 @@ namespace AndroidUI
             {
                 if (currentSize + 1 <= array.Length)
                 {
-                    Array.ConstrainedCopy(array, index, array, index + 1, currentSize - index);
+                    Arrays.arraycopy(array, index, array, index + 1, currentSize - index);
                     array[index] = element;
                     return array;
                 }
 
                 T[] newArray = new T[growSize(currentSize)];
-                Array.ConstrainedCopy(array, 0, newArray, 0, index);
+                Arrays.arraycopy(array, 0, newArray, 0, index);
                 newArray[index] = element;
-                Array.ConstrainedCopy(array, index, newArray, index + 1, array.Length - index);
+                Arrays.arraycopy(array, index, newArray, index + 1, array.Length - index);
                 return newArray;
             }
             else
@@ -188,15 +188,15 @@ namespace AndroidUI
             {
                 if (currentSize + 1 <= array.Length)
                 {
-                    Array.ConstrainedCopy(array, index, array, index + 1, currentSize - index);
+                    Arrays.arraycopy(array, index, array, index + 1, currentSize - index);
                     array[index] = element;
                     return array;
                 }
 
                 int[] newArray = new int[growSize(currentSize)];
-                Array.ConstrainedCopy(array, 0, newArray, 0, index);
+                Arrays.arraycopy(array, 0, newArray, 0, index);
                 newArray[index] = element;
-                Array.ConstrainedCopy(array, index, newArray, index + 1, array.Length - index);
+                Arrays.arraycopy(array, index, newArray, index + 1, array.Length - index);
                 return newArray;
             }
             else
@@ -214,15 +214,15 @@ namespace AndroidUI
             {
                 if (currentSize + 1 <= array.Length)
                 {
-                    Array.ConstrainedCopy(array, index, array, index + 1, currentSize - index);
+                    Arrays.arraycopy(array, index, array, index + 1, currentSize - index);
                     array[index] = element;
                     return array;
                 }
 
                 long[] newArray = new long[growSize(currentSize)];
-                Array.ConstrainedCopy(array, 0, newArray, 0, index);
+                Arrays.arraycopy(array, 0, newArray, 0, index);
                 newArray[index] = element;
-                Array.ConstrainedCopy(array, index, newArray, index + 1, array.Length - index);
+                Arrays.arraycopy(array, index, newArray, index + 1, array.Length - index);
                 return newArray;
             }
             else
@@ -240,15 +240,15 @@ namespace AndroidUI
             {
                 if (currentSize + 1 <= array.Length)
                 {
-                    Array.ConstrainedCopy(array, index, array, index + 1, currentSize - index);
+                    Arrays.arraycopy(array, index, array, index + 1, currentSize - index);
                     array[index] = element;
                     return array;
                 }
 
                 bool[] newArray = new bool[growSize(currentSize)];
-                Array.ConstrainedCopy(array, 0, newArray, 0, index);
+                Arrays.arraycopy(array, 0, newArray, 0, index);
                 newArray[index] = element;
-                Array.ConstrainedCopy(array, index, newArray, index + 1, array.Length - index);
+                Arrays.arraycopy(array, index, newArray, index + 1, array.Length - index);
                 return newArray;
             }
             else

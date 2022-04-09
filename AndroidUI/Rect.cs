@@ -37,25 +37,6 @@ namespace AndroidUI
         public int right;
         public int bottom;
 
-        public class Matcher
-        {
-            System.Text.RegularExpressions.Match match;
-            public Matcher(string input, string pattern)
-            {
-                match = System.Text.RegularExpressions.Regex.Match(input, pattern);
-            }
-
-            public bool matches()
-            {
-                return match.Success;
-            }
-
-            public string group(int index)
-            {
-                return match.Captures[index].Value;
-            }
-        }
-
         /**
          * A helper class for flattened rectange pattern recognition. A separate
          * class to avoid an initialization dependency on a regular expression
@@ -76,6 +57,22 @@ namespace AndroidUI
          * Create a new empty Rect. All coordinates are initialized to 0.
          */
         public Rect() { }
+
+        public SkiaSharp.SKRectI ToSKRectI()
+        {
+            return new SkiaSharp.SKRectI(left, top, right, bottom);
+        }
+
+        public static implicit operator SkiaSharp.SKRectI(Rect r) => r.ToSKRectI();
+
+        public SkiaSharp.SKRect ToSKRect()
+        {
+            return new SkiaSharp.SKRect(left, top, right, bottom);
+        }
+
+        public static implicit operator SkiaSharp.SKRect(Rect r) => r.ToSKRectI();
+
+
 
         /**
          * Create a new rectangle with the specified coordinates. Note: no range

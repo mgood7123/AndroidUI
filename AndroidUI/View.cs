@@ -15,6 +15,7 @@
  */
 
 using System.Drawing;
+using AndroidUI.Extensions;
 using SkiaSharp;
 
 namespace AndroidUI
@@ -2358,8 +2359,8 @@ namespace AndroidUI
                 maxHeight += mPaddingTop + mPaddingBottom;
 
                 // Check against minimum height and width
-                viewWidth = maxWidth.Clamp(0, viewWidth);
-                viewHeight = maxHeight.Clamp(0, viewHeight);
+                viewWidth = maxWidth.clamp(0, viewWidth);
+                viewHeight = maxHeight.clamp(0, viewHeight);
             }
 
             setMeasuredDimension(viewWidth, viewHeight);
@@ -9579,7 +9580,7 @@ namespace AndroidUI
                 if (size == count)
                 {
                     mChildren = new View[size + ARRAY_CAPACITY_INCREMENT];
-                    Array.ConstrainedCopy(children, 0, mChildren, 0, size);
+                    Arrays.arraycopy(children, 0, mChildren, 0, size);
                     children = mChildren;
                 }
                 children[mChildrenCount++] = child;
@@ -9589,13 +9590,13 @@ namespace AndroidUI
                 if (size == count)
                 {
                     mChildren = new View[size + ARRAY_CAPACITY_INCREMENT];
-                    Array.ConstrainedCopy(children, 0, mChildren, 0, index);
-                    Array.ConstrainedCopy(children, index, mChildren, index + 1, count - index);
+                    Arrays.arraycopy(children, 0, mChildren, 0, index);
+                    Arrays.arraycopy(children, index, mChildren, index + 1, count - index);
                     children = mChildren;
                 }
                 else
                 {
-                    Array.ConstrainedCopy(children, index, children, index + 1, count - index);
+                    Arrays.arraycopy(children, index, children, index + 1, count - index);
                 }
                 children[index] = child;
                 mChildrenCount++;
@@ -9625,7 +9626,7 @@ namespace AndroidUI
             }
             else if (index >= 0 && index < count)
             {
-                Array.ConstrainedCopy(children, index + 1, children, index, count - index - 1);
+                Arrays.arraycopy(children, index + 1, children, index, count - index - 1);
                 children[--mChildrenCount] = null;
             }
             else
@@ -9674,7 +9675,7 @@ namespace AndroidUI
 
                 // Since we're looping above, we might as well do the copy, but is arraycopy()
                 // faster than the extra 2 bounds checks we would do in the loop?
-                Array.ConstrainedCopy(children, end, children, start, childrenCount - end);
+                Arrays.arraycopy(children, end, children, start, childrenCount - end);
 
                 for (int i = childrenCount - (end - start); i < childrenCount; i++)
                 {

@@ -1,8 +1,8 @@
 ﻿using System.Runtime.CompilerServices;
 
-namespace AndroidUI
+namespace AndroidUI.Extensions
 {
-    public static class ExtensionProperties
+    public static class ObjectExtensions
     {
         private static ConditionalWeakTable<object, Dictionary<string, object>> PropertyValues = new();
 
@@ -34,6 +34,22 @@ namespace AndroidUI
         public static void ExtensionProperties_RemoveAllValues(this object item)
         {
             PropertyValues.Remove(item);
+        }
+
+        /// <summary>
+        /// alias for GetType
+        /// </summary>
+        public static Type getClass(this object item)
+        {
+            return item.GetType();
+        }
+
+        /// <summary>
+        /// alias for GetHashCode
+        /// </summary>
+        public static int hashCode(this object item)
+        {
+            return item.GetHashCode();
         }
     }
 }

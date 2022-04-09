@@ -14,62 +14,190 @@
  * limitations under the License.
  */
 
+using System.Globalization;
+
 namespace AndroidUI
 {
     class ContainerHelpers
     {
-
-        // This is Arrays.binarySearch(), but doesn't do any argument validation.
-        public static int binarySearch(int[] array, int size, int value)
+        static bool floating_point_type_value_equals<T>(ref object a, ref object b, Func<T, bool> isNaN, Func<T, bool> isInfinity)
         {
-            int lo = 0;
-            int hi = size - 1;
-
-            while (lo <= hi)
-            {
-                int mid = (int)((uint)(lo + hi) >> 1);
-                int midVal = array[mid];
-
-                if (midVal < value)
-                {
-                    lo = mid + 1;
-                }
-                else if (midVal > value)
-                {
-                    hi = mid - 1;
-                }
-                else
-                {
-                    return mid;  // value found
-                }
-            }
-            return ~lo;  // value not present
+            T TA = (T)Convert.ChangeType(a, typeof(T), CultureInfo.InvariantCulture);
+            T TB = (T)Convert.ChangeType(b, typeof(T), CultureInfo.InvariantCulture);
+            return isNaN(TA) ? isNaN(TB) : isInfinity(TA) ? isInfinity(TB) : TA.Equals(TB);
         }
 
-        public static int binarySearch(long[] array, int size, long value)
+        public static bool float_type_value_equals(ref object a, ref object b)
         {
-            int lo = 0;
-            int hi = size - 1;
+            return floating_point_type_value_equals<float>(ref a, ref b, float.IsNaN, float.IsInfinity);
+        }
 
-            while (lo <= hi)
+        public static bool double_type_value_equals(ref object a, ref object b)
+        {
+            return floating_point_type_value_equals<double>(ref a, ref b, double.IsNaN, double.IsInfinity);
+        }
+
+        public static bool float_type_value_equals(object a, object b)
+        {
+            return floating_point_type_value_equals<float>(ref a, ref b, float.IsNaN, float.IsInfinity);
+        }
+
+        public static bool double_type_value_equals(object a, object b)
+        {
+            return floating_point_type_value_equals<double>(ref a, ref b, double.IsNaN, double.IsInfinity);
+        }
+
+        static bool promote_and_equals<T>(ref object a, ref object b)
+        {
+            if (a is float)
             {
-                int mid = (int)((uint)(lo + hi) >> 1);
-                long midVal = array[mid];
+                return float_type_value_equals(ref a, ref b);
+            }
+            else if (a is double)
+            {
+                return double_type_value_equals(ref a, ref b);
+            }
+            else
+            {
+                T TA = (T)Convert.ChangeType(a, typeof(T), CultureInfo.InvariantCulture);
+                T TB = (T)Convert.ChangeType(b, typeof(T), CultureInfo.InvariantCulture);
+                return TA.Equals(TB);
+            }
+        }
 
-                if (midVal < value)
+        public static bool value_type_equals(ref object a, ref object b)
+        {
+            if (a is short)
+            {
+                if (b is short)
                 {
-                    lo = mid + 1;
+                    return promote_and_equals<short>(ref a, ref b);
                 }
-                else if (midVal > value)
+                else if (b is int)
                 {
-                    hi = mid - 1;
+                    return promote_and_equals<int>(ref a, ref b);
+                }
+                else if (b is long)
+                {
+                    return promote_and_equals<long>(ref a, ref b);
+                }
+                else if (b is float)
+                {
+                    return promote_and_equals<float>(ref a, ref b);
+                }
+                else if (b is double)
+                {
+                    return promote_and_equals<double>(ref a, ref b);
                 }
                 else
                 {
-                    return mid;  // value found
+                    return a.Equals(a);
                 }
             }
-            return ~lo;  // value not present
+            else if (a is int)
+            {
+                if (b is short || b is int)
+                {
+                    return promote_and_equals<int>(ref a, ref b);
+                }
+                else if (b is long)
+                {
+                    return promote_and_equals<long>(ref a, ref b);
+                }
+                else if (b is float)
+                {
+                    return promote_and_equals<float>(ref a, ref b);
+                }
+                else if (b is double)
+                {
+                    return promote_and_equals<double>(ref a, ref b);
+                }
+                else
+                {
+                    return a.Equals(a);
+                }
+            }
+            else if (a is long)
+            {
+                if (b is short || b is int || b is long)
+                {
+                    return promote_and_equals<long>(ref a, ref b);
+                }
+                else if (b is float)
+                {
+                    return promote_and_equals<float>(ref a, ref b);
+                }
+                else if (b is double)
+                {
+                    return promote_and_equals<double>(ref a, ref b);
+                }
+                else
+                {
+                    return a.Equals(a);
+                }
+            }
+            else if (a is float)
+            {
+                if (b is short || b is int || b is long || b is float)
+                {
+                    return promote_and_equals<float>(ref a, ref b);
+                }
+                else if (b is double)
+                {
+                    return promote_and_equals<double>(ref a, ref b);
+                }
+                else
+                {
+                    return a.Equals(a);
+                }
+            }
+            else if (a is double)
+            {
+                if (b is short || b is int || b is long || b is float || b is double)
+                {
+                    return promote_and_equals<double>(ref a, ref b);
+                }
+                else
+                {
+                    return a.Equals(a);
+                }
+            }
+            else if (a is char)
+            {
+                if (b is char)
+                {
+                    return promote_and_equals<char>(ref a, ref b);
+                }
+                else if (b is string)
+                {
+                    object tmp = "" + a;
+                    return promote_and_equals<string>(ref tmp, ref b);
+                }
+                else
+                {
+                    return a.Equals(a);
+                }
+            }
+            else if (a is string)
+            {
+                if (b is char)
+                {
+                    object tmp = "" + b;
+                    return promote_and_equals<string>(ref a, ref b);
+                }
+                else if (b is string)
+                {
+                    return promote_and_equals<string>(ref a, ref b);
+                }
+                else
+                {
+                    return a.Equals(a);
+                }
+            }
+            else
+            {
+                return a.Equals(a);
+            }
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿using SkiaSharp;
 
-namespace AndroidUI
+namespace AndroidUI.Extensions
 {
     using static ColorHelper;
 

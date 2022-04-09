@@ -1,31 +1,31 @@
 ﻿using AndroidUITestFramework;
 
-public class Group : AndroidUITestFramework.TestGroup
+public class Group : TestGroup
 {
-    public class ASSERTION : AndroidUITestFramework.Test
+    public class ASSERTION : Test
     {
-        public override void Run(AndroidUITestFramework.TestGroup nullableInstance)
+        public override void Run(TestGroup nullableInstance)
         {
             Console.WriteLine("ASSERTION!");
-            AndroidUITestFramework.Tools.AssertFalse(true);
+            Tools.AssertFalse(true);
         }
     }
 
     public class foo_TEST
     {
-        public class TEST_INSIDE_ANOTHER_CLASS : AndroidUITestFramework.Test
+        public class TEST_INSIDE_ANOTHER_CLASS : Test
         {
-            public override void Run(AndroidUITestFramework.TestGroup nullableInstance)
+            public override void Run(TestGroup nullableInstance)
             {
                 Console.WriteLine("TEST! 3");
             }
         }
         public class H {
-            public class GROUP_INSIDE_ANOTHER_CLASS : AndroidUITestFramework.TestGroup
+            public class GROUP_INSIDE_ANOTHER_CLASS : TestGroup
             {
-                public class HOTDOG : AndroidUITestFramework.Test
+                public class HOTDOG : Test
                 {
-                    public override void Run(AndroidUITestFramework.TestGroup nullableInstance)
+                    public override void Run(TestGroup nullableInstance)
                     {
                         Console.WriteLine("TEST! 4");
                     }
@@ -35,9 +35,9 @@ public class Group : AndroidUITestFramework.TestGroup
     }
 }
 
-class BASE_TEST : AndroidUITestFramework.Test
+class BASE_TEST : Test
 {
-    public override void Run(AndroidUITestFramework.TestGroup nullableInstance)
+    public override void Run(TestGroup nullableInstance)
     {
         Console.WriteLine("TEST! 1");
     }
@@ -45,27 +45,27 @@ class BASE_TEST : AndroidUITestFramework.Test
 
 class inherited_test : BASE_TEST
 {
-    public override void Run(AndroidUITestFramework.TestGroup nullableInstance)
+    public override void Run(TestGroup nullableInstance)
     {
         base.Run(nullableInstance);
         Console.WriteLine("TEST! INHERITED");
     }
 }
 
-class EXPECTATIONS : AndroidUITestFramework.Test
+class EXPECTATIONS : Test
 {
-    public override void Run(AndroidUITestFramework.TestGroup nullableInstance)
+    public override void Run(TestGroup nullableInstance)
     {
         Console.WriteLine("EXPECTATIONS!");
-        AndroidUITestFramework.Tools.ExpectFalse(true);
-        AndroidUITestFramework.Tools.ExpectTrue(false);
-        AndroidUITestFramework.Tools.ExpectInstanceEqual(this, null);
+        Tools.ExpectFalse(true);
+        Tools.ExpectTrue(false);
+        Tools.ExpectInstanceEqual(this, null);
     }
 }
 
-class B_TEST : AndroidUITestFramework.Test
+class B_TEST : Test
 {
-    public override void Run(AndroidUITestFramework.TestGroup nullableInstance)
+    public override void Run(TestGroup nullableInstance)
     {
         Console.WriteLine("TEST!");
     }
@@ -73,16 +73,16 @@ class B_TEST : AndroidUITestFramework.Test
 
 namespace foob
 {
-    class B_TEST : AndroidUITestFramework.Test
+    class B_TEST : Test
     {
-        public override void Run(AndroidUITestFramework.TestGroup nullableInstance)
+        public override void Run(TestGroup nullableInstance)
         {
             Console.WriteLine("TEST! INSIDE NAMESPACE");
         }
     }
 }
 
-public class PrintGroup : AndroidUITestFramework.TestGroup
+public class PrintGroup : TestGroup
 {
     public override void OnCreate()
     {
@@ -94,29 +94,29 @@ public class PrintGroup : AndroidUITestFramework.TestGroup
         Console.WriteLine("TEST GROUP DESTROY");
     }
 
-    public class PrintTest: AndroidUITestFramework.Test
+    public class PrintTest: Test
     {
-        public override void Run(AndroidUITestFramework.TestGroup nullableInstance)
+        public override void Run(TestGroup nullableInstance)
         {
             Console.WriteLine("TEST");
         }
     }
 
-    public class SkipTest : AndroidUITestFramework.Test
+    public class SkipTest : Test
     {
-        public override void Run(AndroidUITestFramework.TestGroup nullableInstance)
+        public override void Run(TestGroup nullableInstance)
         {
-            AndroidUITestFramework.Tools.SKIP();
+            Tools.SKIP();
             Console.WriteLine("TEST");
         }
     }
 }
 
-public class SkipGroup : AndroidUITestFramework.TestGroup
+public class SkipGroup : TestGroup
 {
     public override void OnCreate()
     {
-        AndroidUITestFramework.Tools.SKIP();
+        Tools.SKIP();
         Console.WriteLine("TEST GROUP CREATE");
     }
 
@@ -125,21 +125,21 @@ public class SkipGroup : AndroidUITestFramework.TestGroup
         Console.WriteLine("TEST GROUP DESTROY");
     }
 
-    public class SkipTest : AndroidUITestFramework.Test
+    public class SkipTest : Test
     {
-        public override void Run(AndroidUITestFramework.TestGroup nullableInstance)
+        public override void Run(TestGroup nullableInstance)
         {
             Console.WriteLine("TEST");
         }
     }
 }
 
-public class FailGroup : AndroidUITestFramework.TestGroup
+public class FailGroup : TestGroup
 {
     public override void OnCreate()
     {
         Console.WriteLine("TEST GROUP CREATE");
-        AndroidUITestFramework.Tools.FAIL();
+        Tools.FAIL();
     }
 
     public override void OnDestroy()
@@ -149,14 +149,14 @@ public class FailGroup : AndroidUITestFramework.TestGroup
 
     public class Test : AndroidUITestFramework.Test
     {
-        public override void Run(AndroidUITestFramework.TestGroup nullableInstance)
+        public override void Run(TestGroup nullableInstance)
         {
             Console.WriteLine("TEST");
         }
     }
 }
 
-public class FailGroup2 : AndroidUITestFramework.TestGroup
+public class FailGroup2 : TestGroup
 {
     public override void OnCreate()
     {
@@ -166,12 +166,12 @@ public class FailGroup2 : AndroidUITestFramework.TestGroup
     public override void OnDestroy()
     {
         Console.WriteLine("TEST GROUP DESTROY");
-        AndroidUITestFramework.Tools.FAIL();
+        Tools.FAIL();
     }
 
     public class Test : AndroidUITestFramework.Test
     {
-        public override void Run(AndroidUITestFramework.TestGroup nullableInstance)
+        public override void Run(TestGroup nullableInstance)
         {
             Console.WriteLine("TEST");
         }
@@ -179,7 +179,7 @@ public class FailGroup2 : AndroidUITestFramework.TestGroup
 }
 
 
-public class UNHANDLED_GROUP_EXCEPTION_CREATE : AndroidUITestFramework.TestGroup
+public class UNHANDLED_GROUP_EXCEPTION_CREATE : TestGroup
 {
     public override void OnCreate()
     {
@@ -187,7 +187,7 @@ public class UNHANDLED_GROUP_EXCEPTION_CREATE : AndroidUITestFramework.TestGroup
         Console.WriteLine(a.Equals(this));
     }
 
-    public class UNHANDLED_TEST_EXCEPTION : AndroidUITestFramework.Test
+    public class UNHANDLED_TEST_EXCEPTION : Test
     {
         public override void Run(TestGroup nullableInstance)
         {
@@ -197,7 +197,7 @@ public class UNHANDLED_GROUP_EXCEPTION_CREATE : AndroidUITestFramework.TestGroup
     }
 }
 
-public class UNHANDLED_GROUP_EXCEPTION_DESTROY : AndroidUITestFramework.TestGroup
+public class UNHANDLED_GROUP_EXCEPTION_DESTROY : TestGroup
 {
     public override void OnDestroy()
     {
@@ -205,7 +205,7 @@ public class UNHANDLED_GROUP_EXCEPTION_DESTROY : AndroidUITestFramework.TestGrou
         Console.WriteLine(a.Equals(this));
     }
 
-    public class UNHANDLED_TEST_EXCEPTION : AndroidUITestFramework.Test
+    public class UNHANDLED_TEST_EXCEPTION : Test
     {
         public override void Run(TestGroup nullableInstance)
         {
@@ -214,7 +214,7 @@ public class UNHANDLED_GROUP_EXCEPTION_DESTROY : AndroidUITestFramework.TestGrou
     }
 }
 
-public class UNHANDLED_GROUP_EXCEPTION_DESTROY2 : AndroidUITestFramework.TestGroup
+public class UNHANDLED_GROUP_EXCEPTION_DESTROY2 : TestGroup
 {
     public override void OnDestroy()
     {
@@ -222,7 +222,7 @@ public class UNHANDLED_GROUP_EXCEPTION_DESTROY2 : AndroidUITestFramework.TestGro
         Console.WriteLine(a.Equals(this));
     }
 
-    public class UNHANDLED_TEST_EXCEPTION : AndroidUITestFramework.Test
+    public class UNHANDLED_TEST_EXCEPTION : Test
     {
         public override void Run(TestGroup nullableInstance)
         {
@@ -232,7 +232,7 @@ public class UNHANDLED_GROUP_EXCEPTION_DESTROY2 : AndroidUITestFramework.TestGro
     }
 }
 
-public class UNHANDLED_TEST_EXCEPTION : AndroidUITestFramework.Test
+public class UNHANDLED_TEST_EXCEPTION : Test
 {
     public override void Run(TestGroup nullableInstance)
     {
@@ -241,9 +241,9 @@ public class UNHANDLED_TEST_EXCEPTION : AndroidUITestFramework.Test
     }
 }
 
-public class UNHANDLED_GROUP_EXCEPTION_2 : AndroidUITestFramework.TestGroup
+public class UNHANDLED_GROUP_EXCEPTION_2 : TestGroup
 {
-    public class UNHANDLED_TEST_EXCEPTION_1 : AndroidUITestFramework.Test
+    public class UNHANDLED_TEST_EXCEPTION_1 : Test
     {
         public override void Run(TestGroup nullableInstance)
         {
@@ -252,7 +252,7 @@ public class UNHANDLED_GROUP_EXCEPTION_2 : AndroidUITestFramework.TestGroup
         }
     }
 
-    public class UNHANDLED_TEST_EXCEPTION_2 : AndroidUITestFramework.Test
+    public class UNHANDLED_TEST_EXCEPTION_2 : Test
     {
         public override void Run(TestGroup nullableInstance)
         {

@@ -32,12 +32,12 @@
 
         static float CheckedClamp(float value, float min = 0.0f, float max = 1.0f, float default_value = 0.0f)
         {
-            return (value.IsFinite() ? value : default_value).Clamp(min, max);
+            return (value.isFinite() ? value : default_value).clamp(min, max);
         }
 
         static double CheckedClamp(double value, double min = 0.0, double max = 1.0, double default_value = 0.0)
         {
-            return (value.IsFinite() ? value : default_value).Clamp(min, max);
+            return (value.isFinite() ? value : default_value).clamp(min, max);
         }
 
         public static int ToARGB(float a, float r, float g, float b)

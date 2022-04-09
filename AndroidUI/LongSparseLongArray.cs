@@ -100,7 +100,7 @@ namespace AndroidUI
          */
         public long get(long key, long valueIfKeyNotFound)
         {
-            int i = ContainerHelpers.binarySearch(mKeys, mSize, key);
+            int i = Arrays.binarySearch(mKeys, mSize, key);
 
             if (i < 0)
             {
@@ -117,7 +117,7 @@ namespace AndroidUI
          */
         public void delete(long key)
         {
-            int i = ContainerHelpers.binarySearch(mKeys, mSize, key);
+            int i = Arrays.binarySearch(mKeys, mSize, key);
 
             if (i >= 0)
             {
@@ -130,8 +130,8 @@ namespace AndroidUI
          */
         public void removeAt(int index)
         {
-            Array.ConstrainedCopy(mKeys, index + 1, mKeys, index, mSize - (index + 1));
-            Array.ConstrainedCopy(mValues, index + 1, mValues, index, mSize - (index + 1));
+            Arrays.arraycopy(mKeys, index + 1, mKeys, index, mSize - (index + 1));
+            Arrays.arraycopy(mValues, index + 1, mValues, index, mSize - (index + 1));
             mSize--;
         }
 
@@ -142,7 +142,7 @@ namespace AndroidUI
          */
         public void put(long key, long value)
         {
-            int i = ContainerHelpers.binarySearch(mKeys, mSize, key);
+            int i = Arrays.binarySearch(mKeys, mSize, key);
 
             if (i >= 0)
             {
@@ -227,7 +227,7 @@ namespace AndroidUI
          */
         public int indexOfKey(long key)
         {
-            return ContainerHelpers.binarySearch(mKeys, mSize, key);
+            return Arrays.binarySearch(mKeys, mSize, key);
         }
 
         /**
