@@ -201,7 +201,7 @@ namespace AndroidUI
          * @see Float#valueOf(java.lang.String)
          * @see #toHalf(float)
          */
-        public Half(String value)
+        public Half(string value)
         {
             mValue = toHalf(float.Parse(value, System.Globalization.CultureInfo.InvariantCulture));
         }
@@ -312,7 +312,7 @@ namespace AndroidUI
          *
          * @see #halfToIntBits(short)
          */
-        override public bool Equals(Object o)
+        override public bool Equals(object o)
         {
             return (o is Half) &&
                     (halfToIntBits(((Half)o).mValue) == halfToIntBits(mValue));
@@ -337,7 +337,7 @@ namespace AndroidUI
          *
          * @return A string representation of this {@code Half} object
          */
-        override public String ToString()
+        override public string ToString()
         {
             return toString(mValue);
         }
@@ -866,7 +866,7 @@ namespace AndroidUI
          * @throws NumberFormatException if the string does not contain a parsable
          *         half-precision float value
          */
-        public static Half valueOf(String s)
+        public static Half valueOf(string s)
         {
             return new Half(s);
         }
@@ -882,7 +882,7 @@ namespace AndroidUI
          * @throws NumberFormatException if the string does not contain a parsable
          *         half-precision float value
          */
-        public static short parseHalf(String s)
+        public static short parseHalf(string s)
         {
             return toHalf(float.Parse(s));
         }
@@ -896,7 +896,7 @@ namespace AndroidUI
          * @param h A half-precision float value
          * @return A string representation of the specified value
          */
-        public static String toString(short h)
+        public static string toString(short h)
         {
             return toFloat(h).ToString();
         }
@@ -927,7 +927,7 @@ namespace AndroidUI
          * @param h A half-precision float value
          * @return A hexadecimal string representation of the specified value
          */
-        public static String toHexString(short h)
+        public static string toHexString(short h)
         {
             return FP16.toHexString(h);
         }

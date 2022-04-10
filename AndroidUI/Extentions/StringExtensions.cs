@@ -45,7 +45,7 @@ namespace AndroidUI.Extensions
          * @since 1.4
          * @spec JSR-51
          */
-        public static String replaceFirst(this string s, String regex, String replacement)
+        public static string replaceFirst(this string s, string regex, string replacement)
         {
             return new Regex(s).Replace(s, replacement, 1);
         }

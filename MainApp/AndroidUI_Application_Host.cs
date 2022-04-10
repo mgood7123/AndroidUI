@@ -12,10 +12,10 @@ namespace MainApp
          */
         public const int VISIBLE = AndroidUI.View.VISIBLE;
 
-        public void setDensity(float density)
+        public void setDensity(float density, int dpi)
         {
-            AndroidUI.Log.d(ToString(), "density changed: " + density);
-            AndroidUI.Application.SetDensity(density);
+            AndroidUI.Log.d(ToString(), "density changed: " + density + ", dpi: " + dpi);
+            AndroidUI.Application.SetDensity(density, dpi);
             application?.OnScreenDensityChanged();
         }
 

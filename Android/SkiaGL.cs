@@ -20,7 +20,7 @@ namespace Android
             host.SetInvalidateCallback(Invalidate);
             DisplayMetrics m = new DisplayMetrics();
             Context.Display.GetRealMetrics(m);
-            host.setDensity(m.Density);
+            host.setDensity(m.Density, (int)m.DensityDpi);
             host.OnCreate();
         }
 

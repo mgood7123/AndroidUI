@@ -635,7 +635,7 @@ namespace AndroidUI
             return saturate((float)((0.2126 * r) + (0.7152 * g) + (0.0722 * b)));
         }
 
-        override public bool Equals(Object o)
+        override public bool Equals(object o)
         {
             if (this == o) return true;
             if (o == null || this.getClass() != o.getClass()) return false;
@@ -672,7 +672,7 @@ namespace AndroidUI
          *
          * @return A non-null string representation of the object
          */
-        override public String ToString()
+        override public string ToString()
         {
             System.Text.StringBuilder b = new System.Text.StringBuilder("Color(");
             foreach (float c in mComponents)
@@ -1392,7 +1392,7 @@ namespace AndroidUI
          * <code>navy</code>, <code>olive</code>, <code>purple</code>, <code>silver</code>,
          * and <code>teal</code>.</p>
          */
-        public static int parseColor(String colorString)
+        public static int parseColor(string colorString)
         {
             if (colorString.ElementAt(0) == '#')
             {
@@ -1509,7 +1509,7 @@ namespace AndroidUI
             return (int)(uint)SkiaSharp.SKColor.FromHsv(hsv[0], hsv[1], hsv[2], (byte)alpha);
         }
 
-        private static readonly Dictionary<String, int> sColorNameMap;
+        private static readonly Dictionary<string, int> sColorNameMap;
         static Color()
         {
             sColorNameMap = new Dictionary<string, int>();
@@ -1548,14 +1548,19 @@ namespace AndroidUI
             return new SkiaSharp.SKColor(reinterpret_cast<uint>(toArgb()));
         }
 
-        public SkiaSharp.SKColorF toSKColorF()
-        {
-            return new SkiaSharp.SKColorF(red(), green(), blue(), alpha());
-        }
-
         public static implicit operator SkiaSharp.SKColor(Color color)
         {
             return color.toSKColor();
+        }
+
+        public static SkiaSharp.SKColorF toSKColorF(long color)
+        {
+            return new SkiaSharp.SKColorF(red(color), green(color), blue(color), alpha(color));
+        }
+
+        public SkiaSharp.SKColorF toSKColorF()
+        {
+            return new SkiaSharp.SKColorF(red(), green(), blue(), alpha());
         }
 
         public static implicit operator SkiaSharp.SKColorF(Color color)

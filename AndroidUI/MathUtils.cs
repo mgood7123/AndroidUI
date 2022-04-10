@@ -747,7 +747,7 @@
                                   DoubleConsts.SIGNIFICAND_WIDTH + 1;
             int exp_adjust = 0;
             int scale_increment = 0;
-            double exp_delta = Double.NaN;
+            double exp_delta = double.NaN;
 
             // Make sure scaling factor is in a reasonable range
 

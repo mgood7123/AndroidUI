@@ -281,7 +281,7 @@ namespace AndroidUI
             return trimmedStates;
         }
 
-        public static String dump(int[] states)
+        public static string dump(int[] states)
         {
             System.Text.StringBuilder sb = new System.Text.StringBuilder();
 

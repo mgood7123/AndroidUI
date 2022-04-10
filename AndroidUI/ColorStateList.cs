@@ -112,7 +112,7 @@ namespace AndroidUI
      */
     public class ColorStateList : ComplexColor
     {
-        private const String TAG = "ColorStateList";
+        private const string TAG = "ColorStateList";
 
         private static readonly SKColor DEFAULT_COLOR = SKColors.Red;
         private static readonly int[][] EMPTY = new int[][] { Array.Empty<int>() };
@@ -519,7 +519,7 @@ namespace AndroidUI
             return false;
         }
 
-        override public String ToString()
+        override public string ToString()
         {
             return "ColorStateList{" +
                    "mThemeAttrs=" + Arrays.deepToString(mThemeAttrs) +

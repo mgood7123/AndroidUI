@@ -23,8 +23,9 @@ namespace WinFormsApp1
 
         void handleDpiChange()
         {
-            float dpi = 96 / DeviceDpi;
-            host.setDensity(dpi);
+            int density = DeviceDpi;
+            float dpi = 96 / density;
+            host.setDensity(dpi, density);
         }
 
         protected override void OnPaintSurface(SKPaintGLSurfaceEventArgs e)

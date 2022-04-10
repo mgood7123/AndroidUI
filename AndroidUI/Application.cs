@@ -183,9 +183,9 @@ namespace AndroidUI
         {
         }
 
-        public static void SetDensity(float density)
+        public static void SetDensity(float density, int dpi)
         {
-            DensityManager.INTERNAL_USE_ONLY_SCREEN_DENSITY_SETTER = density;
+            DensityManager.INTERNAL_USE_ONLY____SET_DENSITY(density, dpi);
         }
     }
 }

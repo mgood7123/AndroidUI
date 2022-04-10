@@ -51,7 +51,7 @@ namespace AndroidUI
         private bool mGarbage = false;
 
         private int[] mKeys;
-        private Object[] mValues;
+        private object[] mValues;
         private int mSize;
 
         /**
@@ -77,7 +77,7 @@ namespace AndroidUI
             }
             else
             {
-                mValues = new Object[initialCapacity];
+                mValues = new object[initialCapacity];
                 mKeys = new int[mValues.Length];
             }
             mSize = 0;
@@ -219,11 +219,11 @@ namespace AndroidUI
             int n = mSize;
             int o = 0;
             int[] keys = mKeys;
-            Object[] values = mValues;
+            object[] values = mValues;
 
             for (int i = 0; i < n; i++)
             {
-                Object val = values[i];
+                object val = values[i];
 
                 if (val != DELETED)
                 {
@@ -466,7 +466,7 @@ namespace AndroidUI
         public void clear()
         {
             int n = mSize;
-            Object[] values = mValues;
+            object[] values = mValues;
 
             for (int i = 0; i < n; i++)
             {
@@ -506,7 +506,7 @@ namespace AndroidUI
          * this map contains itself as a value, the string "(this Map)"
          * will appear in its place.
          */
-        override public String ToString()
+        override public string ToString()
         {
             if (size() <= 0)
             {
@@ -524,7 +524,7 @@ namespace AndroidUI
                 int key = keyAt(i);
                 buffer.Append(key);
                 buffer.Append('=');
-                Object value = valueAt(i);
+                object value = valueAt(i);
                 if (value != this)
                 {
                     buffer.Append(value);

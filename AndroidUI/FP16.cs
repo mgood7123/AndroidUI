@@ -856,7 +856,7 @@ public sealed class FP16
          * @hide
          */
         
-        public static String toHexString(short h)
+        public static string toHexString(short h)
         {
             System.Text.StringBuilder o = new System.Text.StringBuilder();
 
@@ -889,7 +889,7 @@ public sealed class FP16
                     else
                     {
                         o.Append("0x0.");
-                        String significand = m.toHexString();
+                        string significand = m.toHexString();
                         o.Append(significand.replaceFirst("0{2,}$", ""));
                         o.Append("p-14");
                     }
@@ -897,7 +897,7 @@ public sealed class FP16
                 else
                 {
                     o.Append("0x1.");
-                    String significand = m.toHexString();
+                    string significand = m.toHexString();
                     o.Append(significand.replaceFirst("0{2,}$", ""));
                     o.Append('p');
                     o.Append((e - EXPONENT_BIAS).toString());

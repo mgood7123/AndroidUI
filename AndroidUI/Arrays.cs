@@ -458,13 +458,13 @@ namespace AndroidUI
          * @see #deepHashCode(Object[])
          * @since 1.5
          */
-        public static int hashCode(Object[] a) {
+        public static int hashCode(object[] a) {
             if (a == null)
                 return 0;
 
             int result = 1;
 
-            foreach (Object element in a)
+            foreach (object element in a)
                 result = 31 * result + (element == null ? 0 : element.GetHashCode());
 
             return result;
@@ -499,21 +499,21 @@ namespace AndroidUI
          * @see #hashCode(Object[])
          * @since 1.5
          */
-        public static int deepHashCode(Object[] a) {
+        public static int deepHashCode(object[] a) {
             if (a == null)
                 return 0;
 
             int result = 1;
 
-            foreach (Object element in a) {
+            foreach (object element in a) {
                 int elementHash;
                 Type cl;
                 if (element == null)
                     elementHash = 0;
                 else if ((cl = element.GetType().GetElementType()) == null)
                     elementHash = element.GetHashCode();
-                else if (element is Object[])
-                    elementHash = deepHashCode((Object[])element);
+                else if (element is object[])
+                    elementHash = deepHashCode((object[])element);
                 else
                     elementHash = primitiveArrayHashCode(element, cl);
 
@@ -523,7 +523,7 @@ namespace AndroidUI
             return result;
         }
 
-        private static int primitiveArrayHashCode(Object a, Type cl) {
+        private static int primitiveArrayHashCode(object a, Type cl) {
             return
                 (cl == typeof(byte)) ? hashCode((byte[])a) :
                 (cl == typeof(int)) ? hashCode((int[])a) :
@@ -572,7 +572,7 @@ namespace AndroidUI
          * @see Objects#deepEquals(Object, Object)
          * @since 1.5
          */
-        public static bool deepEquals(Object[] a1, Object[] a2) {
+        public static bool deepEquals(object[] a1, object[] a2) {
             if (a1 == a2)
                 return true;
             if (a1 == null || a2 == null)
@@ -582,8 +582,8 @@ namespace AndroidUI
                 return false;
 
             for (int i = 0; i < length; i++) {
-                Object e1 = a1[i];
-                Object e2 = a2[i];
+                object e1 = a1[i];
+                object e2 = a2[i];
 
                 if (e1 == e2)
                     continue;
@@ -599,11 +599,11 @@ namespace AndroidUI
             return true;
         }
 
-        static bool deepEquals0(Object e1, Object e2) {
+        static bool deepEquals0(object e1, object e2) {
             if (e1 == null) throw new ArgumentNullException();
             bool eq;
-            if (e1 is Object[] && e2 is Object[])
-                eq = deepEquals((Object[])e1, (Object[])e2);
+            if (e1 is object[] && e2 is object[])
+                eq = deepEquals((object[])e1, (object[])e2);
             else if (e1 is byte[] && e2 is byte[])
                 eq = equals((byte[])e1, (byte[])e2);
             else if (e1 is short[] && e2 is short[])
@@ -638,7 +638,7 @@ namespace AndroidUI
          * @return a string representation of {@code a}
          * @since 1.5
          */
-        public static String toString(long[] a) {
+        public static string toString(long[] a) {
             if (a == null)
                 return "null";
             int iMax = a.Length - 1;
@@ -668,7 +668,7 @@ namespace AndroidUI
          * @return a string representation of {@code a}
          * @since 1.5
          */
-        public static String toString(int[] a) {
+        public static string toString(int[] a) {
             if (a == null)
                 return "null";
             int iMax = a.Length - 1;
@@ -698,7 +698,7 @@ namespace AndroidUI
          * @return a string representation of {@code a}
          * @since 1.5
          */
-        public static String toString(short[] a) {
+        public static string toString(short[] a) {
             if (a == null)
                 return "null";
             int iMax = a.Length - 1;
@@ -728,7 +728,7 @@ namespace AndroidUI
          * @return a string representation of {@code a}
          * @since 1.5
          */
-        public static String toString(char[] a) {
+        public static string toString(char[] a) {
             if (a == null)
                 return "null";
             int iMax = a.Length - 1;
@@ -758,7 +758,7 @@ namespace AndroidUI
          * @return a string representation of {@code a}
          * @since 1.5
          */
-        public static String toString(byte[] a) {
+        public static string toString(byte[] a) {
             if (a == null)
                 return "null";
             int iMax = a.Length - 1;
@@ -788,7 +788,7 @@ namespace AndroidUI
          * @return a string representation of {@code a}
          * @since 1.5
          */
-        public static String toString(bool[] a) {
+        public static string toString(bool[] a) {
             if (a == null)
                 return "null";
             int iMax = a.Length - 1;
@@ -818,7 +818,7 @@ namespace AndroidUI
          * @return a string representation of {@code a}
          * @since 1.5
          */
-        public static String toString(float[] a) {
+        public static string toString(float[] a) {
             if (a == null)
                 return "null";
 
@@ -849,7 +849,7 @@ namespace AndroidUI
          * @return a string representation of {@code a}
          * @since 1.5
          */
-        public static String toString(double[] a) {
+        public static string toString(double[] a) {
             if (a == null)
                 return "null";
             int iMax = a.Length - 1;
@@ -882,7 +882,7 @@ namespace AndroidUI
          * @see #deepToString(Object[])
          * @since 1.5
          */
-        public static String toString(Object[] a) {
+        public static string toString(object[] a) {
             if (a == null)
                 return "null";
 
@@ -893,7 +893,7 @@ namespace AndroidUI
             StringBuilder b = new StringBuilder();
             b.Append('[');
             for (int i = 0; ; i++) {
-                Object c = a[i];
+                object c = a[i];
                 b.Append(c == null ? "<null>" : c.ToString());
                 if (i == iMax)
                     return b.Append(']').ToString();
@@ -934,7 +934,7 @@ namespace AndroidUI
          * @see #toString(Object[])
          * @since 1.5
          */
-        public static String deepToString(Object[] a) {
+        public static string deepToString(object[] a) {
             if (a == null)
                 return "null";
 
@@ -942,12 +942,12 @@ namespace AndroidUI
             if (a.Length != 0 && bufLen <= 0)
                 bufLen = int.MaxValue;
             StringBuilder buf = new StringBuilder(bufLen);
-            deepToString(a, buf, new HashSet<Object[]>());
+            deepToString(a, buf, new HashSet<object[]>());
             return buf.ToString();
         }
 
-        private static void deepToString(Object[] a, StringBuilder buf,
-                                         HashSet<Object[]> dejaVu) {
+        private static void deepToString(object[] a, StringBuilder buf,
+                                         HashSet<object[]> dejaVu) {
             if (a == null) {
                 buf.Append("null");
                 return;
@@ -962,7 +962,7 @@ namespace AndroidUI
             buf.Append('[');
             for (int i = 0; ; i++) {
 
-                Object element = a[i];
+                object element = a[i];
                 if (element == null) {
                     buf.Append("null");
                 } else {
@@ -989,7 +989,7 @@ namespace AndroidUI
                             if (dejaVu.Contains(element))
                                 buf.Append("[...]");
                             else
-                                deepToString((Object[])element, buf, dejaVu);
+                                deepToString((object[])element, buf, dejaVu);
                         }
                     } else {  // element is non-null and not an array
                         buf.Append(element.ToString());

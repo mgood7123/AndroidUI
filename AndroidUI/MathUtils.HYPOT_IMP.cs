@@ -167,5 +167,47 @@
             // C# has no concept of long double
             public static double hypotl(double x, double y) => hypot(x, y);
         }
+
+		/**
+		 * Returns the {@code double} value that is closest in value
+		 * to the argument and is equal to a mathematical integer. If two
+		 * {@code double} values that are mathematical integers are
+		 * equally close to the value of the argument, the result is the
+		 * integer value that is even. Special cases:
+		 * <ul><li>If the argument value is already equal to a mathematical
+		 * integer, then the result is the same as the argument.
+		 * <li>If the argument is NaN or an infinity or positive zero or negative
+		 * zero, then the result is the same as the argument.</ul>
+		 *
+		 * @param   a   a value.
+		 * @return  the closest floating-point value to {@code a} that is
+		 *          equal to a mathematical integer.
+		 * @author Joseph D. Darcy
+		 */
+		public static double rint(double a)
+		{
+			/*
+			 * If the absolute value of a is not less than 2^52, it
+			 * is either a finite integer (the double format does not have
+			 * enough significand bits for a number that large to have any
+			 * fractional portion), an infinity, or a NaN.  In any of
+			 * these cases, rint of the argument is the argument.
+			 *
+			 * Otherwise, the sum (twoToThe52 + a ) will properly round
+			 * away any fractional portion of a since ulp(twoToThe52) ==
+			 * 1.0; subtracting out twoToThe52 from this sum will then be
+			 * exact and leave the rounded integer portion of a.
+			 */
+			double twoToThe52 = (double)(1L << 52); // 2^52
+			double sign = copySign(1.0, a); // preserve sign info
+			a = Math.Abs(a);
+
+			if (a < twoToThe52)
+			{ // E_min <= ilogb(a) <= 51
+				a = ((twoToThe52 + a) - twoToThe52);
+			}
+
+			return sign * a; // restore original sign
+		}
 	}
 }

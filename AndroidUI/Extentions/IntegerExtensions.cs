@@ -503,7 +503,7 @@
          * @see #toUnsignedString(int, int)
          * @since   1.0.2
          */
-        public static String toHexString(this int i)
+        public static string toHexString(this int i)
         {
             return toUnsignedString0(i, 4);
         }
@@ -542,7 +542,7 @@
          * @see #toUnsignedString(int, int)
          * @since   1.0.2
          */
-        public static String toOctalString(this int i)
+        public static string toOctalString(this int i)
         {
             return toUnsignedString0(i, 3);
         }
@@ -575,7 +575,7 @@
          * @see #toUnsignedString(int, int)
          * @since   1.0.2
          */
-        public static String toBinaryString(this int i)
+        public static string toBinaryString(this int i)
         {
             return toUnsignedString0(i, 1);
         }
@@ -619,7 +619,7 @@
         /**
          * Convert the integer to an unsigned number.
          */
-        private static String toUnsignedString0(int val, int shift)
+        private static string toUnsignedString0(int val, int shift)
         {
             // assert shift > 0 && shift <=5 : "Illegal shift value";
             int mag = SIZE - numberOfLeadingZeros(val);
@@ -640,7 +640,7 @@
                 return new String(buf, UTF16);
             }
              */
-            return new String(buf);
+            return new string(buf);
             // END Android-changed: Use single-byte chars.
         }
 
@@ -699,8 +699,8 @@
         // END Android-removed: UTF16 version of formatUnsignedInt().
 
         // BEGIN Android-changed: Cache the toString() result for small values.
-        private static readonly String[] SMALL_NEG_VALUES = new String[100];
-        private static readonly String[] SMALL_NONNEG_VALUES = new String[100];
+        private static readonly string[] SMALL_NEG_VALUES = new string[100];
+        private static readonly string[] SMALL_NONNEG_VALUES = new string[100];
         // END Android-changed: Cache the toString() result for small values.
 
         static readonly char[] DigitTens = {
@@ -740,14 +740,14 @@
          * @param   i   an integer to be converted.
          * @return  a string representation of the argument in base&nbsp;10.
          */
-        public static String toString(this int i)
+        public static string toString(this int i)
         {
             // BEGIN Android-changed: Cache the String for small values.
             bool negative = i < 0;
             bool small = negative ? i > -100 : i < 100;
             if (small)
             {
-                String[] smallValues = negative ? SMALL_NEG_VALUES : SMALL_NONNEG_VALUES;
+                string[] smallValues = negative ? SMALL_NEG_VALUES : SMALL_NONNEG_VALUES;
 
                 if (negative)
                 {
@@ -755,8 +755,8 @@
                     if (smallValues[i] == null)
                     {
                         smallValues[i] =
-                            i < 10 ? new String(new char[] { '-', DigitOnes[i] })
-                                   : new String(new char[] { '-', DigitTens[i], DigitOnes[i] });
+                            i < 10 ? new string(new char[] { '-', DigitOnes[i] })
+                                   : new string(new char[] { '-', DigitTens[i], DigitOnes[i] });
                     }
                 }
                 else
@@ -764,8 +764,8 @@
                     if (smallValues[i] == null)
                     {
                         smallValues[i] =
-                            i < 10 ? new String(new char[] { DigitOnes[i] })
-                                   : new String(new char[] { DigitTens[i], DigitOnes[i] });
+                            i < 10 ? new string(new char[] { DigitOnes[i] })
+                                   : new string(new char[] { DigitTens[i], DigitOnes[i] });
                     }
                 }
                 return smallValues[i];
@@ -787,7 +787,7 @@
                 return new String(buf, UTF16);
             }
              */
-            return new String(buf);
+            return new string(buf);
             // END Android-changed: Use single-byte chars.
         }
 
@@ -805,7 +805,7 @@
          * @see     #toUnsignedString(int, int)
          * @since 1.8
          */
-        public static String toUnsignedString(this int i)
+        public static string toUnsignedString(this int i)
         {
             return toString(toUnsignedLong(i));
         }
@@ -820,7 +820,7 @@
          * @param   i   a {@code long} to be converted.
          * @return  a string representation of the argument in base&nbsp;10.
          */
-        public static String toString(this long i)
+        public static string toString(this long i)
         {
             int size = stringSize(i);
             // BEGIN Android-changed: Always use single-byte buffer.
@@ -837,7 +837,7 @@
                 return new String(buf, UTF16);
             }
              */
-            return new String(buf);
+            return new string(buf);
             // END Android-changed: Always use single-byte buffer.
         }
 
@@ -1068,6 +1068,8 @@
         public static bool toBool(this ushort x) => x != 0;
         public static bool toBool(this uint x) => x != 0;
         public static bool toBool(this ulong x) => x != 0;
+        public static bool toBool(this float x) => x != 0.0f;
+        public static bool toBool(this double x) => x != 0.0;
         public static bool toBool(this decimal x) => x != 0;
     }
 }
