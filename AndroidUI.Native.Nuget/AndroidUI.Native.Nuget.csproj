@@ -1,0 +1,121 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<LangVersion>10.0</LangVersion>
+		<Description></Description>
+		<Copyright></Copyright>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
+	
+	<Target Name="PackIncremental" AfterTargets="Build">
+		<PropertyGroup>
+			<!-- if version is greater than MAX_VALUE then version gets reset to 0 -->
+			<!-- set max value to uint16.MaxValue which is the limit of the assembly metadata format-->
+			<MAX_VALUE>65534</MAX_VALUE>
+		</PropertyGroup>
+		
+		<!-- create file if it does not exist-->
+		<WriteLinesToFile Condition="!Exists('VERSION_MAJOR.txt')" File="VERSION_MAJOR.txt" Lines="0" Overwrite="true" Encoding="Unicode" />
+		<WriteLinesToFile Condition="!Exists('VERSION_MINOR.txt')" File="VERSION_MINOR.txt" Lines="0" Overwrite="true" Encoding="Unicode" />
+		<WriteLinesToFile Condition="!Exists('VERSION_BUILD.txt')" File="VERSION_BUILD.txt" Lines="0" Overwrite="true" Encoding="Unicode" />
+					
+		<!-- read current values-->
+		<ReadLinesFromFile File="VERSION_BUILD.txt">
+			<Output TaskParameter="Lines" ItemName="VERSION_BUILD" />
+		</ReadLinesFromFile>
+		<ReadLinesFromFile File="VERSION_MINOR.txt">
+			<Output TaskParameter="Lines" ItemName="VERSION_MINOR" />
+		</ReadLinesFromFile>
+		<ReadLinesFromFile File="VERSION_MAJOR.txt">
+			<Output TaskParameter="Lines" ItemName="VERSION_MAJOR" />
+		</ReadLinesFromFile>
+		
+		<!-- initialize variables to the read values-->
+		<PropertyGroup>
+			<VERSION_BUILD>@(VERSION_BUILD)</VERSION_BUILD>
+			<VERSION_BUILD_TMP>@(VERSION_BUILD)</VERSION_BUILD_TMP>
+			<VERSION_MINOR>@(VERSION_MINOR)</VERSION_MINOR>
+			<VERSION_MINOR_TMP>@(VERSION_MINOR)</VERSION_MINOR_TMP>
+			<VERSION_MAJOR>@(VERSION_MAJOR)</VERSION_MAJOR>
+			<VERSION_MAJOR_TMP>@(VERSION_MAJOR)</VERSION_MAJOR_TMP>
+		</PropertyGroup>
+
+		<Message Text="init VERSION_BUILD: @(VERSION_BUILD)" />
+		<Message Text="init VERSION_MINOR: @(VERSION_MINOR)" />
+		<Message Text="init VERSION_MAJOR: @(VERSION_MAJOR)" />
+		
+		<!-- we cannot use arithmatic so to get around this we use DateTime -->
+		
+		<!-- increment VERSION_BUILD-->
+		<PropertyGroup>
+			<VERSION_BUILD_TMP>@(VERSION_BUILD)</VERSION_BUILD_TMP>
+			<VERSION_BUILD>$([System.DateTime]::FromBinary($(VERSION_BUILD_TMP)).AddTicks(1).Ticks)</VERSION_BUILD>
+			<VERSION_BUILD_TMP>$(VERSION_BUILD)</VERSION_BUILD_TMP>
+		</PropertyGroup>
+		
+		<!-- conditionally increment VERSION_MINOR and VERSION_MAJOR-->
+
+		<Message Condition="$(VERSION_BUILD) &gt; $(MAX_VALUE)" Text="VERSION_BUILD &gt; MAX_VALUE" />
+		<PropertyGroup Condition="$(VERSION_BUILD) &gt; $(MAX_VALUE)">
+			<VERSION_BUILD>0</VERSION_BUILD>
+			
+			<VERSION_MINOR_TMP>@(VERSION_MINOR)</VERSION_MINOR_TMP>
+			<VERSION_MINOR>$([System.DateTime]::FromBinary($(VERSION_MINOR_TMP)).AddTicks(1).Ticks)</VERSION_MINOR>
+			<VERSION_MINOR_TMP>$(VERSION_MINOR)</VERSION_MINOR_TMP>
+		</PropertyGroup>
+
+		<Message Condition="$(VERSION_MINOR) &gt; $(MAX_VALUE)" Text="VERSION_MINOR &gt; MAX_VALUE" />
+		<PropertyGroup Condition="$(VERSION_MINOR) &gt; $(MAX_VALUE)">
+			<VERSION_MINOR>0</VERSION_MINOR>
+			
+			<VERSION_MAJOR_TMP>@(VERSION_MAJOR)</VERSION_MAJOR_TMP>
+			<VERSION_MAJOR>$([System.DateTime]::FromBinary($(VERSION_MAJOR_TMP)).AddTicks(1).Ticks)</VERSION_MAJOR>
+		</PropertyGroup>
+		
+		<Message Condition="$(VERSION_MAJOR) &gt; $(MAX_VALUE)" Text="VERSION_MAJOR &gt; MAX_VALUE" />
+		<PropertyGroup Condition="$(VERSION_MAJOR) &gt; $(MAX_VALUE)">
+			<VERSION_BUILD>0</VERSION_BUILD>
+			<VERSION_MINOR>0</VERSION_MINOR>
+			<VERSION_MAJOR>0</VERSION_MAJOR>
+		</PropertyGroup>
+		
+		<!-- conditionally write incremented versions to file -->
+		<WriteLinesToFile File="VERSION_BUILD.txt" Lines="$(VERSION_BUILD)" Overwrite="true" Encoding="Unicode" />
+		<WriteLinesToFile Condition="$(VERSION_BUILD_TMP) &gt; $(MAX_VALUE)" File="VERSION_MINOR.txt" Lines="$(VERSION_MINOR)" Overwrite="true" Encoding="Unicode" />
+		<WriteLinesToFile Condition="$(VERSION_MINOR_TMP) &gt; $(MAX_VALUE)" File="VERSION_MAJOR.txt" Lines="$(VERSION_MAJOR)" Overwrite="true" Encoding="Unicode" />
+		
+		<!-- maximum version number is 65534 for each value-->
+		<Message Text="pack VERSION_BUILD: @(VERSION_BUILD) -&gt; $(VERSION_BUILD)" />
+		<Message Text="pack VERSION_MINOR: @(VERSION_MINOR) -&gt; $(VERSION_MINOR)" />
+		<Message Text="pack VERSION_MAJOR: @(VERSION_MAJOR) -&gt; $(VERSION_MAJOR)" />
+
+		<Exec Command="dotnet pack $(MSBuildProjectDirectory)\$(MSBuildProjectName).csproj --no-build /p:Version=$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_BUILD)"></Exec>
+	</Target>
+		
+	<ItemGroup>
+		<!--
+			info:
+				architecture-specific-folders:
+					https://docs.microsoft.com/en-us/nuget/create-packages/supporting-multiple-target-frameworks#architecture-specific-folders
+				supported-frameworks:
+					https://docs.microsoft.com/en-us/nuget/reference/target-frameworks#supported-frameworks
+					
+			putting libs into runtimes\ARCH\natives folder seems to get then into
+			    self contained bin\runtimes folder
+		-->
+		
+		<Content Include="..\x64\Debug\AndroidUI.Native.Windows.dll">
+			<Pack>true</Pack>
+			<PackagePath>\runtimes\win-x64\native</PackagePath>
+		</Content>
+		<Content Include="..\x64\Debug\libAndroidUI_Native_Android.so">
+			<Pack>true</Pack>
+			<PackagePath>\runtimes\monoandroid-x64\native</PackagePath>
+		</Content>
+	</ItemGroup>
+	
+	<ItemGroup>
+	  <PackageReference Include="ClangSharp" Version="14.0.0-beta2" />
+	</ItemGroup>
+</Project>

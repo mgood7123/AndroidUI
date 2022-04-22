@@ -10,6 +10,7 @@ namespace WinFormsApp1
 
         public SkiaGL()
         {
+
             host.SetInvalidateCallback(Invalidate);
             DpiChangedAfterParent += SkiaGL_DpiChangedAfterParent;
             handleDpiChange();

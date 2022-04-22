@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <LangVersion>10.0</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <OutputType>Library</OutputType>
@@ -13,8 +13,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="SkiaSharp" Version="2.80.3" />
-    <PackageReference Include="SkiaSharp.HarfBuzz" Version="2.80.3" />
+    <PackageReference Include="SkiaSharp" Version="2.88.0-preview.254" />
+    <PackageReference Include="SkiaSharp.HarfBuzz" Version="2.88.0-preview.254" />
+    <PackageReference Include="SkiaSharp.Views" Version="2.88.0-preview.254" />
     <PackageReference Include="System.Security.Permissions" Version="6.0.0" />
     <PackageReference Include="Topten.RichTextKit" Version="0.4.151" />
   </ItemGroup>

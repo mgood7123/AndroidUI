@@ -5,7 +5,7 @@
     /// </summary>
     class Union
     {
-        static unsafe TDest ReinterpretCast<TSource, TDest>(TSource source)
+        public static unsafe TDest ReinterpretCast<TSource, TDest>(TSource source)
         {
             var sourceRef = __makeref(source);
             var dest = default(TDest);
@@ -182,11 +182,6 @@
                             {
                                 double source = *(double*)array;
                                 value = ReinterpretCast<double, T>(source);
-                            }
-                            else if (requestedType == CastUtils.DECIMAL)
-                            {
-                                decimal source = *(decimal*)array;
-                                value = ReinterpretCast<decimal, T>(source);
                             }
                             else if (requestedType == CastUtils.DECIMAL)
                             {

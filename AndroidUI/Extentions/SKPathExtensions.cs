@@ -183,7 +183,7 @@ namespace AndroidUI.Extensions
             return true;
         }
 
-        static void addMove(List<SKPoint> segmentPoints, List<float> lengths, ref SKPoint point)
+        static void addMove(List<SKPoint> segmentPoints, List<float> lengths, in SKPoint point)
         {
             float length = 0;
             if (lengths.Count != 0)
@@ -248,16 +248,16 @@ namespace AndroidUI.Extensions
         static bool subdividePoints(SKPoint[] points, Func<float, SKPoint[], SKPoint> bezierFunction,
             float t0, in SKPoint p0, float t1, in SKPoint p1,
             out float midT, out SKPoint midPoint, float errorSquared) {
-        midT = (t1 + t0) / 2;
-        float midX = (p1.X + p0.X) / 2;
-        float midY = (p1.Y + p0.Y) / 2;
+            midT = (t1 + t0) / 2;
+            float midX = (p1.X + p0.X) / 2;
+            float midY = (p1.Y + p0.Y) / 2;
 
-        midPoint = bezierFunction.Invoke(midT, points);
-        float xError = midPoint.X - midX;
-        float yError = midPoint.Y - midY;
-        float midErrorSquared = (xError * xError) + (yError * yError);
-        return midErrorSquared > errorSquared;
-    }
+            midPoint = bezierFunction.Invoke(midT, points);
+            float xError = midPoint.X - midX;
+            float yError = midPoint.Y - midY;
+            float midErrorSquared = (xError * xError) + (yError * yError);
+            return midErrorSquared > errorSquared;
+        }
 
         // Divides Bezier curves until linear interpolation is very close to accurate, using
         // errorSquared as a metric. Cubic Bezier curves can have an inflection point that improperly
@@ -325,9 +325,11 @@ namespace AndroidUI.Extensions
  */
         class SkAutoConicToQuads
         {
-    SkAutoConicToQuads() {
+            SkAutoConicToQuads() {
                 fQuadCount = 0;
             }
+
+            // TODO: RESTORE ME
 
             /**
              *  Given a conic and a tolerance, return the array of points for the
@@ -341,47 +343,45 @@ namespace AndroidUI.Extensions
              *      quad[2] == pts[4..6]
              *      quad[3] == pts[6..8]
              */
-            SKPoint[] computeQuads(in SKConic conic, float tol) {
-        int pow2 = conic.computeQuadPOW2(tol);
-            fQuadCount = 1 << pow2;
-        SkPoint* pts = fStorage.reset(1 + 2 * fQuadCount);
-            fQuadCount = conic.chopIntoQuadsPOW2(pts, pow2);
-        return pts;
-    }
+            //SKPoint[] computeQuads(in SKConic conic, float tol) {
+            //    int pow2 = conic.computeQuadPOW2(tol);
+            //    fQuadCount = 1 << pow2;
+            //    SkPoint* pts = fStorage.reset(1 + 2 * fQuadCount);
+            //    fQuadCount = conic.chopIntoQuadsPOW2(pts, pow2);
+            //    return pts;
+            //}
 
-        const SkPoint* computeQuads(const SkPoint pts[3], SkScalar weight,
-                                SkScalar tol) {
-        Sk conic;
-        conic.set(pts, weight);
-        return computeQuads(conic, tol);
-    }
+            //const SkPoint* computeQuads(const SkPoint pts[3], SkScalar weight,
+            //                            SkScalar tol) {
+            //    Sk conic;
+            //    conic.set(pts, weight);
+            //    return computeQuads(conic, tol);
+            //}
 
-    int countQuads() const { return fQuadCount; }
+            int countQuads() { return fQuadCount; }
 
-private:
-    enum {
-    kQuadCount = 8, // should handle most conics
-    kPointCount = 1 + 2 * kQuadCount,
-};
-SkAutoSTMalloc<kPointCount, SkPoint> fStorage;
-int fQuadCount; // #quads for current usage
-};
+            private const int kQuadCount = 8; // should handle most conics
+            private const int kPointCount = 1 + 2 * kQuadCount;
+
+            //SkAutoSTMalloc<kPointCount, SkPoint> fStorage;
+            int fQuadCount; // #quads for current usage
+        };
 
 
-static void createVerbSegments(ref SKPath.Iterator pathIter, SKPathVerb verb,
-            SKPoint[] points, List<SKPoint> segmentPoints,
-            List<float> lengths, float errorSquared, float errorConic)
+        static void createVerbSegments(ref SKPath.Iterator pathIter, SKPathVerb verb,
+                    SKPoint[] points, List<SKPoint> segmentPoints,
+                    List<float> lengths, float errorSquared, float errorConic)
         {
             switch (verb)
             {
                 case SKPathVerb.Move:
-                    addMove(segmentPoints, lengths, ref points[0]);
+                    addMove(segmentPoints, lengths, points[0]);
                     break;
                 case SKPathVerb.Close:
-                    addLine(segmentPoints, lengths, ref points[0]);
+                    addLine(segmentPoints, lengths, points[0]);
                     break;
                 case SKPathVerb.Line:
-                    addLine(segmentPoints, lengths, ref points[1]);
+                    addLine(segmentPoints, lengths, points[1]);
                     break;
                 case SKPathVerb.Quad:
                     addBezier(points, quadraticBezierCalculation, segmentPoints, lengths,
@@ -393,15 +393,15 @@ static void createVerbSegments(ref SKPath.Iterator pathIter, SKPathVerb verb,
                     break;
                 case SKPathVerb.Conic:
                     {
-                        SKPoint[] quads = SKPath.ConvertConicToQuads(
-                                points, pathIter.ConicWeight, errorConic);
-                        for (int i = 0; i < converter.countQuads(); i++)
-                        {
-                            // Note: offset each subsequent quad by 2, since end points are shared
-                            const SkPoint* quad = quads + i * 2;
-                            addBezier(quad, quadraticBezierCalculation, segmentPoints, lengths,
-                                errorConic, false);
-                        }
+                        //SKPoint[] quads = SKPath.ConvertConicToQuads(
+                        //        points, pathIter.ConicWeight, errorConic);
+                        //for (int i = 0; i < converter.countQuads(); i++)
+                        //{
+                        //    // Note: offset each subsequent quad by 2, since end points are shared
+                        //    const SkPoint* quad = quads + i * 2;
+                        //    addBezier(quad, quadraticBezierCalculation, segmentPoints, lengths,
+                        //        errorConic, false);
+                        //}
                         break;
                     }
                 default:
@@ -416,20 +416,21 @@ static void createVerbSegments(ref SKPath.Iterator pathIter, SKPathVerb verb,
         // Note that more than one point may have the same length along the path in
         // the case of a move.
         // NULL can be returned if the Path is empty.
-        public static float[] Approximate(this SKPath path, float acceptableError)
-        {
-            SKPath.Iterator pathIter = path.CreateIterator(false);
-            SKPathVerb verb;
-            SKPoint[] points = new SKPoint[4];
-            List<SKPoint> segmentPoints;
-            List<float> lengths;
-            float errorSquared = acceptableError * acceptableError;
-            float errorConic = acceptableError / 2; // somewhat arbitrary
+        //public static float[] Approximate(this SKPath path, float acceptableError)
+        //{
+        //    SKPath.Iterator pathIter = path.CreateIterator(false);
+        //    SKPathVerb verb;
+        //    SKPoint[] points = new SKPoint[4];
+        //    List<SKPoint> segmentPoints;
+        //    List<float> lengths;
+        //    float errorSquared = acceptableError * acceptableError;
+        //    float errorConic = acceptableError / 2; // somewhat arbitrary
 
-            while ((verb = pathIter.Next(points)) != SKPathVerb.Done)
-            {
-                createVerbSegments(pathIter, verb, points, segmentPoints, lengths,
-                        errorSquared, errorConic);
-            }
-        }
+        //    while ((verb = pathIter.Next(points)) != SKPathVerb.Done)
+        //    {
+        //        createVerbSegments(pathIter, verb, points, segmentPoints, lengths,
+        //                errorSquared, errorConic);
+        //    }
+        //}
     }
+}

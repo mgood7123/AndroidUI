@@ -54,14 +54,16 @@ namespace AndroidUI
                 throw new Exception("t must be between 0.0 and 1.0");
             }
 
-            if (pos != null)
-            {
-                pos.value = evalAt(t);
-            }
-            if (tangent != null)
-            {
-                tangent.value = evalTangentAt(t);
-            }
+            // TODO: RESTORE ME
+
+            //if (pos != null)
+            //{
+            //    pos.value = evalAt(t);
+            //}
+            //if (tangent != null)
+            //{
+            //    tangent.value = evalTangentAt(t);
+            //}
 
         }
 
@@ -175,81 +177,83 @@ namespace AndroidUI
             return dst[0].isFinite() && dst[1].isFinite();
         }
 
-        void chopAt(float t1, float t2, out SKConic dst) {
-            if (0 == t1 || 1 == t2) {
-                if (0 == t1 && 1 == t2) {
-                    dst = this;
-                    return;
-                } else {
-                    SKConic[] pair = new SKConic[2];
-                    if (chopAt(t1.toBool() ? t1 : t2, pair)) {
-                        dst = pair[t1.toBool().toInt()];
-                        return;
-                    }
-                }
-            }
-SkConicCoeff coeff(*this);
-Sk2s tt1(t1);
-Sk2s aXY = coeff.fNumer.eval(tt1);
-Sk2s aZZ = coeff.fDenom.eval(tt1);
-Sk2s midTT((t1 + t2) / 2);
-Sk2s dXY = coeff.fNumer.eval(midTT);
-Sk2s dZZ = coeff.fDenom.eval(midTT);
-Sk2s tt2(t2);
-Sk2s cXY = coeff.fNumer.eval(tt2);
-Sk2s cZZ = coeff.fDenom.eval(tt2);
-Sk2s bXY = times_2(dXY) - (aXY + cXY) * Sk2s(0.5f);
-Sk2s bZZ = times_2(dZZ) - (aZZ + cZZ) * Sk2s(0.5f);
-dst->fPts[0] = to_point(aXY / aZZ);
-dst->fPts[1] = to_point(bXY / bZZ);
-dst->fPts[2] = to_point(cXY / cZZ);
-Sk2s ww = bZZ / (aZZ * cZZ).sqrt();
-dst->fW = ww[0];
-}
-    void chop(SKConic dst[2]) const;
+        // TODO: RESTORE ME
 
-    SKPoint evalAt(float t) const;
-    SkVector evalTangentAt(float t) const;
+        //        void chopAt(float t1, float t2, out SKConic dst) {
+        //            if (0 == t1 || 1 == t2) {
+        //                if (0 == t1 && 1 == t2) {
+        //                    dst = this;
+        //                    return;
+        //                } else {
+        //                    SKConic[] pair = new SKConic[2];
+        //                    if (chopAt(t1.toBool() ? t1 : t2, pair)) {
+        //                        dst = pair[t1.toBool().toInt()];
+        //                        return;
+        //                    }
+        //                }
+        //            }
+        //SkConicCoeff coeff(*this);
+        //Sk2s tt1(t1);
+        //Sk2s aXY = coeff.fNumer.eval(tt1);
+        //Sk2s aZZ = coeff.fDenom.eval(tt1);
+        //Sk2s midTT((t1 + t2) / 2);
+        //Sk2s dXY = coeff.fNumer.eval(midTT);
+        //Sk2s dZZ = coeff.fDenom.eval(midTT);
+        //Sk2s tt2(t2);
+        //Sk2s cXY = coeff.fNumer.eval(tt2);
+        //Sk2s cZZ = coeff.fDenom.eval(tt2);
+        //Sk2s bXY = times_2(dXY) - (aXY + cXY) * Sk2s(0.5f);
+        //Sk2s bZZ = times_2(dZZ) - (aZZ + cZZ) * Sk2s(0.5f);
+        //dst->fPts[0] = to_point(aXY / aZZ);
+        //dst->fPts[1] = to_point(bXY / bZZ);
+        //dst->fPts[2] = to_point(cXY / cZZ);
+        //Sk2s ww = bZZ / (aZZ * cZZ).sqrt();
+        //dst->fW = ww[0];
+        //}
+        //    void chop(SKConic dst[2]) const;
 
-    void computeAsQuadError(SkVector* err) const;
-    bool asQuadTol(float tol) const;
+        //    SKPoint evalAt(float t) const;
+        //    SkVector evalTangentAt(float t) const;
 
-    /**
-     *  return the power-of-2 number of quads needed to approximate this conic
-     *  with a sequence of quads. Will be >= 0.
-     */
-    int SK_SPI computeQuadPOW2(float tol) const;
+        //    void computeAsQuadError(SkVector* err) const;
+        //    bool asQuadTol(float tol) const;
 
-    /**
-     *  Chop this conic into N quads, stored continguously in pts[], where
-     *  N = 1 << pow2. The amount of storage needed is (1 + 2 * N)
-     */
-    int SK_SPI SK_WARN_UNUSED_RESULT chopIntoQuadsPOW2(SKPoint pts[], int pow2) const;
+        //    /**
+        //     *  return the power-of-2 number of quads needed to approximate this conic
+        //     *  with a sequence of quads. Will be >= 0.
+        //     */
+        //    int SK_SPI computeQuadPOW2(float tol) const;
 
-    float findMidTangent() const;
-    bool findXExtrema(float* t) const;
-    bool findYExtrema(float* t) const;
-    bool chopAtXExtrema(SKConic dst[2]) const;
-    bool chopAtYExtrema(SKConic dst[2]) const;
+        //    /**
+        //     *  Chop this conic into N quads, stored continguously in pts[], where
+        //     *  N = 1 << pow2. The amount of storage needed is (1 + 2 * N)
+        //     */
+        //    int SK_SPI SK_WARN_UNUSED_RESULT chopIntoQuadsPOW2(SKPoint pts[], int pow2) const;
 
-    void computeTightBounds(SkRect* bounds) const;
-    void computeFastBounds(SkRect* bounds) const;
+        //    float findMidTangent() const;
+        //    bool findXExtrema(float* t) const;
+        //    bool findYExtrema(float* t) const;
+        //    bool chopAtXExtrema(SKConic dst[2]) const;
+        //    bool chopAtYExtrema(SKConic dst[2]) const;
 
-    /** Find the parameter value where the conic takes on its maximum curvature.
-     *
-     *  @param t   output scalar for max curvature.  Will be unchanged if
-     *             max curvature outside 0..1 range.
-     *
-     *  @return  true if max curvature found inside 0..1 range, false otherwise
-     */
-    //    bool findMaxCurvature(float* t) const;  // unimplemented
+        //    void computeTightBounds(SkRect* bounds) const;
+        //    void computeFastBounds(SkRect* bounds) const;
 
-    static float TransformW(const SKPoint[3], float w, const SkMatrix&);
+        //    /** Find the parameter value where the conic takes on its maximum curvature.
+        //     *
+        //     *  @param t   output scalar for max curvature.  Will be unchanged if
+        //     *             max curvature outside 0..1 range.
+        //     *
+        //     *  @return  true if max curvature found inside 0..1 range, false otherwise
+        //     */
+        //    //    bool findMaxCurvature(float* t) const;  // unimplemented
 
-    enum {
-        kMaxConicsForArc = 5
+        //    static float TransformW(const SKPoint[3], float w, const SkMatrix&);
+
+        //    enum {
+        //        kMaxConicsForArc = 5
+        //    };
+        //    static int BuildUnitArc(const SkVector& start, const SkVector& stop, SkRotationDirection,
+        //                            const SkMatrix*, SKConic conics[kMaxConicsForArc]);
     };
-    static int BuildUnitArc(const SkVector& start, const SkVector& stop, SkRotationDirection,
-                            const SkMatrix*, SKConic conics[kMaxConicsForArc]);
-};
 }

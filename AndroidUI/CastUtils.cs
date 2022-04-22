@@ -104,7 +104,21 @@
             return SizeOfUnmanagedType(t) != 0;
         }
 
-        // https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/operators/sizeof
+        /// <summary>
+        /// 0 = managed, nuint, nint
+        /// <br></br>
+        /// 1 = sbyte, byte, bool
+        /// <br></br>
+        /// 2 = short, ushort, char
+        /// <br></br>
+        /// 4 = int, uint, float
+        /// <br></br>
+        /// 8 = long, ulong, double
+        /// <br></br>
+        /// 16 = decimal
+        /// <br></br>
+        /// https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/operators/sizeof
+        /// </summary>
         public static int SizeOfUnmanagedType(Type t)
         {
             if (t == SBYTE || t == BYTE || t == BOOL)
