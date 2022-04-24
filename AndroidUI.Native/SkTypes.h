@@ -619,22 +619,6 @@ enum class SkBackingFit {
 #endif
 #endif
 
-void sk_abort_no_print() {
-#if defined(SK_BUILD_FOR_WIN) && defined(SK_IS_BOT)
-    // do not display a system dialog before aborting the process
-    _set_abort_behavior(0, _WRITE_ABORT_MSG);
-#endif
-#if defined(SK_DEBUG) && defined(SK_BUILD_FOR_WIN)
-    __fastfail(FAST_FAIL_FATAL_APP_EXIT);
-#elif defined(__clang__)
-    __builtin_trap();
-#else
-    abort();
-#endif
-}
-
-
-
 #ifdef SK_BUILD_FOR_WIN
 #  ifndef WIN32_LEAN_AND_MEAN
 #    define WIN32_LEAN_AND_MEAN
@@ -656,6 +640,22 @@ void sk_abort_no_print() {
 #    undef NOMINMAX
 #  endif
 #endif
+
+#include <stdlib.h>
+
+void sk_abort_no_print() {
+#if defined(SK_BUILD_FOR_WIN) && defined(SK_IS_BOT)
+    // do not display a system dialog before aborting the process
+    _set_abort_behavior(0, _WRITE_ABORT_MSG);
+#endif
+#if defined(SK_DEBUG) && defined(SK_BUILD_FOR_WIN)
+    __fastfail(FAST_FAIL_FATAL_APP_EXIT);
+#elif defined(__clang__)
+    __builtin_trap();
+#else
+    abort();
+#endif
+}
 
 #if defined(SK_BUILD_FOR_WIN)
 

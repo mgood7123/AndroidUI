@@ -42,7 +42,7 @@ namespace AndroidUI
             public Pointer(IntPtr handle, Action<IntPtr> dispose, bool ownsHandle) : this(handle, dispose, IntPtr.Zero, ownsHandle) { }
             private Pointer(IntPtr handle, Action<IntPtr> dispose, IntPtr invalidHandleValue, bool ownsHandle) : base(invalidHandleValue, ownsHandle)
             {
-                Console.WriteLine("Acquire Handle: " + handle);
+                //Console.WriteLine("Acquire Handle: " + handle);
                 SetHandle(handle);
                 this.dispose = dispose;
                 invalid = invalidHandleValue;
@@ -58,7 +58,7 @@ namespace AndroidUI
 
             protected override bool ReleaseHandle()
             {
-                Console.WriteLine("Release Handle: " + handle);
+                //Console.WriteLine("Release Handle: " + handle);
                 dispose.Invoke(handle);
                 handle = invalid;
                 return true;

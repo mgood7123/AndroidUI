@@ -90,7 +90,7 @@
 		<Message Text="pack VERSION_MINOR: @(VERSION_MINOR) -&gt; $(VERSION_MINOR)" />
 		<Message Text="pack VERSION_MAJOR: @(VERSION_MAJOR) -&gt; $(VERSION_MAJOR)" />
 
-		<Exec Command="dotnet pack $(MSBuildProjectDirectory)\$(MSBuildProjectName).csproj --no-build /p:Version=$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_BUILD)"></Exec>
+		<Exec Command="dotnet pack $(MSBuildProjectDirectory)\$(MSBuildProjectName).csproj --no-build --configuration $(Configuration) /p:Version=$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_BUILD)"></Exec>
 	</Target>
 		
 	<ItemGroup>
@@ -113,9 +113,5 @@
 			<Pack>true</Pack>
 			<PackagePath>\runtimes\monoandroid-x64\native</PackagePath>
 		</Content>
-	</ItemGroup>
-	
-	<ItemGroup>
-	  <PackageReference Include="ClangSharp" Version="14.0.0-beta2" />
 	</ItemGroup>
 </Project>

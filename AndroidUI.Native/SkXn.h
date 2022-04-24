@@ -29,6 +29,9 @@
 // one file https://godbolt.org/z/zs19Yjea9
 // one file https://gist.github.com/mgood7123/b2ac7dcf2ccb1f9e0d288c32c12902f9
 
+// binding generation:
+// ClangSharpPInvokeGenerator.exe -f .\SkXn.h -l "AndroidUI.Native.dll" -n Bindings -m Native -o ..\AndroidUI.Native.Nuget\Bindings -c multi-file -c generate-helper-types -c latest-codegen
+
 #define SKNX_TEMPLATE(N, T) SkNx<N, T>
 #define AS_SKNX(N, T, ptr) reinterpret_cast<SKNX_TEMPLATE(N, T) *>(ptr)
 #define AS_SKNX_REF(N, T, ptr) reinterpret_cast<SKNX_TEMPLATE(N, T) **>(ptr)
@@ -643,11 +646,6 @@ DEFINE_FUNCTION_CALL1SA_IMPL(N, T, NAME, assign_operator_binary_left_shift, void
 DEFINE_FUNCTION_CALL1SA_IMPL(N, T, NAME, assign_operator_binary_right_shift, void*, operator>>, int) \
 DEFINE_FUNCTION_CALL1_SELF_IMPL(N, T, NAME, saturatedAdd, void*, saturatedAdd) \
 DEFINE_FUNCTION_CALL1_SELF_IMPL(N, T, NAME, mulHi, void*, mulHi)
-
-/*
-ClangSharpPInvokeGenerator.exe -f .\SkXn.h -l "runtimes/win-x64/native/AndroidUI.Native.Windows.dll"           -n Bindings_Windows -m Native -c multi-file -c generate-helper-types -o ..\AndroidUI.Native.Nuget\Bindings_Windows -c compatible-codegen
-ClangSharpPInvokeGenerator.exe -f .\SkXn.h -l "runtimes/monoandroid-x64/native/libAndroidUI_Native_Android.so" -n Bindings_Android -m Native -c multi-file -c generate-helper-types -o ..\AndroidUI.Native.Nuget\Bindings_Android -c compatible-codegen
-*/
 
 DEFINE_ALLOCATION0(2, float, f)
 DEFINE_ALLOCATION1(2, float, f)

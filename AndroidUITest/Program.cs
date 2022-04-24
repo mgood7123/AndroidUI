@@ -1,1 +1,1 @@
-﻿AndroidUITestFramework.Main.Run(typeof(NATIVE_TEST));
+﻿AndroidUITestFramework.Main.Run("NATIVE_TEST");
