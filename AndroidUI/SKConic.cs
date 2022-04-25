@@ -1,24 +1,43 @@
 ﻿using AndroidUI.Extensions;
 using SkiaSharp;
+using static AndroidUI.Native;
 
 namespace AndroidUI
 {
     class SKConic
     {
-        SKConic() { }
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        internal static Sk2s from_point(SKPoint point) {
+            return Sk2s.Load(new float[] { point.X, point.Y });
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        internal static SKPoint to_point(Sk2s x) {
+            SKPoint point = new SKPoint();
+            float[] a = x.Store();
+            point.Set(a[0], a[1]);
+            return point;
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        internal static Sk2s times_2(Sk2s value) {
+            return value + value;
+        }
+
+    SKConic() { }
         SKConic(SKPoint p0, SKPoint p1, SKPoint p2, float w) {
-        fPts[0] = p0;
-        fPts[1] = p1;
-        fPts[2] = p2;
-        fW = w;
-    }
+            fPts[0] = p0;
+            fPts[1] = p1;
+            fPts[2] = p2;
+            fW = w;
+        }
     SKConic(SKPoint[] pts, float w)
     {
             set(pts, w);
     }
 
-    SKPoint[] fPts = new SKPoint[3];
-    float fW;
+    internal SKPoint[] fPts = new SKPoint[3];
+        internal float fW;
 
     void set(SKPoint[] pts, float w)
     {
@@ -54,16 +73,14 @@ namespace AndroidUI
                 throw new Exception("t must be between 0.0 and 1.0");
             }
 
-            // TODO: RESTORE ME
-
-            //if (pos != null)
-            //{
-            //    pos.value = evalAt(t);
-            //}
-            //if (tangent != null)
-            //{
-            //    tangent.value = evalTangentAt(t);
-            //}
+            if (pos != null)
+            {
+                pos.value = evalAt(t);
+            }
+            if (tangent != null)
+            {
+                tangent.value = evalTangentAt(t);
+            }
 
         }
 
@@ -179,37 +196,44 @@ namespace AndroidUI
 
         // TODO: RESTORE ME
 
-        //        void chopAt(float t1, float t2, out SKConic dst) {
-        //            if (0 == t1 || 1 == t2) {
-        //                if (0 == t1 && 1 == t2) {
-        //                    dst = this;
-        //                    return;
-        //                } else {
-        //                    SKConic[] pair = new SKConic[2];
-        //                    if (chopAt(t1.toBool() ? t1 : t2, pair)) {
-        //                        dst = pair[t1.toBool().toInt()];
-        //                        return;
-        //                    }
-        //                }
-        //            }
-        //SkConicCoeff coeff(*this);
-        //Sk2s tt1(t1);
-        //Sk2s aXY = coeff.fNumer.eval(tt1);
-        //Sk2s aZZ = coeff.fDenom.eval(tt1);
-        //Sk2s midTT((t1 + t2) / 2);
-        //Sk2s dXY = coeff.fNumer.eval(midTT);
-        //Sk2s dZZ = coeff.fDenom.eval(midTT);
-        //Sk2s tt2(t2);
-        //Sk2s cXY = coeff.fNumer.eval(tt2);
-        //Sk2s cZZ = coeff.fDenom.eval(tt2);
-        //Sk2s bXY = times_2(dXY) - (aXY + cXY) * Sk2s(0.5f);
-        //Sk2s bZZ = times_2(dZZ) - (aZZ + cZZ) * Sk2s(0.5f);
-        //dst->fPts[0] = to_point(aXY / aZZ);
-        //dst->fPts[1] = to_point(bXY / bZZ);
-        //dst->fPts[2] = to_point(cXY / cZZ);
-        //Sk2s ww = bZZ / (aZZ * cZZ).sqrt();
-        //dst->fW = ww[0];
-        //}
+        void chopAt(float t1, float t2, out SKConic dst)
+        {
+            if (0 == t1 || 1 == t2)
+            {
+                if (0 == t1 && 1 == t2)
+                {
+                    dst = this;
+                    return;
+                }
+                else
+                {
+                    SKConic[] pair = new SKConic[2];
+                    if (chopAt(t1.toBool() ? t1 : t2, pair))
+                    {
+                        dst = pair[t1.toBool().toInt()];
+                        return;
+                    }
+                }
+            }
+            SKConicCoeff coeff = new(this);
+            Sk2s tt1 = new(t1);
+            Sk2s aXY = coeff.fNumer.eval(tt1);
+            Sk2s aZZ = coeff.fDenom.eval(tt1);
+            Sk2s midTT = new((t1 +t2) / 2);
+            Sk2s dXY = coeff.fNumer.eval(midTT);
+            Sk2s dZZ = coeff.fDenom.eval(midTT);
+            Sk2s tt2 = new(t2);
+            Sk2s cXY = coeff.fNumer.eval(tt2);
+            Sk2s cZZ = coeff.fDenom.eval(tt2);
+            Sk2s bXY = times_2(dXY) - (aXY + cXY) * new Sk2s(0.5f);
+            Sk2s bZZ = times_2(dZZ) - (aZZ + cZZ) * new Sk2s(0.5f);
+            dst = new();
+            dst.fPts[0] = to_point(aXY / aZZ);
+            dst.fPts[1] = to_point(bXY / bZZ);
+            dst.fPts[2] = to_point(cXY / cZZ);
+            Sk2s ww = bZZ / (aZZ * cZZ).sqrt();
+            dst.fW = ww[0];
+        }
         //    void chop(SKConic dst[2]) const;
 
         //    SKPoint evalAt(float t) const;

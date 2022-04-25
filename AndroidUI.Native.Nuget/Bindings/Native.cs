@@ -80,6 +80,26 @@ namespace Bindings
         public static extern void Sk2f__Store2(void* value1, void* value2, void* value3);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern float Sk2f__min(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern float Sk2f__max(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("bool")]
+        public static extern byte Sk2f__anyTrue(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("bool")]
+        public static extern byte Sk2f__allTrue(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk2f__operator_logical_not(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk2f__operator_binary_ones_complement(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void* Sk2f__operator_add(void* ptr, void* value);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
@@ -251,6 +271,18 @@ namespace Bindings
         public static extern void delete_Sk2f(void* ptr);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk2f__abs(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk2f__sqrt(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk2f__floor(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk2f__operator_unary_minus(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern float Sk4f__index(void* ptr, int value);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
@@ -276,6 +308,26 @@ namespace Bindings
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void Sk4f__Store2(void* value1, void* value2, void* value3);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern float Sk4f__min(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern float Sk4f__max(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("bool")]
+        public static extern byte Sk4f__anyTrue(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("bool")]
+        public static extern byte Sk4f__allTrue(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk4f__operator_logical_not(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk4f__operator_binary_ones_complement(void* ptr);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void* Sk4f__operator_add(void* ptr, void* value);
@@ -449,6 +501,18 @@ namespace Bindings
         public static extern void delete_Sk4f(void* ptr);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk4f__abs(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk4f__sqrt(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk4f__floor(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk4f__operator_unary_minus(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern float Sk8f__index(void* ptr, int value);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
@@ -474,6 +538,26 @@ namespace Bindings
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void Sk8f__Store2(void* value1, void* value2, void* value3);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern float Sk8f__min(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern float Sk8f__max(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("bool")]
+        public static extern byte Sk8f__anyTrue(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("bool")]
+        public static extern byte Sk8f__allTrue(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk8f__operator_logical_not(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk8f__operator_binary_ones_complement(void* ptr);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void* Sk8f__operator_add(void* ptr, void* value);
@@ -647,6 +731,18 @@ namespace Bindings
         public static extern void delete_Sk8f(void* ptr);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk8f__abs(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk8f__sqrt(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk8f__floor(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk8f__operator_unary_minus(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern float Sk16f__index(void* ptr, int value);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
@@ -672,6 +768,26 @@ namespace Bindings
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void Sk16f__Store2(void* value1, void* value2, void* value3);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern float Sk16f__min(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern float Sk16f__max(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("bool")]
+        public static extern byte Sk16f__anyTrue(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("bool")]
+        public static extern byte Sk16f__allTrue(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk16f__operator_logical_not(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk16f__operator_binary_ones_complement(void* ptr);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void* Sk16f__operator_add(void* ptr, void* value);
@@ -845,6 +961,18 @@ namespace Bindings
         public static extern void delete_Sk16f(void* ptr);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk16f__abs(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk16f__sqrt(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk16f__floor(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk16f__operator_unary_minus(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void* new_Sk2s__0();
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
@@ -918,6 +1046,26 @@ namespace Bindings
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void Sk2s__Store2(void* value1, void* value2, void* value3);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern float Sk2s__min(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern float Sk2s__max(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("bool")]
+        public static extern byte Sk2s__anyTrue(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("bool")]
+        public static extern byte Sk2s__allTrue(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk2s__operator_logical_not(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk2s__operator_binary_ones_complement(void* ptr);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void* Sk2s__operator_add(void* ptr, void* value);
@@ -1091,6 +1239,18 @@ namespace Bindings
         public static extern void delete_Sk2s(void* ptr);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk2s__abs(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk2s__sqrt(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk2s__floor(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk2s__operator_unary_minus(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern float Sk4s__index(void* ptr, int value);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
@@ -1116,6 +1276,26 @@ namespace Bindings
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void Sk4s__Store2(void* value1, void* value2, void* value3);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern float Sk4s__min(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern float Sk4s__max(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("bool")]
+        public static extern byte Sk4s__anyTrue(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("bool")]
+        public static extern byte Sk4s__allTrue(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk4s__operator_logical_not(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk4s__operator_binary_ones_complement(void* ptr);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void* Sk4s__operator_add(void* ptr, void* value);
@@ -1289,6 +1469,18 @@ namespace Bindings
         public static extern void delete_Sk4s(void* ptr);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk4s__abs(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk4s__sqrt(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk4s__floor(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk4s__operator_unary_minus(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern float Sk8s__index(void* ptr, int value);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
@@ -1314,6 +1506,26 @@ namespace Bindings
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void Sk8s__Store2(void* value1, void* value2, void* value3);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern float Sk8s__min(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern float Sk8s__max(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("bool")]
+        public static extern byte Sk8s__anyTrue(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("bool")]
+        public static extern byte Sk8s__allTrue(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk8s__operator_logical_not(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk8s__operator_binary_ones_complement(void* ptr);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void* Sk8s__operator_add(void* ptr, void* value);
@@ -1487,6 +1699,18 @@ namespace Bindings
         public static extern void delete_Sk8s(void* ptr);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk8s__abs(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk8s__sqrt(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk8s__floor(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk8s__operator_unary_minus(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern float Sk16s__index(void* ptr, int value);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
@@ -1512,6 +1736,26 @@ namespace Bindings
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void Sk16s__Store2(void* value1, void* value2, void* value3);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern float Sk16s__min(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern float Sk16s__max(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("bool")]
+        public static extern byte Sk16s__anyTrue(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("bool")]
+        public static extern byte Sk16s__allTrue(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk16s__operator_logical_not(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk16s__operator_binary_ones_complement(void* ptr);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void* Sk16s__operator_add(void* ptr, void* value);
@@ -1685,6 +1929,18 @@ namespace Bindings
         public static extern void delete_Sk16s(void* ptr);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk16s__abs(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk16s__sqrt(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk16s__floor(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk16s__operator_unary_minus(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void* new_Sk4b__0();
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
@@ -1747,6 +2003,28 @@ namespace Bindings
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void Sk4b__Store2(void* value1, void* value2, void* value3);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("uint8_t")]
+        public static extern byte Sk4b__min(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("uint8_t")]
+        public static extern byte Sk4b__max(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("bool")]
+        public static extern byte Sk4b__anyTrue(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("bool")]
+        public static extern byte Sk4b__allTrue(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk4b__operator_logical_not(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk4b__operator_binary_ones_complement(void* ptr);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void* Sk4b__operator_add(void* ptr, void* value);
@@ -1966,6 +2244,28 @@ namespace Bindings
         public static extern void Sk8b__Store2(void* value1, void* value2, void* value3);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("uint8_t")]
+        public static extern byte Sk8b__min(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("uint8_t")]
+        public static extern byte Sk8b__max(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("bool")]
+        public static extern byte Sk8b__anyTrue(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("bool")]
+        public static extern byte Sk8b__allTrue(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk8b__operator_logical_not(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk8b__operator_binary_ones_complement(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void* Sk8b__operator_add(void* ptr, void* value);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
@@ -2181,6 +2481,28 @@ namespace Bindings
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void Sk16b__Store2(void* value1, void* value2, void* value3);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("uint8_t")]
+        public static extern byte Sk16b__min(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("uint8_t")]
+        public static extern byte Sk16b__max(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("bool")]
+        public static extern byte Sk16b__anyTrue(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("bool")]
+        public static extern byte Sk16b__allTrue(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk16b__operator_logical_not(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk16b__operator_binary_ones_complement(void* ptr);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void* Sk16b__operator_add(void* ptr, void* value);
@@ -2436,6 +2758,28 @@ namespace Bindings
         public static extern void Sk4h__Store2(void* value1, void* value2, void* value3);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("uint16_t")]
+        public static extern ushort Sk4h__min(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("uint16_t")]
+        public static extern ushort Sk4h__max(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("bool")]
+        public static extern byte Sk4h__anyTrue(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("bool")]
+        public static extern byte Sk4h__allTrue(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk4h__operator_logical_not(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk4h__operator_binary_ones_complement(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void* Sk4h__operator_add(void* ptr, void* value);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
@@ -2653,6 +2997,28 @@ namespace Bindings
         public static extern void Sk8h__Store2(void* value1, void* value2, void* value3);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("uint16_t")]
+        public static extern ushort Sk8h__min(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("uint16_t")]
+        public static extern ushort Sk8h__max(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("bool")]
+        public static extern byte Sk8h__anyTrue(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("bool")]
+        public static extern byte Sk8h__allTrue(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk8h__operator_logical_not(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk8h__operator_binary_ones_complement(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void* Sk8h__operator_add(void* ptr, void* value);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
@@ -2868,6 +3234,28 @@ namespace Bindings
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void Sk16h__Store2(void* value1, void* value2, void* value3);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("uint16_t")]
+        public static extern ushort Sk16h__min(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("uint16_t")]
+        public static extern ushort Sk16h__max(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("bool")]
+        public static extern byte Sk16h__anyTrue(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("bool")]
+        public static extern byte Sk16h__allTrue(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk16h__operator_logical_not(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk16h__operator_binary_ones_complement(void* ptr);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void* Sk16h__operator_add(void* ptr, void* value);
@@ -3123,6 +3511,28 @@ namespace Bindings
         public static extern void Sk4i__Store2(void* value1, void* value2, void* value3);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("int32_t")]
+        public static extern int Sk4i__min(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("int32_t")]
+        public static extern int Sk4i__max(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("bool")]
+        public static extern byte Sk4i__anyTrue(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("bool")]
+        public static extern byte Sk4i__allTrue(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk4i__operator_logical_not(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk4i__operator_binary_ones_complement(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void* Sk4i__operator_add(void* ptr, void* value);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
@@ -3294,6 +3704,12 @@ namespace Bindings
         public static extern void delete_Sk4i(void* ptr);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk4i__abs(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk4i__operator_unary_minus(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void* Sk4i__operator_binary_left_shift(void* ptr, int value);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
@@ -3332,6 +3748,28 @@ namespace Bindings
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void Sk8i__Store2(void* value1, void* value2, void* value3);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("int32_t")]
+        public static extern int Sk8i__min(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("int32_t")]
+        public static extern int Sk8i__max(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("bool")]
+        public static extern byte Sk8i__anyTrue(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("bool")]
+        public static extern byte Sk8i__allTrue(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk8i__operator_logical_not(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk8i__operator_binary_ones_complement(void* ptr);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void* Sk8i__operator_add(void* ptr, void* value);
@@ -3505,6 +3943,12 @@ namespace Bindings
         public static extern void delete_Sk8i(void* ptr);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk8i__abs(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk8i__operator_unary_minus(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void* Sk8i__operator_binary_left_shift(void* ptr, int value);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
@@ -3543,6 +3987,28 @@ namespace Bindings
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void Sk4u__Store2(void* value1, void* value2, void* value3);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("uint32_t")]
+        public static extern uint Sk4u__min(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("uint32_t")]
+        public static extern uint Sk4u__max(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("bool")]
+        public static extern byte Sk4u__anyTrue(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [return: NativeTypeName("bool")]
+        public static extern byte Sk4u__allTrue(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk4u__operator_logical_not(void* ptr);
+
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern void* Sk4u__operator_binary_ones_complement(void* ptr);
 
         [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         public static extern void* Sk4u__operator_add(void* ptr, void* value);

@@ -14,6 +14,7 @@
     <ProjectCapability Include="SourceItemsFromImports" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)C_API.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)SkFloatBits.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)SkFloatingPoint.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)SkNx_neon.h" />
@@ -21,7 +22,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)SkSafe_math.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)SkScalar.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)SkTypes.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)SkXn.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)SkNx.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)TmpPtr.h" />
   </ItemGroup>
 </Project>

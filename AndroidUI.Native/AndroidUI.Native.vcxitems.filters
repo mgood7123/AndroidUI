@@ -8,7 +8,8 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)SkFloatBits.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)SkFloatingPoint.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)SkSafe_math.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)SkXn.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)SkNx.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)TmpPtr.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)C_API.h" />
   </ItemGroup>
 </Project>

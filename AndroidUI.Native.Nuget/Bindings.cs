@@ -612,6 +612,68 @@ namespace AndroidUI
                     Bindings.Native.Sk2f__suffle16(_native, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p)
                 );
             }
+
+            public float min()
+            {
+                return Bindings.Native.Sk2f__min(_native);
+            }
+
+            public float max()
+            {
+                return Bindings.Native.Sk2f__min(_native);
+            }
+
+            public bool AnyTrue()
+            {
+                return Bindings.Native.Sk2f__anyTrue(_native) != 0;
+            }
+
+            public bool AllTrue()
+            {
+                return Bindings.Native.Sk2f__allTrue(_native) != 0;
+            }
+
+            public static Sk2f operator !(Sk2f left)
+            {
+                return new Sk2f(
+                    Bindings.Native.Sk2f__operator_logical_not(left._native)
+                );
+            }
+
+            public static Sk2f operator ~(Sk2f left)
+            {
+                return new Sk2f(
+                    Bindings.Native.Sk2f__operator_binary_ones_complement(left._native)
+                );
+            }
+
+            public static Sk2f operator -(Sk2f left)
+            {
+                return new Sk2f(
+                    Bindings.Native.Sk2f__operator_unary_minus(left._native)
+                );
+            }
+
+            public Sk2f Abs()
+            {
+                return new Sk2f(
+                    Bindings.Native.Sk2f__abs(_native)
+                );
+            }
+
+            public Sk2f Sqrt()
+            {
+                return new Sk2f(
+                    Bindings.Native.Sk2f__sqrt(_native)
+                );
+            }
+
+            public Sk2f Floor()
+            {
+                return new Sk2f(
+                    Bindings.Native.Sk2f__floor(_native)
+                );
+            }
         }
 
         public unsafe class Sk4f
@@ -1113,6 +1175,68 @@ namespace AndroidUI
             {
                 return new Sk16f(
                     Bindings.Native.Sk4f__suffle16(_native, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p)
+                );
+            }
+
+            public float min()
+            {
+                return Bindings.Native.Sk4f__min(_native);
+            }
+
+            public float max()
+            {
+                return Bindings.Native.Sk4f__min(_native);
+            }
+
+            public bool AnyTrue()
+            {
+                return Bindings.Native.Sk4f__anyTrue(_native) != 0;
+            }
+
+            public bool AllTrue()
+            {
+                return Bindings.Native.Sk4f__allTrue(_native) != 0;
+            }
+
+            public static Sk4f operator !(Sk4f left)
+            {
+                return new Sk4f(
+                    Bindings.Native.Sk4f__operator_logical_not(left._native)
+                );
+            }
+
+            public static Sk4f operator ~(Sk4f left)
+            {
+                return new Sk4f(
+                    Bindings.Native.Sk4f__operator_binary_ones_complement(left._native)
+                );
+            }
+
+            public static Sk4f operator -(Sk4f left)
+            {
+                return new Sk4f(
+                    Bindings.Native.Sk4f__operator_unary_minus(left._native)
+                );
+            }
+
+            public Sk4f Abs()
+            {
+                return new Sk4f(
+                    Bindings.Native.Sk4f__abs(_native)
+                );
+            }
+
+            public Sk4f Sqrt()
+            {
+                return new Sk4f(
+                    Bindings.Native.Sk4f__sqrt(_native)
+                );
+            }
+
+            public Sk4f Floor()
+            {
+                return new Sk4f(
+                    Bindings.Native.Sk4f__floor(_native)
                 );
             }
         }
@@ -1618,6 +1742,68 @@ namespace AndroidUI
                     Bindings.Native.Sk8f__suffle16(_native, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p)
                 );
             }
+
+            public float min()
+            {
+                return Bindings.Native.Sk8f__min(_native);
+            }
+
+            public float max()
+            {
+                return Bindings.Native.Sk8f__min(_native);
+            }
+
+            public bool AnyTrue()
+            {
+                return Bindings.Native.Sk8f__anyTrue(_native) != 0;
+            }
+
+            public bool AllTrue()
+            {
+                return Bindings.Native.Sk8f__allTrue(_native) != 0;
+            }
+
+            public static Sk8f operator !(Sk8f left)
+            {
+                return new Sk8f(
+                    Bindings.Native.Sk8f__operator_logical_not(left._native)
+                );
+            }
+
+            public static Sk8f operator ~(Sk8f left)
+            {
+                return new Sk8f(
+                    Bindings.Native.Sk8f__operator_binary_ones_complement(left._native)
+                );
+            }
+
+            public static Sk8f operator -(Sk8f left)
+            {
+                return new Sk8f(
+                    Bindings.Native.Sk8f__operator_unary_minus(left._native)
+                );
+            }
+
+            public Sk8f Abs()
+            {
+                return new Sk8f(
+                    Bindings.Native.Sk8f__abs(_native)
+                );
+            }
+
+            public Sk8f Sqrt()
+            {
+                return new Sk8f(
+                    Bindings.Native.Sk8f__sqrt(_native)
+                );
+            }
+
+            public Sk8f Floor()
+            {
+                return new Sk8f(
+                    Bindings.Native.Sk8f__floor(_native)
+                );
+            }
         }
 
         public unsafe class Sk16f
@@ -2119,6 +2305,68 @@ namespace AndroidUI
             {
                 return new Sk16f(
                     Bindings.Native.Sk16f__suffle16(_native, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p)
+                );
+            }
+
+            public float min()
+            {
+                return Bindings.Native.Sk16f__min(_native);
+            }
+
+            public float max()
+            {
+                return Bindings.Native.Sk16f__min(_native);
+            }
+
+            public bool AnyTrue()
+            {
+                return Bindings.Native.Sk16f__anyTrue(_native) != 0;
+            }
+
+            public bool AllTrue()
+            {
+                return Bindings.Native.Sk16f__allTrue(_native) != 0;
+            }
+
+            public static Sk16f operator !(Sk16f left)
+            {
+                return new Sk16f(
+                    Bindings.Native.Sk16f__operator_logical_not(left._native)
+                );
+            }
+
+            public static Sk16f operator ~(Sk16f left)
+            {
+                return new Sk16f(
+                    Bindings.Native.Sk16f__operator_binary_ones_complement(left._native)
+                );
+            }
+
+            public static Sk16f operator -(Sk16f left)
+            {
+                return new Sk16f(
+                    Bindings.Native.Sk16f__operator_unary_minus(left._native)
+                );
+            }
+
+            public Sk16f Abs()
+            {
+                return new Sk16f(
+                    Bindings.Native.Sk16f__abs(_native)
+                );
+            }
+
+            public Sk16f Sqrt()
+            {
+                return new Sk16f(
+                    Bindings.Native.Sk16f__sqrt(_native)
+                );
+            }
+
+            public Sk16f Floor()
+            {
+                return new Sk16f(
+                    Bindings.Native.Sk16f__floor(_native)
                 );
             }
         }
@@ -2660,6 +2908,68 @@ namespace AndroidUI
                     Bindings.Native.Sk2s__suffle16(_native, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p)
                 );
             }
+
+            public float min()
+            {
+                return Bindings.Native.Sk2s__min(_native);
+            }
+
+            public float max()
+            {
+                return Bindings.Native.Sk2s__min(_native);
+            }
+
+            public bool AnyTrue()
+            {
+                return Bindings.Native.Sk2s__anyTrue(_native) != 0;
+            }
+
+            public bool AllTrue()
+            {
+                return Bindings.Native.Sk2s__allTrue(_native) != 0;
+            }
+
+            public static Sk2s operator !(Sk2s left)
+            {
+                return new Sk2s(
+                    Bindings.Native.Sk2s__operator_logical_not(left._native)
+                );
+            }
+
+            public static Sk2s operator ~(Sk2s left)
+            {
+                return new Sk2s(
+                    Bindings.Native.Sk2s__operator_binary_ones_complement(left._native)
+                );
+            }
+
+            public static Sk2s operator -(Sk2s left)
+            {
+                return new Sk2s(
+                    Bindings.Native.Sk2s__operator_unary_minus(left._native)
+                );
+            }
+
+            public Sk2s Abs()
+            {
+                return new Sk2s(
+                    Bindings.Native.Sk2s__abs(_native)
+                );
+            }
+
+            public Sk2s Sqrt()
+            {
+                return new Sk2s(
+                    Bindings.Native.Sk2s__sqrt(_native)
+                );
+            }
+
+            public Sk2s Floor()
+            {
+                return new Sk2s(
+                    Bindings.Native.Sk2s__floor(_native)
+                );
+            }
         }
 
         public unsafe class Sk4s
@@ -3161,6 +3471,68 @@ namespace AndroidUI
             {
                 return new Sk16s(
                     Bindings.Native.Sk4s__suffle16(_native, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p)
+                );
+            }
+
+            public float min()
+            {
+                return Bindings.Native.Sk4s__min(_native);
+            }
+
+            public float max()
+            {
+                return Bindings.Native.Sk4s__min(_native);
+            }
+
+            public bool AnyTrue()
+            {
+                return Bindings.Native.Sk4s__anyTrue(_native) != 0;
+            }
+
+            public bool AllTrue()
+            {
+                return Bindings.Native.Sk4s__allTrue(_native) != 0;
+            }
+
+            public static Sk4s operator !(Sk4s left)
+            {
+                return new Sk4s(
+                    Bindings.Native.Sk4s__operator_logical_not(left._native)
+                );
+            }
+
+            public static Sk4s operator ~(Sk4s left)
+            {
+                return new Sk4s(
+                    Bindings.Native.Sk4s__operator_binary_ones_complement(left._native)
+                );
+            }
+
+            public static Sk4s operator -(Sk4s left)
+            {
+                return new Sk4s(
+                    Bindings.Native.Sk4s__operator_unary_minus(left._native)
+                );
+            }
+
+            public Sk4s Abs()
+            {
+                return new Sk4s(
+                    Bindings.Native.Sk4s__abs(_native)
+                );
+            }
+
+            public Sk4s Sqrt()
+            {
+                return new Sk4s(
+                    Bindings.Native.Sk4s__sqrt(_native)
+                );
+            }
+
+            public Sk4s Floor()
+            {
+                return new Sk4s(
+                    Bindings.Native.Sk4s__floor(_native)
                 );
             }
         }
@@ -3666,6 +4038,68 @@ namespace AndroidUI
                     Bindings.Native.Sk8s__suffle16(_native, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p)
                 );
             }
+
+            public float min()
+            {
+                return Bindings.Native.Sk8f__min(_native);
+            }
+
+            public float max()
+            {
+                return Bindings.Native.Sk8s__min(_native);
+            }
+
+            public bool AnyTrue()
+            {
+                return Bindings.Native.Sk8s__anyTrue(_native) != 0;
+            }
+
+            public bool AllTrue()
+            {
+                return Bindings.Native.Sk8s__allTrue(_native) != 0;
+            }
+
+            public static Sk8s operator !(Sk8s left)
+            {
+                return new Sk8s(
+                    Bindings.Native.Sk8s__operator_logical_not(left._native)
+                );
+            }
+
+            public static Sk8s operator ~(Sk8s left)
+            {
+                return new Sk8s(
+                    Bindings.Native.Sk8s__operator_binary_ones_complement(left._native)
+                );
+            }
+
+            public static Sk8s operator -(Sk8s left)
+            {
+                return new Sk8s(
+                    Bindings.Native.Sk8s__operator_unary_minus(left._native)
+                );
+            }
+
+            public Sk8s Abs()
+            {
+                return new Sk8s(
+                    Bindings.Native.Sk8s__abs(_native)
+                );
+            }
+
+            public Sk8s Sqrt()
+            {
+                return new Sk8s(
+                    Bindings.Native.Sk8s__sqrt(_native)
+                );
+            }
+
+            public Sk8s Floor()
+            {
+                return new Sk8s(
+                    Bindings.Native.Sk8s__floor(_native)
+                );
+            }
         }
 
         public unsafe class Sk16s
@@ -4167,6 +4601,68 @@ namespace AndroidUI
             {
                 return new Sk16s(
                     Bindings.Native.Sk16s__suffle16(_native, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p)
+                );
+            }
+
+            public float min()
+            {
+                return Bindings.Native.Sk16s__min(_native);
+            }
+
+            public float max()
+            {
+                return Bindings.Native.Sk16s__min(_native);
+            }
+
+            public bool AnyTrue()
+            {
+                return Bindings.Native.Sk16s__anyTrue(_native) != 0;
+            }
+
+            public bool AllTrue()
+            {
+                return Bindings.Native.Sk16s__allTrue(_native) != 0;
+            }
+
+            public static Sk16s operator !(Sk16s left)
+            {
+                return new Sk16s(
+                    Bindings.Native.Sk16s__operator_logical_not(left._native)
+                );
+            }
+
+            public static Sk16s operator ~(Sk16s left)
+            {
+                return new Sk16s(
+                    Bindings.Native.Sk16s__operator_binary_ones_complement(left._native)
+                );
+            }
+
+            public static Sk16s operator -(Sk16s left)
+            {
+                return new Sk16s(
+                    Bindings.Native.Sk16s__operator_unary_minus(left._native)
+                );
+            }
+
+            public Sk16s Abs()
+            {
+                return new Sk16s(
+                    Bindings.Native.Sk16s__abs(_native)
+                );
+            }
+
+            public Sk16s Sqrt()
+            {
+                return new Sk16s(
+                    Bindings.Native.Sk16s__sqrt(_native)
+                );
+            }
+
+            public Sk16s Floor()
+            {
+                return new Sk16s(
+                    Bindings.Native.Sk16s__floor(_native)
                 );
             }
         }
@@ -4687,6 +5183,69 @@ namespace AndroidUI
                     Bindings.Native.Sk4b__suffle16(_native, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p)
                 );
             }
+
+            public Sk4b SaturatedAdd(Sk4b value)
+            {
+                return new Sk4b(
+                    Bindings.Native.Sk4b__saturatedAdd(_native, value._native)
+                );
+            }
+
+            public Sk4b MulHi(Sk4b value)
+            {
+                return new Sk4b(
+                    Bindings.Native.Sk4b__mulHi(_native, value._native)
+                );
+            }
+
+            public static Sk4b operator <<(Sk4b left, int value)
+            {
+                return new Sk4b(
+                    Bindings.Native.Sk4b__assign_operator_binary_left_shift(left._native, value)
+                );
+            }
+
+            public static Sk4b operator >>(Sk4b left, int value)
+            {
+                return new Sk4b(
+                    Bindings.Native.Sk4b__assign_operator_binary_right_shift(left._native, value)
+                );
+            }
+
+            public byte min()
+            {
+                return Bindings.Native.Sk4b__min(_native);
+            }
+
+            public byte max()
+            {
+                return Bindings.Native.Sk4b__min(_native);
+            }
+
+            public bool AnyTrue()
+            {
+                return Bindings.Native.Sk4b__anyTrue(_native) != 0;
+            }
+
+            public bool AllTrue()
+            {
+                return Bindings.Native.Sk4b__allTrue(_native) != 0;
+            }
+
+            public static Sk4b operator !(Sk4b left)
+            {
+                return new Sk4b(
+                    Bindings.Native.Sk4b__operator_logical_not(left._native)
+                );
+            }
+
+            public static Sk4b operator ~(Sk4b left)
+            {
+                return new Sk4b(
+                    Bindings.Native.Sk4b__operator_binary_ones_complement(left._native)
+                );
+            }
+
         }
 
         public unsafe class Sk8b
@@ -5183,6 +5742,68 @@ namespace AndroidUI
                     Bindings.Native.Sk8b__suffle16(_native, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p)
                 );
             }
+
+            public Sk8b SaturatedAdd(Sk8b value)
+            {
+                return new Sk8b(
+                    Bindings.Native.Sk8b__saturatedAdd(_native, value._native)
+                );
+            }
+
+            public Sk8b MulHi(Sk8b value)
+            {
+                return new Sk8b(
+                    Bindings.Native.Sk8b__mulHi(_native, value._native)
+                );
+            }
+
+            public static Sk8b operator <<(Sk8b left, int value)
+            {
+                return new Sk8b(
+                    Bindings.Native.Sk8b__assign_operator_binary_left_shift(left._native, value)
+                );
+            }
+
+            public static Sk8b operator >>(Sk8b left, int value)
+            {
+                return new Sk8b(
+                    Bindings.Native.Sk8b__assign_operator_binary_right_shift(left._native, value)
+                );
+            }
+
+            public byte min()
+            {
+                return Bindings.Native.Sk8b__min(_native);
+            }
+
+            public byte max()
+            {
+                return Bindings.Native.Sk8b__min(_native);
+            }
+
+            public bool AnyTrue()
+            {
+                return Bindings.Native.Sk8b__anyTrue(_native) != 0;
+            }
+
+            public bool AllTrue()
+            {
+                return Bindings.Native.Sk8b__allTrue(_native) != 0;
+            }
+
+            public static Sk8b operator !(Sk8b left)
+            {
+                return new Sk8b(
+                    Bindings.Native.Sk8b__operator_logical_not(left._native)
+                );
+            }
+
+            public static Sk8b operator ~(Sk8b left)
+            {
+                return new Sk8b(
+                    Bindings.Native.Sk8b__operator_binary_ones_complement(left._native)
+                );
+            }
         }
 
         public unsafe class Sk16b
@@ -5677,6 +6298,68 @@ namespace AndroidUI
             {
                 return new Sk16b(
                     Bindings.Native.Sk16b__suffle16(_native, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p)
+                );
+            }
+
+            public Sk16b SaturatedAdd(Sk16b value)
+            {
+                return new Sk16b(
+                    Bindings.Native.Sk16b__saturatedAdd(_native, value._native)
+                );
+            }
+
+            public Sk16b MulHi(Sk16b value)
+            {
+                return new Sk16b(
+                    Bindings.Native.Sk16b__mulHi(_native, value._native)
+                );
+            }
+
+            public static Sk16b operator <<(Sk16b left, int value)
+            {
+                return new Sk16b(
+                    Bindings.Native.Sk16b__assign_operator_binary_left_shift(left._native, value)
+                );
+            }
+
+            public static Sk16b operator >>(Sk16b left, int value)
+            {
+                return new Sk16b(
+                    Bindings.Native.Sk16b__assign_operator_binary_right_shift(left._native, value)
+                );
+            }
+
+            public byte min()
+            {
+                return Bindings.Native.Sk16b__min(_native);
+            }
+
+            public byte max()
+            {
+                return Bindings.Native.Sk16b__min(_native);
+            }
+
+            public bool AnyTrue()
+            {
+                return Bindings.Native.Sk16b__anyTrue(_native) != 0;
+            }
+
+            public bool AllTrue()
+            {
+                return Bindings.Native.Sk16b__allTrue(_native) != 0;
+            }
+
+            public static Sk16b operator !(Sk16b left)
+            {
+                return new Sk16b(
+                    Bindings.Native.Sk16b__operator_logical_not(left._native)
+                );
+            }
+
+            public static Sk16b operator ~(Sk16b left)
+            {
+                return new Sk16b(
+                    Bindings.Native.Sk16b__operator_binary_ones_complement(left._native)
                 );
             }
         }
@@ -6197,6 +6880,68 @@ namespace AndroidUI
                     Bindings.Native.Sk4h__suffle16(_native, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p)
                 );
             }
+
+            public Sk4h SaturatedAdd(Sk4h value)
+            {
+                return new Sk4h(
+                    Bindings.Native.Sk4h__saturatedAdd(_native, value._native)
+                );
+            }
+
+            public Sk4h MulHi(Sk4h value)
+            {
+                return new Sk4h(
+                    Bindings.Native.Sk4h__mulHi(_native, value._native)
+                );
+            }
+
+            public static Sk4h operator <<(Sk4h left, int value)
+            {
+                return new Sk4h(
+                    Bindings.Native.Sk4h__assign_operator_binary_left_shift(left._native, value)
+                );
+            }
+
+            public static Sk4h operator >>(Sk4h left, int value)
+            {
+                return new Sk4h(
+                    Bindings.Native.Sk4h__assign_operator_binary_right_shift(left._native, value)
+                );
+            }
+
+            public ushort min()
+            {
+                return Bindings.Native.Sk4h__min(_native);
+            }
+
+            public ushort max()
+            {
+                return Bindings.Native.Sk4h__min(_native);
+            }
+
+            public bool AnyTrue()
+            {
+                return Bindings.Native.Sk4h__anyTrue(_native) != 0;
+            }
+
+            public bool AllTrue()
+            {
+                return Bindings.Native.Sk4h__allTrue(_native) != 0;
+            }
+
+            public static Sk4h operator !(Sk4h left)
+            {
+                return new Sk4h(
+                    Bindings.Native.Sk4h__operator_logical_not(left._native)
+                );
+            }
+
+            public static Sk4h operator ~(Sk4h left)
+            {
+                return new Sk4h(
+                    Bindings.Native.Sk4h__operator_binary_ones_complement(left._native)
+                );
+            }
         }
 
         public unsafe class Sk8h
@@ -6693,6 +7438,68 @@ namespace AndroidUI
                     Bindings.Native.Sk8h__suffle16(_native, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p)
                 );
             }
+
+            public Sk8h SaturatedAdd(Sk8h value)
+            {
+                return new Sk8h(
+                    Bindings.Native.Sk8h__saturatedAdd(_native, value._native)
+                );
+            }
+
+            public Sk8h MulHi(Sk8h value)
+            {
+                return new Sk8h(
+                    Bindings.Native.Sk8h__mulHi(_native, value._native)
+                );
+            }
+
+            public static Sk8h operator <<(Sk8h left, int value)
+            {
+                return new Sk8h(
+                    Bindings.Native.Sk8h__assign_operator_binary_left_shift(left._native, value)
+                );
+            }
+
+            public static Sk8h operator >>(Sk8h left, int value)
+            {
+                return new Sk8h(
+                    Bindings.Native.Sk8h__assign_operator_binary_right_shift(left._native, value)
+                );
+            }
+
+            public ushort min()
+            {
+                return Bindings.Native.Sk8h__min(_native);
+            }
+
+            public ushort max()
+            {
+                return Bindings.Native.Sk8h__min(_native);
+            }
+
+            public bool AnyTrue()
+            {
+                return Bindings.Native.Sk8h__anyTrue(_native) != 0;
+            }
+
+            public bool AllTrue()
+            {
+                return Bindings.Native.Sk8h__allTrue(_native) != 0;
+            }
+
+            public static Sk8h operator !(Sk8h left)
+            {
+                return new Sk8h(
+                    Bindings.Native.Sk8h__operator_logical_not(left._native)
+                );
+            }
+
+            public static Sk8h operator ~(Sk8h left)
+            {
+                return new Sk8h(
+                    Bindings.Native.Sk8h__operator_binary_ones_complement(left._native)
+                );
+            }
         }
 
         public unsafe class Sk16h
@@ -7187,6 +7994,68 @@ namespace AndroidUI
             {
                 return new Sk16h(
                     Bindings.Native.Sk16h__suffle16(_native, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p)
+                );
+            }
+
+            public Sk16h SaturatedAdd(Sk16h value)
+            {
+                return new Sk16h(
+                    Bindings.Native.Sk16h__saturatedAdd(_native, value._native)
+                );
+            }
+
+            public Sk16h MulHi(Sk16h value)
+            {
+                return new Sk16h(
+                    Bindings.Native.Sk16h__mulHi(_native, value._native)
+                );
+            }
+
+            public static Sk16h operator <<(Sk16h left, int value)
+            {
+                return new Sk16h(
+                    Bindings.Native.Sk16h__assign_operator_binary_left_shift(left._native, value)
+                );
+            }
+
+            public static Sk16h operator >>(Sk16h left, int value)
+            {
+                return new Sk16h(
+                    Bindings.Native.Sk16h__assign_operator_binary_right_shift(left._native, value)
+                );
+            }
+
+            public ushort min()
+            {
+                return Bindings.Native.Sk16h__min(_native);
+            }
+
+            public ushort max()
+            {
+                return Bindings.Native.Sk16h__min(_native);
+            }
+
+            public bool AnyTrue()
+            {
+                return Bindings.Native.Sk16h__anyTrue(_native) != 0;
+            }
+
+            public bool AllTrue()
+            {
+                return Bindings.Native.Sk16h__allTrue(_native) != 0;
+            }
+
+            public static Sk16h operator !(Sk16h left)
+            {
+                return new Sk16h(
+                    Bindings.Native.Sk16h__operator_logical_not(left._native)
+                );
+            }
+
+            public static Sk16h operator ~(Sk16h left)
+            {
+                return new Sk16h(
+                    Bindings.Native.Sk16h__operator_binary_ones_complement(left._native)
                 );
             }
         }
@@ -7686,6 +8555,61 @@ namespace AndroidUI
                     Bindings.Native.Sk4i__suffle8(_native, a, b, c, d, e, f, j, h)
                 );
             }
+
+            public Sk4i Abs()
+            {
+                return new Sk4i(
+                    Bindings.Native.Sk4i__abs(_native)
+                );
+            }
+
+            public static Sk4i operator <<(Sk4i left, int value)
+            {
+                return new Sk4i(
+                    Bindings.Native.Sk4i__assign_operator_binary_left_shift(left._native, value)
+                );
+            }
+
+            public static Sk4i operator >>(Sk4i left, int value)
+            {
+                return new Sk4i(
+                    Bindings.Native.Sk4i__assign_operator_binary_right_shift(left._native, value)
+                );
+            }
+
+            public int min()
+            {
+                return Bindings.Native.Sk4i__min(_native);
+            }
+
+            public int max()
+            {
+                return Bindings.Native.Sk4i__min(_native);
+            }
+
+            public bool AnyTrue()
+            {
+                return Bindings.Native.Sk4i__anyTrue(_native) != 0;
+            }
+
+            public bool AllTrue()
+            {
+                return Bindings.Native.Sk4i__allTrue(_native) != 0;
+            }
+
+            public static Sk4i operator !(Sk4i left)
+            {
+                return new Sk4i(
+                    Bindings.Native.Sk4i__operator_logical_not(left._native)
+                );
+            }
+
+            public static Sk4i operator ~(Sk4i left)
+            {
+                return new Sk4i(
+                    Bindings.Native.Sk4i__operator_binary_ones_complement(left._native)
+                );
+            }
         }
 
         public unsafe class Sk8i
@@ -8175,6 +9099,61 @@ namespace AndroidUI
                     Bindings.Native.Sk8i__suffle8(_native, a, b, c, d, e, f, j, h)
                 );
             }
+
+            public Sk8i Abs()
+            {
+                return new Sk8i(
+                    Bindings.Native.Sk8i__abs(_native)
+                );
+            }
+
+            public static Sk8i operator <<(Sk8i left, int value)
+            {
+                return new Sk8i(
+                    Bindings.Native.Sk8i__assign_operator_binary_left_shift(left._native, value)
+                );
+            }
+
+            public static Sk8i operator >>(Sk8i left, int value)
+            {
+                return new Sk8i(
+                    Bindings.Native.Sk8i__assign_operator_binary_right_shift(left._native, value)
+                );
+            }
+
+            public int min()
+            {
+                return Bindings.Native.Sk8i__min(_native);
+            }
+
+            public int max()
+            {
+                return Bindings.Native.Sk8i__min(_native);
+            }
+
+            public bool AnyTrue()
+            {
+                return Bindings.Native.Sk8i__anyTrue(_native) != 0;
+            }
+
+            public bool AllTrue()
+            {
+                return Bindings.Native.Sk8i__allTrue(_native) != 0;
+            }
+
+            public static Sk8i operator !(Sk8i left)
+            {
+                return new Sk8i(
+                    Bindings.Native.Sk8i__operator_logical_not(left._native)
+                );
+            }
+
+            public static Sk8i operator ~(Sk8i left)
+            {
+                return new Sk8i(
+                    Bindings.Native.Sk8i__operator_binary_ones_complement(left._native)
+                );
+            }
         }
 
         public static unsafe Sk4u fma(Sk4u a, Sk4u b, Sk4u c)
@@ -8649,6 +9628,68 @@ namespace AndroidUI
             {
                 return new Sk4u(
                     Bindings.Native.Sk4u__suffle4(_native, a, b, c, d)
+                );
+            }
+
+            public Sk4u SaturatedAdd(Sk4u value)
+            {
+                return new Sk4u(
+                    Bindings.Native.Sk4u__saturatedAdd(_native, value._native)
+                );
+            }
+
+            public Sk4u MulHi(Sk4u value)
+            {
+                return new Sk4u(
+                    Bindings.Native.Sk4u__mulHi(_native, value._native)
+                );
+            }
+
+            public static Sk4u operator <<(Sk4u left, int value)
+            {
+                return new Sk4u(
+                    Bindings.Native.Sk4u__assign_operator_binary_left_shift(left._native, value)
+                );
+            }
+
+            public static Sk4u operator >>(Sk4u left, int value)
+            {
+                return new Sk4u(
+                    Bindings.Native.Sk4u__assign_operator_binary_right_shift(left._native, value)
+                );
+            }
+
+            public uint min()
+            {
+                return Bindings.Native.Sk4u__min(_native);
+            }
+
+            public uint max()
+            {
+                return Bindings.Native.Sk4u__min(_native);
+            }
+
+            public bool AnyTrue()
+            {
+                return Bindings.Native.Sk4u__anyTrue(_native) != 0;
+            }
+
+            public bool AllTrue()
+            {
+                return Bindings.Native.Sk4u__allTrue(_native) != 0;
+            }
+
+            public static Sk4u operator !(Sk4u left)
+            {
+                return new Sk4u(
+                    Bindings.Native.Sk4u__operator_logical_not(left._native)
+                );
+            }
+
+            public static Sk4u operator ~(Sk4u left)
+            {
+                return new Sk4u(
+                    Bindings.Native.Sk4u__operator_binary_ones_complement(left._native)
                 );
             }
         }
