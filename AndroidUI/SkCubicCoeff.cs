@@ -3,12 +3,12 @@ using static AndroidUI.Native;
 
 namespace AndroidUI
 {
-    class SkCubicCoeff
+    class SKCubicCoeff
     {
-        public SkCubicCoeff(SKPoint[] src) {
+        public SKCubicCoeff(SKPoint[] src) {
             if (src.Length < 4)
             {
-                throw new Exception("SkCubicCoeff point array size must be at least 4");
+                throw new Exception("SKCubicCoeff point array size must be at least 4");
             }
             Sk2s P0 = SKConic.from_point(src[0]);
             Sk2s P1 = SKConic.from_point(src[1]);

@@ -28,7 +28,7 @@ namespace AndroidUI
             return numer / denom;
         }
 
-        internal SkQuadCoeff fNumer = new();
-        internal SkQuadCoeff fDenom = new();
+        internal SKQuadCoeff fNumer = new();
+        internal SKQuadCoeff fDenom = new();
     };
 }

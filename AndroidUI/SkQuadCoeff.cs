@@ -6,22 +6,22 @@ namespace AndroidUI
     /**
      *  use for : eval(t) == A * t^2 + B * t + C
      */
-    class SkQuadCoeff
+    class SKQuadCoeff
     {
-        public SkQuadCoeff() { }
+        public SKQuadCoeff() { }
 
-        public SkQuadCoeff(Sk2s A, Sk2s B, Sk2s C)
+        public SKQuadCoeff(Sk2s A, Sk2s B, Sk2s C)
         {
             fA = A;
             fB = B;
             fC = C;
         }
 
-        public SkQuadCoeff(SKPoint[] src)
+        public SKQuadCoeff(SKPoint[] src)
         {
             if (src.Length < 3)
             {
-                throw new Exception("SkQuadCoeff point array size must be at least 3");
+                throw new Exception("SKQuadCoeff point array size must be at least 3");
             }
             fC = SKConic.from_point(src[0]);
             Sk2s P1 = SKConic.from_point(src[1]);
