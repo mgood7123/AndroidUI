@@ -64,6 +64,20 @@ namespace AndroidUITest
                     Tools.AssertEqual(b[1], 2);
                 }
             }
+
+            class test6_foreach : Test
+            {
+                public override void Run(TestGroup nullableInstance)
+                {
+                    AndroidUI.MemoryPointer<int> a = new int[] { 1, 2, 3, 4 };
+                    int index = 1;
+                    foreach (int value in a)
+                    {
+                        Tools.AssertEqual(value, index);
+                        index++;
+                    }
+                }
+            }
         }
 
         class Rank2 : TestGroup
@@ -141,6 +155,20 @@ namespace AndroidUITest
                     Tools.AssertEqual(b[1], 2);
                     Tools.AssertEqual(b[2], 3);
                     Tools.AssertEqual(b[3], 4);
+                }
+            }
+
+            class test6_foreach : Test
+            {
+                public override void Run(TestGroup nullableInstance)
+                {
+                    AndroidUI.MemoryPointer<int> a = new int[][] { new int[] { 1, 2 }, new int[] { 3, 4 } };
+                    int index = 1;
+                    foreach (int value in a)
+                    {
+                        Tools.AssertEqual(value, index);
+                        index++;
+                    }
                 }
             }
         }
