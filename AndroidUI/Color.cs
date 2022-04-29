@@ -1250,7 +1250,7 @@ namespace AndroidUI
          */
         public static int alpha(int color)
         {
-            return color.UnsignedShift(24);
+            return color.UnsignedRightShift(24);
         }
 
         /**

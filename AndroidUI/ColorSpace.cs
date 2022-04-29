@@ -2179,19 +2179,19 @@ namespace AndroidUI
                     int result;
                     long temp;
                     temp = a.ToLongBits();
-                    result = (int)(temp ^ temp.UnsignedShift(32));
+                    result = (int)(temp ^ temp.UnsignedRightShift(32));
                     temp = b.ToLongBits();
-                    result = 31 * result + (int)(temp ^ temp.UnsignedShift(32));
+                    result = 31 * result + (int)(temp ^ temp.UnsignedRightShift(32));
                     temp = c.ToLongBits();
-                    result = 31 * result + (int)(temp ^ temp.UnsignedShift(32));
+                    result = 31 * result + (int)(temp ^ temp.UnsignedRightShift(32));
                     temp = d.ToLongBits();
-                    result = 31 * result + (int)(temp ^ temp.UnsignedShift(32));
+                    result = 31 * result + (int)(temp ^ temp.UnsignedRightShift(32));
                     temp = e.ToLongBits();
-                    result = 31 * result + (int)(temp ^ temp.UnsignedShift(32));
+                    result = 31 * result + (int)(temp ^ temp.UnsignedRightShift(32));
                     temp = f.ToLongBits();
-                    result = 31 * result + (int)(temp ^ temp.UnsignedShift(32));
+                    result = 31 * result + (int)(temp ^ temp.UnsignedRightShift(32));
                     temp = g.ToLongBits();
-                    result = 31 * result + (int)(temp ^ temp.UnsignedShift(32));
+                    result = 31 * result + (int)(temp ^ temp.UnsignedRightShift(32));
                     return result;
                 }
             }

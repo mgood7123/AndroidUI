@@ -13,28 +13,32 @@
         /// <br></br>
         /// example: `i >>> shift_by`
         /// </summary>
-        public static short tripleRightShift(this short i, int shift_by) => UnsignedShift(i, shift_by);
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static short tripleRightShift(this short i, int shift_by) => UnsignedRightShift(i, shift_by);
 
         /// <summary>
         /// Alias for UnsignedShift - equivilant to java's Unsigned Shift operator `>>>`
         /// <br></br>
         /// example: `i >>> shift_by`
         /// </summary>
-        public static int tripleRightShift(this int i, int shift_by) => UnsignedShift(i, shift_by);
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static int tripleRightShift(this int i, int shift_by) => UnsignedRightShift(i, shift_by);
 
         /// <summary>
         /// Alias for UnsignedShift - equivilant to java's Unsigned Shift operator `>>>`
         /// <br></br>
         /// example: `i >>> shift_by`
         /// </summary>
-        public static long tripleRightShift(this long i, int shift_by) => UnsignedShift(i, shift_by);
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static long tripleRightShift(this long i, int shift_by) => UnsignedRightShift(i, shift_by);
 
         /// <summary>
         /// equivilant to java's Unsigned Shift operator `>>>`
         /// <br></br>
         /// example: `i >>> shift_by`
         /// </summary>
-        public static short UnsignedShift(this short i, int shift_by)
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static short UnsignedRightShift(this short i, int shift_by)
         {
             return (short)((ushort)(i) >> shift_by);
         }
@@ -44,7 +48,8 @@
         /// <br></br>
         /// example: `i >>> shift_by`
         /// </summary>
-        public static int UnsignedShift(this int i, int shift_by)
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static int UnsignedRightShift(this int i, int shift_by)
         {
             return (int)((uint)(i) >> shift_by);
         }
@@ -54,9 +59,67 @@
         /// <br></br>
         /// example: `i >>> shift_by`
         /// </summary>
-        public static long UnsignedShift(this long i, int shift_by)
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static long UnsignedRightShift(this long i, int shift_by)
         {
             return (int)((ulong)(i) >> shift_by);
+        }
+
+        /// <summary>
+        /// Alias for UnsignedShift - equivilant to java's Unsigned Shift operator '&lt;&lt;&lt;'
+        /// <br></br>
+        /// example: `i &lt;&lt;&lt; shift_by`
+        /// </summary>
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static short tripleLeftShift(this short i, int shift_by) => UnsignedLeftShift(i, shift_by);
+
+        /// <summary>
+        /// Alias for UnsignedShift - equivilant to java's Unsigned Shift operator `&lt;&lt;&lt;`
+        /// <br></br>
+        /// example: `i &lt;&lt;&lt; shift_by`
+        /// </summary>
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static int tripleLeftShift(this int i, int shift_by) => UnsignedLeftShift(i, shift_by);
+
+        /// <summary>
+        /// Alias for UnsignedShift - equivilant to java's Unsigned Shift operator `&lt;&lt;&lt;`
+        /// <br></br>
+        /// example: `i &lt;&lt;&lt; shift_by`
+        /// </summary>
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static long tripleLeftShift(this long i, int shift_by) => UnsignedLeftShift(i, shift_by);
+
+        /// <summary>
+        /// equivilant to java's Unsigned Shift operator `&lt;&lt;&lt;`
+        /// <br></br>
+        /// example: `i &lt;&lt;&lt; shift_by`
+        /// </summary>
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static short UnsignedLeftShift(this short i, int shift_by)
+        {
+            return (short)((ushort)(i) << shift_by);
+        }
+
+        /// <summary>
+        /// equivilant to java's Unsigned Shift operator `&lt;&lt;&lt;`
+        /// <br></br>
+        /// example: `i &lt;&lt;&lt; shift_by`
+        /// </summary>
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static int UnsignedLeftShift(this int i, int shift_by)
+        {
+            return (int)((uint)(i) << shift_by);
+        }
+
+        /// <summary>
+        /// equivilant to java's Unsigned Shift operator `&lt;&lt;&lt;`
+        /// <br></br>
+        /// example: `i &lt;&lt;&lt; shift_by`
+        /// </summary>
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static long UnsignedLeftShift(this long i, int shift_by)
+        {
+            return (int)((ulong)(i) << shift_by);
         }
 
         /// <summary>
@@ -74,10 +137,7 @@
         /// <returns>the number of one-bits in the two's complement binary
         /// representation of the specified int value.</returns>
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static int bitCount(this int i)
-        {
-            return bitCount((uint)i);
-        }
+        public static int bitCount(this int i) => bitCount((uint)i);
 
         /// <summary>
         /// Returns the number of one-bits in the two's complement binary
@@ -94,24 +154,7 @@
         /// <returns>the number of one-bits in the two's complement binary
         /// representation of the specified uint value.</returns>
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static int bitCount(this uint i)
-        {
-            return SoftwareFallback((uint)i);
-
-            static int SoftwareFallback(uint value)
-            {
-                const uint c1 = 0x_55555555u;
-                const uint c2 = 0x_33333333u;
-                const uint c3 = 0x_0F0F0F0Fu;
-                const uint c4 = 0x_01010101u;
-
-                value -= (value >> 1) & c1;
-                value = (value & c2) + ((value >> 2) & c2);
-                value = (((value + (value >> 4)) & c3) * c4) >> 24;
-
-                return (int)value;
-            }
-        }
+        public static int bitCount(this uint i) => System.Numerics.BitOperations.PopCount(i);
 
         /// <summary>
         /// Returns the number of one-bits in the two's complement binary
@@ -128,10 +171,7 @@
         /// <returns>the number of one-bits in the two's complement binary
         /// representation of the specified long value.</returns>
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static int bitCount(this long i)
-        {
-            return bitCount((ulong)i);
-        }
+        public static int bitCount(this long i) => bitCount((ulong)i);
 
         /// <summary>
         /// Returns the number of one-bits in the two's complement binary
@@ -148,29 +188,7 @@
         /// <returns>the number of one-bits in the two's complement binary
         /// representation of the specified ulong value.</returns>
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static int bitCount(this ulong i)
-        {
-#if TARGET_32BIT
-            return bitCount((uint)value) // lo
-                + bitCount((uint)(value >> 32)); // hi
-#else
-            return SoftwareFallback(i);
-
-            static int SoftwareFallback(ulong value)
-            {
-                const ulong c1 = 0x_55555555_55555555ul;
-                const ulong c2 = 0x_33333333_33333333ul;
-                const ulong c3 = 0x_0F0F0F0F_0F0F0F0Ful;
-                const ulong c4 = 0x_01010101_01010101ul;
-
-                value -= (value >> 1) & c1;
-                value = (value & c2) + ((value >> 2) & c2);
-                value = (((value + (value >> 4)) & c3) * c4) >> 56;
-
-                return (int)value;
-            }
-#endif
-        }
+        public static int bitCount(this ulong i) => System.Numerics.BitOperations.PopCount(i);
 
         /**
          * Returns the {@code float} value corresponding to a given
@@ -231,7 +249,8 @@
          * @return  the {@code float} floating-point value with the same bit
          *          pattern.
          */
-        public static unsafe float BitsToFloat(this int bits) => reinterpret_cast<float>(bits);
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static unsafe float BitsToFloat(this int bits) => BitConverter.Int32BitsToSingle(bits);
 
         /**
          * Returns the {@code float} value corresponding to a given
@@ -292,7 +311,8 @@
          * @return  the {@code float} floating-point value with the same bit
          *          pattern.
          */
-        public static unsafe float BitsToFloat(this uint bits) => reinterpret_cast<float>(bits);
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static unsafe float BitsToFloat(this uint bits) => BitConverter.UInt32BitsToSingle(bits);
 
         /**
           * Returns the {@code double} value corresponding to a given
@@ -355,7 +375,8 @@
           * @return  the {@code double} floating-point value with the same
           *          bit pattern.
           */
-        public static unsafe double BitsToDouble(this long bits) => reinterpret_cast<double>(bits);
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static unsafe double BitsToDouble(this long bits) => BitConverter.Int64BitsToDouble(bits);
 
         /**
           * Returns the {@code double} value corresponding to a given
@@ -418,7 +439,8 @@
           * @return  the {@code double} floating-point value with the same
           *          bit pattern.
           */
-        public static unsafe double BitsToDouble(this ulong bits) => reinterpret_cast<double>(bits);
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static unsafe double BitsToDouble(this ulong bits) => BitConverter.UInt64BitsToDouble(bits);
 
 
         /**
@@ -607,11 +629,11 @@
             if (i <= 0)
                 return i == 0 ? 32 : 0;
             int n = 31;
-            if (i >= 1 << 16) { n -= 16; i = i.UnsignedShift(16); }
-            if (i >= 1 << 8) { n -= 8; i = i.UnsignedShift(8); }
-            if (i >= 1 << 4) { n -= 4; i = i.UnsignedShift(4); }
-            if (i >= 1 << 2) { n -= 2; i = i.UnsignedShift(2); }
-            return n - (i.UnsignedShift(1));
+            if (i >= 1 << 16) { n -= 16; i = i.UnsignedRightShift(16); }
+            if (i >= 1 << 8) { n -= 8; i = i.UnsignedRightShift(8); }
+            if (i >= 1 << 4) { n -= 4; i = i.UnsignedRightShift(4); }
+            if (i >= 1 << 2) { n -= 2; i = i.UnsignedRightShift(2); }
+            return n - (i.UnsignedRightShift(1));
         }
 
         public const int SIZE = 32;
@@ -666,7 +688,7 @@
             do
             {
                 buf[--charPos] = digits[val & mask];
-                val = val.UnsignedShift(shift);
+                val = val.UnsignedRightShift(shift);
             } while (charPos > offset);
         }
 
@@ -679,7 +701,7 @@
             do
             {
                 buf[--charPos] = (byte)digits[val & mask];
-                val = val.UnsignedShift(shift);
+                val = val.UnsignedRightShift(shift);
             } while (charPos > offset);
         }
 

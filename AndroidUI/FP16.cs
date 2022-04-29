@@ -698,7 +698,7 @@ public sealed class FP16
         {
             int bits = h & 0xffff;
             int s = bits & SIGN_MASK;
-            int e = bits.UnsignedShift(EXPONENT_SHIFT) & SHIFTED_EXPONENT_MASK;
+            int e = bits.UnsignedRightShift(EXPONENT_SHIFT) & SHIFTED_EXPONENT_MASK;
             int m = bits & SIGNIFICAND_MASK;
 
             int outE = 0;
@@ -763,8 +763,8 @@ public sealed class FP16
     public static short toHalf(float f)
         {
             int bits = f.ToRawIntBits();
-            int s = bits.UnsignedShift(FP32_SIGN_SHIFT);
-            int e = bits.UnsignedShift(FP32_EXPONENT_SHIFT) & FP32_SHIFTED_EXPONENT_MASK;
+            int s = bits.UnsignedRightShift(FP32_SIGN_SHIFT);
+            int e = bits.UnsignedRightShift(FP32_EXPONENT_SHIFT) & FP32_SHIFTED_EXPONENT_MASK;
             int m = bits & FP32_SIGNIFICAND_MASK;
 
             int outE = 0;
@@ -861,8 +861,8 @@ public sealed class FP16
             System.Text.StringBuilder o = new System.Text.StringBuilder();
 
             int bits = h & 0xffff;
-            int s = bits.UnsignedShift(SIGN_SHIFT);
-            int e = bits.UnsignedShift(EXPONENT_SHIFT) & SHIFTED_EXPONENT_MASK;
+            int s = bits.UnsignedRightShift(SIGN_SHIFT);
+            int e = bits.UnsignedRightShift(EXPONENT_SHIFT) & SHIFTED_EXPONENT_MASK;
             int m = bits & SIGNIFICAND_MASK;
 
             if (e == 0x1f)

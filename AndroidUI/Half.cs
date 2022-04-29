@@ -730,7 +730,7 @@ namespace AndroidUI
          */
         public static int getExponent(short h)
         {
-            return (h.UnsignedShift(FP16.EXPONENT_SHIFT) & FP16.SHIFTED_EXPONENT_MASK) - FP16.EXPONENT_BIAS;
+            return (h.UnsignedRightShift(FP16.EXPONENT_SHIFT) & FP16.SHIFTED_EXPONENT_MASK) - FP16.EXPONENT_BIAS;
         }
 
         /**

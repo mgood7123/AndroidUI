@@ -1,29 +1,12 @@
 ﻿using AndroidUI.Extensions;
 using SkiaSharp;
 using static AndroidUI.Native;
+using static AndroidUI.SKUtils;
 
 namespace AndroidUI
 {
     class SKConic
     {
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        internal static Sk2s from_point(SKPoint point) {
-            return Sk2s.Load(new float[] { point.X, point.Y });
-        }
-
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        internal static SKPoint to_point(Sk2s x) {
-            SKPoint point = new SKPoint();
-            float[] a = x.Store();
-            point.Set(a[0], a[1]);
-            return point;
-        }
-
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        internal static Sk2s times_2(Sk2s value) {
-            return value + value;
-        }
-
         SKConic() { }
         SKConic(SKPoint p0, SKPoint p1, SKPoint p2, float w) {
             fPts[0] = p0;
@@ -100,18 +83,24 @@ namespace AndroidUI
         }
 
         // We only interpolate one dimension at a time (the first, at +0, +3, +6).
-        static void p3d_interp(float src0, float src1, float src2, out float dst0, out float dst1, out float dst2, float t) {
-            float ab = SkScalarInterp(src0, src1, t);
-            float bc = SkScalarInterp(src1, src2, t);
-            dst0 = ab;
-            dst1 = SkScalarInterp(ab, bc, t);
-            dst2 = bc;
+        static void p3d_interp(MemoryPointer<float> src, MemoryPointer<float> dst, float t) {
+            float ab = SkScalarInterp(src[0], src[3], t);
+            float bc = SkScalarInterp(src[3], src[6], t);
+            dst[0] = ab;
+            dst[3] = SkScalarInterp(ab, bc, t);
+            dst[6] = bc;
         }
 
-        static void ratquad_mapTo3D(SKPoint[] src, float w, SKPoint3[] dst) {
-            dst[0].Set(src[0].X * 1, src[0].Y * 1, 1);
-            dst[1].Set(src[1].X * w, src[1].Y * w, w);
-            dst[2].Set(src[2].X * 1, src[2].Y * 1, 1);
+        static void ratquad_mapTo3D(ContiguousArray<float> src, float w, ContiguousArray<float> dst) {
+            dst[0] = src[0] * 1;
+            dst[1] = src[1] * 1;
+            dst[2] = 1;
+            dst[3] = src[3] * w;
+            dst[4] = src[4] * w;
+            dst[5] = w;
+            dst[6] = src[6] * 1;
+            dst[7] = src[7] * 1;
+            dst[8] = 1;
         }
 
         static SKPoint project_down(SKPoint3 src) {
@@ -137,47 +126,24 @@ namespace AndroidUI
                 throw new Exception("SKConic chopAt destination array size must be at least 2");
             }
 
-            SKPoint3[] tmp = new SKPoint3[3], tmp2 = new SKPoint3[3];
+            MemoryPointer<float> tmp = new float[9], tmp2 = new float[9];
 
             ratquad_mapTo3D(fPts, fW, tmp);
 
-            float tmp_0, tmp_1, tmp_2;
-
-            tmp_0 = tmp2[0].X;
-            tmp_1 = tmp2[1].X;
-            tmp_2 = tmp2[2].X;
-            p3d_interp(
-                tmp[0].X, tmp[1].X, tmp[2].X,
-                out tmp_0, out tmp_1, out tmp_2,
-                t);
-            tmp2[0].X = tmp_0;
-            tmp2[1].X = tmp_1;
-            tmp2[2].X = tmp_2;
-            tmp_0 = tmp2[0].Y;
-            tmp_1 = tmp2[1].Y;
-            tmp_2 = tmp2[2].Y;
-            p3d_interp(
-                tmp[0].Y, tmp[1].Y, tmp[2].Y,
-                out tmp_0, out tmp_1, out tmp_2,
-                t);
-            tmp2[0].Y = tmp_0;
-            tmp2[1].Y = tmp_1;
-            tmp2[2].Y = tmp_2;
-            tmp_0 = tmp2[0].Z;
-            tmp_1 = tmp2[1].Z;
-            tmp_2 = tmp2[2].Z;
-            p3d_interp(
-                tmp[0].Z, tmp[1].Z, tmp[2].Z,
-                out tmp_0, out tmp_1, out tmp_2,
-                t);
-            tmp2[0].Z = tmp_0;
-            tmp2[1].Z = tmp_1;
-            tmp2[2].Z = tmp_2;
+            p3d_interp(tmp, tmp2, t);
+            tmp++;
+            tmp2++;
+            p3d_interp(tmp, tmp2, t);
+            tmp++;
+            tmp2++;
+            p3d_interp(tmp, tmp2, t);
+            tmp.ResetPointerOffset();
+            tmp2.ResetPointerOffset();
 
             dst[0].fPts[0] = fPts[0];
-            dst[0].fPts[1] = project_down(tmp2[0]);
-            dst[0].fPts[2] = project_down(tmp2[1]); dst[1].fPts[0] = dst[0].fPts[2];
-            dst[1].fPts[1] = project_down(tmp2[2]);
+            dst[0].fPts[1] = project_down(tmp2.ToSKPoint3());
+            dst[0].fPts[2] = project_down((tmp2 + 3).ToSKPoint3()); dst[1].fPts[0] = dst[0].fPts[2];
+            dst[1].fPts[1] = project_down((tmp2 + 6).ToSKPoint3());
             dst[1].fPts[2] = fPts[2];
 
             // to put in "standard form", where w0 and w2 are both 1, we compute the
@@ -188,9 +154,9 @@ namespace AndroidUI
             // However, in our case, we know that for dst[0]:
             //     w0 == 1, and for dst[1], w2 == 1
             //
-            float root = MathUtils.sqrtf(tmp2[1].Z);
-            dst[0].fW = tmp2[0].Z / root;
-            dst[1].fW = tmp2[2].Z / root;
+            float root = MathUtils.sqrtf(tmp2[5]);
+            dst[0].fW = tmp2[2] / root;
+            dst[1].fW = tmp2[8] / root;
             return dst[0].isFinite() && dst[1].isFinite();
         }
 
@@ -231,17 +197,6 @@ namespace AndroidUI
             dst.fPts[2] = to_point(cXY / cZZ);
             Sk2s ww = bZZ / (aZZ * cZZ).Sqrt();
             dst.fW = ww[0];
-        }
-
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        static float SkScalarInvert(float x)
-        {
-            return 1.0f / x;
-        }
-
-        static float subdivide_w_value(float w)
-        {
-            return MathUtils.sqrtf(0.5f + w * 0.5f);
         }
 
         void chop(out SKConic[] dst)
@@ -325,30 +280,6 @@ namespace AndroidUI
         // Limit the number of suggested quads to approximate a conic
         const byte kMaxConicToQuadPOW2 = 5;
 
-        bool SkPointsAreFinite(SKPoint[] fPts, int count)
-        {
-            float prod = 0;
-            for (int i = 0; i < count; ++i)
-            {
-                prod *= fPts[i].X;
-                prod *= fPts[i].Y;
-            }
-            // At this point, prod will either be NaN or 0
-            return prod == 0;   // if prod is NaN, this check will return false
-        }
-
-        static int SkScalarCeilToInt(float fpow2)
-        {
-            float x = MathF.Ceiling(fpow2);
-
-            /**
-             *  Return the closest int for the given float. Returns SK_MaxS32FitsInFloat for NaN.
-             */
-            x = x < 2147483520 ? x : 2147483520;
-            x = x > -2147483520 ? x : -2147483520;
-            return (int)x;
-        }
-
         /**
          *  return the power-of-2 number of quads needed to approximate this conic
          *  with a sequence of quads. Will be >= 0.
@@ -389,10 +320,10 @@ namespace AndroidUI
                     return kMaxConicToQuadPOW2;
                 }
                 float fpow2 = MathF.Log2((x * x + y * y) / tol2) * 0.25f;
-                int altPow2 = SkScalarCeilToInt(fpow2);
+                int altPow2 = sk_float_ceil2int(fpow2);
                 if (altPow2 != pow2)
                 {
-                    throw new Exception(string.Format("pow2 %d altPow2 %d fbits %g err %g tol %g\n", pow2, altPow2, fpow2, err, tol);
+                    throw new Exception(string.Format("pow2 %d altPow2 %d fbits %g err %g tol %g\n", pow2, altPow2, fpow2, err, tol));
                 }
                 pow2 = altPow2;
             }
@@ -405,40 +336,58 @@ namespace AndroidUI
             return (a - b) * (c - b) <= 0;
         }
 
-        static SKPoint[] subdivide(SKConic src, MemoryPointer<SKPoint> pts, int level) {
+        static SKPoint[] subdivide(SKConic src, MemoryPointer<SKPoint> pts, int level)
+        {
             if (!(level >= 0)) throw new Exception("subdivide level must not be less than 0");
 
-            if (0 == level) {
-                pts.memcpy(0, src.fPts, 1, 2);
-                return pts + 2;
-            } else {
-                SkConic dst[2];
-                src.chop(dst);
-                const SkScalar startY = src.fPts[0].fY;
-                SkScalar endY = src.fPts[2].fY;
-                if (between(startY, src.fPts[1].fY, endY)) {
+            if (0 == level)
+            {
+                MemoryPointer<SKPoint> tmp = src.fPts;
+                pts.Copy(tmp + 3, 1);
+                return (pts + 2).ToArray();
+            }
+            else
+            {
+                SKConic[] dst;
+                src.chop(out dst);
+                float startY = src.fPts[0].Y;
+                float endY = src.fPts[2].Y;
+                if (between(startY, src.fPts[1].Y, endY))
+                {
                     // If the input is monotonic and the output is not, the scan converter hangs.
                     // Ensure that the chopped conics maintain their y-order.
-                    SkScalar midY = dst[0].fPts[2].fY;
-                    if (!between(startY, midY, endY)) {
+                    float midY = dst[0].fPts[2].Y;
+                    if (!between(startY, midY, endY))
+                    {
                         // If the computed midpoint is outside the ends, move it to the closer one.
-                        SkScalar closerY = SkTAbs(midY - startY) < SkTAbs(midY - endY) ? startY : endY;
-                        dst[0].fPts[2].fY = dst[1].fPts[0].fY = closerY;
+                        float closerY = MathF.Abs(midY - startY) < MathF.Abs(midY - endY) ? startY : endY;
+                        dst[0].fPts[2].Y = dst[1].fPts[0].Y = closerY;
                     }
-                    if (!between(startY, dst[0].fPts[1].fY, dst[0].fPts[2].fY)) {
+                    if (!between(startY, dst[0].fPts[1].Y, dst[0].fPts[2].Y))
+                    {
                         // If the 1st control is not between the start and end, put it at the start.
                         // This also reduces the quad to a line.
-                        dst[0].fPts[1].fY = startY;
+                        dst[0].fPts[1].Y = startY;
                     }
-                    if (!between(dst[1].fPts[0].fY, dst[1].fPts[1].fY, endY)) {
+                    if (!between(dst[1].fPts[0].Y, dst[1].fPts[1].Y, endY))
+                    {
                         // If the 2nd control is not between the start and end, put it at the end.
                         // This also reduces the quad to a line.
-                        dst[1].fPts[1].fY = endY;
+                        dst[1].fPts[1].Y = endY;
                     }
                     // Verify that all five points are in order.
-                    SkASSERT(between(startY, dst[0].fPts[1].fY, dst[0].fPts[2].fY));
-                    SkASSERT(between(dst[0].fPts[1].fY, dst[0].fPts[2].fY, dst[1].fPts[1].fY));
-                    SkASSERT(between(dst[0].fPts[2].fY, dst[1].fPts[1].fY, endY));
+                    if (!between(startY, dst[0].fPts[1].Y, dst[0].fPts[2].Y))
+                    {
+                        throw new ArithmeticException("between(startY, dst[0].fPts[1].Y, dst[0].fPts[2].Y)");
+                    }
+                    if(!between(dst[0].fPts[1].Y, dst[0].fPts[2].Y, dst[1].fPts[1].Y))
+                    {
+                        throw new ArithmeticException("between(dst[0].fPts[1].Y, dst[0].fPts[2].Y, dst[1].fPts[1].Y)");
+                    }
+                    if (!between(dst[0].fPts[2].Y, dst[1].fPts[1].Y, endY))
+                    {
+                        throw new ArithmeticException("between(dst[0].fPts[2].Y, dst[1].fPts[1].Y, endY)");
+                    }
                 }
                 --level;
                 pts = subdivide(dst[0], pts, level);
@@ -450,12 +399,12 @@ namespace AndroidUI
          *  Chop this conic into N quads, stored continguously in pts[], where
          *  N = 1 << pow2. The amount of storage needed is (1 + 2 * N)
          */
-        int chopIntoQuadsPOW2(SKPoint[] pts, int pow2)
+        int chopIntoQuadsPOW2(MemoryPointer<SKPoint> pts, int pow2)
         {
             if (!(pow2 >= 0)) throw new Exception("chopIntoQuadsPOW2 pow2 must be greater than 0");
             pts[0] = fPts[0];
-            
-            SKPoint endPts;
+
+            SKPoint[] endPts;
 
             if (pow2 == kMaxConicToQuadPOW2)
             {  // If an extreme weight generates many quads ...
@@ -468,7 +417,7 @@ namespace AndroidUI
                     pts[1] = pts[2] = pts[3] = dst[0].fPts[1];  // set ctrl == end to make lines
                     pts[4] = dst[1].fPts[2];
                     pow2 = 1;
-                    endPts = pts[5];
+                    endPts = (pts + 5).ToArray();
                     goto commonFinitePtCheck;
                 }
             }
@@ -476,7 +425,7 @@ namespace AndroidUI
         commonFinitePtCheck:
             int quadCount = 1 << pow2;
             int ptCount = 2 * quadCount + 1;
-            if (!SkPointPriv::AreFinite(pts, ptCount))
+            if (!SkPointsAreFinite(pts, ptCount))
             {
                 // if we generated a non-finite, pin ourselves to the middle of the hull,
                 // as our first and last are already on the first/last pts of the hull.
@@ -493,7 +442,106 @@ namespace AndroidUI
             throw new NotImplementedException();
         }
 
-        //    float findMidTangent() const;
+        float findMidTangent()
+        {
+            // Tangents point in the direction of increasing T, so tan0 and -tan1 both point toward the
+            // midtangent. The bisector of tan0 and -tan1 is orthogonal to the midtangent:
+            //
+            //     bisector dot midtangent = 0
+            //
+            SKPoint tan0 = fPts[1] - fPts[0];
+            SKPoint tan1 = fPts[2] - fPts[1];
+            SKPoint bisector = SkFindBisector(tan0, tan1.Negate());
+
+            // Start by finding the tangent function's power basis coefficients. These define a tangent
+            // direction (scaled by some uniform value) as:
+            //                                                |T^2|
+            //     Tangent_Direction(T) = dx,dy = |A  B  C| * |T  |
+            //                                    |.  .  .|   |1  |
+            //
+            // The derivative of a conic has a cumbersome order-4 denominator. However, this isn't necessary
+            // if we are only interested in a vector in the same *direction* as a given tangent line. Since
+            // the denominator scales dx and dy uniformly, we can throw it out completely after evaluating
+            // the derivative with the standard quotient rule. This leaves us with a simpler quadratic
+            // function that we use to find a tangent.
+            SKPoint A = (fPts[2] - fPts[0]).Multiply(fW - 1);
+            SKPoint B = ((fPts[2] - fPts[0]) - (fPts[1] - fPts[0])).Multiply(fW * 2);
+            SKPoint C = (fPts[1] - fPts[0]).Multiply(fW);
+
+            // Now solve for "bisector dot midtangent = 0":
+            //
+            //                            |T^2|
+            //     bisector * |A  B  C| * |T  | = 0
+            //                |.  .  .|   |1  |
+            //
+            float a = bisector.Dot(A);
+            float b = bisector.Dot(B);
+            float c = bisector.Dot(C);
+            return solve_quadratic_equation_for_midtangent(a, b, c);
+        }
+
+        // Finds the root nearest 0.5. Returns 0.5 if the roots are undefined or outside 0..1.
+        static float solve_quadratic_equation_for_midtangent(float a, float b, float c, float discr)
+        {
+            // Quadratic formula from Numerical Recipes in C:
+            float q = -.5f * (b + MathF.CopySign(MathF.Sqrt(discr), b));
+            // The roots are q/a and c/q. Pick the midtangent closer to T=.5.
+            float _5qa = -.5f * q * a;
+            float T = MathF.Abs(q * q + _5qa) < MathF.Abs(a * c + _5qa) ? sk_ieee_float_divide(q, a)
+                                                            : sk_ieee_float_divide(c, q);
+            if (!(T > 0 && T < 1))
+            {  // Use "!(positive_logic)" so T=NaN will take this branch.
+               // Either the curve is a flat line with no rotation or FP precision failed us. Chop at .5.
+                T = .5f;
+            }
+            return T;
+        }
+
+        static float solve_quadratic_equation_for_midtangent(float a, float b, float c)
+        {
+            return solve_quadratic_equation_for_midtangent(a, b, c, b * b - 4 * a * c);
+        }
+
+        SKPoint SkFindBisector(SKPoint a, SKPoint b)
+        {
+            float[] v = new float[4];
+            if (a.Dot(b) >= 0)
+            {
+                // a,b are within +/-90 degrees apart.
+                v[0] = a.X;
+                v[1] = a.Y;
+                v[2] = b.X;
+                v[3] = b.Y;
+            }
+            else if (a.Cross(b) >= 0)
+            {
+                // a,b are >90 degrees apart. Find the bisector of their interior normals instead. (Above 90
+                // degrees, the original vectors start cancelling each other out which eventually becomes
+                // unstable.)
+                v[0] = -a.Y;
+                v[1] = +a.X;
+                v[2] = +b.Y;
+                v[3] = -b.X;
+            }
+            else
+            {
+                // a,b are <-90 degrees apart. Find the bisector of their interior normals instead. (Below
+                // -90 degrees, the original vectors start cancelling each other out which eventually
+                // becomes unstable.)
+                v[0] = +a.Y;
+                v[1] = -a.X;
+                v[2] = -b.Y;
+                v[3] = +b.X;
+            }
+            // Return "normalize(v[0]) + normalize(v[1])".
+            Sk2f x0_x1, y0_y1;
+            Sk2f.Load2(v, out x0_x1, out y0_y1);
+            Sk2f invLengths = 1.0f / (x0_x1 * x0_x1 + y0_y1 * y0_y1).Sqrt();
+            x0_x1 *= invLengths;
+            y0_y1 *= invLengths;
+            return new SKPoint(x0_x1[0] + x0_x1[1], y0_y1[0] + y0_y1[1]);
+        }
+
         //    bool findXExtrema(float* t) const;
         //    bool findYExtrema(float* t) const;
         //    bool chopAtXExtrema(SKConic dst[2]) const;

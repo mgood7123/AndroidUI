@@ -26,6 +26,11 @@ namespace AndroidUI
         {
         }
 
+		/// <summary>
+		/// returns the wrapped array
+		/// </summary>
+		public Array GetArray() => value;
+
 		public void AssignFrom(Array array)
         {
 			ArgumentNullException.ThrowIfNull(array, nameof(array));

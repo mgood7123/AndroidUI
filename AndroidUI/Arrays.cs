@@ -13,7 +13,7 @@ namespace AndroidUI
 
             while (lo <= hi)
             {
-                int mid = (lo + hi).UnsignedShift(1);
+                int mid = (lo + hi).UnsignedRightShift(1);
                 int midVal = array[mid];
 
                 if (midVal < value)
@@ -39,7 +39,7 @@ namespace AndroidUI
 
             while (lo <= hi)
             {
-                int mid = (lo + hi).UnsignedShift(1);
+                int mid = (lo + hi).UnsignedRightShift(1);
                 long midVal = array[mid];
 
                 if (midVal < value)
@@ -240,7 +240,7 @@ namespace AndroidUI
 
             int result = 1;
             foreach (long element in a) {
-                int elementHash = (int)(element ^ (element.UnsignedShift(32)));
+                int elementHash = (int)(element ^ (element.UnsignedRightShift(32)));
                 result = 31 * result + elementHash;
             }
 
@@ -432,7 +432,7 @@ namespace AndroidUI
             int result = 1;
             foreach (double element in a) {
                 long bits = element.ToLongBits();
-                result = 31 * result + (int)(bits ^ (bits.UnsignedShift(32)));
+                result = 31 * result + (int)(bits ^ (bits.UnsignedRightShift(32)));
             }
             return result;
         }

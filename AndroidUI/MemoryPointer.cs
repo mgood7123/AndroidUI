@@ -68,6 +68,9 @@ namespace AndroidUI
             set => base[offset + index] = value;
         }
 
+        /// <summary>
+        /// increments the pointer offset by the specified value
+        /// </summary>
         public static MemoryPointer<T> operator +(MemoryPointer<T> memoryPointer, int value)
         {
             if (value == 0)
@@ -85,6 +88,9 @@ namespace AndroidUI
             return tmp;
         }
 
+        /// <summary>
+        /// decrements the pointer offset by the specified value
+        /// </summary>
         public static MemoryPointer<T> operator -(MemoryPointer<T> memoryPointer, int value)
         {
             if (value == 0)
@@ -102,11 +108,17 @@ namespace AndroidUI
             return tmp;
         }
 
+        /// <summary>
+        /// increments the pointer offset by one
+        /// </summary>
         public static MemoryPointer<T> operator ++(MemoryPointer<T> memoryPointer)
         {
             return memoryPointer + 1;
         }
 
+        /// <summary>
+        /// decrements the pointer offset by one
+        /// </summary>
         public static MemoryPointer<T> operator --(MemoryPointer<T> memoryPointer)
         {
             return memoryPointer - 1;
@@ -162,6 +174,14 @@ namespace AndroidUI
         public static implicit operator MemoryPointer<T>(Array array)
         {
             return new MemoryPointer<T>(array);
+        }
+
+        /// <summary>
+        /// resets the pointer offset to zero
+        /// </summary>
+        public void ResetPointerOffset()
+        {
+            offset = 0;
         }
     }
 

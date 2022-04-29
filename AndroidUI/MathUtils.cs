@@ -766,7 +766,7 @@
 
             // Calculate (scaleFactor % +/-512), 512 = 2^9, using
             // technique from "Hacker's Delight" section 10-2.
-            int t = (scaleFactor >> 9 - 1).UnsignedShift(32 - 9);
+            int t = (scaleFactor >> 9 - 1).UnsignedRightShift(32 - 9);
             exp_adjust = ((scaleFactor + t) & (512 - 1)) - t;
 
             d *= powerOfTwoD(exp_adjust);
@@ -1452,6 +1452,18 @@
             }
             float maxSize = Math.Max(outToResize.width(), outToResize.height());
             outToResize.scale(largestSide / maxSize);
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static float fmod(float number, float denom)
+        {
+            return number - MathF.Truncate(number / denom) * denom;
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static double fmod(double number, double denom)
+        {
+            return number - Math.Truncate(number / denom) * denom;
         }
     }
 }

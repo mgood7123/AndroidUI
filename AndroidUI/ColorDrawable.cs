@@ -88,7 +88,7 @@ namespace AndroidUI
         override public void draw(SkiaSharp.SKCanvas canvas)
         {
             ColorFilter colorFilter = mPaint.getColorFilter();
-            if ((mColorState.mUseColor.UnsignedShift(24)) != 0 || colorFilter != null
+            if ((mColorState.mUseColor.UnsignedRightShift(24)) != 0 || colorFilter != null
                     || mBlendModeColorFilter != null)
             {
                 if (colorFilter == null)
@@ -141,7 +141,7 @@ namespace AndroidUI
          */
         override public int getAlpha()
         {
-            return mColorState.mUseColor.UnsignedShift(24);
+            return mColorState.mUseColor.UnsignedRightShift(24);
         }
 
         /**
@@ -154,9 +154,9 @@ namespace AndroidUI
         override public void setAlpha(int alpha)
         {
             alpha += alpha >> 7;   // make it 0..256
-            int baseAlpha = mColorState.mBaseColor.UnsignedShift(24);
+            int baseAlpha = mColorState.mBaseColor.UnsignedRightShift(24);
             int useAlpha = baseAlpha * alpha >> 8;
-            int useColor = ((mColorState.mBaseColor << 8).UnsignedShift(8)) | (useAlpha << 24);
+            int useColor = ((mColorState.mBaseColor << 8).UnsignedRightShift(8)) | (useAlpha << 24);
             if (mColorState.mUseColor != useColor)
             {
                 mColorState.mUseColor = useColor;
@@ -252,7 +252,7 @@ namespace AndroidUI
                 return (int)PixelFormat.TRANSLUCENT;
             }
 
-            switch (mColorState.mUseColor.UnsignedShift(24))
+            switch (mColorState.mUseColor.UnsignedRightShift(24))
             {
                 case 255:
                     return (int)PixelFormat.OPAQUE;
