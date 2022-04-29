@@ -1,1 +1,1 @@
-﻿AndroidUITestFramework.Main.Run("NATIVE_TEST");
+﻿AndroidUITestFramework.Main.Run(typeof(AndroidUITest.MemoryTests));
