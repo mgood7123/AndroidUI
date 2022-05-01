@@ -23,11 +23,11 @@ namespace AndroidUI
             {
                 throw new Exception("SKQuadCoeff point array size must be at least 3");
             }
-            fC = SKConic.from_point(src[0]);
-            Sk2s P1 = SKConic.from_point(src[1]);
-            Sk2s P2 = SKConic.from_point(src[2]);
-            fB = SKConic.times_2(P1 - fC);
-            fA = P2 - SKConic.times_2(P1) + fC;
+            fC = SKUtils.from_point(src[0]);
+            Sk2s P1 = SKUtils.from_point(src[1]);
+            Sk2s P2 = SKUtils.from_point(src[2]);
+            fB = SKUtils.times_2(P1 - fC);
+            fA = P2 - SKUtils.times_2(P1) + fC;
         }
 
         public Sk2s eval(float t)
