@@ -104,7 +104,7 @@ namespace AndroidUI.Extensions
         /// <param name="a">left side of cross product</param>
         /// <param name="b">right side of cross product</param>
         /// <returns>area spanned by vectors signed by angle direction</returns>
-        static float CrossProduct(SKPoint a, SKPoint b)
+        public static float CrossProduct(this SKPoint a, SKPoint b)
         {
             return a.X * b.Y - a.Y * b.X;
         }
@@ -180,9 +180,37 @@ namespace AndroidUI.Extensions
         }
 
         /// <summary>
-        /// Scales (vec->fX, vec->fY) so that length() returns one, while preserving ratio of vec->fX
+        /// Scales (X, Y) so that length() returns one, while preserving ratio of X to Y,
         /// <br></br>
-        /// to vec->fY, if possible. If original length is nearly zero, sets vec to (0, 0) and returns
+        /// if possible. If prior length is nearly zero, sets vector to (0, 0) and returns
+        /// <br></br>
+        /// false; otherwise returns true.
+        /// </summary>
+        /// <returns>true if former length is not zero or nearly zero</returns>
+        public static bool Normalize1(this ref SKPoint pt)
+        {
+            return pt.setLength(pt.X, pt.Y, SK_Scalar1);
+        }
+
+        /// <summary>
+        /// Sets vector to (x, y) scaled so length() returns one, and so that
+        /// <br></br>
+        /// (fX, fY) is proportional to (x, y).  If (x, y) length is nearly zero,
+        /// <br></br>
+        /// sets vector to (0, 0) and returns false; otherwise returns true.
+        /// </summary>
+        /// <param name="x">proportional value for X</param>
+        /// <param name="y">proportional value for Y</param>
+        /// <returns>true if (x, y) length is not zero or nearly zero</returns>
+        public static bool Normalize2(this ref SKPoint pt, float x, float y)
+        {
+            return pt.setLength(x, y, SK_Scalar1);
+        }
+
+        /// <summary>
+        /// Scales (X, Y) so that length() returns one, while preserving ratio of X
+        /// <br></br>
+        /// to Y, if possible. If original length is nearly zero, sets vec to (0, 0) and returns
         /// <br></br>
         /// zero; otherwise, returns length of vec before vec is scaled.
         /// <br></br>
@@ -194,7 +222,7 @@ namespace AndroidUI.Extensions
         /// </summary>
         /// <param name="vec">normalized to unit length</param>
         /// <returns>original vec length</returns>
-        static float Normalize(this ref SKPoint pt)
+        public static float NormalizeStatic(this ref SKPoint pt)
         {
             float[] mag = new float[1];
             if (set_point_length(false, ref pt, pt.X, pt.Y, 1.0f, mag))
@@ -202,6 +230,16 @@ namespace AndroidUI.Extensions
                 return mag[0];
             }
             return 0;
+        }
+
+        public static bool setLength(this ref SKPoint pt, float length)
+        {
+            return set_point_length(false, ref pt, pt.X, pt.Y, length);
+        }
+
+        public static bool setLength(this ref SKPoint pt, float x, float y, float length)
+        {
+            return set_point_length(false, ref pt, x, y, length);
         }
 
         /// <summary>

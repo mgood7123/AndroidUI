@@ -22,7 +22,7 @@ namespace AndroidUI
         internal SKPoint[] fPts = new SKPoint[3];
         internal float fW;
 
-        void set(SKPoint[] pts, float w)
+        void set(MemoryPointer<SKPoint> pts, float w)
         {
             if (pts.Length < 3)
             {
@@ -49,7 +49,7 @@ namespace AndroidUI
          *  tangent value's length is arbitrary, and only its direction should
          *  be used.
          */
-        void evalAt(float t, ValueHolder<SKPoint> pos, ValueHolder<SKPoint> tangent = null)
+        void evalAt(float t, MemoryPointer<SKPoint> pos, MemoryPointer<SKPoint> tangent = null)
         {
             if (!(t >= 0 && t <= 1.0f))
             {
@@ -58,11 +58,11 @@ namespace AndroidUI
 
             if (pos != null)
             {
-                pos.value = evalAt(t);
+                pos[0] = evalAt(t);
             }
             if (tangent != null)
             {
-                tangent.value = evalTangentAt(t);
+                pos[0] = evalTangentAt(t);
             }
 
         }
@@ -91,16 +91,10 @@ namespace AndroidUI
             dst[6] = bc;
         }
 
-        static void ratquad_mapTo3D(ContiguousArray<float> src, float w, ContiguousArray<float> dst) {
-            dst[0] = src[0] * 1;
-            dst[1] = src[1] * 1;
-            dst[2] = 1;
-            dst[3] = src[3] * w;
-            dst[4] = src[4] * w;
-            dst[5] = w;
-            dst[6] = src[6] * 1;
-            dst[7] = src[7] * 1;
-            dst[8] = 1;
+        static void ratquad_mapTo3D(SKPoint[] src, float w, SKPoint3[] dst) {
+            dst[0].Set(src[0].X * 1, src[0].Y * 1, 1);
+            dst[1].Set(src[1].X * w, src[1].Y * w, w);
+            dst[2].Set(src[2].X * 1, src[2].Y * 1, 1);
         }
 
         static SKPoint project_down(SKPoint3 src) {
@@ -119,27 +113,28 @@ namespace AndroidUI
             return prod == 0;   // if prod is NaN, this check will return false
         }
 
-        bool chopAt(float t, SKConic[] dst)
+        bool chopAt(float t, out SKConic[] dst)
         {
-            if (dst.Length < 2)
-            {
-                throw new Exception("SKConic chopAt destination array size must be at least 2");
-            }
-
-            MemoryPointer<float> tmp = new float[9], tmp2 = new float[9];
-
+            SKPoint3[] tmp = new SKPoint3[3];
             ratquad_mapTo3D(fPts, fW, tmp);
 
-            p3d_interp(tmp, tmp2, t);
-            tmp++;
+            MemoryPointer<float> tmp1 = createSKPoint3Mapper(tmp);
+            MemoryPointer<float> tmp2 = createSKPoint3Mapper(new SKPoint3[3]);
+
+            p3d_interp(tmp1, tmp2, t);
+
+            tmp1++;
             tmp2++;
-            p3d_interp(tmp, tmp2, t);
-            tmp++;
+            p3d_interp(tmp1, tmp2, t);
+
+            tmp1++;
             tmp2++;
-            p3d_interp(tmp, tmp2, t);
-            tmp.ResetPointerOffset();
+            p3d_interp(tmp1, tmp2, t);
+
+            tmp1.ResetPointerOffset();
             tmp2.ResetPointerOffset();
 
+            dst = new SKConic[2];
             dst[0].fPts[0] = fPts[0];
             dst[0].fPts[1] = project_down(tmp2.ToSKPoint3());
             dst[0].fPts[2] = project_down((tmp2 + 3).ToSKPoint3()); dst[1].fPts[0] = dst[0].fPts[2];
@@ -171,8 +166,8 @@ namespace AndroidUI
                 }
                 else
                 {
-                    SKConic[] pair = new SKConic[2];
-                    if (chopAt(t1.toBool() ? t1 : t2, pair))
+                    SKConic[] pair;
+                    if (chopAt(t1.toBool() ? t1 : t2, out pair))
                     {
                         dst = pair[t1.toBool().toInt()];
                         return;
@@ -380,7 +375,7 @@ namespace AndroidUI
                     {
                         throw new ArithmeticException("between(startY, dst[0].fPts[1].Y, dst[0].fPts[2].Y)");
                     }
-                    if(!between(dst[0].fPts[1].Y, dst[0].fPts[2].Y, dst[1].fPts[1].Y))
+                    if (!between(dst[0].fPts[1].Y, dst[0].fPts[2].Y, dst[1].fPts[1].Y))
                     {
                         throw new ArithmeticException("between(dst[0].fPts[1].Y, dst[0].fPts[2].Y, dst[1].fPts[1].Y)");
                     }
@@ -437,9 +432,14 @@ namespace AndroidUI
             return 1 << pow2;
         }
 
-        private bool EqualsWithinTolerance(SKPoint sKPoint1, SKPoint sKPoint2)
+        static bool CanNormalize(float dx, float dy)
         {
-            throw new NotImplementedException();
+            return sk_floats_are_finite(dx, dy) && (dx != 0 || dy != 0);
+        }
+
+        static bool EqualsWithinTolerance(SKPoint p1, SKPoint p2)
+        {
+            return !CanNormalize(p1.X - p2.X, p1.Y - p2.Y);
         }
 
         float findMidTangent()
@@ -542,13 +542,227 @@ namespace AndroidUI
             return new SKPoint(x0_x1[0] + x0_x1[1], y0_y1[0] + y0_y1[1]);
         }
 
-        //    bool findXExtrema(float* t) const;
-        //    bool findYExtrema(float* t) const;
-        //    bool chopAtXExtrema(SKConic dst[2]) const;
-        //    bool chopAtYExtrema(SKConic dst[2]) const;
+        ///////////////////////////////////////////////////////////////////////////////
+        //
+        // NURB representation for conics.  Helpful explanations at:
+        //
+        // http://citeseerx.ist.psu.edu/viewdoc/
+        //   download?doi=10.1.1.44.5740&rep=rep1&type=ps
+        // and
+        // http://www.cs.mtu.edu/~shene/COURSES/cs3621/NOTES/spline/NURBS/RB-conics.html
+        //
+        // F = (A (1 - t)^2 + C t^2 + 2 B (1 - t) t w)
+        //     ------------------------------------------
+        //         ((1 - t)^2 + t^2 + 2 (1 - t) t w)
+        //
+        //   = {t^2 (P0 + P2 - 2 P1 w), t (-2 P0 + 2 P1 w), P0}
+        //     ------------------------------------------------
+        //             {t^2 (2 - 2 w), t (-2 + 2 w), 1}
+        //
+        //
+        // F' = 2 (C t (1 + t (-1 + w)) - A (-1 + t) (t (-1 + w) - w) + B (1 - 2 t) w)
+        //
+        //  t^2 : (2 P0 - 2 P2 - 2 P0 w + 2 P2 w)
+        //  t^1 : (-2 P0 + 2 P2 + 4 P0 w - 4 P1 w)
+        //  t^0 : -2 P0 w + 2 P1 w
+        //
+        //  We disregard magnitude, so we can freely ignore the denominator of F', and
+        //  divide the numerator by 2
+        //
+        //    coeff[0] for t^2
+        //    coeff[1] for t^1
+        //    coeff[2] for t^0
+        //
+        private static void conic_deriv_coeff(MemoryPointer<float> src, float w, float[] coeff)
+        {
+            float P20 = src[4] - src[0];
+            float P10 = src[2] - src[0];
+            float wP10 = w * P10;
+            coeff[0] = w * P20 - P20;
+            coeff[1] = P20 - 2 * wP10;
+            coeff[2] = wP10;
+        }
 
-        //    void computeTightBounds(SkRect* bounds) const;
-        //    void computeFastBounds(SkRect* bounds) const;
+        static bool conic_find_extrema(MemoryPointer<float> src, float w, ref float t) {
+            float[] coeff = new float[3];
+
+            conic_deriv_coeff(src, w, coeff);
+
+            float[] tValues = new float[2];
+            int roots = SkFindUnitQuadRoots(coeff[0], coeff[1], coeff[2], tValues);
+            if (!(0 == roots || 1 == roots))
+            {
+                throw new Exception("(0 == roots || 1 == roots) failed");
+            };
+
+            if (1 == roots)
+            {
+                t = tValues[0];
+                return true;
+            }
+            return false;
+        }
+
+        static int valid_unit_divide(float number, float denom, MemoryPointer<float> ratio)
+        {
+            if (number < 0)
+            {
+                number = -number;
+                denom = -denom;
+            }
+
+            if (denom == 0 || number == 0 || number >= denom)
+            {
+                return 0;
+            }
+
+            float r = number / denom;
+            if (sk_float_isnan(r))
+            {
+                return 0;
+            }
+            if (!(r >= 0 && r < SK_Scalar1)) {
+                throw new Exception("numer " + number + ", denom " + denom + ", r " + r);
+            };
+            if (r == 0)
+            { // catch underflow if numer <<<< denom
+                return 0;
+            }
+            ratio[0] = r;
+            return 1;
+        }
+
+        // Just returns its argument, but makes it easy to set a break-point to know when
+        // SkFindUnitQuadRoots is going to return 0 (an error).
+        static int return_check_zero(int value)
+        {
+            if (value == 0)
+            {
+                return 0;
+            }
+            return value;
+        }
+
+        /** From Numerical Recipes in C.
+
+            Q = -1/2 (B + sign(B) sqrt[B*B - 4*A*C])
+            x1 = Q / A
+            x2 = C / Q
+        */
+        static int SkFindUnitQuadRoots(float A, float B, float C, MemoryPointer<float> roots)
+        {
+            ArgumentNullException.ThrowIfNull(roots, nameof(roots));
+
+            if (A == 0)
+            {
+                return return_check_zero(valid_unit_divide(-C, B, roots));
+            }
+
+            MemoryPointer<float> r = roots;
+
+            // use doubles so we don't overflow temporarily trying to compute R
+            double dr = (double)B * B - 4 * (double)A * C;
+            if (dr < 0)
+            {
+                return return_check_zero(0);
+            }
+            dr = Math.Sqrt(dr);
+            float R = sk_double_to_float(dr);
+            if (!sk_float_isfinite(R))
+            {
+                return return_check_zero(0);
+            }
+
+            float Q = (B < 0) ? -(B - R) / 2 : -(B + R) / 2;
+            r += valid_unit_divide(Q, A, r);
+            r += valid_unit_divide(C, Q, r);
+            if (r - roots == 2)
+            {
+                if (roots[0] > roots[1])
+                {
+                    roots.Swap(0, 1);
+                }
+                else if (roots[0] == roots[1])
+                {
+                    // nearly-equal?
+                    r -= 1; // skip the double root
+                }
+            }
+            return return_check_zero((int)(r - roots));
+        }
+
+        bool findXExtrema(out float t) {
+            t = 0;
+            return conic_find_extrema(createSKPointMapper(fPts), fW, ref t);
+
+        }
+        bool findYExtrema(out float t)
+        {
+            t = 0;
+            return conic_find_extrema(new MemoryPointer<float>(createSKPointMapper(fPts)) + 1, fW, ref t);
+        }
+
+        bool chopAtXExtrema(out SKConic[] dst) {
+            float t;
+            if (findXExtrema(out t)) {
+                if (!chopAt(t, out dst))
+                {
+                    // if chop can't return finite values, don't chop
+                    return false;
+                }
+                // now clean-up the middle, since we know t was meant to be at
+                // an X-extrema
+                float value = dst[0].fPts[2].X;
+                dst[0].fPts[1].X = value;
+                dst[1].fPts[0].X = value;
+                dst[1].fPts[1].X = value;
+                return true;
+            }
+            dst = null;
+            return false;
+        }
+
+        bool chopAtYExtrema(out SKConic[] dst) {
+            float t;
+            if (findYExtrema(out t)) {
+                if (!chopAt(t, out dst))
+                {
+                    // if chop can't return finite values, don't chop
+                    return false;
+                }
+                // now clean-up the middle, since we know t was meant to be at
+                // an Y-extrema
+                float value = dst[0].fPts[2].Y;
+                dst[0].fPts[1].Y = value;
+                dst[1].fPts[0].Y = value;
+                dst[1].fPts[1].Y = value;
+                return true;
+            }
+            dst = null;
+            return false;
+        }
+
+        void computeTightBounds(ref SKRect bounds) {
+            MemoryPointer<SKPoint> pts = new SKPoint[4];
+            pts[0] = fPts[0];
+            pts[1] = fPts[2];
+            int count = 2;
+
+            float t;
+            if (findXExtrema(out t)) {
+                evalAt(t, pts + count);
+                count++;
+            }
+            if (findYExtrema(out t)) {
+                evalAt(t, pts + count);
+                count++;
+            }
+            bounds.setBounds((SKPoint[])pts.GetArray(), count);
+        }
+
+        void computeFastBounds(ref SKRect bounds) {
+            bounds.setBounds(fPts, 3);
+        }
 
         //    /** Find the parameter value where the conic takes on its maximum curvature.
         //     *
@@ -559,12 +773,130 @@ namespace AndroidUI
         //     */
         //    //    bool findMaxCurvature(float* t) const;  // unimplemented
 
-        //    static float TransformW(const SKPoint[3], float w, const SkMatrix&);
+        static float TransformW(SKPoint[] pts, float w, ref SKMatrix matrix) {
+            throw new NotImplementedException("this involves pointer casting");
+#if false
+            if (!matrix.hasPerspective())
+            {
+                return w;
+            }
 
-        //    enum {
-        //        kMaxConicsForArc = 5
-        //    };
-        //    static int BuildUnitArc(const SkVector& start, const SkVector& stop, SkRotationDirection,
-        //                            const SkMatrix*, SKConic conics[kMaxConicsForArc]);
+            SKPoint3[] src = new SKPoint3[3], dst = new SKPoint3[3];
+
+            ratquad_mapTo3D(pts, w, src);
+
+            matrix.mapHomogeneousPoints(dst, src, 3);
+
+            // w' = sqrt(w1*w1/w0*w2)
+            // use doubles temporarily, to handle small numer/denom
+            double w0 = dst[0].Z;
+            double w1 = dst[1].Z;
+            double w2 = dst[2].Z;
+            return sk_double_to_float(Math.Sqrt(sk_ieee_double_divide(w1 * w1, w0 * w2)));
+#endif
+        }
+
+        public const int kMaxConicsForArc = 5;
+        public static int BuildUnitArc(ref SKPoint uStart, ref SKPoint uStop,
+            SKPathDirection dir, ref SKMatrix userMatrix, out SKConic[] dst) {
+            dst = new SKConic[kMaxConicsForArc];
+            // rotate by x,y so that uStart is (1.0)
+            float x = uStart.DotProduct(uStop);
+            float y = uStart.CrossProduct(uStop);
+
+            float absY = sk_float_abs(y);
+
+            // check for (effectively) coincident vectors
+            // this can happen if our angle is nearly 0 or nearly 180 (y == 0)
+            // ... we use the dot-prod to distinguish between 0 and 180 (x > 0)
+            if (absY <= SK_ScalarNearlyZero && x > 0 && ((y >= 0 && SKPathDirection.Clockwise == dir) ||
+                                                         (y <= 0 && SKPathDirection.CounterClockwise == dir))) {
+                return 0;
+            }
+
+            if (dir == SKPathDirection.CounterClockwise) {
+                y = -y;
+            }
+
+            // We decide to use 1-conic per quadrant of a circle. What quadrant does [xy] lie in?
+            //      0 == [0  .. 90)
+            //      1 == [90 ..180)
+            //      2 == [180..270)
+            //      3 == [270..360)
+            //
+            int quadrant = 0;
+            if (0 == y) {
+                quadrant = 2;        // 180
+                if (!(sk_float_abs(x + SK_Scalar1) <= SK_ScalarNearlyZero))
+                {
+                    throw new Exception("(sk_float_abs(x + SK_Scalar1) <= SK_ScalarNearlyZero) failed");
+                }
+            } else if (0 == x) {
+                if (!(absY - SK_Scalar1 <= SK_ScalarNearlyZero))
+                {
+                    throw new Exception("(absY - SK_Scalar1 <= SK_ScalarNearlyZero) failed");
+                }
+                quadrant = y > 0 ? 1 : 3; // 90 : 270
+            } else {
+                if (y < 0) {
+                    quadrant += 2;
+                }
+                if ((x < 0) != (y < 0)) {
+                    quadrant += 1;
+                }
+            }
+
+            MemoryPointer<SKPoint> quadrantPts = new SKPoint[] {
+                new (1, 0), new (1, 1), new (0, 1), new (-1, 1),
+                new (-1, 0), new (-1, -1), new (0, -1), new (1, -1)
+            };
+            const float quadrantWeight = SK_ScalarRoot2Over2;
+
+            int conicCount = quadrant;
+            for (int i = 0; i < conicCount; ++i) {
+                dst[i].set(quadrantPts + (i * 2), quadrantWeight);
+            }
+
+            // Now compute any remaing (sub-90-degree) arc for the last conic
+            SKPoint finalP = new(x, y);
+            SKPoint lastQ = quadrantPts[quadrant * 2];  // will already be a unit-vector
+            float dot = lastQ.DotProduct(finalP);
+            if (!(0 <= dot && dot <= SK_Scalar1 + SK_ScalarNearlyZero))
+            {
+                throw new Exception("(0 <= dot && dot <= SK_Scalar1 + SK_ScalarNearlyZero) failed");
+            }
+            
+            if (dot < 1) {
+                SKPoint offCurve = new(lastQ.X + x, lastQ.Y + y);
+                // compute the bisector vector, and then rescale to be the off-curve point.
+                // we compute its length from cos(theta/2) = length / 1, using half-angle identity we get
+                // length = sqrt(2 / (1 + cos(theta)). We already have cos() when to computed the dot.
+                // This is nice, since our computed weight is cos(theta/2) as well!
+                //
+                float cosThetaOver2 = sk_float_sqrt((1 + dot) / 2);
+                offCurve.setLength(SkScalarInvert(cosThetaOver2));
+                if (!EqualsWithinTolerance(lastQ, offCurve)) {
+                    dst[conicCount].set(lastQ, offCurve, finalP, cosThetaOver2);
+                    conicCount += 1;
+                }
+            }
+
+            // now handle counter-clockwise and the initial unitStart rotation
+            throw new NotImplementedException("this involves pointer casting, which is currently not implemented");
+#if false
+            SKMatrix    matrix;
+            matrix.setSinCos(uStart.Y, uStart.X);
+            if (dir == kCCW_SkRotationDirection) {
+                matrix.preScale(SK_Scalar1, -SK_Scalar1);
+            }
+            if (userMatrix) {
+                matrix.postConcat(*userMatrix);
+            }
+            for (int i = 0; i < conicCount; ++i) {
+                matrix.mapPoints(dst[i].fPts, 3);
+            }
+            return conicCount;
+#endif
+        }
     }
 }

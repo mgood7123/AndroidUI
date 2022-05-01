@@ -6,6 +6,34 @@ namespace AndroidUI
 {
     public static class SKUtils
     {
+        public const short SK_MaxS16 = short.MaxValue;
+        public const short SK_MinS16 = -SK_MaxS16;
+
+        public const int SK_MaxS32 = int.MaxValue;
+        public const int SK_MinS32 = -SK_MaxS32;
+        public const int SK_NaN32 = int.MinValue;
+
+        public const long SK_MaxS64 = long.MaxValue;
+        public const long SK_MinS64 = -SK_MaxS64;
+
+        public const int SK_MaxS32FitsInFloat = 2147483520;
+        public const int SK_MinS32FitsInFloat = -SK_MaxS32FitsInFloat;
+
+        public const long SK_MaxS64FitsInFloat = (SK_MaxS64 >> (63 - 24) << (63 - 24));   // 0x7fffff8000000000
+        public const long SK_MinS64FitsInFloat = -SK_MaxS64FitsInFloat;
+
+        public const float SK_FloatSqrt2 = 1.41421356f;
+        public const float SK_FloatPI = 3.14159265f;
+        public const double SK_DoublePI = 3.14159265358979323846264338327950288;
+        public const float SK_Scalar1 = 1.0f;
+        public const float SK_ScalarHalf = 0.5f;
+        public const float SK_ScalarSqrt2 = 1.41421356f;
+        public const float SK_ScalarPI = 3.14159265f;
+        public const float SK_ScalarTanPIOver8 = 0.414213562f;
+        public const float SK_ScalarRoot2Over2 = 0.707106781f;
+        public const float SK_ScalarMax = FloatConsts.MAX_VALUE;
+        public const float SK_ScalarNearlyZero = SK_Scalar1 / (1 << 12);
+
         /// <summary>
         /// Cast double to float, ignoring any warning about too-large finite values being cast to float.
         /// <br></br>
@@ -65,26 +93,6 @@ namespace AndroidUI
             return prod == 0;   // if prod is NaN, this check will return false
         }
 
-        public const short SK_MaxS16 = short.MaxValue;
-        public const short SK_MinS16 = -SK_MaxS16;
-
-        public const int SK_MaxS32 = int.MaxValue;
-        public const int SK_MinS32 = -SK_MaxS32;
-        public const int SK_NaN32 = int.MinValue;
-
-        public const long SK_MaxS64 = long.MaxValue;
-        public const long SK_MinS64 = -SK_MaxS64;
-
-        public const int SK_MaxS32FitsInFloat = 2147483520;
-        public const int SK_MinS32FitsInFloat = -SK_MaxS32FitsInFloat;
-
-        public const long SK_MaxS64FitsInFloat = (SK_MaxS64 >> (63 - 24) << (63 - 24));   // 0x7fffff8000000000
-        public const long SK_MinS64FitsInFloat = -SK_MaxS64FitsInFloat;
-
-        public const float SK_FloatSqrt2 = 1.41421356f;
-        public const float SK_FloatPI = 3.14159265f;
-        public const double SK_DoublePI = 3.14159265358979323846264338327950288;
-
         /// <summary>
         /// Return the closest int for the given float. Returns SK_MaxS32FitsInFloat for NaN.
         /// </summary>
@@ -94,6 +102,107 @@ namespace AndroidUI
             x = x < SK_MaxS32FitsInFloat ? x : SK_MaxS32FitsInFloat;
             x = x > SK_MinS32FitsInFloat ? x : SK_MinS32FitsInFloat;
             return (int)x;
+        }
+
+        public static Mapper<SKPoint[], float>[] createSKPointMapper()
+        {
+            return new Mapper<SKPoint[], float>[1] {
+                new(
+                    (o, ai, i) =>
+                    {
+                        if (i == 0)
+                        {
+                            return o[ai].X;
+                        }
+                        return o[ai].Y;
+                    },
+                    (o, ai, i, v) =>
+                    {
+                        if (i == 0)
+                        {
+                            o[ai].X = v;
+                        }
+                        o[ai].Y = v;
+                    }, 2
+                )
+            };
+        }
+
+        public static Mapper<SKPointI[], int>[] createSKPointIMapper()
+        {
+            return new Mapper<SKPointI[], int>[1] {
+                new(
+                    (o, ai, i) =>
+                    {
+                        if (i == 0)
+                        {
+                            return o[ai].X;
+                        }
+                        return o[ai].Y;
+                    },
+                    (o, ai, i, v) =>
+                    {
+                        if (i == 0)
+                        {
+                            o[ai].X = v;
+                        }
+                        o[ai].Y = v;
+                    }, 2
+                )
+            };
+        }
+
+        public static Mapper<SKPoint3[], float>[] createSKPoint3Mapper()
+        {
+            return new Mapper<SKPoint3[], float>[1] {
+                new(
+                    (o, ai, i) =>
+                    {
+                        if (i == 0)
+                        {
+                            return o[ai].X;
+                        }
+                        if (i == 1)
+                        {
+                            return o[ai].Y;
+                        }
+                        return o[ai].Z;
+                    },
+                    (o, ai, i, v) =>
+                    {
+                        if (i == 0)
+                        {
+                            o[ai].X = v;
+                        }
+                        if (i == 1)
+                        {
+                            o[ai].Y = v;
+                        }
+                        o[ai].Z = v;
+                    }, 3
+                )
+            };
+        }
+
+        public static Mapper<SKPoint[], float>[] createSKPointMapper(SKPoint[] fPts)
+        {
+            var m = createSKPointMapper();
+            m[0].SetObject(fPts);
+            return m;
+        }
+
+        public static Mapper<SKPointI[], int>[] createSKPointIMapper(SKPointI[] fPts)
+        {
+            var m = createSKPointIMapper();
+            m[0].SetObject(fPts);
+            return m;
+        }
+
+        public static Mapper<SKPoint3[], float>[] createSKPoint3Mapper(SKPoint3[] fPts)
+        {
+            var m = createSKPoint3Mapper();
+            m[0].SetObject(fPts);
+            return m;
         }
 
         /// <summary>
