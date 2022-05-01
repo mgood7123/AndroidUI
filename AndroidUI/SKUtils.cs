@@ -474,5 +474,11 @@ namespace AndroidUI
 
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static float sk_fmaf(float f, float m, float a) => MathF.FusedMultiplyAdd(f, m, a);
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static int ConvertConicToQuads(
+            ref SKPoint p0, ref SKPoint p1, ref SKPoint p2,
+            float w, SKPoint[] pts, int pow2
+        ) => new SKConic(p0, p1, p2, w).chopIntoQuadsPOW2(pts, pow2);
     }
 }

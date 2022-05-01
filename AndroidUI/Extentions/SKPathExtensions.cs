@@ -4,7 +4,6 @@ namespace AndroidUI.Extensions
 {
     public static class SKPathExtensions
     {
-
         public static void SetLastPt(this SKPath path, float x, float y)
         {
             int count = path.PointCount;
@@ -221,7 +220,7 @@ namespace AndroidUI.Extensions
                     + (3 * oneMinusT * tSquared * p2) + (tCubed * p3);
         }
 
-        static SKPoint cubicBezierCalculation(float t, SKPoint[] points)
+        static SKPoint cubicBezierCalculation(float t, MemoryPointer<SKPoint> points)
         {
             float x = cubicCoordinateCalculation(t, points[0].X, points[1].X,
                 points[2].X, points[3].X);
@@ -236,7 +235,7 @@ namespace AndroidUI.Extensions
             return oneMinusT * ((oneMinusT * p0) + (t * p1)) + t * ((oneMinusT * p1) + (t * p2));
         }
 
-        static SKPoint quadraticBezierCalculation(float t, SKPoint[] points)
+        static SKPoint quadraticBezierCalculation(float t, MemoryPointer<SKPoint> points)
         {
             float x = quadraticCoordinateCalculation(t, points[0].X, points[1].X, points[2].X);
             float y = quadraticCoordinateCalculation(t, points[0].Y, points[1].Y, points[2].Y);
@@ -245,7 +244,7 @@ namespace AndroidUI.Extensions
 
         // Subdivide a section of the Bezier curve, set the mid-point and the mid-t value.
         // Returns true if further subdivision is necessary as defined by errorSquared.
-        static bool subdividePoints(SKPoint[] points, Func<float, SKPoint[], SKPoint> bezierFunction,
+        static bool subdividePoints(MemoryPointer<SKPoint> points, Func<float, MemoryPointer<SKPoint>, SKPoint> bezierFunction,
             float t0, in SKPoint p0, float t1, in SKPoint p1,
             out float midT, out SKPoint midPoint, float errorSquared) {
             midT = (t1 + t0) / 2;
@@ -266,8 +265,8 @@ namespace AndroidUI.Extensions
         // the point. It is clearly not the case that we can linearly interpolate at that point.
         // doubleCheckDivision forces a second examination between subdivisions to ensure that linear
         // interpolation works.
-        static void addBezier(SKPoint[] points,
-                Func<float, SKPoint[], SKPoint> bezierFunction, List<SKPoint> segmentPoints,
+        static void addBezier(MemoryPointer<SKPoint> points,
+                Func<float, MemoryPointer<SKPoint>, SKPoint> bezierFunction, List<SKPoint> segmentPoints,
             List<float> lengths, float errorSquared, bool doubleCheckDivision)
         {
             Dictionary<float, SKPoint> tToPoint = new Dictionary<float, SKPoint>();
@@ -321,15 +320,14 @@ namespace AndroidUI.Extensions
         }
 
         /**
- *  Help class to allocate storage for approximating a conic with N quads.
- */
+         *  Help class to allocate storage for approximating a conic with N quads.
+         */
         class SkAutoConicToQuads
         {
-            SkAutoConicToQuads() {
+            public SkAutoConicToQuads()
+            {
                 fQuadCount = 0;
             }
-
-            // TODO: RESTORE ME
 
             /**
              *  Given a conic and a tolerance, return the array of points for the
@@ -343,27 +341,27 @@ namespace AndroidUI.Extensions
              *      quad[2] == pts[4..6]
              *      quad[3] == pts[6..8]
              */
-            //SKPoint[] computeQuads(in SKConic conic, float tol) {
-            //    int pow2 = conic.computeQuadPOW2(tol);
-            //    fQuadCount = 1 << pow2;
-            //    SkPoint* pts = fStorage.reset(1 + 2 * fQuadCount);
-            //    fQuadCount = conic.chopIntoQuadsPOW2(pts, pow2);
-            //    return pts;
-            //}
+            public SKPoint[] computeQuads(SKConic conic, float tol)
+            {
+                int pow2 = conic.computeQuadPOW2(tol);
+                fQuadCount = 1 << pow2;
+                SKPoint[] pts = fStorage = new SKPoint[1 + 2 * fQuadCount];
+                fQuadCount = conic.chopIntoQuadsPOW2(pts, pow2);
+                return pts;
+            }
 
-            //const SkPoint* computeQuads(const SkPoint pts[3], SkScalar weight,
-            //                            SkScalar tol) {
-            //    Sk conic;
-            //    conic.set(pts, weight);
-            //    return computeQuads(conic, tol);
-            //}
+            public SKPoint[] computeQuads(SKPoint[] pts, float weight,
+                                        float tol)
+            {
+                return computeQuads(new(pts, weight), tol);
+            }
 
-            int countQuads() { return fQuadCount; }
+            public int countQuads() { return fQuadCount; }
 
             private const int kQuadCount = 8; // should handle most conics
             private const int kPointCount = 1 + 2 * kQuadCount;
 
-            //SkAutoSTMalloc<kPointCount, SkPoint> fStorage;
+            SKPoint[] fStorage = new SKPoint[kPointCount];
             int fQuadCount; // #quads for current usage
         };
 
@@ -393,15 +391,17 @@ namespace AndroidUI.Extensions
                     break;
                 case SKPathVerb.Conic:
                     {
-                        //SKPoint[] quads = SKPath.ConvertConicToQuads(
-                        //        points, pathIter.ConicWeight, errorConic);
-                        //for (int i = 0; i < converter.countQuads(); i++)
-                        //{
-                        //    // Note: offset each subsequent quad by 2, since end points are shared
-                        //    const SkPoint* quad = quads + i * 2;
-                        //    addBezier(quad, quadraticBezierCalculation, segmentPoints, lengths,
-                        //        errorConic, false);
-                        //}
+                        SkAutoConicToQuads converter = new();
+
+                        MemoryPointer<SKPoint> quads = converter.computeQuads(
+                            points, pathIter.ConicWeight(), errorConic);
+                        for (int i = 0; i < converter.countQuads(); i++)
+                        {
+                            // Note: offset each subsequent quad by 2, since end points are shared
+                            MemoryPointer<SKPoint> quad = quads + i * 2;
+                            addBezier(quad, quadraticBezierCalculation, segmentPoints, lengths,
+                                errorConic, false);
+                        }
                         break;
                     }
                 default:
@@ -416,21 +416,60 @@ namespace AndroidUI.Extensions
         // Note that more than one point may have the same length along the path in
         // the case of a move.
         // NULL can be returned if the Path is empty.
-        //public static float[] Approximate(this SKPath path, float acceptableError)
-        //{
-        //    SKPath.Iterator pathIter = path.CreateIterator(false);
-        //    SKPathVerb verb;
-        //    SKPoint[] points = new SKPoint[4];
-        //    List<SKPoint> segmentPoints;
-        //    List<float> lengths;
-        //    float errorSquared = acceptableError * acceptableError;
-        //    float errorConic = acceptableError / 2; // somewhat arbitrary
+        public static float[] Approximate(this SKPath path, float acceptableError)
+        {
+            SKPath.Iterator pathIter = path.CreateIterator(false);
+            SKPathVerb verb;
+            SKPoint[] points = new SKPoint[4];
+            List<SKPoint> segmentPoints = new();
+            List<float> lengths = new();
+            float errorSquared = acceptableError * acceptableError;
+            float errorConic = acceptableError / 2; // somewhat arbitrary
 
-        //    while ((verb = pathIter.Next(points)) != SKPathVerb.Done)
-        //    {
-        //        createVerbSegments(pathIter, verb, points, segmentPoints, lengths,
-        //                errorSquared, errorConic);
-        //    }
-        //}
+            while ((verb = pathIter.Next(points)) != SKPathVerb.Done)
+            {
+                createVerbSegments(ref pathIter, verb, points, segmentPoints, lengths,
+                        errorSquared, errorConic);
+            }
+
+            if (segmentPoints.Count == 0)
+            {
+                int numVerbs = path.VerbCount;
+                if (numVerbs == 1)
+                {
+                    addMove(segmentPoints, lengths, path.GetPoint(0));
+                }
+                else
+                {
+                    // Invalid or empty path. Fall back to point(0,0)
+                    addMove(segmentPoints, lengths, new SKPoint());
+                }
+            }
+
+            float totalLength = lengths.Last();
+            if (totalLength == 0)
+            {
+                // Lone Move instructions should still be able to animate at the same value.
+                segmentPoints.Add(segmentPoints.Last());
+                lengths.Add(1);
+                totalLength = 1;
+            }
+
+            int numPoints = segmentPoints.Count;
+            int approximationArraySize = numPoints * 3;
+
+            float[] approximation = new float[approximationArraySize];
+
+            int approximationIndex = 0;
+            for (int i = 0; i < numPoints; i++)
+            {
+                SKPoint point = segmentPoints[i];
+                approximation[approximationIndex++] = lengths[i] / totalLength;
+                approximation[approximationIndex++] = point.X;
+                approximation[approximationIndex++] = point.Y;
+            }
+
+            return approximation;
+        }
     }
 }

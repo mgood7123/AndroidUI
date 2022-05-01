@@ -7,14 +7,14 @@ namespace AndroidUI
 {
     class SKConic
     {
-        SKConic() { }
-        SKConic(SKPoint p0, SKPoint p1, SKPoint p2, float w) {
+        public SKConic() { }
+        public SKConic(SKPoint p0, SKPoint p1, SKPoint p2, float w) {
             fPts[0] = p0;
             fPts[1] = p1;
             fPts[2] = p2;
             fW = w;
         }
-        SKConic(SKPoint[] pts, float w)
+        public SKConic(SKPoint[] pts, float w)
         {
             set(pts, w);
         }
@@ -22,7 +22,7 @@ namespace AndroidUI
         internal SKPoint[] fPts = new SKPoint[3];
         internal float fW;
 
-        void set(MemoryPointer<SKPoint> pts, float w)
+        public void set(MemoryPointer<SKPoint> pts, float w)
         {
             if (pts.Length < 3)
             {
@@ -34,7 +34,7 @@ namespace AndroidUI
             fW = w;
         }
 
-        void set(SKPoint p0, SKPoint p1, SKPoint p2, float w)
+        public void set(SKPoint p0, SKPoint p1, SKPoint p2, float w)
         {
             fPts[0] = p0;
             fPts[1] = p1;
@@ -49,7 +49,7 @@ namespace AndroidUI
          *  tangent value's length is arbitrary, and only its direction should
          *  be used.
          */
-        void evalAt(float t, MemoryPointer<SKPoint> pos, MemoryPointer<SKPoint> tangent = null)
+        public void evalAt(float t, MemoryPointer<SKPoint> pos, MemoryPointer<SKPoint> tangent = null)
         {
             if (!(t >= 0 && t <= 1.0f))
             {
@@ -73,7 +73,7 @@ namespace AndroidUI
             else interpolate.
             t must be [0..1]
         */
-        static float SkScalarInterp(float A, float B, float t)
+        public static float SkScalarInterp(float A, float B, float t)
         {
             if (!(t >= 0 && t <= 1.0f))
             {
@@ -83,7 +83,7 @@ namespace AndroidUI
         }
 
         // We only interpolate one dimension at a time (the first, at +0, +3, +6).
-        static void p3d_interp(MemoryPointer<float> src, MemoryPointer<float> dst, float t) {
+        public static void p3d_interp(MemoryPointer<float> src, MemoryPointer<float> dst, float t) {
             float ab = SkScalarInterp(src[0], src[3], t);
             float bc = SkScalarInterp(src[3], src[6], t);
             dst[0] = ab;
@@ -91,13 +91,13 @@ namespace AndroidUI
             dst[6] = bc;
         }
 
-        static void ratquad_mapTo3D(SKPoint[] src, float w, SKPoint3[] dst) {
+        public static void ratquad_mapTo3D(SKPoint[] src, float w, SKPoint3[] dst) {
             dst[0].Set(src[0].X * 1, src[0].Y * 1, 1);
             dst[1].Set(src[1].X * w, src[1].Y * w, w);
             dst[2].Set(src[2].X * 1, src[2].Y * 1, 1);
         }
 
-        static SKPoint project_down(SKPoint3 src) {
+        public static SKPoint project_down(SKPoint3 src) {
             return new SKPoint(src.X / src.Z, src.Y / src.Z);
         }
 
@@ -113,7 +113,7 @@ namespace AndroidUI
             return prod == 0;   // if prod is NaN, this check will return false
         }
 
-        bool chopAt(float t, out SKConic[] dst)
+        public bool chopAt(float t, out SKConic[] dst)
         {
             SKPoint3[] tmp = new SKPoint3[3];
             ratquad_mapTo3D(fPts, fW, tmp);
@@ -155,7 +155,7 @@ namespace AndroidUI
             return dst[0].isFinite() && dst[1].isFinite();
         }
 
-        void chopAt(float t1, float t2, out SKConic dst)
+        public void chopAt(float t1, float t2, out SKConic dst)
         {
             if (0 == t1 || 1 == t2)
             {
@@ -194,7 +194,7 @@ namespace AndroidUI
             dst.fW = ww[0];
         }
 
-        void chop(out SKConic[] dst)
+        public void chop(out SKConic[] dst)
         {
             Sk2s scale = new(SkScalarInvert(1.0f + fW));
             float newW = subdivide_w_value(fW);
@@ -225,12 +225,12 @@ namespace AndroidUI
             dst[0].fW = dst[1].fW = newW;
         }
 
-        SKPoint evalAt(float t)
+        public SKPoint evalAt(float t)
         {
             return to_point(new SKConicCoeff(this).eval(t));
         }
 
-        SKPoint evalTangentAt(float t)
+        public SKPoint evalTangentAt(float t)
         {
             // The derivative equation returns a zero tangent vector when t is 0 or 1,
             // and the control point is equal to the end point.
@@ -263,7 +263,7 @@ namespace AndroidUI
             err.Set(x, y);
         }
 
-        bool asQuadTol(float tol)
+        public bool asQuadTol(float tol)
         {
             float a = fW - 1;
             float k = a / (4 * (2 + a));
@@ -273,13 +273,13 @@ namespace AndroidUI
         }
 
         // Limit the number of suggested quads to approximate a conic
-        const byte kMaxConicToQuadPOW2 = 5;
+        const int kMaxConicToQuadPOW2 = 5;
 
         /**
          *  return the power-of-2 number of quads needed to approximate this conic
          *  with a sequence of quads. Will be >= 0.
          */
-        int computeQuadPOW2(float tol)
+        public int computeQuadPOW2(float tol)
         {
             if (tol < 0 || !tol.isFinite() || !SkPointsAreFinite(fPts, 3))
             {
@@ -327,11 +327,11 @@ namespace AndroidUI
 
         // This was originally developed and tested for pathops: see SkOpTypes.h
         // returns true if (a <= b <= c) || (a >= b >= c)
-        static bool between(float a, float b, float c) {
+        public static bool between(float a, float b, float c) {
             return (a - b) * (c - b) <= 0;
         }
 
-        static SKPoint[] subdivide(SKConic src, MemoryPointer<SKPoint> pts, int level)
+        public static SKPoint[] subdivide(SKConic src, MemoryPointer<SKPoint> pts, int level)
         {
             if (!(level >= 0)) throw new Exception("subdivide level must not be less than 0");
 
@@ -394,7 +394,7 @@ namespace AndroidUI
          *  Chop this conic into N quads, stored continguously in pts[], where
          *  N = 1 << pow2. The amount of storage needed is (1 + 2 * N)
          */
-        int chopIntoQuadsPOW2(MemoryPointer<SKPoint> pts, int pow2)
+        public int chopIntoQuadsPOW2(MemoryPointer<SKPoint> pts, int pow2)
         {
             if (!(pow2 >= 0)) throw new Exception("chopIntoQuadsPOW2 pow2 must be greater than 0");
             pts[0] = fPts[0];
@@ -442,7 +442,7 @@ namespace AndroidUI
             return !CanNormalize(p1.X - p2.X, p1.Y - p2.Y);
         }
 
-        float findMidTangent()
+        public float findMidTangent()
         {
             // Tangents point in the direction of increasing T, so tan0 and -tan1 both point toward the
             // midtangent. The bisector of tan0 and -tan1 is orthogonal to the midtangent:
@@ -481,7 +481,7 @@ namespace AndroidUI
         }
 
         // Finds the root nearest 0.5. Returns 0.5 if the roots are undefined or outside 0..1.
-        static float solve_quadratic_equation_for_midtangent(float a, float b, float c, float discr)
+        public static float solve_quadratic_equation_for_midtangent(float a, float b, float c, float discr)
         {
             // Quadratic formula from Numerical Recipes in C:
             float q = -.5f * (b + MathF.CopySign(MathF.Sqrt(discr), b));
@@ -497,12 +497,12 @@ namespace AndroidUI
             return T;
         }
 
-        static float solve_quadratic_equation_for_midtangent(float a, float b, float c)
+        public static float solve_quadratic_equation_for_midtangent(float a, float b, float c)
         {
             return solve_quadratic_equation_for_midtangent(a, b, c, b * b - 4 * a * c);
         }
 
-        SKPoint SkFindBisector(SKPoint a, SKPoint b)
+        public SKPoint SkFindBisector(SKPoint a, SKPoint b)
         {
             float[] v = new float[4];
             if (a.Dot(b) >= 0)
@@ -573,7 +573,7 @@ namespace AndroidUI
         //    coeff[1] for t^1
         //    coeff[2] for t^0
         //
-        private static void conic_deriv_coeff(MemoryPointer<float> src, float w, float[] coeff)
+        public static void conic_deriv_coeff(MemoryPointer<float> src, float w, float[] coeff)
         {
             float P20 = src[4] - src[0];
             float P10 = src[2] - src[0];
@@ -583,7 +583,7 @@ namespace AndroidUI
             coeff[2] = wP10;
         }
 
-        static bool conic_find_extrema(MemoryPointer<float> src, float w, ref float t) {
+        public static bool conic_find_extrema(MemoryPointer<float> src, float w, ref float t) {
             float[] coeff = new float[3];
 
             conic_deriv_coeff(src, w, coeff);
@@ -603,26 +603,26 @@ namespace AndroidUI
             return false;
         }
 
-        static int valid_unit_divide(float number, float denom, MemoryPointer<float> ratio)
+        public static int valid_unit_divide(float numerator, float denominator, MemoryPointer<float> ratio)
         {
-            if (number < 0)
+            if (numerator < 0)
             {
-                number = -number;
-                denom = -denom;
+                numerator = -numerator;
+                denominator = -denominator;
             }
 
-            if (denom == 0 || number == 0 || number >= denom)
+            if (denominator == 0 || numerator == 0 || numerator >= denominator)
             {
                 return 0;
             }
 
-            float r = number / denom;
+            float r = numerator / denominator;
             if (sk_float_isnan(r))
             {
                 return 0;
             }
             if (!(r >= 0 && r < SK_Scalar1)) {
-                throw new Exception("numer " + number + ", denom " + denom + ", r " + r);
+                throw new Exception("numer " + numerator + ", denom " + denominator + ", r " + r);
             };
             if (r == 0)
             { // catch underflow if numer <<<< denom
@@ -634,7 +634,7 @@ namespace AndroidUI
 
         // Just returns its argument, but makes it easy to set a break-point to know when
         // SkFindUnitQuadRoots is going to return 0 (an error).
-        static int return_check_zero(int value)
+        public static int return_check_zero(int value)
         {
             if (value == 0)
             {
@@ -649,7 +649,7 @@ namespace AndroidUI
             x1 = Q / A
             x2 = C / Q
         */
-        static int SkFindUnitQuadRoots(float A, float B, float C, MemoryPointer<float> roots)
+        public static int SkFindUnitQuadRoots(float A, float B, float C, MemoryPointer<float> roots)
         {
             ArgumentNullException.ThrowIfNull(roots, nameof(roots));
 
@@ -691,18 +691,18 @@ namespace AndroidUI
             return return_check_zero((int)(r - roots));
         }
 
-        bool findXExtrema(out float t) {
+        public bool findXExtrema(out float t) {
             t = 0;
             return conic_find_extrema(createSKPointMapper(fPts), fW, ref t);
 
         }
-        bool findYExtrema(out float t)
+        public bool findYExtrema(out float t)
         {
             t = 0;
             return conic_find_extrema(new MemoryPointer<float>(createSKPointMapper(fPts)) + 1, fW, ref t);
         }
 
-        bool chopAtXExtrema(out SKConic[] dst) {
+        public bool chopAtXExtrema(out SKConic[] dst) {
             float t;
             if (findXExtrema(out t)) {
                 if (!chopAt(t, out dst))
@@ -722,7 +722,7 @@ namespace AndroidUI
             return false;
         }
 
-        bool chopAtYExtrema(out SKConic[] dst) {
+        public bool chopAtYExtrema(out SKConic[] dst) {
             float t;
             if (findYExtrema(out t)) {
                 if (!chopAt(t, out dst))
@@ -742,7 +742,7 @@ namespace AndroidUI
             return false;
         }
 
-        void computeTightBounds(ref SKRect bounds) {
+        public void computeTightBounds(ref SKRect bounds) {
             MemoryPointer<SKPoint> pts = new SKPoint[4];
             pts[0] = fPts[0];
             pts[1] = fPts[2];
@@ -760,7 +760,7 @@ namespace AndroidUI
             bounds.setBounds((SKPoint[])pts.GetArray(), count);
         }
 
-        void computeFastBounds(ref SKRect bounds) {
+        public void computeFastBounds(ref SKRect bounds) {
             bounds.setBounds(fPts, 3);
         }
 
@@ -773,7 +773,8 @@ namespace AndroidUI
         //     */
         //    //    bool findMaxCurvature(float* t) const;  // unimplemented
 
-        static float TransformW(SKPoint[] pts, float w, ref SKMatrix matrix) {
+#if false
+        public static float TransformW(SKPoint[] pts, float w, ref SKMatrix matrix) {
             throw new NotImplementedException("this involves pointer casting");
 #if false
             if (!matrix.hasPerspective())
@@ -898,5 +899,6 @@ namespace AndroidUI
             return conicCount;
 #endif
         }
+#endif
     }
 }
