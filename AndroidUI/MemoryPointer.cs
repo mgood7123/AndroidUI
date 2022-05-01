@@ -11,6 +11,8 @@ namespace AndroidUI
     {
         internal int offset = 0;
 
+        int Offset => offset;
+
         public MemoryPointer(Array a) : base(a)
         {
         }
@@ -84,8 +86,17 @@ namespace AndroidUI
             }
 
             MemoryPointer<T> tmp = new MemoryPointer<T>(memoryPointer);
-            tmp.offset++;
+            tmp.offset += value;
             return tmp;
+        }
+
+        /// <summary>
+        /// increments the pointer offset by the specified value
+        /// </summary>
+        public static MemoryPointer<T> operator +(MemoryPointer<T> memoryPointer, MemoryPointer<T> value)
+        {
+            ArgumentNullException.ThrowIfNull(value, nameof(value));
+            return memoryPointer + value.offset;
         }
 
         /// <summary>
@@ -104,8 +115,17 @@ namespace AndroidUI
             }
 
             MemoryPointer<T> tmp = new MemoryPointer<T>(memoryPointer);
-            tmp.offset--;
+            tmp.offset -= value;
             return tmp;
+        }
+
+        /// <summary>
+        /// decrements the pointer offset by the specified pointer
+        /// </summary>
+        public static MemoryPointer<T> operator -(MemoryPointer<T> memoryPointer, MemoryPointer<T> value)
+        {
+            ArgumentNullException.ThrowIfNull(value, nameof(value));
+            return memoryPointer - value.offset;
         }
 
         /// <summary>
@@ -174,6 +194,14 @@ namespace AndroidUI
         public static implicit operator MemoryPointer<T>(Array array)
         {
             return new MemoryPointer<T>(array);
+        }
+
+        /// <summary>
+        /// returns the internal pointer offset
+        /// </summary>
+        public static implicit operator int(MemoryPointer<T> v)
+        {
+            return v.offset;
         }
 
         /// <summary>
