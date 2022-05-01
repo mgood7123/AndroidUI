@@ -8,6 +8,8 @@ namespace AndroidUI
         public abstract void setValue(int arrayIndex, int fieldIndex, T v);
         public abstract T getValue(int arrayIndex, int fieldIndex);
 
+        public abstract void SetObject(object obj);
+
         public abstract int FieldLength { get; }
         public abstract int ArrayLength { get; }
     }
@@ -19,8 +21,8 @@ namespace AndroidUI
     public unsafe class Mapper<C, T> : IMapper<T>, IDisposable where C : class
     {
         C obj;
-        private readonly int length;
-        private readonly int arrayLength;
+        private int length;
+        private int arrayLength;
         private bool disposedValue;
 
         private event MapperField<C, T> ev;
@@ -31,10 +33,36 @@ namespace AndroidUI
         public override int FieldLength => length;
         public override int ArrayLength => arrayLength;
 
+        /// <summary>
+        /// this exists purely for passing to MapToArray
+        /// <br></br>
+        /// please use another constructor
+        /// </summary>
+        public Mapper()
+        {
+        }
+
+        public Mapper(MapperField<C, T> field, int fieldCount) : this(null, field, fieldCount)
+        { }
+
+        public Mapper(MapperFieldGet<C, T> getField, MapperFieldSet<C, T> setField, int fieldCount) : this(null, getField, setField, fieldCount)
+        { }
+
+        public Mapper(C obj, MapperField<C, T> field, int fieldCount)
+        {
+            this.obj = obj;
+
+            if (fieldCount <= 0) throw new ArgumentOutOfRangeException(nameof(fieldCount), "fieldCount must be greater than zero");
+
+            length = fieldCount;
+            arrayLength = obj is Array ? (obj as Array).Length : 1;
+            if (arrayLength == 0) throw new ArgumentOutOfRangeException(nameof(obj), "array length cannot be zero");
+            ev = field ?? throw new ArgumentNullException(nameof(field));
+        }
 
         public Mapper(C obj, MapperFieldGet<C, T> getField, MapperFieldSet<C, T> setField, int fieldCount)
         {
-            this.obj = obj ?? throw new ArgumentNullException(nameof(obj));
+            this.obj = obj;
 
             if (fieldCount <= 0) throw new ArgumentOutOfRangeException(nameof(fieldCount), "fieldCount must be greater than zero");
 
@@ -46,17 +74,7 @@ namespace AndroidUI
             set_ev = setField ?? throw new ArgumentNullException(nameof(setField));
         }
 
-        public Mapper(C obj, MapperField<C, T> field, int fieldCount)
-        {
-            this.obj = obj ?? throw new ArgumentNullException(nameof(obj));
-
-            if (fieldCount <= 0) throw new ArgumentOutOfRangeException(nameof(fieldCount), "fieldCount must be greater than zero");
-
-            length = fieldCount;
-            arrayLength = obj is Array ? (obj as Array).Length : 1;
-            if (arrayLength == 0) throw new ArgumentOutOfRangeException(nameof(obj), "array length cannot be zero");
-            ev = field ?? throw new ArgumentNullException(nameof(field));
-        }
+        public override void SetObject(object obj) => this.obj = (C)obj;
 
         public override void setValue(int arrayIndex, int fieldIndex, ref T v)
         {
@@ -160,13 +178,16 @@ namespace AndroidUI
         {
             ArgumentNullException.ThrowIfNull(array, nameof(array));
             Type array_type = getArrayType(array);
-            if (array_type == typeof(IMapper<T>)) {
+            if (array_type == typeof(IMapper<T>))
+            {
                 isMapper = true;
                 if (!isMapperSameLength(array))
                 {
                     throw new InvalidDataException("all mappers must have the same length");
                 }
-            } else {
+            }
+            else
+            {
                 Type target_type = typeof(T);
                 if (array_type != target_type)
                 {
@@ -504,6 +525,23 @@ namespace AndroidUI
             return map;
         }
 
+        /// <summary>
+        /// swaps the values at index A and B
+        /// </summary>
+        public void Swap(int A, int B)
+        {
+            T tmp = this[A];
+            this[A] = this[B];
+            this[B] = tmp;
+        }
+
+        public T[] MapToArray<C, T>(Mapper<C, T>[] mapper) where C : class
+        {
+            ArgumentNullException.ThrowIfNull(mapper, nameof(mapper));
+            mapper[0].SetObject(value);
+            return new ContiguousArray<T>(mapper).ToArray();
+        }
+
         private class ContiguousArrayEnumerator<T> : IEnumerator<T>
         {
             ContiguousArray<T> contiguousArray;
@@ -540,7 +578,7 @@ namespace AndroidUI
 
             object IEnumerator.Current => Current;
         }
-        
+
         public virtual IEnumerator<T> GetEnumerator()
         {
             return new ContiguousArrayEnumerator<T>(this);
