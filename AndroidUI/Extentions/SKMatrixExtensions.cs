@@ -42,6 +42,43 @@ namespace AndroidUI.Extensions
         ///////////////////////////////////////////////////////////////////////////////
 
 #if false
+        void MapHomogeneousPointsWithStride(ref SKMatrix mx, Span<SKPoint3> dst,
+                                                          long dstStride, ReadOnlySpan<SKPoint3> src,
+                                                          long srcStride, int count) {
+    if (count > 0) {
+        if (mx.IsIdentity) {
+                    unsafe
+                    {
+                        if (srcStride == sizeof(SKPoint3) && dstStride == sizeof(SKPoint3))
+                        {
+                            src.Slice(0, count).CopyTo(dst);
+                        }
+                        else
+                        {
+                            for (int i = 0; i < count; ++i)
+                            {
+                                fixed (SKPoint3* srcP = src)
+                                {
+                                    fixed (SKPoint3* dstP = dst)
+                                    {
+                                        for (int i_ = 0; i_ < count; i_++)
+                                        {
+                                            *dstP = *srcP;
+                                            dstP = (SKPoint3*)((byte*)dstP + dstStride);
+                                            srcP = (SKPoint3*)((byte*)srcP + srcStride);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return;
+        }
+#endif
+
+#if false
         void MapHomogeneousPointsWithStride(ref SKMatrix mx, MemoryPointer<SKPoint3> dst,
                                                           long dstStride, MemoryPointer<SKPoint3> src,
                                                           long srcStride, int count) {
