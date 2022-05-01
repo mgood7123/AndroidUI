@@ -231,7 +231,13 @@ namespace AndroidUITest
                     Tools.ExpectEqual(x4[1].x, 77, "x4 77");
                     Tools.ExpectEqual(x4[1].y, 88, "x4 88");
                     AndroidUI.ContiguousArray<int> c = new AndroidUI.Mapper<XY[], int>[1] {
-                        new(x4, (obj, arrayIndex, index) => ref index == 0 ? ref obj[arrayIndex].x : ref obj[arrayIndex].y, 2)
+                        new(x4, (obj, arrayIndex, index) => {
+                            if (index == 0)
+                            {
+                                return ref obj[arrayIndex].x;
+                            }
+                            return ref obj[arrayIndex].y;
+                        }, 2)
                     };
                     c[0] = 5577;
                     c[1] = 6677;

@@ -13,6 +13,8 @@ namespace AndroidUI
     }
 
     public delegate ref Type MapperField<Class, Type>(Class obj, int arrayIndex, int fieldIndex);
+    public delegate Type MapperFieldGet<Class, Type>(Class obj, int arrayIndex, int fieldIndex);
+    public delegate void MapperFieldSet<Class, Type>(Class obj, int arrayIndex, int fieldIndex, Type value);
 
     public unsafe class Mapper<C, T> : IMapper<T>, IDisposable where C : class
     {
@@ -22,10 +24,27 @@ namespace AndroidUI
         private bool disposedValue;
 
         private event MapperField<C, T> ev;
+        private bool hasGetSet;
+        private event MapperFieldGet<C, T> get_ev;
+        private event MapperFieldSet<C, T> set_ev;
 
         public override int FieldLength => length;
         public override int ArrayLength => arrayLength;
 
+
+        public Mapper(C obj, MapperFieldGet<C, T> getField, MapperFieldSet<C, T> setField, int fieldCount)
+        {
+            this.obj = obj ?? throw new ArgumentNullException(nameof(obj));
+
+            if (fieldCount <= 0) throw new ArgumentOutOfRangeException(nameof(fieldCount), "fieldCount must be greater than zero");
+
+            length = fieldCount;
+            arrayLength = obj is Array ? (obj as Array).Length : 1;
+            if (arrayLength == 0) throw new ArgumentOutOfRangeException(nameof(obj), "array length cannot be zero");
+            hasGetSet = true;
+            get_ev = getField ?? throw new ArgumentNullException(nameof(getField));
+            set_ev = setField ?? throw new ArgumentNullException(nameof(setField));
+        }
 
         public Mapper(C obj, MapperField<C, T> field, int fieldCount)
         {
@@ -39,9 +58,23 @@ namespace AndroidUI
             ev = field ?? throw new ArgumentNullException(nameof(field));
         }
 
-        public override void setValue(int arrayIndex, int fieldIndex, ref T v) => ev.Invoke(obj, arrayIndex, fieldIndex) = v;
-        public override void setValue(int arrayIndex, int fieldIndex, T v) => ev.Invoke(obj, arrayIndex, fieldIndex) = v;
-        public override T getValue(int arrayIndex, int fieldIndex) => ev.Invoke(obj, arrayIndex, fieldIndex);
+        public override void setValue(int arrayIndex, int fieldIndex, ref T v)
+        {
+            if (hasGetSet) set_ev.Invoke(obj, arrayIndex, fieldIndex, v);
+            else ev.Invoke(obj, arrayIndex, fieldIndex) = v;
+        }
+
+        public override void setValue(int arrayIndex, int fieldIndex, T v)
+        {
+            if (hasGetSet) set_ev.Invoke(obj, arrayIndex, fieldIndex, v);
+            else ev.Invoke(obj, arrayIndex, fieldIndex) = v;
+        }
+
+        public override T getValue(int arrayIndex, int fieldIndex)
+        {
+            if (hasGetSet) return get_ev.Invoke(obj, arrayIndex, fieldIndex);
+            else return ev.Invoke(obj, arrayIndex, fieldIndex);
+        }
 
         protected virtual void Dispose(bool disposing)
         {
@@ -54,10 +87,26 @@ namespace AndroidUI
 
                 // TODO: free unmanaged resources (unmanaged objects) and override finalizer
                 // TODO: set large fields to null
-                Delegate[] delegates = ev.GetInvocationList();
-                foreach (Delegate @delegate in delegates)
+                if (hasGetSet)
                 {
-                    ev -= (MapperField<C, T>)@delegate;
+                    Delegate[] delegates = get_ev.GetInvocationList();
+                    foreach (Delegate @delegate in delegates)
+                    {
+                        get_ev -= (MapperFieldGet<C, T>)@delegate;
+                    }
+                    delegates = set_ev.GetInvocationList();
+                    foreach (Delegate @delegate in delegates)
+                    {
+                        set_ev -= (MapperFieldSet<C, T>)@delegate;
+                    }
+                }
+                else
+                {
+                    Delegate[] delegates = ev.GetInvocationList();
+                    foreach (Delegate @delegate in delegates)
+                    {
+                        ev -= (MapperField<C, T>)@delegate;
+                    }
                 }
                 disposedValue = true;
             }
