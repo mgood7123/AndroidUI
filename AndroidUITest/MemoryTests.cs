@@ -172,5 +172,77 @@ namespace AndroidUITest
                 }
             }
         }
+
+        class Assignment : TestGroup
+        {
+            public class X
+            {
+                public int x;
+
+                public X(int x)
+                {
+                    this.x = x;
+                }
+            }
+
+            public struct XY
+            {
+                public int x;
+                public int y;
+
+                public XY(int x, int y)
+                {
+                    this.x = x;
+                    this.y = y;
+                }
+            }
+
+            class t : Test
+            {
+                public override void Run(TestGroup nullableInstance)
+                {
+                    X x1 = new X(5);
+                    X x2 = new X(5);
+                    Tools.ExpectEqual(x1.x, 5, "x1 5");
+                    Tools.ExpectEqual(x2.x, 5, "x2 5");
+                    AndroidUI.ContiguousArray<int> a = new AndroidUI.Mapper<X, int>[2] {
+                        new(x1, (obj, arrayIndex, index) => ref obj.x, 1),
+                        new(x2, (obj, arrayIndex, index) => ref obj.x, 1)
+                    };
+                    a[0] = 1;
+                    a[1] = 2;
+                    Tools.ExpectEqual(x1.x, 1, "x1 1");
+                    Tools.ExpectEqual(x2.x, 2, "x2 2");
+
+                    AndroidUI.ValueHolder<XY> x3 = new XY(55, 66);
+                    Tools.ExpectEqual(x3.value.x, 55, "x3 55");
+                    Tools.ExpectEqual(x3.value.y, 66, "x3 66");
+                    AndroidUI.ContiguousArray<int> b = new AndroidUI.Mapper<AndroidUI.ValueHolder<XY>, int>[1] {
+                        new(x3, (obj, arrayIndex, index) => ref index == 0 ? ref obj.value.x : ref obj.value.y, 2)
+                    };
+                    b[0] = 5577;
+                    b[1] = 6677;
+                    Tools.ExpectEqual(x3.value.x, 5577, "x3 5577");
+                    Tools.ExpectEqual(x3.value.y, 6677, "x3 6677");
+
+                    XY[] x4 = new XY[2] { new(55, 66), new(77, 88) };
+                    Tools.ExpectEqual(x4[0].x, 55, "x4 55");
+                    Tools.ExpectEqual(x4[0].y, 66, "x4 66");
+                    Tools.ExpectEqual(x4[1].x, 77, "x4 77");
+                    Tools.ExpectEqual(x4[1].y, 88, "x4 88");
+                    AndroidUI.ContiguousArray<int> c = new AndroidUI.Mapper<XY[], int>[1] {
+                        new(x4, (obj, arrayIndex, index) => ref index == 0 ? ref obj[arrayIndex].x : ref obj[arrayIndex].y, 2)
+                    };
+                    c[0] = 5577;
+                    c[1] = 6677;
+                    c[2] = 7777;
+                    c[3] = 8877;
+                    Tools.ExpectEqual(x4[0].x, 5577, "x4 5577");
+                    Tools.ExpectEqual(x4[0].y, 6677, "x4 6677");
+                    Tools.ExpectEqual(x4[1].x, 7777, "x4 7777");
+                    Tools.ExpectEqual(x4[1].y, 8877, "x4 8877");
+                }
+            }
+        }
     }
 }
