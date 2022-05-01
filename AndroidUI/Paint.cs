@@ -20,9 +20,9 @@ namespace AndroidUI
     using SkiaSharp;
 
     /**
-* The Paint class holds the style and color information about how to draw
-* geometries, text and bitmaps.
-*/
+    * The Paint class holds the style and color information about how to draw
+    * geometries, text and bitmaps.
+    */
     public class Paint
     {
 

@@ -228,5 +228,101 @@ namespace AndroidUI.Extensions
             // avoid allocating a new SKRect
             canvas.DrawRect(x1, y1, x2 - x1, y2 - y1, paint);
         }
+
+        static void throwIfCannotDraw(Bitmap bitmap)
+        {
+            if (bitmap.isRecycled())
+            {
+                throw new Exception("Canvas: trying to use a recycled bitmap " + bitmap);
+            }
+            if (!bitmap.isPremultiplied() && bitmap.getConfig() == Bitmap.Config.ARGB_8888 &&
+                    bitmap.hasAlpha())
+            {
+                throw new Exception("Canvas: trying to use a non-premultiplied bitmap "
+                        + bitmap);
+            }
+        }
+
+        public static void DrawPatch(this SKCanvas canvas, NinePatch patch, Rect dst, SKPaint paint)
+        {
+            Bitmap bitmap = patch.getBitmap();
+            throwIfCannotDraw(bitmap);
+            canvas.DrawNinePatch(bitmap.getNativeInstance(), patch.mNativeChunk,
+                    dst.left, dst.top, dst.right, dst.bottom, paint,
+                    Bitmap.DENSITY_NONE, patch.getDensity());
+        }
+
+        public static void DrawPatch(this SKCanvas canvas, NinePatch patch, RectF dst, SKPaint paint)
+        {
+            Bitmap bitmap = patch.getBitmap();
+            throwIfCannotDraw(bitmap);
+            canvas.DrawNinePatch(bitmap.getNativeInstance(), patch.mNativeChunk,
+                    dst.left, dst.top, dst.right, dst.bottom, paint,
+                    Bitmap.DENSITY_NONE, patch.getDensity());
+        }
+
+        public static void DrawNinePatch(
+            this SKCanvas canvas, SKBitmap bitmap, long nativeChunk,
+            float left, float top, float right, float bottom,
+            SKPaint paint, int dstDensity, int srcDensity
+        )
+        {
+            if (dstDensity == srcDensity || dstDensity == 0 || srcDensity == 0)
+            {
+                canvas.DrawNinePatch(bitmap, nativeChunk, left, top, right, bottom, paint);
+            }
+            else
+            {
+                canvas.Save();
+                float scale = dstDensity / (float)srcDensity;
+                canvas.Translate(left, top);
+                canvas.Scale(scale, scale);
+
+                SKPaint filteredPaint = paint == null ? new SKPaint() : paint;
+                filteredPaint.FilterQuality = SKFilterQuality.Low;
+
+                canvas.DrawNinePatch(bitmap, nativeChunk, 0, 0, (right - left) / scale, (bottom - top) / scale,
+                        filteredPaint);
+                canvas.Restore();
+            }
+        }
+
+        public static void DrawNinePatch(
+            this SKCanvas canvas, SKBitmap bitmap, long chunk,
+            float dstLeft, float dstTop, float dstRight, float dstBottom,
+            SKPaint paint
+        )
+        {
+            throw new Exception("Canvas: DrawNinePatch is not implemented");
+#if false
+            SkCanvas::Lattice lattice;
+            NinePatchUtils::SetLatticeDivs(&lattice, chunk, bitmap.width(), bitmap.height());
+
+            lattice.fRectTypes = nullptr;
+            lattice.fColors = nullptr;
+            int numFlags = 0;
+            if (chunk.numColors > 0 && chunk.numColors == NinePatchUtils::NumDistinctRects(lattice))
+            {
+                // We can expect the framework to give us a color for every distinct rect.
+                // Skia requires a flag for every rect.
+                numFlags = (lattice.fXCount + 1) * (lattice.fYCount + 1);
+            }
+
+            SkAutoSTMalloc < 25, SkCanvas::Lattice::RectType > flags(numFlags);
+            SkAutoSTMalloc < 25, SkColor > colors(numFlags);
+            if (numFlags > 0)
+            {
+                NinePatchUtils::SetLatticeFlags(&lattice, flags.get(), numFlags, chunk, colors.get());
+            }
+
+            lattice.fBounds = nullptr;
+            SkRect dst = SkRect::MakeLTRB(dstLeft, dstTop, dstRight, dstBottom);
+            auto image = bitmap.makeImage();
+            applyLooper(paint, [&](const SkPaint&p) {
+                auto filter = SkSamplingOptions(p.getFilterQuality()).filter;
+                mCanvas->drawImageLattice(image.get(), lattice, dst, filter, &p);
+            });
+#endif
+        }
     }
 }
