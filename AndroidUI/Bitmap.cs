@@ -74,7 +74,7 @@ namespace AndroidUI
             sDefaultDensity = density;
         }
 
-        static int getDefaultDensity()
+        internal static int getDefaultDensity()
         {
             if (sDefaultDensity >= 0)
             {
@@ -450,7 +450,7 @@ namespace AndroidUI
              * No color information is stored.
              * With this configuration, each pixel requires 1 byte of memory.
              */
-            public const int ALPHA_8 = 1;
+            public static readonly Config ALPHA_8 = new Config(1);
 
             /**
              * Each pixel is stored on 2 bytes and only the RGB channels are
@@ -471,7 +471,7 @@ namespace AndroidUI
              * short color = (R & 0x1f) << 11 | (G & 0x3f) << 5 | (B & 0x1f);
              * </pre>
              */
-            public const int RGB_565 = 3;
+            public static readonly Config RGB_565 = new Config(3);
 
             /**
              * Each pixel is stored on 2 bytes. The three RGB color channels
@@ -492,7 +492,7 @@ namespace AndroidUI
              * @deprecated Because of the poor quality of this configuration,
              *             it is advised to use {@link #ARGB_8888} instead.
              */
-            public const int ARGB_4444 = 4;
+            public static readonly Config ARGB_4444 = new Config(4);
 
             /**
              * Each pixel is stored on 4 bytes. Each channel (RGB and alpha
@@ -507,7 +507,7 @@ namespace AndroidUI
              * int color = (A & 0xff) << 24 | (B & 0xff) << 16 | (G & 0xff) << 8 | (R & 0xff);
              * </pre>
              */
-            public const int ARGB_8888 = 5;
+            public static readonly Config ARGB_8888 = new Config(5);
 
             /**
              * Each pixels is stored on 8 bytes. Each channel (RGB and alpha
@@ -522,7 +522,7 @@ namespace AndroidUI
              * long color = (A & 0xffff) << 48 | (B & 0xffff) << 32 | (G & 0xffff) << 16 | (R & 0xffff);
              * </pre>
              */
-            public const int RGBA_F16 = 6;
+            public static readonly Config RGBA_F16 = new Config(6);
 
             /**
              * Special configuration, when bitmap is stored only in graphic memory.
@@ -531,15 +531,13 @@ namespace AndroidUI
              * It is optimal for cases, when the only operation with the bitmap is to draw it on a
              * screen.
              */
-            public const int HARDWARE = 7;
+            public static readonly Config HARDWARE = new Config(7);
 
             internal int nativeInt;
 
             private static readonly Config[] sConfigs = {
-                new Config(0), new Config(ALPHA_8),
-                new Config(0), new Config(RGB_565),
-                new Config(ARGB_4444), new Config(ARGB_8888),
-                new Config(RGBA_F16), new Config(HARDWARE)
+                new Config(0), ALPHA_8, new Config(0), RGB_565,
+                ARGB_4444, ARGB_8888, RGBA_F16, HARDWARE
             };
 
             internal Config(int ni)
@@ -874,28 +872,26 @@ namespace AndroidUI
             RectF dstR = new RectF(0, 0, width, height);
             RectF deviceR = new RectF();
 
-            int newConfig = Config.ARGB_8888;
+            Config newConfig = Config.ARGB_8888;
             Config config = source.getConfig();
             // GIF files generate null configs, assume ARGB_8888
             if (config != null)
             {
-                switch (config.nativeInt)
+                if (config.nativeInt == Config.RGB_565.nativeInt)
                 {
-                    case Config.RGB_565:
-                        newConfig = Config.RGB_565;
-                        break;
-                    case Config.ALPHA_8:
-                        newConfig = Config.ALPHA_8;
-                        break;
-                    case Config.RGBA_F16:
-                        newConfig = Config.RGBA_F16;
-                        break;
-                    //noinspection deprecation
-                    case Config.ARGB_4444:
-                    case Config.ARGB_8888:
-                    default:
-                        newConfig = Config.ARGB_8888;
-                        break;
+                    newConfig = Config.RGB_565;
+                }
+                else if (config.nativeInt == Config.ALPHA_8.nativeInt)
+                {
+                    newConfig = Config.ALPHA_8;
+                }
+                else if (config.nativeInt == Config.RGBA_F16.nativeInt)
+                {
+                    newConfig = Config.RGBA_F16;
+                }
+                else
+                {
+                    newConfig = Config.ARGB_8888;
                 }
             }
 

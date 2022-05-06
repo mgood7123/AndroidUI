@@ -1,1 +1,1 @@
-﻿AndroidUITestFramework.Main.Run(typeof(AndroidUITest.MemoryTests));
+﻿AndroidUITestFramework.Main.Run(typeof(AndroidUITest.BindingTest));
