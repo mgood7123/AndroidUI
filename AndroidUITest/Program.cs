@@ -1,1 +1,1 @@
-﻿AndroidUITestFramework.Main.Run(typeof(AndroidUITest.BindingTest));
+﻿AndroidUITestFramework.Main.Run(typeof(AndroidUITest.Skia));

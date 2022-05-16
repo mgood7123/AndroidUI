@@ -111,6 +111,9 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
+    <Link>
+      <LibraryDependencies>$(SolutionDir)AndroidUI.Native.Nuget/deps/monoandroid-x64/libHarfBuzzSharp.so;$(SolutionDir)AndroidUI.Native.Nuget/deps/monoandroid-x64/libSkiaSharp.so;%(LibraryDependencies)</LibraryDependencies>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>

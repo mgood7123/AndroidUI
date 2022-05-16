@@ -35,7 +35,14 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AndroidUI.Native.Nuget", "A
 		{80E40EAF-DBC7-4273-80FE-50B2EE183C17} = {80E40EAF-DBC7-4273-80FE-50B2EE183C17}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OtherPlatforms", "OtherPlatforms\OtherPlatforms.csproj", "{59F9EE6F-FDA6-4BF0-9466-E551CDDC3C2E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OtherPlatforms", "OtherPlatforms\OtherPlatforms.csproj", "{59F9EE6F-FDA6-4BF0-9466-E551CDDC3C2E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5906E96A-F270-41AB-AE25-D220F601309D}"
+	ProjectSection(SolutionItems) = preProject
+		BuildNuget.ps1 = BuildNuget.ps1
+		Modifying.md = Modifying.md
+		README.md = README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

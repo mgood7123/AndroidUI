@@ -365,14 +365,14 @@ namespace AndroidUI
          *
          * @return The current generation ID for this bitmap.
          */
-        public int getGenerationId()
+        public uint getGenerationId()
         {
             if (mRecycled)
             {
                 Log.w(TAG, "Called getGenerationId() on a recycle()'d bitmap! This is undefined behavior!");
             }
             // TODO
-            return 0;
+            return mNativePtr.GenerationId;
         }
 
         /**

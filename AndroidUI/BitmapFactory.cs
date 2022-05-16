@@ -1046,7 +1046,6 @@ namespace AndroidUI
                         if (0 == remainder)
                         {
                             float scale = get_scale_from_sample_size(supportedSampleSize);
-
                             // this->codec() will scale to this size.
                             preSampledSize = codec().GetScaledDimensions(scale);
 
