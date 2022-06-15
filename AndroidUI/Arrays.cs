@@ -275,7 +275,7 @@ namespace AndroidUI
         }
 
         /// <summary>
-        /// creates a managed array containing a copy the contents pointed to by ptr
+        /// creates a managed array containing a copy of the contents pointed to by ptr
         /// </summary>
         public static unsafe T[] FromNative<T>(void* ptr, int length) where T : unmanaged
         {

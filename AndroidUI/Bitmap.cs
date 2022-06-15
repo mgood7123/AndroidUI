@@ -91,7 +91,7 @@ namespace AndroidUI
          * int (pointer).
          */
         // JNI now calls the version below this one. This is preserved due to UnsupportedAppUsage.
-        public Bitmap(SKBitmap nativeBitmap, int width, int height)
+        internal Bitmap(SKBitmap nativeBitmap, int width, int height)
             : this(nativeBitmap, width, height, DensityManager.ScreenDpi, false, null, null, true)
         {
         }
