@@ -1,5 +1,4 @@
-﻿using Microsoft.Maui.Handlers;
-#if ANDROID
+﻿#if ANDROID
 using OtherPlatforms.Platforms.Android;
 #endif
 

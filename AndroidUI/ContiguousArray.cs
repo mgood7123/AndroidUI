@@ -158,7 +158,7 @@ namespace AndroidUI
         protected int length;
         private bool isMapper;
 
-        public int Length => length;
+        public virtual int Length => length;
 
         /// <summary>
         /// this exists purely for decleration as a field
@@ -214,6 +214,27 @@ namespace AndroidUI
             AssignFrom(contiguousArray);
         }
 
+        public void Fill(T value)
+        {
+            for (int i = 0; i < Length; i++)
+            {
+                this[i] = value;
+            }
+        }
+
+        public void Fill(T value, int length)
+        {
+            if (this.length < length)
+            {
+                throw new ArgumentOutOfRangeException("given length (" + length + ") is greater than this.length (" + this.length + ")");
+            }
+
+            for (int i = 0; i < length; i++)
+            {
+                this[i] = value;
+            }
+        }
+
         public void Copy(ContiguousArray<T> dest)
         {
             if (length != dest.length)
@@ -231,12 +252,12 @@ namespace AndroidUI
         {
             if (this.length < length)
             {
-                throw new ArgumentOutOfRangeException("given length (" + length + ") differs from this.length (" + this.length + ")");
+                throw new ArgumentOutOfRangeException("given length (" + length + ") is greater than this.length (" + this.length + ")");
             }
 
             if (dest.length < length)
             {
-                throw new ArgumentOutOfRangeException("given length (" + length + ") differs from dest length (" + dest.length + ")");
+                throw new ArgumentOutOfRangeException("given length (" + length + ") is greater than dest length (" + dest.length + ")");
             }
 
             for (int i = 0; i < length; i++)
@@ -262,12 +283,12 @@ namespace AndroidUI
         {
             if (this.length < length)
             {
-                throw new ArgumentOutOfRangeException("given length (" + length + ") differs from this.length (" + this.length + ")");
+                throw new ArgumentOutOfRangeException("given length (" + length + ") is greater than this.length (" + this.length + ")");
             }
 
             if (dest.Length < length)
             {
-                throw new ArgumentOutOfRangeException("given length (" + length + ") differs from dest length (" + dest.Length + ")");
+                throw new ArgumentOutOfRangeException("given length (" + length + ") is greater than dest length (" + dest.Length + ")");
             }
 
             for (int i = 0; i < length; i++)

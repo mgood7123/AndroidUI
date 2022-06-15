@@ -79,7 +79,7 @@ namespace AndroidUI
         /**
          * @hide
          */
-        override public void clearMutated()
+        override internal void clearMutated()
         {
             base.clearMutated();
             mMutated = false;
@@ -230,9 +230,9 @@ namespace AndroidUI
          * @hide
          * @param mode new transfer mode
          */
-        internal override void setXfermode(BlendMode mode)
+        internal override void setXfermode(Xfermode mode)
         {
-            mPaint.setXfermode((Xfermode)(object)mode);
+            mPaint.setXfermode(mode);
             invalidateSelf();
         }
 
@@ -245,21 +245,21 @@ namespace AndroidUI
             return mPaint.getXfermode();
         }
 
-        override public int getOpacity()
+        override public PixelFormat getOpacity()
         {
             if (mBlendModeColorFilter != null || mPaint.getColorFilter() != null)
             {
-                return (int)PixelFormat.TRANSLUCENT;
+                return PixelFormat.TRANSLUCENT;
             }
 
             switch (mColorState.mUseColor.UnsignedRightShift(24))
             {
                 case 255:
-                    return (int)PixelFormat.OPAQUE;
+                    return PixelFormat.OPAQUE;
                 case 0:
-                    return (int)PixelFormat.TRANSPARENT;
+                    return PixelFormat.TRANSPARENT;
             }
-            return (int)PixelFormat.TRANSLUCENT;
+            return PixelFormat.TRANSLUCENT;
         }
 
         override public void getOutline(Outline outline)

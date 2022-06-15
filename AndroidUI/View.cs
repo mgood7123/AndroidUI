@@ -15,6 +15,7 @@
  */
 
 using System.Drawing;
+using AndroidUI.Exceptions;
 using AndroidUI.Extensions;
 using SkiaSharp;
 
@@ -23,7 +24,7 @@ namespace AndroidUI
     using static View.LayoutParams;
 
 
-    public class View : Parent
+    public class View : Parent, Drawable.Callback
     {
 
         public void onDescendantUnbufferedRequested()
@@ -419,11 +420,11 @@ namespace AndroidUI
         {
             if (detached)
             {
-                mPrivateFlags |= PFLAG_DETACHED;
+                mPrivateFlags4 |= PFLAG4_DETACHED;
             }
             else
             {
-                mPrivateFlags &= ~PFLAG_DETACHED;
+                mPrivateFlags4 &= ~PFLAG4_DETACHED;
             }
         }
 
@@ -433,7 +434,7 @@ namespace AndroidUI
             //noinspection ConstantConditions
             do
             {
-                if ((current.mPrivateFlags & PFLAG_DETACHED) != 0)
+                if ((current.mPrivateFlags4 & PFLAG4_DETACHED) != 0)
                 {
                     return true;
                 }
@@ -458,7 +459,7 @@ namespace AndroidUI
          */
         bool isAggregatedVisible()
         {
-            return (mPrivateFlags & PFLAG_AGGREGATED_VISIBLE) != 0;
+            return (mPrivateFlags3 & PFLAG3_AGGREGATED_VISIBLE) != 0;
         }
 
         /**
@@ -488,32 +489,32 @@ namespace AndroidUI
          * @param isVisible true if this view and all of its ancestors are {@link #VISIBLE}
          *                  and this view's window is also visible
          */
-        public void onVisibilityAggregated(bool isVisible)
+        virtual public void onVisibilityAggregated(bool isVisible)
         {
             // Update our internal visibility tracking so we can detect changes
             bool oldVisible = isAggregatedVisible();
-            mPrivateFlags = isVisible ? (mPrivateFlags | PFLAG_AGGREGATED_VISIBLE)
-                    : (mPrivateFlags & ~PFLAG_AGGREGATED_VISIBLE);
+            mPrivateFlags3 = isVisible ? (mPrivateFlags3 | PFLAG3_AGGREGATED_VISIBLE)
+                    : (mPrivateFlags3 & ~PFLAG3_AGGREGATED_VISIBLE);
             if (isVisible && mAttachInfo != null)
             {
                 //initialAwakenScrollBars();
             }
 
-            //Drawable dr = mBackground;
-            //if (dr != null && isVisible != dr.isVisible())
-            //{
-            //    dr.setVisible(isVisible, false);
-            //}
-            //Drawable hl = mDefaultFocusHighlight;
-            //if (hl != null && isVisible != hl.isVisible())
-            //{
-            //    hl.setVisible(isVisible, false);
-            //}
-            //Drawable fg = mForegroundInfo != null ? mForegroundInfo.mDrawable : null;
-            //if (fg != null && isVisible != fg.isVisible())
-            //{
-            //    fg.setVisible(isVisible, false);
-            //}
+            Drawable dr = mBackground;
+            if (dr != null && isVisible != dr.isVisible())
+            {
+                dr.setVisible(isVisible, false);
+            }
+            Drawable hl = mDefaultFocusHighlight;
+            if (hl != null && isVisible != hl.isVisible())
+            {
+                hl.setVisible(isVisible, false);
+            }
+            Drawable fg = mForegroundInfo != null ? mForegroundInfo.mDrawable : null;
+            if (fg != null && isVisible != fg.isVisible())
+            {
+                fg.setVisible(isVisible, false);
+            }
 
             //if (isAutofillable())
             //{
@@ -695,7 +696,7 @@ namespace AndroidUI
             if ((mPrivateFlags & PFLAG_DRAWABLE_STATE_DIRTY) != 0)
             {
                 // If nobody has evaluated the drawable state yet, then do it now.
-                //refreshDrawableState();
+                refreshDrawableState();
             }
             //needGlobalAttributesUpdate(false);
 
@@ -844,16 +845,16 @@ namespace AndroidUI
          *
          * @see #onDetachedFromWindow()
          */
-        protected void onAttachedToWindow()
+        virtual protected void onAttachedToWindow()
         {
             //if ((mPrivateFlags & PFLAG_REQUEST_TRANSPARENT_REGIONS) != 0)
             //{
             //mParent.requestTransparentRegion(this);
             //}
 
-            mPrivateFlags &= ~PFLAG_IS_LAID_OUT;
+            mPrivateFlags3 &= ~PFLAG3_IS_LAID_OUT;
 
-            //jumpDrawablesToCurrentState();
+            jumpDrawablesToCurrentState();
 
             //AccessibilityNodeIdManager.getInstance().registerViewWithId(this, getAccessibilityViewId());
             //resetSubtreeAccessibilityStateChanged();
@@ -1082,7 +1083,7 @@ namespace AndroidUI
          */
         public int getRawLayoutDirection()
         {
-            return (mPrivateFlags2 & PFLAG2_LAYOUT_DIRECTION_MASK) >> PFLAG2_LAYOUT_DIRECTION_MASK_SHIFT;
+            return (int)((mPrivateFlags2 & PFLAG2_LAYOUT_DIRECTION_MASK) >> (int)PFLAG2_LAYOUT_DIRECTION_MASK_SHIFT);
         }
 
         /**
@@ -1411,7 +1412,7 @@ namespace AndroidUI
          *
          * @see #onAttachedToWindow()
          */
-        protected void onDetachedFromWindow()
+        virtual protected void onDetachedFromWindow()
         {
         }
 
@@ -1428,8 +1429,8 @@ namespace AndroidUI
         protected void onDetachedFromWindowInternal()
         {
             mPrivateFlags &= ~PFLAG_CANCEL_NEXT_UP_EVENT;
-            mPrivateFlags &= ~PFLAG_IS_LAID_OUT;
-            mPrivateFlags &= ~PFLAG_TEMPORARY_DETACH;
+            mPrivateFlags3 &= ~PFLAG3_IS_LAID_OUT;
+            mPrivateFlags3 &= ~PFLAG3_TEMPORARY_DETACH;
 
             removeUnsetPressCallback();
             removeLongPressCallback();
@@ -1439,7 +1440,7 @@ namespace AndroidUI
 
             // Anything that started animating right before detach should already
             // be in its state when re-attached.
-            //jumpDrawablesToCurrentState();
+            jumpDrawablesToCurrentState();
 
             //destroyDrawingCache();
 
@@ -1476,54 +1477,145 @@ namespace AndroidUI
         }
 
         internal int mPrivateFlags;
+        internal int mPrivateFlags2;
+        internal int mPrivateFlags3;
+        internal int mPrivateFlags4;
 
+        /*
+         * Masks for mPrivateFlags, as generated by dumpFlags():
+         *
+         * |-------|-------|-------|-------|
+         *                                 1 PFLAG_WANTS_FOCUS
+         *                                1  PFLAG_FOCUSED
+         *                               1   PFLAG_SELECTED
+         *                              1    PFLAG_IS_ROOT_NAMESPACE
+         *                             1     PFLAG_HAS_BOUNDS
+         *                            1      PFLAG_DRAWN
+         *                           1       PFLAG_DRAW_ANIMATION
+         *                          1        PFLAG_SKIP_DRAW
+         *                        1          PFLAG_REQUEST_TRANSPARENT_REGIONS
+         *                       1           PFLAG_DRAWABLE_STATE_DIRTY
+         *                      1            PFLAG_MEASURED_DIMENSION_SET
+         *                     1             PFLAG_FORCE_LAYOUT
+         *                    1              PFLAG_LAYOUT_REQUIRED
+         *                   1               PFLAG_PRESSED
+         *                  1                PFLAG_DRAWING_CACHE_VALID
+         *                 1                 PFLAG_ANIMATION_STARTED
+         *                1                  PFLAG_SAVE_STATE_CALLED
+         *               1                   PFLAG_ALPHA_SET
+         *              1                    PFLAG_SCROLL_CONTAINER
+         *             1                     PFLAG_SCROLL_CONTAINER_ADDED
+         *            1                      PFLAG_DIRTY
+         *            1                      PFLAG_DIRTY_MASK
+         *          1                        PFLAG_OPAQUE_BACKGROUND
+         *         1                         PFLAG_OPAQUE_SCROLLBARS
+         *         11                        PFLAG_OPAQUE_MASK
+         *        1                          PFLAG_PREPRESSED
+         *       1                           PFLAG_CANCEL_NEXT_UP_EVENT
+         *      1                            PFLAG_AWAKEN_SCROLL_BARS_ON_ATTACH
+         *     1                             PFLAG_HOVERED
+         *    1                              PFLAG_NOTIFY_AUTOFILL_MANAGER_ON_CLICK
+         *   1                               PFLAG_ACTIVATED
+         *  1                                PFLAG_INVALIDATED
+         * |-------|-------|-------|-------|
+         */
+        /** {@hide} */
         internal const int PFLAG_WANTS_FOCUS = 0x00000001;
+        /** {@hide} */
         internal const int PFLAG_FOCUSED = 0x00000002;
-        internal const int PFLAG_IS_LAID_OUT = 0x00000004;
-        internal const int PFLAG_MEASURE_NEEDED_BEFORE_LAYOUT = 0x00000008;
+        /** {@hide} */
+        internal const int PFLAG_SELECTED = 0x00000004;
+        /** {@hide} */
+        internal const int PFLAG_IS_ROOT_NAMESPACE = 0x00000008;
+        /** {@hide} */
         internal const int PFLAG_HAS_BOUNDS = 0x00000010;
+        /** {@hide} */
         internal const int PFLAG_DRAWN = 0x00000020;
-        internal const int PFLAG_SKIP_DRAW = 0x00000040;
-        internal const int PFLAG_IS_ROOT_NAMESPACE = 0x00000080;
-        internal const int PFLAG_DRAWABLE_STATE_DIRTY = 0x00000100;
-        internal const int PFLAG_MEASURED_DIMENSION_SET = 0x00000200;
-        internal const int PFLAG_FORCE_LAYOUT = 0x00000400;
-        internal const int PFLAG_LAYOUT_REQUIRED = 0x00000800;
-        internal const int PFLAG_PRESSED = 0x00001000;
-        internal const int PFLAG_DRAWING_CACHE_VALID = 0x00002000;
+        /**
+         * When this flag is set, this view is running an animation on behalf of its
+         * children and should therefore not cancel invalidate requests, even if they
+         * lie outside of this view's bounds.
+         *
+         * {@hide}
+         */
+        internal const int PFLAG_DRAW_ANIMATION = 0x00000040;
+        /** {@hide} */
+        internal const int PFLAG_SKIP_DRAW = 0x00000080;
+        /** {@hide} */
+        internal const int PFLAG_REQUEST_TRANSPARENT_REGIONS = 0x00000200;
+        /** {@hide} */
+        internal const int PFLAG_DRAWABLE_STATE_DIRTY = 0x00000400;
+        /** {@hide} */
+        internal const int PFLAG_MEASURED_DIMENSION_SET = 0x00000800;
+        /** {@hide} */
+        internal const int PFLAG_FORCE_LAYOUT = 0x00001000;
+        /** {@hide} */
+        internal const int PFLAG_LAYOUT_REQUIRED = 0x00002000;
+
+        internal const int PFLAG_PRESSED = 0x00004000;
+
+        /** {@hide} */
+        internal const int PFLAG_DRAWING_CACHE_VALID = 0x00008000;
+        /**
+         * Flag used to indicate that this view should be drawn once more (and only once
+         * more) after its animation has completed.
+         * {@hide}
+         */
+        internal const int PFLAG_ANIMATION_STARTED = 0x00010000;
+
+        internal const int PFLAG_SAVE_STATE_CALLED = 0x00020000;
+
+        /**
+         * Indicates that the View returned true when onSetAlpha() was called and that
+         * the alpha must be restored.
+         * {@hide}
+         */
+        internal const int PFLAG_ALPHA_SET = 0x00040000;
 
         /**
          * Set by {@link #setScrollContainer(bool)}.
          */
-        internal const int PFLAG_SCROLL_CONTAINER = 0x00004000;
+        internal const int PFLAG_SCROLL_CONTAINER = 0x00080000;
 
         /**
          * Set by {@link #setScrollContainer(bool)}.
          */
-        internal const int PFLAG_SCROLL_CONTAINER_ADDED = 0x00008000;
+        internal const int PFLAG_SCROLL_CONTAINER_ADDED = 0x00100000;
 
         /**
          * View flag indicating whether this view was invalidated (fully or partially.)
          *
          * @hide
          */
-        internal const int PFLAG_DIRTY = 0x00010000;
+        internal const int PFLAG_DIRTY = 0x00200000;
 
         /**
          * Mask for {@link #PFLAG_DIRTY}.
          *
          * @hide
          */
-        internal const int PFLAG_DIRTY_MASK = 0x00010000;
+        internal const int PFLAG_DIRTY_MASK = 0x00200000;
 
         /**
-         * Flag indicating that the view is a root of a keyboard navigation cluster.
+         * Indicates whether the background is opaque.
          *
-         * @see #isKeyboardNavigationCluster()
-         * @see #setKeyboardNavigationCluster(bool)
+         * @hide
          */
-        internal const int PFLAG_CLUSTER = 0x00020000;
-        internal const int PFLAG_FOCUSED_BY_DEFAULT = 0x00040000;
+        internal const int PFLAG_OPAQUE_BACKGROUND = 0x00800000;
+
+        /**
+         * Indicates whether the scrollbars are opaque.
+         *
+         * @hide
+         */
+        internal const int PFLAG_OPAQUE_SCROLLBARS = 0x01000000;
+
+        /**
+         * Indicates whether the view is opaque.
+         *
+         * @hide
+         */
+        internal const int PFLAG_OPAQUE_MASK = 0x01800000;
 
         /**
          * Indicates a prepressed state;
@@ -1533,42 +1625,38 @@ namespace AndroidUI
          *
          * @hide
          */
-        internal const int PFLAG_PREPRESSED = 0x00080000;
+        internal const int PFLAG_PREPRESSED = 0x02000000;
 
         /**
          * Indicates whether the view is temporarily detached.
          *
          * @hide
          */
-        internal const int PFLAG_CANCEL_NEXT_UP_EVENT = 0x00100000;
+        internal const int PFLAG_CANCEL_NEXT_UP_EVENT = 0x04000000;
+
+        /**
+         * Indicates that we should awaken scroll bars once attached
+         *
+         * PLEASE NOTE: This flag is now unused as we now send onVisibilityChanged
+         * during window attachment and it is no longer needed. Feel free to repurpose it.
+         *
+         * @hide
+         */
+        internal const int PFLAG_AWAKEN_SCROLL_BARS_ON_ATTACH = 0x08000000;
+
+        /**
+         * Indicates that the view has received HOVER_ENTER.  Cleared on HOVER_EXIT.
+         * @hide
+         */
+        internal const int PFLAG_HOVERED = 0x10000000;
+
+        /**
+         * Flag set by {@link AutofillManager} if it needs to be notified when this view is clicked.
+         */
+        internal const int PFLAG_NOTIFY_AUTOFILL_MANAGER_ON_CLICK = 0x20000000;
 
         /** {@hide} */
-        internal const int PFLAG_ACTIVATED = 0x00200000;
-
-        /**
-         * Flag indicating that the view is temporarily detached from the parent view.
-         *
-         * @see #onStartTemporaryDetach()
-         * @see #onFinishTemporaryDetach()
-         */
-        internal const int PFLAG_TEMPORARY_DETACH = 0x00400000;
-
-        /**
-         * Indicates if the view is just detached.
-         */
-        internal const int PFLAG_DETACHED = 0x00800000;
-
-        /**
-         * The last aggregated visibility. Used to detect when it truly changes.
-         */
-        internal const int PFLAG_AGGREGATED_VISIBLE = 0x01000000;
-
-        /**
-         * Flag indicating whether a view failed the quickReject() check in draw(). This condition
-         * is used to check whether later changes to the view's transform should invalidate the
-         * view to force the quickReject test to run again.
-         */
-        internal const int PFLAG_VIEW_QUICK_REJECTED = 0x02000000;
+        internal const int PFLAG_ACTIVATED = 0x40000000;
 
         /**
          * Indicates that this view was specifically invalidated, not just dirtied because some
@@ -1578,10 +1666,152 @@ namespace AndroidUI
          *
          * @hide
          */
-        internal const int PFLAG_INVALIDATED = 0x40000000;
+        internal const uint PFLAG_INVALIDATED = 0x80000000;
 
-        // for layout flags because bitshifting is involved
-        internal int mPrivateFlags2;
+        /* End of masks for mPrivateFlags */
+
+        /*
+         * Masks for mPrivateFlags2, as generated by dumpFlags():
+         *
+         * |-------|-------|-------|-------|
+         *                                 1 PFLAG2_DRAG_CAN_ACCEPT
+         *                                1  PFLAG2_DRAG_HOVERED
+         *                              11   PFLAG2_LAYOUT_DIRECTION_MASK
+         *                             1     PFLAG2_LAYOUT_DIRECTION_RESOLVED_RTL
+         *                            1      PFLAG2_LAYOUT_DIRECTION_RESOLVED
+         *                            11     PFLAG2_LAYOUT_DIRECTION_RESOLVED_MASK
+         *                           1       PFLAG2_TEXT_DIRECTION_FLAGS[1]
+         *                          1        PFLAG2_TEXT_DIRECTION_FLAGS[2]
+         *                          11       PFLAG2_TEXT_DIRECTION_FLAGS[3]
+         *                         1         PFLAG2_TEXT_DIRECTION_FLAGS[4]
+         *                         1 1       PFLAG2_TEXT_DIRECTION_FLAGS[5]
+         *                         11        PFLAG2_TEXT_DIRECTION_FLAGS[6]
+         *                         111       PFLAG2_TEXT_DIRECTION_FLAGS[7]
+         *                         111       PFLAG2_TEXT_DIRECTION_MASK
+         *                        1          PFLAG2_TEXT_DIRECTION_RESOLVED
+         *                       1           PFLAG2_TEXT_DIRECTION_RESOLVED_DEFAULT
+         *                     111           PFLAG2_TEXT_DIRECTION_RESOLVED_MASK
+         *                    1              PFLAG2_TEXT_ALIGNMENT_FLAGS[1]
+         *                   1               PFLAG2_TEXT_ALIGNMENT_FLAGS[2]
+         *                   11              PFLAG2_TEXT_ALIGNMENT_FLAGS[3]
+         *                  1                PFLAG2_TEXT_ALIGNMENT_FLAGS[4]
+         *                  1 1              PFLAG2_TEXT_ALIGNMENT_FLAGS[5]
+         *                  11               PFLAG2_TEXT_ALIGNMENT_FLAGS[6]
+         *                  111              PFLAG2_TEXT_ALIGNMENT_MASK
+         *                 1                 PFLAG2_TEXT_ALIGNMENT_RESOLVED
+         *                1                  PFLAG2_TEXT_ALIGNMENT_RESOLVED_DEFAULT
+         *              111                  PFLAG2_TEXT_ALIGNMENT_RESOLVED_MASK
+         *           111                     PFLAG2_IMPORTANT_FOR_ACCESSIBILITY_MASK
+         *         11                        PFLAG2_ACCESSIBILITY_LIVE_REGION_MASK
+         *       1                           PFLAG2_ACCESSIBILITY_FOCUSED
+         *      1                            PFLAG2_SUBTREE_ACCESSIBILITY_STATE_CHANGED
+         *     1                             PFLAG2_VIEW_QUICK_REJECTED
+         *    1                              PFLAG2_PADDING_RESOLVED
+         *   1                               PFLAG2_DRAWABLE_RESOLVED
+         *  1                                PFLAG2_HAS_TRANSIENT_STATE
+         * |-------|-------|-------|-------|
+         */
+
+        /**
+         * Indicates that this view has reported that it can accept the current drag's content.
+         * Cleared when the drag operation concludes.
+         * @hide
+         */
+        internal const int PFLAG2_DRAG_CAN_ACCEPT = 0x00000001;
+
+        /**
+         * Indicates that this view is currently directly under the drag location in a
+         * drag-and-drop operation involving content that it can accept.  Cleared when
+         * the drag exits the view, or when the drag operation concludes.
+         * @hide
+         */
+        internal const int PFLAG2_DRAG_HOVERED = 0x00000002;
+
+        /** @hide */
+        public enum ContentCaptureImportance {
+            /**
+             * Automatically determine whether a view is important for content capture.
+             *
+             * @see #isImportantForContentCapture()
+             * @see #setImportantForContentCapture(int)
+             */
+            IMPORTANT_FOR_CONTENT_CAPTURE_AUTO = 0x0,
+
+            /**
+             * The view is important for content capture, and its children (if any) will be traversed.
+             *
+             * @see #isImportantForContentCapture()
+             * @see #setImportantForContentCapture(int)
+             */
+            IMPORTANT_FOR_CONTENT_CAPTURE_YES = 0x1,
+
+            /**
+             * The view is not important for content capture, but its children (if any) will be traversed.
+             *
+             * @see #isImportantForContentCapture()
+             * @see #setImportantForContentCapture(int)
+             */
+            IMPORTANT_FOR_CONTENT_CAPTURE_NO = 0x2,
+
+            /**
+             * The view is important for content capture, but its children (if any) will not be traversed.
+             *
+             * @see #isImportantForContentCapture()
+             * @see #setImportantForContentCapture(int)
+             */
+            IMPORTANT_FOR_CONTENT_CAPTURE_YES_EXCLUDE_DESCENDANTS = 0x4,
+
+            /**
+             * The view is not important for content capture, and its children (if any) will not be
+             * traversed.
+             *
+             * @see #isImportantForContentCapture()
+             * @see #setImportantForContentCapture(int)
+             */
+            IMPORTANT_FOR_CONTENT_CAPTURE_NO_EXCLUDE_DESCENDANTS = 0x8
+        };
+
+        /** @hide */
+        public enum ScrollCaptureHint
+        {
+            /**
+             * The content of this view will be considered for scroll capture if scrolling is possible.
+             *
+             * @see #getScrollCaptureHint()
+             * @see #setScrollCaptureHint(int)
+             */
+            SCROLL_CAPTURE_HINT_AUTO = 0x0,
+
+            /**
+             * Explicitly exclude this view as a potential scroll capture target. The system will not
+             * consider it. Mutually exclusive with {@link #SCROLL_CAPTURE_HINT_INCLUDE}, which this flag
+             * takes precedence over.
+             *
+             * @see #getScrollCaptureHint()
+             * @see #setScrollCaptureHint(int)
+             */
+            SCROLL_CAPTURE_HINT_EXCLUDE = 0x1,
+
+            /**
+             * Explicitly include this view as a potential scroll capture target. When locating a scroll
+             * capture target, this view will be prioritized before others without this flag. Mutually
+             * exclusive with {@link #SCROLL_CAPTURE_HINT_EXCLUDE}, which takes precedence.
+             *
+             * @see #getScrollCaptureHint()
+             * @see #setScrollCaptureHint(int)
+             */
+            SCROLL_CAPTURE_HINT_INCLUDE = 0x2,
+
+            /**
+             * Explicitly exclude all children of this view as potential scroll capture targets. This view
+             * is unaffected. Note: Excluded children are not considered, regardless of {@link
+             * #SCROLL_CAPTURE_HINT_INCLUDE}.
+             *
+             * @see #getScrollCaptureHint()
+             * @see #setScrollCaptureHint(int)
+             */
+            SCROLL_CAPTURE_HINT_EXCLUDE_DESCENDANTS = 0x4
+        };
 
         /** @hide */
         public enum LayoutDir
@@ -1640,32 +1870,32 @@ namespace AndroidUI
          * Bit shift to get the horizontal layout direction. (bits after DRAG_HOVERED)
          * @hide
          */
-        const int PFLAG2_LAYOUT_DIRECTION_MASK_SHIFT = 2;
+        internal const int PFLAG2_LAYOUT_DIRECTION_MASK_SHIFT = 2;
 
         /**
          * Mask for use with private flags indicating bits used for horizontal layout direction.
          * @hide
          */
-        const int PFLAG2_LAYOUT_DIRECTION_MASK = 0x00000003 << PFLAG2_LAYOUT_DIRECTION_MASK_SHIFT;
+        internal const int PFLAG2_LAYOUT_DIRECTION_MASK = 0x00000003 << PFLAG2_LAYOUT_DIRECTION_MASK_SHIFT;
 
         /**
          * Indicates whether the view horizontal layout direction has been resolved and drawn to the
          * right-to-left direction.
          * @hide
          */
-        const int PFLAG2_LAYOUT_DIRECTION_RESOLVED_RTL = 4 << PFLAG2_LAYOUT_DIRECTION_MASK_SHIFT;
+        internal const int PFLAG2_LAYOUT_DIRECTION_RESOLVED_RTL = 4 << PFLAG2_LAYOUT_DIRECTION_MASK_SHIFT;
 
         /**
          * Indicates whether the view horizontal layout direction has been resolved.
          * @hide
          */
-        const int PFLAG2_LAYOUT_DIRECTION_RESOLVED = 8 << PFLAG2_LAYOUT_DIRECTION_MASK_SHIFT;
+        internal const int PFLAG2_LAYOUT_DIRECTION_RESOLVED = 8 << PFLAG2_LAYOUT_DIRECTION_MASK_SHIFT;
 
         /**
          * Mask for use with private flags indicating bits used for resolved horizontal layout direction.
          * @hide
          */
-        const int PFLAG2_LAYOUT_DIRECTION_RESOLVED_MASK = 0x0000000C
+        internal const int PFLAG2_LAYOUT_DIRECTION_RESOLVED_MASK = 0x0000000C
                 << PFLAG2_LAYOUT_DIRECTION_MASK_SHIFT;
 
         /*
@@ -1686,30 +1916,450 @@ namespace AndroidUI
         private const int LAYOUT_DIRECTION_DEFAULT = LAYOUT_DIRECTION_INHERIT;
 
         /**
-         * Flag indicating that start/end padding has been resolved into left/right padding
-         * for use in measurement, layout, drawing, etc. This is set by {@link #resolvePadding()}
-         * and checked by {@link #measure(int, int)} to determine if padding needs to be resolved
-         * during measurement. In some special cases this is required such as when an adapter-based
-         * view measures prospective children without attaching them to a window.
-         */
-        internal const int PFLAG2_PADDING_RESOLVED = 0x04000000;
-
-        /**
          * Default horizontal layout direction.
          * @hide
          */
         internal const int LAYOUT_DIRECTION_RESOLVED_DEFAULT = LAYOUT_DIRECTION_LTR;
 
         /**
+         * Flag indicating whether a view failed the quickReject() check in draw(). This condition
+         * is used to check whether later changes to the view's transform should invalidate the
+         * view to force the quickReject test to run again.
+         */
+        internal const int PFLAG2_VIEW_QUICK_REJECTED = 0x10000000;
+
+        /**
+         * Flag indicating that start/end padding has been resolved into left/right padding
+         * for use in measurement, layout, drawing, etc. This is set by {@link #resolvePadding()}
+         * and checked by {@link #measure(int, int)} to determine if padding needs to be resolved
+         * during measurement. In some special cases this is required such as when an adapter-based
+         * view measures prospective children without attaching them to a window.
+         */
+        internal const int PFLAG2_PADDING_RESOLVED = 0x20000000;
+
+        /**
+         * Flag indicating that the start/end drawables has been resolved into left/right ones.
+         */
+        internal const int PFLAG2_DRAWABLE_RESOLVED = 0x40000000;
+
+        /**
+         * Indicates that the view is tracking some sort of transient state
+         * that the app should not need to be aware of, but that the framework
+         * should take special care to preserve.
+         */
+        internal const uint PFLAG2_HAS_TRANSIENT_STATE = 0x80000000;
+
+        /**
          * Group of bits indicating that RTL properties resolution is done.
          */
-        const int ALL_RTL_PROPERTIES_RESOLVED = PFLAG2_LAYOUT_DIRECTION_RESOLVED
+        const uint ALL_RTL_PROPERTIES_RESOLVED = PFLAG2_LAYOUT_DIRECTION_RESOLVED
             //| PFLAG2_TEXT_DIRECTION_RESOLVED
             //| PFLAG2_TEXT_ALIGNMENT_RESOLVED
             | PFLAG2_PADDING_RESOLVED
-            //| PFLAG2_DRAWABLE_RESOLVED
+            | PFLAG2_DRAWABLE_RESOLVED
             ;
 
+        // There are a couple of flags left in mPrivateFlags2
+
+        /* End of masks for mPrivateFlags2 */
+
+        /*
+         * Masks for mPrivateFlags3, as generated by dumpFlags():
+         *
+         * |-------|-------|-------|-------|
+         *                                 1 PFLAG3_VIEW_IS_ANIMATING_TRANSFORM
+         *                                1  PFLAG3_VIEW_IS_ANIMATING_ALPHA
+         *                               1   PFLAG3_IS_LAID_OUT
+         *                              1    PFLAG3_MEASURE_NEEDED_BEFORE_LAYOUT
+         *                             1     PFLAG3_CALLED_SUPER
+         *                            1      PFLAG3_APPLYING_INSETS
+         *                           1       PFLAG3_FITTING_SYSTEM_WINDOWS
+         *                          1        PFLAG3_NESTED_SCROLLING_ENABLED
+         *                         1         PFLAG3_SCROLL_INDICATOR_TOP
+         *                        1          PFLAG3_SCROLL_INDICATOR_BOTTOM
+         *                       1           PFLAG3_SCROLL_INDICATOR_LEFT
+         *                      1            PFLAG3_SCROLL_INDICATOR_RIGHT
+         *                     1             PFLAG3_SCROLL_INDICATOR_START
+         *                    1              PFLAG3_SCROLL_INDICATOR_END
+         *                   1               PFLAG3_ASSIST_BLOCKED
+         *                  1                PFLAG3_CLUSTER
+         *                 1                 PFLAG3_IS_AUTOFILLED
+         *                1                  PFLAG3_FINGER_DOWN
+         *               1                   PFLAG3_FOCUSED_BY_DEFAULT
+         *           1111                    PFLAG3_IMPORTANT_FOR_AUTOFILL
+         *          1                        PFLAG3_OVERLAPPING_RENDERING_FORCED_VALUE
+         *         1                         PFLAG3_HAS_OVERLAPPING_RENDERING_FORCED
+         *        1                          PFLAG3_TEMPORARY_DETACH
+         *       1                           PFLAG3_NO_REVEAL_ON_FOCUS
+         *      1                            PFLAG3_NOTIFY_AUTOFILL_ENTER_ON_LAYOUT
+         *     1                             PFLAG3_SCREEN_READER_FOCUSABLE
+         *    1                              PFLAG3_AGGREGATED_VISIBLE
+         *   1                               PFLAG3_AUTOFILLID_EXPLICITLY_SET
+         *  1                                PFLAG3_ACCESSIBILITY_HEADING
+         * |-------|-------|-------|-------|
+         */
+
+        /**
+         * Flag indicating that view has a transform animation set on it. This is used to track whether
+         * an animation is cleared between successive frames, in order to tell the associated
+         * DisplayList to clear its animation matrix.
+         */
+        internal const int PFLAG3_VIEW_IS_ANIMATING_TRANSFORM = 0x1;
+
+        /**
+         * Flag indicating that view has an alpha animation set on it. This is used to track whether an
+         * animation is cleared between successive frames, in order to tell the associated
+         * DisplayList to restore its alpha value.
+         */
+        internal const int PFLAG3_VIEW_IS_ANIMATING_ALPHA = 0x2;
+
+        /**
+         * Flag indicating that the view has been through at least one layout since it
+         * was last attached to a window.
+         */
+        internal const int PFLAG3_IS_LAID_OUT = 0x4;
+
+        /**
+         * Flag indicating that a call to measure() was skipped and should be done
+         * instead when layout() is invoked.
+         */
+        internal const int PFLAG3_MEASURE_NEEDED_BEFORE_LAYOUT = 0x8;
+
+        /**
+         * Flag indicating that an overridden method correctly called down to
+         * the superclass implementation as required by the API spec.
+         */
+        internal const int PFLAG3_CALLED_SUPER = 0x10;
+
+        /**
+         * Flag indicating that we're in the process of applying window insets.
+         */
+        internal const int PFLAG3_APPLYING_INSETS = 0x20;
+
+        /**
+         * Flag indicating that we're in the process of fitting system windows using the old method.
+         */
+        internal const int PFLAG3_FITTING_SYSTEM_WINDOWS = 0x40;
+
+        /**
+         * Flag indicating that nested scrolling is enabled for this view.
+         * The view will optionally cooperate with views up its parent chain to allow for
+         * integrated nested scrolling along the same axis.
+         */
+        internal const int PFLAG3_NESTED_SCROLLING_ENABLED = 0x80;
+
+        /**
+         * Flag indicating that the bottom scroll indicator should be displayed
+         * when this view can scroll up.
+         */
+        internal const int PFLAG3_SCROLL_INDICATOR_TOP = 0x0100;
+
+        /**
+         * Flag indicating that the bottom scroll indicator should be displayed
+         * when this view can scroll down.
+         */
+        internal const int PFLAG3_SCROLL_INDICATOR_BOTTOM = 0x0200;
+
+        /**
+         * Flag indicating that the left scroll indicator should be displayed
+         * when this view can scroll left.
+         */
+        internal const int PFLAG3_SCROLL_INDICATOR_LEFT = 0x0400;
+
+        /**
+         * Flag indicating that the right scroll indicator should be displayed
+         * when this view can scroll right.
+         */
+        internal const int PFLAG3_SCROLL_INDICATOR_RIGHT = 0x0800;
+
+        /**
+         * Flag indicating that the start scroll indicator should be displayed
+         * when this view can scroll in the start direction.
+         */
+        internal const int PFLAG3_SCROLL_INDICATOR_START = 0x1000;
+
+        /**
+         * Flag indicating that the end scroll indicator should be displayed
+         * when this view can scroll in the end direction.
+         */
+        internal const int PFLAG3_SCROLL_INDICATOR_END = 0x2000;
+
+        //const uint DRAG_MASK = PFLAG2_DRAG_CAN_ACCEPT | PFLAG2_DRAG_HOVERED;
+
+        const int SCROLL_INDICATORS_NONE = 0x0000;
+
+        /**
+         * Mask for use with setFlags indicating bits used for indicating which
+         * scroll indicators are enabled.
+         */
+        const int SCROLL_INDICATORS_PFLAG3_MASK = PFLAG3_SCROLL_INDICATOR_TOP
+                | PFLAG3_SCROLL_INDICATOR_BOTTOM | PFLAG3_SCROLL_INDICATOR_LEFT
+                | PFLAG3_SCROLL_INDICATOR_RIGHT | PFLAG3_SCROLL_INDICATOR_START
+                | PFLAG3_SCROLL_INDICATOR_END;
+
+        /**
+         * Left-shift required to translate between public scroll indicator flags
+         * and internal PFLAGS3 flags. When used as a right-shift, translates
+         * PFLAGS3 flags to public flags.
+         */
+        const int SCROLL_INDICATORS_TO_PFLAGS3_LSHIFT = 8;
+
+        /**
+         * Scroll indicator direction for the top edge of the view.
+         *
+         * @see #setScrollIndicators(int)
+         * @see #setScrollIndicators(int, int)
+         * @see #getScrollIndicators()
+         */
+        public const int SCROLL_INDICATOR_TOP =
+                PFLAG3_SCROLL_INDICATOR_TOP >> SCROLL_INDICATORS_TO_PFLAGS3_LSHIFT;
+
+        /**
+         * Scroll indicator direction for the bottom edge of the view.
+         *
+         * @see #setScrollIndicators(int)
+         * @see #setScrollIndicators(int, int)
+         * @see #getScrollIndicators()
+         */
+        public const int SCROLL_INDICATOR_BOTTOM =
+                PFLAG3_SCROLL_INDICATOR_BOTTOM >> SCROLL_INDICATORS_TO_PFLAGS3_LSHIFT;
+
+        /**
+         * Scroll indicator direction for the left edge of the view.
+         *
+         * @see #setScrollIndicators(int)
+         * @see #setScrollIndicators(int, int)
+         * @see #getScrollIndicators()
+         */
+        public const int SCROLL_INDICATOR_LEFT =
+                PFLAG3_SCROLL_INDICATOR_LEFT >> SCROLL_INDICATORS_TO_PFLAGS3_LSHIFT;
+
+        /**
+         * Scroll indicator direction for the right edge of the view.
+         *
+         * @see #setScrollIndicators(int)
+         * @see #setScrollIndicators(int, int)
+         * @see #getScrollIndicators()
+         */
+        public const int SCROLL_INDICATOR_RIGHT =
+                PFLAG3_SCROLL_INDICATOR_RIGHT >> SCROLL_INDICATORS_TO_PFLAGS3_LSHIFT;
+
+        /**
+         * Scroll indicator direction for the starting edge of the view.
+         * <p>
+         * Resolved according to the view's layout direction, see
+         * {@link #getLayoutDirection()} for more information.
+         *
+         * @see #setScrollIndicators(int)
+         * @see #setScrollIndicators(int, int)
+         * @see #getScrollIndicators()
+         */
+        public const int SCROLL_INDICATOR_START =
+                PFLAG3_SCROLL_INDICATOR_START >> SCROLL_INDICATORS_TO_PFLAGS3_LSHIFT;
+
+        /**
+         * Scroll indicator direction for the ending edge of the view.
+         * <p>
+         * Resolved according to the view's layout direction, see
+         * {@link #getLayoutDirection()} for more information.
+         *
+         * @see #setScrollIndicators(int)
+         * @see #setScrollIndicators(int, int)
+         * @see #getScrollIndicators()
+         */
+        public const int SCROLL_INDICATOR_END =
+                PFLAG3_SCROLL_INDICATOR_END >> SCROLL_INDICATORS_TO_PFLAGS3_LSHIFT;
+
+        /**
+         * <p>Indicates that we are allowing {@link ViewStructure} to traverse
+         * into this view.<p>
+         */
+        internal const int PFLAG3_ASSIST_BLOCKED = 0x4000;
+
+        /**
+         * Flag indicating that the view is a root of a keyboard navigation cluster.
+         *
+         * @see #isKeyboardNavigationCluster()
+         * @see #setKeyboardNavigationCluster(bool)
+         */
+        internal const int PFLAG3_CLUSTER = 0x8000;
+
+        /**
+         * Flag indicating that the view is autofilled
+         *
+         * @see #isAutofilled()
+         * @see #setAutofilled(bool, bool)
+         */
+        internal const int PFLAG3_IS_AUTOFILLED = 0x10000;
+
+        /**
+         * Indicates that the user is currently touching the screen.
+         * Currently used for the tooltip positioning only.
+         */
+        internal const int PFLAG3_FINGER_DOWN = 0x20000;
+
+        /**
+         * Flag indicating that this view is the default-focus view.
+         *
+         * @see #isFocusedByDefault()
+         * @see #setFocusedByDefault(bool)
+         */
+        internal const int PFLAG3_FOCUSED_BY_DEFAULT = 0x40000;
+
+        /**
+         * Whether this view has rendered elements that overlap (see {@link
+         * #hasOverlappingRendering()}, {@link #forceHasOverlappingRendering(bool)}, and
+         * {@link #getHasOverlappingRendering()} ). The value in this bit is only valid when
+         * PFLAG3_HAS_OVERLAPPING_RENDERING_FORCED has been set. Otherwise, the value is
+         * determined by whatever {@link #hasOverlappingRendering()} returns.
+         */
+        internal const int PFLAG3_OVERLAPPING_RENDERING_FORCED_VALUE = 0x800000;
+
+        /**
+         * Whether {@link #forceHasOverlappingRendering(bool)} has been called. When true, value
+         * in PFLAG3_OVERLAPPING_RENDERING_FORCED_VALUE is valid.
+         */
+        internal const int PFLAG3_HAS_OVERLAPPING_RENDERING_FORCED = 0x1000000;
+
+        /**
+         * Flag indicating that the view is temporarily detached from the parent view.
+         *
+         * @see #onStartTemporaryDetach()
+         * @see #onFinishTemporaryDetach()
+         */
+        internal const int PFLAG3_TEMPORARY_DETACH = 0x2000000;
+
+        /**
+         * Flag indicating that the view does not wish to be revealed within its parent
+         * hierarchy when it gains focus. Expressed in the negative since the historical
+         * default behavior is to reveal on focus; this flag suppresses that behavior.
+         *
+         * @see #setRevealOnFocusHint(bool)
+         * @see #getRevealOnFocusHint()
+         */
+        internal const int PFLAG3_NO_REVEAL_ON_FOCUS = 0x4000000;
+
+        /**
+         * Works like focusable for screen readers, but without the side effects on input focus.
+         * @see #setScreenReaderFocusable(bool)
+         */
+        internal const int PFLAG3_SCREEN_READER_FOCUSABLE = 0x10000000;
+
+        /**
+         * The last aggregated visibility. Used to detect when it truly changes.
+         */
+        internal const int PFLAG3_AGGREGATED_VISIBLE = 0x20000000;
+
+        /**
+         * Used to indicate that {@link #mAutofillId} was explicitly set through
+         * {@link #setAutofillId(AutofillId)}.
+         */
+        internal const int PFLAG3_AUTOFILLID_EXPLICITLY_SET = 0x40000000;
+
+        /**
+         * Indicates if the View is a heading for accessibility purposes
+         */
+        internal const uint PFLAG3_ACCESSIBILITY_HEADING = 0x80000000;
+
+        /* End of masks for mPrivateFlags3 */
+
+        /*
+         * Masks for mPrivateFlags4, as generated by dumpFlags():
+         *
+         * |-------|-------|-------|-------|
+         *                             1111 PFLAG4_IMPORTANT_FOR_CONTENT_CAPTURE_MASK
+         *                            1     PFLAG4_NOTIFIED_CONTENT_CAPTURE_APPEARED
+         *                           1      PFLAG4_NOTIFIED_CONTENT_CAPTURE_DISAPPEARED
+         *                          1       PFLAG4_CONTENT_CAPTURE_IMPORTANCE_IS_CACHED
+         *                         1        PFLAG4_CONTENT_CAPTURE_IMPORTANCE_CACHED_VALUE
+         *                         11       PFLAG4_CONTENT_CAPTURE_IMPORTANCE_MASK
+         *                        1         PFLAG4_FRAMEWORK_OPTIONAL_FITS_SYSTEM_WINDOWS
+         *                       1          PFLAG4_AUTOFILL_HIDE_HIGHLIGHT
+         *                     11           PFLAG4_SCROLL_CAPTURE_HINT_MASK
+         *                    1             PFLAG4_ALLOW_CLICK_WHEN_DISABLED
+         *                   1              PFLAG4_DETACHED
+         *                  1               PFLAG4_HAS_TRANSLATION_TRANSIENT_STATE
+         *                 1                PFLAG4_DRAG_A11Y_STARTED
+         * |-------|-------|-------|-------|
+         */
+
+        /**
+         * Mask for obtaining the bits which specify how to determine
+         * whether a view is important for autofill.
+         *
+         * <p>NOTE: the important for content capture values were the first flags added and are set in
+         * the rightmost position, so we don't need to shift them
+         */
+        internal const int PFLAG4_IMPORTANT_FOR_CONTENT_CAPTURE_MASK =
+            (int)(
+                ContentCaptureImportance.IMPORTANT_FOR_CONTENT_CAPTURE_AUTO
+                | ContentCaptureImportance.IMPORTANT_FOR_CONTENT_CAPTURE_YES
+                | ContentCaptureImportance.IMPORTANT_FOR_CONTENT_CAPTURE_NO
+                | ContentCaptureImportance.IMPORTANT_FOR_CONTENT_CAPTURE_YES_EXCLUDE_DESCENDANTS
+                | ContentCaptureImportance.IMPORTANT_FOR_CONTENT_CAPTURE_NO_EXCLUDE_DESCENDANTS
+            );
+
+        /*
+         * Variables used to control when the IntelligenceManager.notifyNodeAdded()/removed() methods
+         * should be called.
+         *
+         * The idea is to call notifyAppeared() after the view is layout and visible, then call
+         * notifyDisappeared() when it's gone (without known when it was removed from the parent).
+         */
+        internal const int PFLAG4_NOTIFIED_CONTENT_CAPTURE_APPEARED = 0x10;
+        internal const int PFLAG4_NOTIFIED_CONTENT_CAPTURE_DISAPPEARED = 0x20;
+
+        /*
+         * Flags used to cache the value returned by isImportantForContentCapture while the view
+         * hierarchy is being traversed.
+         */
+        internal const int PFLAG4_CONTENT_CAPTURE_IMPORTANCE_IS_CACHED = 0x40;
+        internal const int PFLAG4_CONTENT_CAPTURE_IMPORTANCE_CACHED_VALUE = 0x80;
+
+        internal const int PFLAG4_CONTENT_CAPTURE_IMPORTANCE_MASK =
+                PFLAG4_CONTENT_CAPTURE_IMPORTANCE_IS_CACHED
+                | PFLAG4_CONTENT_CAPTURE_IMPORTANCE_CACHED_VALUE;
+
+        /**
+         * @see #OPTIONAL_FITS_SYSTEM_WINDOWS
+         */
+        internal const int PFLAG4_FRAMEWORK_OPTIONAL_FITS_SYSTEM_WINDOWS = 0x000000100;
+
+        /**
+         * Flag indicating the field should not have yellow highlight when autofilled.
+         */
+        internal const int PFLAG4_AUTOFILL_HIDE_HIGHLIGHT = 0x200;
+
+        /**
+         * Shift for the bits in {@link #mPrivateFlags4} related to scroll capture.
+         */
+        internal const int PFLAG4_SCROLL_CAPTURE_HINT_SHIFT = 10;
+
+        internal const int PFLAG4_SCROLL_CAPTURE_HINT_MASK = ((int)(ScrollCaptureHint.SCROLL_CAPTURE_HINT_INCLUDE
+                | ScrollCaptureHint.SCROLL_CAPTURE_HINT_EXCLUDE | ScrollCaptureHint.SCROLL_CAPTURE_HINT_EXCLUDE_DESCENDANTS))
+                << PFLAG4_SCROLL_CAPTURE_HINT_SHIFT;
+
+        /**
+         * Indicates if the view can receive click events when disabled.
+         */
+        internal const int PFLAG4_ALLOW_CLICK_WHEN_DISABLED = 0x000001000;
+
+        /**
+         * Indicates if the view is just detached.
+         */
+        internal const int PFLAG4_DETACHED = 0x000002000;
+
+        /**
+         * Indicates that the view has transient state because the system is translating it.
+         */
+        internal const int PFLAG4_HAS_TRANSLATION_TRANSIENT_STATE = 0x000004000;
+
+        /**
+         * Indicates that the view has started a drag with {@link AccessibilityAction#ACTION_DRAG_START}
+         */
+        internal const int PFLAG4_DRAG_A11Y_STARTED = 0x000008000;
+
+        /* End of masks for mPrivateFlags4 */
 
         int mMeasuredWidth;
         int mMeasuredHeight;
@@ -1920,14 +2570,14 @@ namespace AndroidUI
                 {
                     // measure ourselves, this should set the measured dimension flag back
                     onMeasure(widthMeasureSpec, heightMeasureSpec);
-                    mPrivateFlags &= ~PFLAG_MEASURE_NEEDED_BEFORE_LAYOUT;
+                    mPrivateFlags3 &= ~PFLAG3_MEASURE_NEEDED_BEFORE_LAYOUT;
                 }
                 else
                 {
                     long value = mMeasureCache.valueAt(cacheIndex);
                     // Casting a long to int drops the high 32 bits, no mask needed
                     setMeasuredDimension((int)(value >> 32), (int)value);
-                    mPrivateFlags |= PFLAG_MEASURE_NEEDED_BEFORE_LAYOUT;
+                    mPrivateFlags3 |= PFLAG3_MEASURE_NEEDED_BEFORE_LAYOUT;
                 }
 
                 // flag not set, setMeasuredDimension() was not invoked, we raise
@@ -2146,7 +2796,6 @@ namespace AndroidUI
         {
             mMinWidth = minWidth;
             requestLayout();
-
         }
 
         /**
@@ -2382,7 +3031,7 @@ namespace AndroidUI
          */
         public bool isLaidOut()
         {
-            return (mPrivateFlags & PFLAG_IS_LAID_OUT) == PFLAG_IS_LAID_OUT;
+            return (mPrivateFlags3 & PFLAG3_IS_LAID_OUT) == PFLAG3_IS_LAID_OUT;
         }
 
         /**
@@ -2795,7 +3444,108 @@ namespace AndroidUI
 
         bool rootViewRequestFocus()
         {
-            return false;
+            View root = getRootView();
+            return root != null && root.requestFocus();
+        }
+
+        /**
+         * Indicates whether this view reacts to click events or not.
+         *
+         * @return true if the view is clickable, false otherwise
+         *
+         * @see #setClickable(bool)
+         * @attr ref android.R.styleable#View_clickable
+         */
+        public bool isClickable()
+        {
+            return (mViewFlags & CLICKABLE) == CLICKABLE;
+        }
+
+        /**
+         * Enables or disables click events for this view. When a view
+         * is clickable it will change its state to "pressed" on every click.
+         * Subclasses should set the view clickable to visually react to
+         * user's clicks.
+         *
+         * @param clickable true to make the view clickable, false otherwise
+         *
+         * @see #isClickable()
+         * @attr ref android.R.styleable#View_clickable
+         */
+        public void setClickable(bool clickable)
+        {
+            setFlags(clickable ? CLICKABLE : 0, CLICKABLE);
+        }
+
+        /**
+         * Enables or disables click events for this view when disabled.
+         *
+         * @param clickableWhenDisabled true to make the view clickable, false otherwise
+         *
+         * @attr ref android.R.styleable#View_allowClickWhenDisabled
+         */
+        public void setAllowClickWhenDisabled(bool clickableWhenDisabled)
+        {
+            if (clickableWhenDisabled)
+            {
+                mPrivateFlags4 |= PFLAG4_ALLOW_CLICK_WHEN_DISABLED;
+            }
+            else
+            {
+                mPrivateFlags4 &= ~PFLAG4_ALLOW_CLICK_WHEN_DISABLED;
+            }
+        }
+
+        /**
+         * Indicates whether this view reacts to long click events or not.
+         *
+         * @return true if the view is long clickable, false otherwise
+         *
+         * @see #setLongClickable(bool)
+         * @attr ref android.R.styleable#View_longClickable
+         */
+        public bool isLongClickable()
+        {
+            return (mViewFlags & LONG_CLICKABLE) == LONG_CLICKABLE;
+        }
+
+        /**
+         * Enables or disables long click events for this view. When a view is long
+         * clickable it reacts to the user holding down the button for a longer
+         * duration than a tap. This event can either launch the listener or a
+         * context menu.
+         *
+         * @param longClickable true to make the view long clickable, false otherwise
+         * @see #isLongClickable()
+         * @attr ref android.R.styleable#View_longClickable
+         */
+        public void setLongClickable(bool longClickable)
+        {
+            setFlags(longClickable ? LONG_CLICKABLE : 0, LONG_CLICKABLE);
+        }
+
+        /**
+         * Indicates whether this view reacts to context clicks or not.
+         *
+         * @return true if the view is context clickable, false otherwise
+         * @see #setContextClickable(bool)
+         * @attr ref android.R.styleable#View_contextClickable
+         */
+        public bool isContextClickable()
+        {
+            return (mViewFlags & CONTEXT_CLICKABLE) == CONTEXT_CLICKABLE;
+        }
+
+        /**
+         * Enables or disables context clicking for this view. This event can launch the listener.
+         *
+         * @param contextClickable true to make the view react to a context click, false otherwise
+         * @see #isContextClickable()
+         * @attr ref android.R.styleable#View_contextClickable
+         */
+        public void setContextClickable(bool contextClickable)
+        {
+            setFlags(contextClickable ? CONTEXT_CLICKABLE : 0, CONTEXT_CLICKABLE);
         }
 
         /**
@@ -2822,7 +3572,7 @@ namespace AndroidUI
 
             if (needsRefresh)
             {
-                //refreshDrawableState();
+                refreshDrawableState();
             }
             dispatchSetPressed(pressed);
         }
@@ -2836,7 +3586,22 @@ namespace AndroidUI
          */
         protected void dispatchSetPressed(bool pressed)
         {
+            View[] children = mChildren;
+            int count = mChildrenCount;
+            for (int i = 0; i < count; i++)
+            {
+                View child = children[i];
+                // Children that are clickable on their own should not
+                // show a pressed state when their parent view does.
+                // Clearing a pressed state always propagates.
+                if (!pressed || (!child.isClickable() && !child.isLongClickable()))
+                {
+                    child.setPressed(pressed);
+                }
+            }
         }
+
+
 
         /**
          * Indicates whether the view is currently in pressed state. Unless
@@ -3276,7 +4041,7 @@ namespace AndroidUI
          * @param visibility One of {@link #VISIBLE}, {@link #INVISIBLE}, or {@link #GONE}.
          * @attr ref android.R.styleable#View_visibility
          */
-        public void setVisibility(int visibility)
+        virtual public void setVisibility(int visibility)
         {
             setFlags(visibility, VISIBILITY_MASK);
         }
@@ -4158,7 +4923,7 @@ namespace AndroidUI
             {
                 mPrivateFlags |= PFLAG_FOCUSED;
 
-                View oldFocus = (mAttachInfo != null) ? null : null; //getRootView().findFocus() : null;
+                View oldFocus = (mAttachInfo != null) ? getRootView().findFocus() : null;
 
                 if (mParent != null)
                 {
@@ -4172,7 +4937,7 @@ namespace AndroidUI
                 }
 
                 onFocusChanged(true, direction, previouslyFocusedRect);
-                //refreshDrawableState();
+                refreshDrawableState();
             }
         }
 
@@ -4416,7 +5181,7 @@ namespace AndroidUI
          */
         public bool isKeyboardNavigationCluster()
         {
-            return (mPrivateFlags & PFLAG_CLUSTER) != 0;
+            return (mPrivateFlags3 & PFLAG3_CLUSTER) != 0;
         }
 
         /**
@@ -4454,11 +5219,11 @@ namespace AndroidUI
         {
             if (isCluster)
             {
-                mPrivateFlags |= PFLAG_CLUSTER;
+                mPrivateFlags3 |= PFLAG3_CLUSTER;
             }
             else
             {
-                mPrivateFlags &= ~PFLAG_CLUSTER;
+                mPrivateFlags3 &= ~PFLAG3_CLUSTER;
             }
         }
 
@@ -4708,7 +5473,7 @@ namespace AndroidUI
                 }
 
                 onFocusChanged(false, 0, null);
-                //refreshDrawableState();
+                refreshDrawableState();
 
                 if (propagate && (!refocus || !rootViewRequestFocus()))
                 {
@@ -4719,10 +5484,10 @@ namespace AndroidUI
 
         public void layout(int l, int t, int r, int b)
         {
-            if ((mPrivateFlags & PFLAG_MEASURE_NEEDED_BEFORE_LAYOUT) != 0)
+            if ((mPrivateFlags3 & PFLAG3_MEASURE_NEEDED_BEFORE_LAYOUT) != 0)
             {
                 onMeasure(mOldWidthMeasureSpec, mOldHeightMeasureSpec);
-                mPrivateFlags &= ~PFLAG_MEASURE_NEEDED_BEFORE_LAYOUT;
+                mPrivateFlags3 &= ~PFLAG3_MEASURE_NEEDED_BEFORE_LAYOUT;
             }
 
             int oldL = mLeft;
@@ -4766,7 +5531,7 @@ namespace AndroidUI
             bool wasLayoutValid = isLayoutValid();
 
             mPrivateFlags &= ~PFLAG_FORCE_LAYOUT;
-            mPrivateFlags |= PFLAG_IS_LAID_OUT;
+            mPrivateFlags3 |= PFLAG3_IS_LAID_OUT;
 
             if (!wasLayoutValid && isFocused())
             {
@@ -4897,7 +5662,10 @@ namespace AndroidUI
         {
             if (mParent is View)
             {
-                ((View)mParent).mPrivateFlags |= PFLAG_INVALIDATED;
+                View p = (View)mParent;
+                uint f = (uint)p.mPrivateFlags;
+                f |= PFLAG_INVALIDATED;
+                p.mPrivateFlags = (int)f;
             }
         }
 
@@ -4914,7 +5682,7 @@ namespace AndroidUI
          *         previous ones
          * {@hide}
          */
-        protected bool setFrame(int left, int top, int right, int bottom)
+        virtual protected bool setFrame(int left, int top, int right, int bottom)
         {
             bool changed = false;
 
@@ -4964,12 +5732,12 @@ namespace AndroidUI
                 // Reset drawn bit to original value (invalidate turns it off)
                 mPrivateFlags |= drawn;
 
-                //mBackgroundSizeChanged = true;
+                mBackgroundSizeChanged = true;
                 //mDefaultFocusHighlightSizeChanged = true;
-                //if (mForegroundInfo != null)
-                //{
-                //    mForegroundInfo.mBoundsChanged = true;
-                //}
+                if (mForegroundInfo != null)
+                {
+                    mForegroundInfo.mBoundsChanged = true;
+                }
 
                 //notifySubtreeAccessibilityStateChangedIfNeeded();
             }
@@ -5078,13 +5846,11 @@ namespace AndroidUI
             if ((mPrivateFlags & (PFLAG_DRAWN | PFLAG_HAS_BOUNDS)) == (PFLAG_DRAWN | PFLAG_HAS_BOUNDS)
                     || (invalidateCache && (mPrivateFlags & PFLAG_DRAWING_CACHE_VALID) == PFLAG_DRAWING_CACHE_VALID)
                     || (mPrivateFlags & PFLAG_INVALIDATED) != PFLAG_INVALIDATED
-                    || (fullInvalidate
-                    //&& isOpaque() != mLastIsOpaque
-                    ))
+                    || (fullInvalidate && isOpaque() != mLastIsOpaque))
             {
                 if (fullInvalidate)
                 {
-                    //mLastIsOpaque = isOpaque();
+                    mLastIsOpaque = isOpaque();
                     mPrivateFlags &= ~PFLAG_DRAWN;
                 }
 
@@ -5092,7 +5858,9 @@ namespace AndroidUI
 
                 if (invalidateCache)
                 {
-                    mPrivateFlags |= PFLAG_INVALIDATED;
+                    uint f = (uint)mPrivateFlags;
+                    f |= PFLAG_INVALIDATED;
+                    mPrivateFlags = (int)f;
                     mPrivateFlags &= ~PFLAG_DRAWING_CACHE_VALID;
                 }
 
@@ -5145,7 +5913,9 @@ namespace AndroidUI
             //{
             // Layered parents should be invalidated. Escalate to a full invalidate (and note that
             // we do this after consuming any relevant flags from the originating descendant)
-            mPrivateFlags |= PFLAG_INVALIDATED | PFLAG_DIRTY;
+            uint f = (uint)mPrivateFlags;
+            f |= PFLAG_INVALIDATED | PFLAG_DIRTY;
+            mPrivateFlags = (int)f;
             //target = this;
             //}
 
@@ -5188,20 +5958,20 @@ namespace AndroidUI
             //    // If the child is drawing an animation, we want to copy this flag onto
             //    // ourselves and the parent to make sure the invalidate request goes
             //    // through
-            //    boolean drawAnimation = (child.mPrivateFlags & PFLAG_DRAW_ANIMATION) != 0;
+            //    bool drawAnimation = (child.mPrivateFlags & PFLAG_DRAW_ANIMATION) != 0;
 
             //    // Check whether the child that requests the invalidate is fully opaque
             //    // Views being animated or transformed are not considered opaque because we may
             //    // be invalidating their old position and need the parent to paint behind them.
-            //    Matrix childMatrix = child.getMatrix();
+            //    SKMatrix childMatrix = child.getMatrix();
             //    // Mark the child as dirty, using the appropriate flag
             //    // Make sure we do not set both flags at the same time
 
-            //    if (child.mLayerType != LAYER_TYPE_NONE)
-            //    {
-            //        mPrivateFlags |= PFLAG_INVALIDATED;
-            //        mPrivateFlags &= ~PFLAG_DRAWING_CACHE_VALID;
-            //    }
+            //    //if (child.mLayerType != LAYER_TYPE_NONE)
+            //    //{
+            //    //    mPrivateFlags |= PFLAG_INVALIDATED;
+            //    //    mPrivateFlags &= ~PFLAG_DRAWING_CACHE_VALID;
+            //    //}
 
             //    int[] location = attachInfo.mInvalidateChildLocation;
             //    location[CHILD_LEFT_INDEX] = child.mLeft;
@@ -5211,11 +5981,11 @@ namespace AndroidUI
             //    {
             //        RectF boundingRect = attachInfo.mTmpTransformRect;
             //        boundingRect.set(dirty);
-            //        Matrix transformMatrix;
-            //        if ((mGroupFlags & ViewGroup.FLAG_SUPPORT_STATIC_TRANSFORMATIONS) != 0)
+            //        SKMatrix transformMatrix;
+            //        if ((mGroupFlags & View.FLAG_SUPPORT_STATIC_TRANSFORMATIONS) != 0)
             //        {
             //            Transformation t = attachInfo.mTmpTransformation;
-            //            boolean transformed = getChildStaticTransformation(child, t);
+            //            bool transformed = getChildStaticTransformation(child, t);
             //            if (transformed)
             //            {
             //                transformMatrix = attachInfo.mTmpMatrix;
@@ -5244,7 +6014,7 @@ namespace AndroidUI
             //    do
             //    {
             //        View view = null;
-            //        if (parent instanceof View) {
+            //        if (parent is View) {
             //            view = (View)parent;
             //        }
 
@@ -5254,7 +6024,7 @@ namespace AndroidUI
             //            {
             //                view.mPrivateFlags |= PFLAG_DRAW_ANIMATION;
             //            }
-            //            else if (parent instanceof ViewRootImpl) {
+            //            else if (parent is ViewRootImpl) {
             //                ((ViewRootImpl)parent).mIsAnimating = true;
             //            }
             //        }
@@ -5273,7 +6043,7 @@ namespace AndroidUI
             //        if (view != null)
             //        {
             //            // Account for transform on current parent
-            //            Matrix m = view.getMatrix();
+            //            SKMatrix m = view.getMatrix();
             //            if (!m.isIdentity())
             //            {
             //                RectF boundingRect = attachInfo.mTmpTransformRect;
@@ -5350,7 +6120,14 @@ namespace AndroidUI
         {
             if (mLayoutParams != null)
             {
-                //mLayoutParams.resolveLayoutDirection(getLayoutDirection());
+                mLayoutParams.resolveLayoutDirection(getLayoutDirection());
+            }
+
+            int count = getChildCount();
+            for (int i = 0; i < count; i++)
+            {
+                View child = getChildAt(i);
+                child.resolveLayoutParams();
             }
         }
 
@@ -5543,9 +6320,28 @@ namespace AndroidUI
             return mBottom - mTop - mPaddingBottom - padding;
         }
 
-        class Drawable { };
         class ScrollBarDrawable : Drawable
         {
+            public override void draw(SKCanvas canvas)
+            {
+                throw new NotImplementedException();
+            }
+
+            public override PixelFormat getOpacity()
+            {
+                throw new NotImplementedException();
+            }
+
+            public override void setAlpha(int alpha)
+            {
+                throw new NotImplementedException();
+            }
+
+            public override void setColorFilter(ColorFilter colorFilter)
+            {
+                throw new NotImplementedException();
+            }
+
             internal int getSize(bool v)
             {
                 return 0;
@@ -6076,7 +6872,7 @@ namespace AndroidUI
         private void recreateChildDisplayList(View child)
         {
             child.mRecreateDisplayList = (child.mPrivateFlags & PFLAG_INVALIDATED) != 0;
-            child.mPrivateFlags &= ~PFLAG_INVALIDATED;
+            child.mPrivateFlags &= (int)~PFLAG_INVALIDATED;
             child.updateDisplayListIfDirty();
             child.mRecreateDisplayList = false;
         }
@@ -6180,6 +6976,8 @@ namespace AndroidUI
                     mRenderNode = pictureRecorder.EndRecording();
                     setDisplayListProperties(mRenderNode);
                 }
+                canvas.Dispose();
+                pictureRecorder.Dispose();
             }
             else
             {
@@ -7963,9 +8761,7 @@ namespace AndroidUI
             Parent theParent = descendant.mParent;
 
             // search and offset up to the parent
-            while ((theParent != null)
-                    && (theParent is View)
-                && (theParent != this))
+            while ((theParent != null) && (theParent is View) && (theParent != this))
             {
 
                 if (offsetFromChildToParent)
@@ -8059,7 +8855,7 @@ namespace AndroidUI
          */
         public bool isFocusedByDefault()
         {
-            return (mPrivateFlags & PFLAG_FOCUSED_BY_DEFAULT) != 0;
+            return (mPrivateFlags3 & PFLAG3_FOCUSED_BY_DEFAULT) != 0;
         }
 
         /**
@@ -8078,18 +8874,18 @@ namespace AndroidUI
          */
         public void setFocusedByDefault(bool isFocusedByDefault)
         {
-            if (isFocusedByDefault == ((mPrivateFlags & PFLAG_FOCUSED_BY_DEFAULT) != 0))
+            if (isFocusedByDefault == ((mPrivateFlags3 & PFLAG3_FOCUSED_BY_DEFAULT) != 0))
             {
                 return;
             }
 
             if (isFocusedByDefault)
             {
-                mPrivateFlags |= PFLAG_FOCUSED_BY_DEFAULT;
+                mPrivateFlags3 |= PFLAG3_FOCUSED_BY_DEFAULT;
             }
             else
             {
-                mPrivateFlags &= ~PFLAG_FOCUSED_BY_DEFAULT;
+                mPrivateFlags3 &= ~PFLAG3_FOCUSED_BY_DEFAULT;
             }
 
             if (mParent is View)
@@ -8845,6 +9641,25 @@ namespace AndroidUI
         /** @hide */
         internal TransformationInfo mTransformationInfo;
 
+        /**
+         * The transform matrix of this view, which is calculated based on the current
+         * rotation, scale, and pivot properties.
+         *
+         * @see #getRotation()
+         * @see #getScaleX()
+         * @see #getScaleY()
+         * @see #getPivotX()
+         * @see #getPivotY()
+         * @return The current transform matrix for the view
+         */
+        public SKMatrix getMatrix()
+        {
+            ensureTransformationInfo();
+            SKMatrix matrix = mTransformationInfo.mMatrix;
+            //mRenderNode.getMatrix(matrix);
+            return matrix;
+        }
+
         void ensureTransformationInfo()
         {
             if (mTransformationInfo == null)
@@ -8923,12 +9738,12 @@ namespace AndroidUI
                     mPrivateFlags |= PFLAG_DRAWN; // force another invalidation with the new orientation
                     invalidate(true);
                 }
-                //mBackgroundSizeChanged = true;
+                mBackgroundSizeChanged = true;
                 //mDefaultFocusHighlightSizeChanged = true;
-                //if (mForegroundInfo != null)
-                //{
-                //    mForegroundInfo.mBoundsChanged = true;
-                //}
+                if (mForegroundInfo != null)
+                {
+                    mForegroundInfo.mBoundsChanged = true;
+                }
                 invalidateParentIfNeeded();
             }
         }
@@ -9010,12 +9825,12 @@ namespace AndroidUI
                     mPrivateFlags |= PFLAG_DRAWN; // force another invalidation with the new orientation
                     invalidate(true);
                 }
-                //mBackgroundSizeChanged = true;
+                mBackgroundSizeChanged = true;
                 //mDefaultFocusHighlightSizeChanged = true;
-                //if (mForegroundInfo != null)
-                //{
-                //    mForegroundInfo.mBoundsChanged = true;
-                //}
+                if (mForegroundInfo != null)
+                {
+                    mForegroundInfo.mBoundsChanged = true;
+                }
                 invalidateParentIfNeeded();
             }
         }
@@ -9080,12 +9895,12 @@ namespace AndroidUI
                     mPrivateFlags |= PFLAG_DRAWN; // force another invalidation with the new orientation
                     invalidate(true);
                 }
-                //mBackgroundSizeChanged = true;
+                mBackgroundSizeChanged = true;
                 //mDefaultFocusHighlightSizeChanged = true;
-                //if (mForegroundInfo != null)
-                //{
-                //    mForegroundInfo.mBoundsChanged = true;
-                //}
+                if (mForegroundInfo != null)
+                {
+                    mForegroundInfo.mBoundsChanged = true;
+                }
                 invalidateParentIfNeeded();
             }
         }
@@ -10012,18 +10827,22 @@ namespace AndroidUI
 
                 //view.clearAccessibilityFocus();
 
-                //cancelTouchTarget(view);
+                cancelTouchTarget(view);
                 //cancelHoverTarget(view);
 
+                if (false)
+                {
+                    // no animation support yet
+                }
                 //if (view.getAnimation() != null ||
                 //        (mTransitioningViews != null && mTransitioningViews.contains(view)))
                 //{
                 //    addDisappearingView(view);
                 //}
-                //else if (detach)
-                //{
-                //    view.dispatchDetachedFromWindow();
-                //}
+                else if (detach)
+                {
+                    view.dispatchDetachedFromWindow();
+                }
 
                 //if (view.hasTransientState())
                 //{
@@ -11122,22 +11941,23 @@ namespace AndroidUI
                     (parentFlags & (FLAG_SUPPORT_STATIC_TRANSFORMATIONS |
                             FLAG_CLIP_CHILDREN)) == FLAG_CLIP_CHILDREN &&
                     canvas.QuickReject(new SKRect(mLeft, mTop, mRight, mBottom))
-                //&& (mPrivateFlags & PFLAG_DRAW_ANIMATION) == 0
-                )
+                && (mPrivateFlags & PFLAG_DRAW_ANIMATION) == 0
+            )
             {
-                mPrivateFlags |= PFLAG_VIEW_QUICK_REJECTED;
+                mPrivateFlags2 |= PFLAG2_VIEW_QUICK_REJECTED;
                 return more;
             }
-            mPrivateFlags &= ~PFLAG_VIEW_QUICK_REJECTED;
+            mPrivateFlags2 &= ~PFLAG2_VIEW_QUICK_REJECTED;
 
             if (hardwareAcceleratedCanvas)
             {
                 // Clear INVALIDATED flag to allow invalidation to occur during rendering, but
                 // retain the flag's value temporarily in the mRecreateDisplayList flag
                 mRecreateDisplayList = (mPrivateFlags & PFLAG_INVALIDATED) != 0;
-                mPrivateFlags &= ~PFLAG_INVALIDATED;
+                mPrivateFlags &= (int)~PFLAG_INVALIDATED;
             }
 
+            // we cannot dispose this since we require it for drawing
             SKPicture renderNode = null;
             SKBitmap cache = null;
             //int layerType = getLayerType(); // TODO: signify cache state with just 'cache' local
@@ -11211,7 +12031,7 @@ namespace AndroidUI
             if (transformToApply != null
                     || alpha < 1
                     || !hasIdentityMatrix()
-                //|| (mPrivateFlags3 & PFLAG3_VIEW_IS_ANIMATING_ALPHA) != 0
+                    || (mPrivateFlags3 & PFLAG3_VIEW_IS_ANIMATING_ALPHA) != 0
                 )
             {
                 if (transformToApply != null || !childHasIdentityMatrix)
@@ -11255,23 +12075,24 @@ namespace AndroidUI
                     if (!childHasIdentityMatrix && !drawingWithRenderNode)
                     {
                         canvas.Translate(-transX, -transY);
-                        //canvas.concat(getMatrix());
+                        var m = getMatrix();
+                        canvas.Concat(ref m);
                         canvas.Translate(transX, transY);
                     }
                 }
 
                 // Deal with alpha if it is or used to be <1
                 if (alpha < 1
-                    //|| (mPrivateFlags3 & PFLAG3_VIEW_IS_ANIMATING_ALPHA) != 0
+                    || (mPrivateFlags3 & PFLAG3_VIEW_IS_ANIMATING_ALPHA) != 0
                     )
                 {
                     if (alpha < 1)
                     {
-                        //mPrivateFlags3 |= PFLAG3_VIEW_IS_ANIMATING_ALPHA;
+                        mPrivateFlags3 |= PFLAG3_VIEW_IS_ANIMATING_ALPHA;
                     }
                     else
                     {
-                        //mPrivateFlags3 &= ~PFLAG3_VIEW_IS_ANIMATING_ALPHA;
+                        mPrivateFlags3 &= ~PFLAG3_VIEW_IS_ANIMATING_ALPHA;
                     }
                     parent.mGroupFlags |= FLAG_CLEAR_TRANSFORMATION;
                     if (!drawingWithDrawingCache)
@@ -11297,11 +12118,11 @@ namespace AndroidUI
                     }
                 }
             }
-            //else if ((mPrivateFlags & PFLAG_ALPHA_SET) == PFLAG_ALPHA_SET)
-            //{
+            else if ((mPrivateFlags & PFLAG_ALPHA_SET) == PFLAG_ALPHA_SET)
+            {
             //    onSetAlpha(255);
-            //    mPrivateFlags &= ~PFLAG_ALPHA_SET;
-            //}
+                mPrivateFlags &= ~PFLAG_ALPHA_SET;
+            }
 
             if (!drawingWithRenderNode)
             {
@@ -11414,6 +12235,7 @@ namespace AndroidUI
 
             mRecreateDisplayList = false;
 
+            cache?.Dispose();
             return more;
         }
 
@@ -11940,7 +12762,9 @@ namespace AndroidUI
             }
 
             mPrivateFlags |= PFLAG_FORCE_LAYOUT;
-            mPrivateFlags |= PFLAG_INVALIDATED;
+            uint f = (uint)mPrivateFlags;
+            f |= PFLAG_INVALIDATED;
+            mPrivateFlags = (int)f;
 
             if (mParent != null && !mParent.isLayoutRequested())
             {
@@ -11962,5 +12786,1531 @@ namespace AndroidUI
         {
             return (mPrivateFlags & PFLAG_FORCE_LAYOUT) == PFLAG_FORCE_LAYOUT;
         }
+
+        /**
+         * If your view subclass is displaying its own Drawable objects, it should
+         * override this function and return true for any Drawable it is
+         * displaying.  This allows animations for those drawables to be
+         * scheduled.
+         *
+         * <p>Be sure to call through to the super class when overriding this
+         * function.
+         *
+         * @param who The Drawable to verify.  Return true if it is one you are
+         *            displaying, else return the result of calling through to the
+         *            super class.
+         *
+         * @return bool If true then the Drawable is being displayed in the
+         *         view; else false and it is not allowed to animate.
+         *
+         * @see #unscheduleDrawable(android.graphics.drawable.Drawable)
+         * @see #drawableStateChanged()
+         */
+        virtual protected bool verifyDrawable(Drawable who)
+        {
+            // Avoid verifying the scroll bar drawable so that we don't end up in
+            // an invalidation loop. This effectively prevents the scroll bar
+            // drawable from triggering invalidations and scheduling runnables.
+            return who == mBackground || (mForegroundInfo != null && mForegroundInfo.mDrawable == who)
+                    || (mDefaultFocusHighlight == who);
+        }
+
+        /**
+         * Sets the behavior for overlapping rendering for this view (see {@link
+         * #hasOverlappingRendering()} for more details on this behavior). Calling this method
+         * is an alternative to overriding {@link #hasOverlappingRendering()} in a subclass,
+         * providing the value which is then used internally. That is, when {@link
+         * #forceHasOverlappingRendering(bool)} is called, the value of {@link
+         * #hasOverlappingRendering()} is ignored and the value passed into this method is used
+         * instead.
+         *
+         * @param hasOverlappingRendering The value for overlapping rendering to be used internally
+         * instead of that returned by {@link #hasOverlappingRendering()}.
+         *
+         * @attr ref android.R.styleable#View_forceHasOverlappingRendering
+         */
+        public void forceHasOverlappingRendering(bool hasOverlappingRendering)
+        {
+            mPrivateFlags3 |= PFLAG3_HAS_OVERLAPPING_RENDERING_FORCED;
+            if (hasOverlappingRendering)
+            {
+                mPrivateFlags3 |= PFLAG3_OVERLAPPING_RENDERING_FORCED_VALUE;
+            }
+            else
+            {
+                mPrivateFlags3 &= ~PFLAG3_OVERLAPPING_RENDERING_FORCED_VALUE;
+            }
+        }
+
+        /**
+         * Returns the value for overlapping rendering that is used internally. This is either
+         * the value passed into {@link #forceHasOverlappingRendering(bool)}, if called, or
+         * the return value of {@link #hasOverlappingRendering()}, otherwise.
+         *
+         * @return The value for overlapping rendering being used internally.
+         */
+        public bool getHasOverlappingRendering()
+        {
+            return (mPrivateFlags3 & PFLAG3_HAS_OVERLAPPING_RENDERING_FORCED) != 0 ?
+                    (mPrivateFlags3 & PFLAG3_OVERLAPPING_RENDERING_FORCED_VALUE) != 0 :
+                    hasOverlappingRendering();
+        }
+
+        /**
+         * Returns whether this View has content which overlaps.
+         *
+         * <p>This function, intended to be overridden by specific View types, is an optimization when
+         * alpha is set on a view. If rendering overlaps in a view with alpha < 1, that view is drawn to
+         * an offscreen buffer and then composited into place, which can be expensive. If the view has
+         * no overlapping rendering, the view can draw each primitive with the appropriate alpha value
+         * directly. An example of overlapping rendering is a TextView with a background image, such as
+         * a Button. An example of non-overlapping rendering is a TextView with no background, or an
+         * ImageView with only the foreground image. The default implementation returns true; subclasses
+         * should override if they have cases which can be optimized.</p>
+         *
+         * <p><strong>Note:</strong> The return value of this method is ignored if {@link
+         * #forceHasOverlappingRendering(bool)} has been called on this view.</p>
+         *
+         * @return true if the content in this view might overlap, false otherwise.
+         */
+        virtual public bool hasOverlappingRendering()
+        {
+            return true;
+        }
+
+        /**
+         * Invalidates the specified Drawable.
+         *
+         * @param drawable the drawable to invalidate
+         */
+        virtual public void invalidateDrawable(Drawable drawable)
+        {
+            if (verifyDrawable(drawable))
+            {
+                Rect dirty = drawable.getDirtyBounds();
+                int scrollX = mScrollX;
+                int scrollY = mScrollY;
+
+                invalidate(dirty.left + scrollX, dirty.top + scrollY,
+                        dirty.right + scrollX, dirty.bottom + scrollY);
+                //rebuildOutline();
+            }
+        }
+
+        /**
+         * Schedules an action on a drawable to occur at a specified time.
+         *
+         * @param who the recipient of the action
+         * @param what the action to run on the drawable
+         * @param when the time at which the action must occur. Uses the
+         *        {@link SystemClock#uptimeMillis} timebase.
+         */
+        public void scheduleDrawable(Drawable who, AndroidUI.Runnable what, long when)
+        {
+            if (verifyDrawable(who) && what != null)
+            {
+                long delay = when - NanoTime.currentTimeMillis();
+                if (mAttachInfo != null)
+                {
+                    //mAttachInfo.mViewRootImpl.mChoreographer.postCallbackDelayed(
+                    //        Choreographer.CALLBACK_ANIMATION, what, who,
+                    //        Choreographer.subtractFrameDelay(delay));
+                }
+                else
+                {
+                    // Postpone the runnable until we know
+                    // on which thread it needs to run.
+                    //getRunQueue().postDelayed(what, delay);
+                }
+            }
+        }
+
+        /**
+         * Cancels a scheduled action on a drawable.
+         *
+         * @param who the recipient of the action
+         * @param what the action to cancel
+         */
+        public void unscheduleDrawable(Drawable who, AndroidUI.Runnable what)
+        {
+            if (verifyDrawable(who) && what != null)
+            {
+                if (mAttachInfo != null)
+                {
+                    //mAttachInfo.mViewRootImpl.mChoreographer.removeCallbacks(
+                    //        Choreographer.CALLBACK_ANIMATION, what, who);
+                }
+                //getRunQueue().removeCallbacks(what);
+            }
+        }
+
+        /**
+         * Unschedule any events associated with the given Drawable.  This can be
+         * used when selecting a new Drawable into a view, so that the previous
+         * one is completely unscheduled.
+         *
+         * @param who The Drawable to unschedule.
+         *
+         * @see #drawableStateChanged
+         */
+        public void unscheduleDrawable(Drawable who)
+        {
+            if (mAttachInfo != null && who != null)
+            {
+                //mAttachInfo.mViewRootImpl.mChoreographer.removeCallbacks(
+                //        Choreographer.CALLBACK_ANIMATION, null, who);
+            }
+        }
+
+        private ForegroundInfo mForegroundInfo;
+        private bool mBackgroundSizeChanged;
+
+        class TintInfo
+        {
+            internal ColorStateList mTintList;
+            internal BlendMode mBlendMode;
+            internal bool mHasTintMode;
+            internal bool mHasTintList;
+        }
+
+        private class ForegroundInfo
+        {
+            internal Drawable mDrawable;
+            internal TintInfo mTintInfo;
+            internal int mGravity = Gravity.FILL;
+            internal bool mInsidePadding = true;
+            internal bool mBoundsChanged = true;
+            internal readonly Rect mSelfBounds = new Rect();
+            internal readonly Rect mOverlayBounds = new Rect();
+        }
+
+        /**
+         * Resolve the Drawables depending on the layout direction. This is implicitly supposing
+         * that the View directionality can and will be resolved before its Drawables.
+         *
+         * Will call {@link View#onResolveDrawables} when resolution is done.
+         *
+         * @hide
+         */
+        protected void resolveDrawables()
+        {
+            // Drawables resolution may need to happen before resolving the layout direction (which is
+            // done only during the measure() call).
+            // If the layout direction is not resolved yet, we cannot resolve the Drawables except in
+            // one case: when the raw layout direction has not been defined as LAYOUT_DIRECTION_INHERIT.
+            // So, if the raw layout direction is LAYOUT_DIRECTION_LTR or LAYOUT_DIRECTION_RTL or
+            // LAYOUT_DIRECTION_LOCALE, we can "cheat" and we don't need to wait for the layout
+            // direction to be resolved as its resolved value will be the same as its raw value.
+            if (!isLayoutDirectionResolved() &&
+                    getRawLayoutDirection() == View.LAYOUT_DIRECTION_INHERIT)
+            {
+                return;
+            }
+
+            int layoutDirection = isLayoutDirectionResolved() ?
+                    getLayoutDirection() : getRawLayoutDirection();
+
+            if (mBackground != null)
+            {
+                mBackground.setLayoutDirection(layoutDirection);
+            }
+            if (mForegroundInfo != null && mForegroundInfo.mDrawable != null)
+            {
+                mForegroundInfo.mDrawable.setLayoutDirection(layoutDirection);
+            }
+            if (mDefaultFocusHighlight != null)
+            {
+                mDefaultFocusHighlight.setLayoutDirection(layoutDirection);
+            }
+            mPrivateFlags2 |= PFLAG2_DRAWABLE_RESOLVED;
+            onResolveDrawables(layoutDirection);
+
+            int count = getChildCount();
+            for (int i = 0; i < count; i++)
+            {
+                View child = getChildAt(i);
+                if (child.isLayoutDirectionInherited() && !child.areDrawablesResolved())
+                {
+                    child.resolveDrawables();
+                }
+            }
+        }
+
+        bool areDrawablesResolved()
+        {
+            return (mPrivateFlags2 & PFLAG2_DRAWABLE_RESOLVED) == PFLAG2_DRAWABLE_RESOLVED;
+        }
+
+        /**
+         * Called when layout direction has been resolved.
+         *
+         * The default implementation does nothing.
+         *
+         * @param layoutDirection The resolved layout direction.
+         *
+         * @see #LAYOUT_DIRECTION_LTR
+         * @see #LAYOUT_DIRECTION_RTL
+         *
+         * @hide
+         */
+        internal void onResolveDrawables(int layoutDirection)
+        {
+        }
+
+        /**
+         * @hide
+         */
+        internal protected void resetResolvedDrawables()
+        {
+            resetResolvedDrawablesInternal();
+
+            int count = getChildCount();
+            for (int i = 0; i < count; i++)
+            {
+                View child = getChildAt(i);
+                if (child.isLayoutDirectionInherited())
+                {
+                    child.resetResolvedDrawables();
+                }
+            }
+        }
+
+        void resetResolvedDrawablesInternal()
+        {
+            mPrivateFlags2 &= ~PFLAG2_DRAWABLE_RESOLVED;
+        }
+
+        /**
+         * Set the background to a given Drawable, or remove the background. If the
+         * background has padding, this View's padding is set to the background's
+         * padding. However, when a background is removed, this View's padding isn't
+         * touched. If setting the padding is desired, please use
+         * {@link #setPadding(int, int, int, int)}.
+         *
+         * @param background The Drawable to use as the background, or null to remove the
+         *        background
+         */
+        public void setBackground(Drawable background)
+        {
+            //noinspection deprecation
+            setBackgroundDrawable(background);
+        }
+
+        /**
+         * @deprecated use {@link #setBackground(Drawable)} instead
+         */
+        internal void setBackgroundDrawable(Drawable background)
+        {
+            computeOpaqueFlags();
+
+            if (background == mBackground)
+            {
+                return;
+            }
+
+            bool requestLayout_ = false;
+
+            //mBackgroundResource = 0;
+
+            /*
+             * Regardless of whether we're setting a new background or not, we want
+             * to clear the previous drawable. setVisible first while we still have the callback set.
+             */
+            if (mBackground != null)
+            {
+                if (isAttachedToWindow())
+                {
+                    mBackground.setVisible(false, false);
+                }
+                mBackground.setCallback(null);
+                unscheduleDrawable(mBackground);
+            }
+
+            if (background != null)
+            {
+                Rect padding = sThreadLocal.Value;
+                if (padding == null)
+                {
+                    padding = new Rect();
+                    sThreadLocal.Value = padding;
+                }
+                resetResolvedDrawablesInternal();
+                background.setLayoutDirection(getLayoutDirection());
+                if (background.getPadding(padding))
+                {
+                    resetResolvedPaddingInternal();
+                    switch (background.getLayoutDirection())
+                    {
+                        case LAYOUT_DIRECTION_RTL:
+                            mUserPaddingLeftInitial = padding.right;
+                            mUserPaddingRightInitial = padding.left;
+                            internalSetPadding(padding.right, padding.top, padding.left, padding.bottom);
+                            break;
+                        default:
+                            mUserPaddingLeftInitial = padding.left;
+                            mUserPaddingRightInitial = padding.right;
+                            internalSetPadding(padding.left, padding.top, padding.right, padding.bottom);
+                            break;
+                    }
+                    mLeftPaddingDefined = false;
+                    mRightPaddingDefined = false;
+                }
+
+                // Compare the minimum sizes of the old Drawable and the new.  If there isn't an old or
+                // if it has a different minimum size, we should layout again
+                if (mBackground == null
+                        || mBackground.getMinimumHeight() != background.getMinimumHeight()
+                        || mBackground.getMinimumWidth() != background.getMinimumWidth())
+                {
+                    requestLayout_ = true;
+                }
+
+                // Set mBackground before we set this as the callback and start making other
+                // background drawable state change calls. In particular, the setVisible call below
+                // can result in drawables attempting to start animations or otherwise invalidate,
+                // which requires the view set as the callback (us) to recognize the drawable as
+                // belonging to it as per verifyDrawable.
+                mBackground = background;
+                if (background.isStateful())
+                {
+                    background.setState(getDrawableState());
+                }
+                if (isAttachedToWindow())
+                {
+                    background.setVisible(getWindowVisibility() == VISIBLE && isShown(), false);
+                }
+
+                applyBackgroundTint();
+
+                // Set callback last, since the view may still be initializing.
+                background.setCallback(this);
+
+                if ((mPrivateFlags & PFLAG_SKIP_DRAW) != 0)
+                {
+                    mPrivateFlags &= ~PFLAG_SKIP_DRAW;
+                    requestLayout_ = true;
+                }
+            }
+            else
+            {
+                /* Remove the background */
+                mBackground = null;
+                if ((mViewFlags & WILL_NOT_DRAW) != 0
+                        && (mDefaultFocusHighlight == null)
+                        && (mForegroundInfo == null || mForegroundInfo.mDrawable == null))
+                {
+                    mPrivateFlags |= PFLAG_SKIP_DRAW;
+                }
+
+                /*
+                 * When the background is set, we try to apply its padding to this
+                 * View. When the background is removed, we don't touch this View's
+                 * padding. This is noted in the Javadocs. Hence, we don't need to
+                 * requestLayout(), the invalidate() below is sufficient.
+                 */
+
+                // The old background's minimum size could have affected this
+                // View's layout, so let's requestLayout
+                requestLayout_ = true;
+            }
+
+            computeOpaqueFlags();
+
+            if (requestLayout_)
+            {
+                requestLayout();
+            }
+
+            mBackgroundSizeChanged = true;
+            invalidate(true);
+            //invalidateOutline();
+        }
+
+        /**
+         * Gets the background drawable
+         *
+         * @return The drawable used as the background for this view, if any.
+         *
+         * @see #setBackground(Drawable)
+         *
+         * @attr ref android.R.styleable#View_background
+         */
+        public Drawable getBackground()
+        {
+            return mBackground;
+        }
+
+        private TintInfo mBackgroundTint;
+
+        /**
+         * Applies a tint to the background drawable. Does not modify the current tint
+         * mode, which is {@link BlendMode#SRC_IN} by default.
+         * <p>
+         * Subsequent calls to {@link #setBackground(Drawable)} will automatically
+         * mutate the drawable and apply the specified tint and tint mode using
+         * {@link Drawable#setTintList(ColorStateList)}.
+         *
+         * @param tint the tint to apply, may be {@code null} to clear tint
+         *
+         * @attr ref android.R.styleable#View_backgroundTint
+         * @see #getBackgroundTintList()
+         * @see Drawable#setTintList(ColorStateList)
+         */
+        public void setBackgroundTintList(ColorStateList tint)
+        {
+            if (mBackgroundTint == null)
+            {
+                mBackgroundTint = new TintInfo();
+            }
+            mBackgroundTint.mTintList = tint;
+            mBackgroundTint.mHasTintList = true;
+
+            applyBackgroundTint();
+        }
+
+        /**
+         * Return the tint applied to the background drawable, if specified.
+         *
+         * @return the tint applied to the background drawable
+         * @attr ref android.R.styleable#View_backgroundTint
+         * @see #setBackgroundTintList(ColorStateList)
+         */
+        public ColorStateList getBackgroundTintList()
+        {
+            return mBackgroundTint != null ? mBackgroundTint.mTintList : null;
+        }
+
+        /**
+         * Specifies the blending mode used to apply the tint specified by
+         * {@link #setBackgroundTintList(ColorStateList)}} to the background
+         * drawable. The default mode is {@link PorterDuff.Mode#SRC_IN}.
+         *
+         * @param tintMode the blending mode used to apply the tint, may be
+         *                 {@code null} to clear tint
+         * @attr ref android.R.styleable#View_backgroundTintMode
+         * @see #getBackgroundTintMode()
+         * @see Drawable#setTintMode(PorterDuff.Mode)
+         */
+        public void setBackgroundTintMode(PorterDuff.Mode tintMode)
+        {
+            BlendMode mode = null;
+            if (tintMode != null)
+            {
+                mode = BlendMode.fromValue(tintMode.nativeInt);
+            }
+
+            setBackgroundTintBlendMode(mode);
+        }
+
+        /**
+         * Specifies the blending mode used to apply the tint specified by
+         * {@link #setBackgroundTintList(ColorStateList)}} to the background
+         * drawable. The default mode is {@link BlendMode#SRC_IN}.
+         *
+         * @param blendMode the blending mode used to apply the tint, may be
+         *                 {@code null} to clear tint
+         * @attr ref android.R.styleable#View_backgroundTintMode
+         * @see #getBackgroundTintMode()
+         * @see Drawable#setTintBlendMode(BlendMode)
+         */
+        public void setBackgroundTintBlendMode(BlendMode blendMode)
+        {
+            if (mBackgroundTint == null)
+            {
+                mBackgroundTint = new TintInfo();
+            }
+
+            mBackgroundTint.mBlendMode = blendMode;
+            mBackgroundTint.mHasTintMode = true;
+
+            applyBackgroundTint();
+        }
+
+        /**
+         * Return the blending mode used to apply the tint to the background
+         * drawable, if specified.
+         *
+         * @return the blending mode used to apply the tint to the background
+         *         drawable
+         * @attr ref android.R.styleable#View_backgroundTintMode
+         * @see #setBackgroundTintBlendMode(BlendMode)
+         *
+         */
+        public PorterDuff.Mode getBackgroundTintMode()
+        {
+            PorterDuff.Mode porterDuffMode;
+            if (mBackgroundTint != null && mBackgroundTint.mBlendMode != null)
+            {
+                porterDuffMode = BlendMode.blendModeToPorterDuffMode(mBackgroundTint.mBlendMode);
+            }
+            else
+            {
+                porterDuffMode = null;
+            }
+            return porterDuffMode;
+        }
+
+        /**
+         * Return the blending mode used to apply the tint to the background
+         * drawable, if specified.
+         *
+         * @return the blending mode used to apply the tint to the background
+         *         drawable, null if no blend has previously been configured
+         * @attr ref android.R.styleable#View_backgroundTintMode
+         * @see #setBackgroundTintBlendMode(BlendMode)
+         */
+        public BlendMode getBackgroundTintBlendMode()
+        {
+            return mBackgroundTint != null ? mBackgroundTint.mBlendMode : null;
+        }
+
+        private void applyBackgroundTint()
+        {
+            if (mBackground != null && mBackgroundTint != null)
+            {
+                TintInfo tintInfo = mBackgroundTint;
+                if (tintInfo.mHasTintList || tintInfo.mHasTintMode)
+                {
+                    mBackground = mBackground.mutate();
+
+                    if (tintInfo.mHasTintList)
+                    {
+                        mBackground.setTintList(tintInfo.mTintList);
+                    }
+
+                    if (tintInfo.mHasTintMode)
+                    {
+                        mBackground.setTintBlendMode(tintInfo.mBlendMode);
+                    }
+
+                    // The drawable (or one of its children) may not have been
+                    // stateful before applying the tint, so let's try again.
+                    if (mBackground.isStateful())
+                    {
+                        mBackground.setState(getDrawableState());
+                    }
+                }
+            }
+        }
+
+        /**
+         * Returns the drawable used as the foreground of this View. The
+         * foreground drawable, if non-null, is always drawn on top of the view's content.
+         *
+         * @return a Drawable or null if no foreground was set
+         *
+         * @see #onDrawForeground(Canvas)
+         */
+        public Drawable getForeground()
+        {
+            return mForegroundInfo != null ? mForegroundInfo.mDrawable : null;
+        }
+
+        /**
+         * Returns true if this view is currently attached to a window.
+         */
+        public bool isAttachedToWindow() {
+            return mAttachInfo != null;
+        }
+
+
+        /**
+         * Supply a Drawable that is to be rendered on top of all of the content in the view.
+         *
+         * @param foreground the Drawable to be drawn on top of the children
+         *
+         * @attr ref android.R.styleable#View_foreground
+         */
+        public void setForeground(Drawable foreground)
+        {
+            if (mForegroundInfo == null)
+            {
+                if (foreground == null)
+                {
+                    // Nothing to do.
+                    return;
+                }
+                mForegroundInfo = new ForegroundInfo();
+            }
+
+            if (foreground == mForegroundInfo.mDrawable)
+            {
+                // Nothing to do
+                return;
+            }
+
+            if (mForegroundInfo.mDrawable != null)
+            {
+                if (isAttachedToWindow())
+                {
+                    mForegroundInfo.mDrawable.setVisible(false, false);
+                }
+                mForegroundInfo.mDrawable.setCallback(null);
+                unscheduleDrawable(mForegroundInfo.mDrawable);
+            }
+
+            mForegroundInfo.mDrawable = foreground;
+            mForegroundInfo.mBoundsChanged = true;
+            if (foreground != null)
+            {
+                if ((mPrivateFlags & PFLAG_SKIP_DRAW) != 0)
+                {
+                    mPrivateFlags &= ~PFLAG_SKIP_DRAW;
+                }
+                foreground.setLayoutDirection(getLayoutDirection());
+                if (foreground.isStateful())
+                {
+                    foreground.setState(getDrawableState());
+                }
+                applyForegroundTint();
+                if (isAttachedToWindow())
+                {
+                    foreground.setVisible(getWindowVisibility() == VISIBLE && isShown(), false);
+                }
+                // Set callback last, since the view may still be initializing.
+                foreground.setCallback(this);
+            }
+            else if ((mViewFlags & WILL_NOT_DRAW) != 0 && mBackground == null
+                    && (mDefaultFocusHighlight == null))
+            {
+                mPrivateFlags |= PFLAG_SKIP_DRAW;
+            }
+            requestLayout();
+            invalidate();
+        }
+
+        /** The default focus highlight.
+         * @see #mDefaultFocusHighlightEnabled
+         * @see Drawable#hasFocusStateSpecified()
+         */
+        private Drawable mDefaultFocusHighlight;
+        private Drawable mDefaultFocusHighlightCache;
+
+
+        /**
+         * Magic bit used to support features of framework-internal window decor implementation details.
+         * This used to live exclusively in FrameLayout.
+         *
+         * @return true if the foreground should draw inside the padding region or false
+         *         if it should draw inset by the view's padding
+         * @hide internal use only; only used by FrameLayout and internal screen layouts.
+         */
+        internal bool isForegroundInsidePadding()
+        {
+            return mForegroundInfo != null ? mForegroundInfo.mInsidePadding : true;
+        }
+
+        /**
+         * Describes how the foreground is positioned.
+         *
+         * @return foreground gravity.
+         *
+         * @see #setForegroundGravity(int)
+         *
+         * @attr ref android.R.styleable#View_foregroundGravity
+         */
+        public int getForegroundGravity()
+        {
+            return mForegroundInfo != null ? mForegroundInfo.mGravity
+                    : Gravity.START | Gravity.TOP;
+        }
+
+        /**
+         * Describes how the foreground is positioned. Defaults to START and TOP.
+         *
+         * @param gravity see {@link android.view.Gravity}
+         *
+         * @see #getForegroundGravity()
+         *
+         * @attr ref android.R.styleable#View_foregroundGravity
+         */
+        public void setForegroundGravity(int gravity)
+        {
+            if (mForegroundInfo == null)
+            {
+                mForegroundInfo = new ForegroundInfo();
+            }
+
+            if (mForegroundInfo.mGravity != gravity)
+            {
+                if ((gravity & Gravity.RELATIVE_HORIZONTAL_GRAVITY_MASK) == 0)
+                {
+                    gravity |= Gravity.START;
+                }
+
+                if ((gravity & Gravity.VERTICAL_GRAVITY_MASK) == 0)
+                {
+                    gravity |= Gravity.TOP;
+                }
+
+                mForegroundInfo.mGravity = gravity;
+                requestLayout();
+            }
+        }
+
+        /**
+         * Applies a tint to the foreground drawable. Does not modify the current tint
+         * mode, which is {@link PorterDuff.Mode#SRC_IN} by default.
+         * <p>
+         * Subsequent calls to {@link #setForeground(Drawable)} will automatically
+         * mutate the drawable and apply the specified tint and tint mode using
+         * {@link Drawable#setTintList(ColorStateList)}.
+         *
+         * @param tint the tint to apply, may be {@code null} to clear tint
+         *
+         * @attr ref android.R.styleable#View_foregroundTint
+         * @see #getForegroundTintList()
+         * @see Drawable#setTintList(ColorStateList)
+         */
+        public void setForegroundTintList(ColorStateList tint)
+        {
+            if (mForegroundInfo == null)
+            {
+                mForegroundInfo = new ForegroundInfo();
+            }
+            if (mForegroundInfo.mTintInfo == null)
+            {
+                mForegroundInfo.mTintInfo = new TintInfo();
+            }
+            mForegroundInfo.mTintInfo.mTintList = tint;
+            mForegroundInfo.mTintInfo.mHasTintList = true;
+
+            applyForegroundTint();
+        }
+
+        /**
+         * Return the tint applied to the foreground drawable, if specified.
+         *
+         * @return the tint applied to the foreground drawable
+         * @attr ref android.R.styleable#View_foregroundTint
+         * @see #setForegroundTintList(ColorStateList)
+         */
+        public ColorStateList getForegroundTintList()
+        {
+            return mForegroundInfo != null && mForegroundInfo.mTintInfo != null
+                    ? mForegroundInfo.mTintInfo.mTintList : null;
+        }
+
+        /**
+         * Specifies the blending mode used to apply the tint specified by
+         * {@link #setForegroundTintList(ColorStateList)}} to the background
+         * drawable. The default mode is {@link PorterDuff.Mode#SRC_IN}.
+         *
+         * @param tintMode the blending mode used to apply the tint, may be
+         *                 {@code null} to clear tint
+         * @attr ref android.R.styleable#View_foregroundTintMode
+         * @see #getForegroundTintMode()
+         * @see Drawable#setTintMode(PorterDuff.Mode)
+         *
+         */
+        public void setForegroundTintMode(PorterDuff.Mode tintMode)
+        {
+            BlendMode mode = null;
+            if (tintMode != null)
+            {
+                mode = BlendMode.fromValue(tintMode.nativeInt);
+            }
+            setForegroundTintBlendMode(mode);
+        }
+
+        /**
+         * Specifies the blending mode used to apply the tint specified by
+         * {@link #setForegroundTintList(ColorStateList)}} to the background
+         * drawable. The default mode is {@link BlendMode#SRC_IN}.
+         *
+         * @param blendMode the blending mode used to apply the tint, may be
+         *                 {@code null} to clear tint
+         * @attr ref android.R.styleable#View_foregroundTintMode
+         * @see #getForegroundTintMode()
+         * @see Drawable#setTintBlendMode(BlendMode)
+         */
+        public void setForegroundTintBlendMode(BlendMode blendMode)
+        {
+            if (mForegroundInfo == null)
+            {
+                mForegroundInfo = new ForegroundInfo();
+            }
+            if (mForegroundInfo.mTintInfo == null)
+            {
+                mForegroundInfo.mTintInfo = new TintInfo();
+            }
+            mForegroundInfo.mTintInfo.mBlendMode = blendMode;
+            mForegroundInfo.mTintInfo.mHasTintMode = true;
+
+            applyForegroundTint();
+        }
+
+        /**
+         * Return the blending mode used to apply the tint to the foreground
+         * drawable, if specified.
+         *
+         * @return the blending mode used to apply the tint to the foreground
+         *         drawable
+         * @attr ref android.R.styleable#View_foregroundTintMode
+         * @see #setForegroundTintMode(PorterDuff.Mode)
+         */
+        public PorterDuff.Mode getForegroundTintMode()
+        {
+            BlendMode blendMode = mForegroundInfo != null && mForegroundInfo.mTintInfo != null
+                    ? mForegroundInfo.mTintInfo.mBlendMode : null;
+            if (blendMode != null)
+            {
+                return BlendMode.blendModeToPorterDuffMode(blendMode);
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        /**
+         * Return the blending mode used to apply the tint to the foreground
+         * drawable, if specified.
+         *
+         * @return the blending mode used to apply the tint to the foreground
+         *         drawable
+         * @attr ref android.R.styleable#View_foregroundTintMode
+         * @see #setForegroundTintBlendMode(BlendMode)
+         *
+         */
+        public BlendMode getForegroundTintBlendMode()
+        {
+            return mForegroundInfo != null && mForegroundInfo.mTintInfo != null
+                    ? mForegroundInfo.mTintInfo.mBlendMode : null;
+        }
+
+        private void applyForegroundTint()
+        {
+            if (mForegroundInfo != null && mForegroundInfo.mDrawable != null
+                    && mForegroundInfo.mTintInfo != null)
+            {
+                TintInfo tintInfo = mForegroundInfo.mTintInfo;
+                if (tintInfo.mHasTintList || tintInfo.mHasTintMode)
+                {
+                    mForegroundInfo.mDrawable = mForegroundInfo.mDrawable.mutate();
+
+                    if (tintInfo.mHasTintList)
+                    {
+                        mForegroundInfo.mDrawable.setTintList(tintInfo.mTintList);
+                    }
+
+                    if (tintInfo.mHasTintMode)
+                    {
+                        mForegroundInfo.mDrawable.setTintBlendMode(tintInfo.mBlendMode);
+                    }
+
+                    // The drawable (or one of its children) may not have been
+                    // stateful before applying the tint, so let's try again.
+                    if (mForegroundInfo.mDrawable.isStateful())
+                    {
+                        mForegroundInfo.mDrawable.setState(getDrawableState());
+                    }
+                }
+            }
+        }
+
+        private int[] mDrawableState = null;
+
+        /**
+         * Return an array of resource IDs of the drawable states representing the
+         * current state of the view.
+         *
+         * @return The current drawable state
+         *
+         * @see Drawable#setState(int[])
+         * @see #drawableStateChanged()
+         * @see #onCreateDrawableState(int)
+         */
+        public int[] getDrawableState() {
+            if ((mDrawableState != null) && ((mPrivateFlags & PFLAG_DRAWABLE_STATE_DIRTY) == 0)) {
+                return mDrawableState;
+            } else {
+                mDrawableState = onCreateDrawableState(0);
+                mPrivateFlags &= ~PFLAG_DRAWABLE_STATE_DIRTY;
+                return mDrawableState;
+            }
+        }
+
+        /**
+         * Returns true if this view is in a window that currently has window focus.
+         * Note that this is not the same as the view itself having focus.
+         *
+         * @return True if this view is in a window that currently has window focus.
+         */
+        public bool hasWindowFocus()
+        {
+            return mAttachInfo != null && mAttachInfo.mHasWindowFocus;
+        }
+
+        /**
+         * When set, this ViewGroup's drawable states also include those
+         * of its children.
+         */
+        private const int FLAG_ADD_STATES_FROM_CHILDREN = 0x2000;
+
+
+        /**
+         * Generate the new {@link android.graphics.drawable.Drawable} state for
+         * this view. This is called by the view
+         * system when the cached Drawable state is determined to be invalid.  To
+         * retrieve the current state, you should use {@link #getDrawableState}.
+         *
+         * @param extraSpace if non-zero, this is the number of extra entries you
+         * would like in the returned array in which you can place your own
+         * states.
+         *
+         * @return Returns an array holding the current {@link Drawable} state of
+         * the view.
+         *
+         * @see #mergeDrawableStates(int[], int[])
+         */
+        virtual protected int[] onCreateDrawableState(int extraSpace)
+        {
+            if ((mGroupFlags & FLAG_ADD_STATES_FROM_CHILDREN) == 0)
+            {
+                return onCreateDrawableStateInternal(extraSpace);
+            }
+
+            int need = 0;
+            int n = getChildCount();
+            for (int i = 0; i < n; i++)
+            {
+                int[] childState = getChildAt(i).getDrawableState();
+
+                if (childState != null)
+                {
+                    need += childState.Length;
+                }
+            }
+
+            int[] state = onCreateDrawableStateInternal(extraSpace + need);
+
+            for (int i = 0; i < n; i++)
+            {
+                int[] childState = getChildAt(i).getDrawableState();
+
+                if (childState != null)
+                {
+                    state = mergeDrawableStates(state, childState);
+                }
+            }
+
+            return state;
+        }
+
+        private int[] onCreateDrawableStateInternal(int extraSpace)
+        {
+            if ((mViewFlags & DUPLICATE_PARENT_STATE) == DUPLICATE_PARENT_STATE && mParent is View)
+            {
+                return ((View)mParent).onCreateDrawableState(extraSpace);
+            }
+
+            int[] drawableState;
+
+            int privateFlags = mPrivateFlags;
+
+            int viewStateIndex = 0;
+            if ((privateFlags & PFLAG_PRESSED) != 0) viewStateIndex |= StateSet.VIEW_STATE_PRESSED;
+            if ((mViewFlags & ENABLED_MASK) == ENABLED) viewStateIndex |= StateSet.VIEW_STATE_ENABLED;
+            if (isFocused()) viewStateIndex |= StateSet.VIEW_STATE_FOCUSED;
+            if ((privateFlags & PFLAG_SELECTED) != 0) viewStateIndex |= StateSet.VIEW_STATE_SELECTED;
+            if (hasWindowFocus()) viewStateIndex |= StateSet.VIEW_STATE_WINDOW_FOCUSED;
+            if ((privateFlags & PFLAG_ACTIVATED) != 0) viewStateIndex |= StateSet.VIEW_STATE_ACTIVATED;
+            if (mAttachInfo != null && mAttachInfo.mHardwareAccelerated)
+            {
+                // This is set if HW acceleration is requested, even if the current
+                // process doesn't allow it.  This is just to allow app preview
+                // windows to better match their app.
+                viewStateIndex |= StateSet.VIEW_STATE_ACCELERATED;
+            }
+            if ((privateFlags & PFLAG_HOVERED) != 0) viewStateIndex |= StateSet.VIEW_STATE_HOVERED;
+
+            int privateFlags2 = mPrivateFlags2;
+            if ((privateFlags2 & PFLAG2_DRAG_CAN_ACCEPT) != 0)
+            {
+                viewStateIndex |= StateSet.VIEW_STATE_DRAG_CAN_ACCEPT;
+            }
+            if ((privateFlags2 & PFLAG2_DRAG_HOVERED) != 0)
+            {
+                viewStateIndex |= StateSet.VIEW_STATE_DRAG_HOVERED;
+            }
+
+            drawableState = StateSet.get(viewStateIndex);
+
+            //noinspection ConstantIfStatement
+            if (false)
+            {
+                //Log.i("View", "drawableStateIndex=" + viewStateIndex);
+                //Log.i("View", toString()
+                //        + " pressed=" + ((privateFlags & PFLAG_PRESSED) != 0)
+                //        + " en=" + ((mViewFlags & ENABLED_MASK) == ENABLED)
+                //        + " fo=" + hasFocus()
+                //        + " sl=" + ((privateFlags & PFLAG_SELECTED) != 0)
+                //        + " wf=" + hasWindowFocus()
+                //        + ": " + Arrays.toString(drawableState));
+            }
+
+            if (extraSpace == 0)
+            {
+                return drawableState;
+            }
+
+            int[] fullState;
+            if (drawableState != null)
+            {
+                fullState = new int[drawableState.Length + extraSpace];
+                Arrays.arraycopy(drawableState, 0, fullState, 0, drawableState.Length);
+            }
+            else
+            {
+                fullState = new int[extraSpace];
+            }
+
+            return fullState;
+        }
+
+        /**
+         * Sets whether this ViewGroup's drawable states also include
+         * its children's drawable states.  This is used, for example, to
+         * make a group appear to be focused when its child EditText or button
+         * is focused.
+         */
+        public void setAddStatesFromChildren(bool addsStates)
+        {
+            if (addsStates)
+            {
+                mGroupFlags |= FLAG_ADD_STATES_FROM_CHILDREN;
+            }
+            else
+            {
+                mGroupFlags &= ~FLAG_ADD_STATES_FROM_CHILDREN;
+            }
+
+            refreshDrawableState();
+        }
+
+        /**
+         * Returns whether this ViewGroup's drawable states also include
+         * its children's drawable states.  This is used, for example, to
+         * make a group appear to be focused when its child EditText or button
+         * is focused.
+         */
+        public bool addStatesFromChildren()
+        {
+            return (mGroupFlags & FLAG_ADD_STATES_FROM_CHILDREN) != 0;
+        }
+
+        /**
+         * If {@link #addStatesFromChildren} is true, refreshes this group's
+         * drawable state (to include the states from its children).
+         */
+        public void childDrawableStateChanged(View child)
+        {
+            if ((mGroupFlags & FLAG_ADD_STATES_FROM_CHILDREN) != 0)
+            {
+                refreshDrawableState();
+            }
+        }
+
+        /**
+         * Merge your own state values in <var>additionalState</var> into the base
+         * state values <var>baseState</var> that were returned by
+         * {@link #onCreateDrawableState(int)}.
+         *
+         * @param baseState The base state values returned by
+         * {@link #onCreateDrawableState(int)}, which will be modified to also hold your
+         * own additional state values.
+         *
+         * @param additionalState The additional state values you would like
+         * added to <var>baseState</var>; this array is not modified.
+         *
+         * @return As a convenience, the <var>baseState</var> array you originally
+         * passed into the function is returned.
+         *
+         * @see #onCreateDrawableState(int)
+         */
+        protected static int[] mergeDrawableStates(int[] baseState, int[] additionalState) {
+            int N = baseState.Length;
+            int i = N - 1;
+            while (i >= 0 && baseState[i] == 0) {
+                i--;
+            }
+            Arrays.arraycopy(additionalState, 0, baseState, i + 1, additionalState.Length);
+            return baseState;
+        }
+
+        /**
+         * Call {@link Drawable#jumpToCurrentState() Drawable.jumpToCurrentState()}
+         * on all Drawable objects associated with this view.
+         * <p>
+         * Also calls {@link StateListAnimator#jumpToCurrentState()} if there is a StateListAnimator
+         * attached to this view.
+         */
+        virtual public void jumpDrawablesToCurrentState() {
+            if (mBackground != null) {
+                mBackground.jumpToCurrentState();
+            }
+            //if (mStateListAnimator != null) {
+            //    mStateListAnimator.jumpToCurrentState();
+            //}
+            if (mDefaultFocusHighlight != null) {
+                mDefaultFocusHighlight.jumpToCurrentState();
+            }
+            if (mForegroundInfo != null && mForegroundInfo.mDrawable != null) {
+                mForegroundInfo.mDrawable.jumpToCurrentState();
+            }
+
+            View[] children = mChildren;
+            int count = mChildrenCount;
+            for (int i = 0; i < count; i++)
+            {
+                children[i].jumpDrawablesToCurrentState();
+            }
+        }
+
+        /**
+         * Sets the background color for this view.
+         * @param color the color of the background
+         */
+        public void setBackgroundColor(int color) {
+            if (mBackground is ColorDrawable) {
+                ((ColorDrawable) mBackground.mutate()).setColor(color);
+                computeOpaqueFlags();
+                //mBackgroundResource = 0;
+            } else {
+                setBackground(new ColorDrawable(color));
+            }
+        }
+
+        private bool mLastIsOpaque;
+
+        /**
+         * Calculates the visual alpha of this view, which is a combination of the actual
+         * alpha value and the transitionAlpha value (if set).
+         */
+        private float getFinalAlpha()
+        {
+            if (mTransformationInfo != null)
+            {
+                return mTransformationInfo.mAlpha * mTransformationInfo.mTransitionAlpha;
+            }
+            return 1;
+        }
+
+        /**
+         * Indicates whether this View is opaque. An opaque View guarantees that it will
+         * draw all the pixels overlapping its bounds using a fully opaque color.
+         *
+         * Subclasses of View should override this method whenever possible to indicate
+         * whether an instance is opaque. Opaque Views are treated in a special way by
+         * the View hierarchy, possibly allowing it to perform optimizations during
+         * invalidate/draw passes.
+         *
+         * @return True if this View is guaranteed to be fully opaque, false otherwise.
+         */
+        virtual public bool isOpaque() {
+            return (mPrivateFlags & PFLAG_OPAQUE_MASK) == PFLAG_OPAQUE_MASK &&
+                    getFinalAlpha() >= 1.0f;
+        }
+
+
+        /**
+         * @hide
+         */
+        protected void computeOpaqueFlags()
+        {
+            // Opaque if:
+            //   - Has a background
+            //   - Background is opaque
+            //   - Doesn't have scrollbars or scrollbars overlay
+
+            if (mBackground != null && mBackground.getOpacity() == PixelFormat.OPAQUE)
+            {
+                mPrivateFlags |= PFLAG_OPAQUE_BACKGROUND;
+            }
+            else
+            {
+                mPrivateFlags &= ~PFLAG_OPAQUE_BACKGROUND;
+            }
+
+            int flags = mViewFlags;
+            if (((flags & SCROLLBARS_VERTICAL) == 0 && (flags & SCROLLBARS_HORIZONTAL) == 0) ||
+                    (flags & SCROLLBARS_STYLE_MASK) == SCROLLBARS_INSIDE_OVERLAY ||
+                    (flags & SCROLLBARS_STYLE_MASK) == SCROLLBARS_OUTSIDE_OVERLAY)
+            {
+                mPrivateFlags |= PFLAG_OPAQUE_SCROLLBARS;
+            }
+            else
+            {
+                mPrivateFlags &= ~PFLAG_OPAQUE_SCROLLBARS;
+            }
+        }
+
+        /**
+         * This function is called whenever the state of the view changes in such
+         * a way that it impacts the state of drawables being shown.
+         * <p>
+         * If the View has a StateListAnimator, it will also be called to run necessary state
+         * change animations.
+         * <p>
+         * Be sure to call through to the superclass when overriding this function.
+         *
+         * @see Drawable#setState(int[])
+         */
+        virtual protected void drawableStateChanged()
+        {
+            int[] state = getDrawableState();
+            bool changed = false;
+
+            Drawable bg = mBackground;
+            if (bg != null && bg.isStateful())
+            {
+                changed |= bg.setState(state);
+            }
+
+            Drawable hl = mDefaultFocusHighlight;
+            if (hl != null && hl.isStateful())
+            {
+                changed |= hl.setState(state);
+            }
+
+            Drawable fg = mForegroundInfo != null ? mForegroundInfo.mDrawable : null;
+            if (fg != null && fg.isStateful())
+            {
+                changed |= fg.setState(state);
+            }
+
+            if (mScrollCache != null)
+            {
+                Drawable scrollBar = mScrollCache.scrollBar;
+                if (scrollBar != null && scrollBar.isStateful())
+                {
+                    changed |= scrollBar.setState(state)
+                            && mScrollCache.state != ScrollabilityCache.OFF;
+                }
+            }
+
+            //if (mStateListAnimator != null)
+            //{
+            //    mStateListAnimator.setState(state);
+            //}
+
+            if (!isAggregatedVisible())
+            {
+                // If we're not visible, skip any animated changes
+                jumpDrawablesToCurrentState();
+            }
+
+            if (changed)
+            {
+                invalidate();
+            }
+
+            if ((mGroupFlags & FLAG_NOTIFY_CHILDREN_ON_DRAWABLE_STATE_CHANGE) != 0)
+            {
+                if ((mGroupFlags & FLAG_ADD_STATES_FROM_CHILDREN) != 0)
+                {
+                    throw new IllegalStateException("addStateFromChildren cannot be enabled if a"
+                            + " child has duplicateParentState set to true");
+                }
+
+                View[] children = mChildren;
+                int count = mChildrenCount;
+
+                for (int i = 0; i < count; i++)
+                {
+                    View child = children[i];
+                    if ((child.mViewFlags & DUPLICATE_PARENT_STATE) != 0)
+                    {
+                        child.refreshDrawableState();
+                    }
+                }
+            }
+        }
+
+        /**
+         * This function is called whenever the view hotspot changes and needs to
+         * be propagated to drawables or child views managed by the view.
+         * <p>
+         * Dispatching to child views is handled by
+         * {@link #dispatchDrawableHotspotChanged(float, float)}.
+         * <p>
+         * Be sure to call through to the superclass when overriding this function.
+         *
+         * @param x hotspot x coordinate
+         * @param y hotspot y coordinate
+         */
+        virtual public void drawableHotspotChanged(float x, float y)
+        {
+            if (mBackground != null)
+            {
+                mBackground.setHotspot(x, y);
+            }
+            if (mDefaultFocusHighlight != null)
+            {
+                mDefaultFocusHighlight.setHotspot(x, y);
+            }
+            if (mForegroundInfo != null && mForegroundInfo.mDrawable != null)
+            {
+                mForegroundInfo.mDrawable.setHotspot(x, y);
+            }
+
+            dispatchDrawableHotspotChanged(x, y);
+        }
+
+        /**
+         * Dispatches drawableHotspotChanged to all of this View's children.
+         *
+         * @param x hotspot x coordinate
+         * @param y hotspot y coordinate
+         * @see #drawableHotspotChanged(float, float)
+         */
+        virtual public void dispatchDrawableHotspotChanged(float x, float y)
+        {
+            int count = mChildrenCount;
+            if (count == 0)
+            {
+                return;
+            }
+
+            View[] children = mChildren;
+            for (int i = 0; i < count; i++)
+            {
+                View child = children[i];
+                // Children that are clickable on their own should not
+                // receive hotspots when their parent view does.
+                bool nonActionable = !child.isClickable() && !child.isLongClickable();
+                bool duplicatesState = (child.mViewFlags & DUPLICATE_PARENT_STATE) != 0;
+                if (nonActionable || duplicatesState)
+                {
+                    float[] point = getTempLocationF();
+                    point[0] = x;
+                    point[1] = y;
+                    transformPointToViewLocal(point, child);
+                    child.drawableHotspotChanged(point[0], point[1]);
+                }
+            }
+        }
+
+        /**
+         * Call this to force a view to update its drawable state. This will cause
+         * drawableStateChanged to be called on this view. Views that are interested
+         * in the new state should call getDrawableState.
+         *
+         * @see #drawableStateChanged
+         * @see #getDrawableState
+         */
+        public void refreshDrawableState()
+        {
+            mPrivateFlags |= PFLAG_DRAWABLE_STATE_DIRTY;
+            drawableStateChanged();
+
+            Parent parent = mParent;
+            if (parent != null)
+            {
+                parent.childDrawableStateChanged(this);
+            }
+        }
+
+        /**
+         * Changes the selection state of this view. A view can be selected or not.
+         * Note that selection is not the same as focus. Views are typically
+         * selected in the context of an AdapterView like ListView or GridView;
+         * the selected view is the view that is highlighted.
+         *
+         * @param selected true if the view must be selected, false otherwise
+         */
+        virtual public void setSelected(bool selected)
+        {
+            //noinspection DoubleNegation
+            if (((mPrivateFlags & PFLAG_SELECTED) != 0) != selected)
+            {
+                mPrivateFlags = (mPrivateFlags & ~PFLAG_SELECTED) | (selected ? PFLAG_SELECTED : 0);
+                if (!selected) resetPressedState();
+                invalidate(true);
+                refreshDrawableState();
+                dispatchSetSelected(selected);
+            }
+        }
+
+        /**
+         * Dispatch setSelected to all of this View's children.
+         *
+         * @see #setSelected(bool)
+         *
+         * @param selected The new selected state
+         */
+        protected void dispatchSetSelected(bool selected)
+        {
+            View[] children = mChildren;
+            int count = mChildrenCount;
+            for (int i = 0; i < count; i++)
+            {
+                children[i].setSelected(selected);
+            }
+        }
+
+        /**
+         * Indicates the selection state of this view.
+         *
+         * @return true if the view is selected, false otherwise
+         */
+        public bool isSelected()
+        {
+            return (mPrivateFlags & PFLAG_SELECTED) != 0;
+        }
+
+        /**
+         * Changes the activated state of this view. A view can be activated or not.
+         * Note that activation is not the same as selection.  Selection is
+         * a transient property, representing the view (hierarchy) the user is
+         * currently interacting with.  Activation is a longer-term state that the
+         * user can move views in and out of.  For example, in a list view with
+         * single or multiple selection enabled, the views in the current selection
+         * set are activated.  (Um, yeah, we are deeply sorry about the terminology
+         * here.)  The activated state is propagated down to children of the view it
+         * is set on.
+         *
+         * @param activated true if the view must be activated, false otherwise
+         */
+        virtual public void setActivated(bool activated)
+        {
+            //noinspection DoubleNegation
+            if (((mPrivateFlags & PFLAG_ACTIVATED) != 0) != activated)
+            {
+                mPrivateFlags = (mPrivateFlags & ~PFLAG_ACTIVATED) | (activated ? PFLAG_ACTIVATED : 0);
+                invalidate(true);
+                refreshDrawableState();
+                dispatchSetActivated(activated);
+            }
+        }
+
+        /**
+         * Dispatch setActivated to all of this View's children.
+         *
+         * @see #setActivated(bool)
+         *
+         * @param activated The new activated state
+         */
+        protected void dispatchSetActivated(bool activated)
+        {
+            View[] children = mChildren;
+            int count = mChildrenCount;
+            for (int i = 0; i < count; i++)
+            {
+                children[i].setActivated(activated);
+            }
+        }
+
+        /**
+         * Indicates the activation state of this view.
+         *
+         * @return true if the view is activated, false otherwise
+         */
+        public bool isActivated()
+        {
+            return (mPrivateFlags & PFLAG_ACTIVATED) != 0;
+        }
+
     }
 }

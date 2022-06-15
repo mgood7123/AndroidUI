@@ -76,7 +76,7 @@ namespace MainApp
             public override void OnCreate()
             {
 
-                if (true)
+                if (false)
                 {
                     AndroidUI.LinearLayout linearLayout = new();
 
@@ -91,7 +91,21 @@ namespace MainApp
                 }
                 else
                 {
-                    SetContentView(new AndroidUI.Box());
+                    if (false)
+                    {
+                        SetContentView(new AndroidUI.BoxView());
+                    }
+                    else
+                    {
+                        //SkiaSharp.SKNativeObject.LOG_ALLOCATIONS = true;
+
+                        var image = new AndroidUI.ImageView();
+                        var bm = AndroidUI.BitmapFactory.decodeFile("C:/Users/small/Pictures/Screenshot 2022-05-19 034147.jpeg");
+                        image.setImageBitmap(bm);
+                        //image.setImageDrawable(new AndroidUI.ColorDrawable((int)(uint)SkiaSharp.SKColors.Firebrick));
+                        image.setScaleType(AndroidUI.ImageView.ScaleType.CENTER_INSIDE);
+                        SetContentView(image);
+                    }
                 }
             }
         }

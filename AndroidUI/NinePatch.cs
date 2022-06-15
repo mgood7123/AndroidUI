@@ -15,6 +15,7 @@
  */
 
 using AndroidUI.Extensions;
+using SkiaSharp;
 
 namespace AndroidUI
 {
@@ -32,7 +33,7 @@ namespace AndroidUI
      * using a WYSIWYG graphics editor.
      * </p>
      */
-    public class NinePatch
+    public unsafe class NinePatch
     {
         /**
          * Struct of inset information attached to a 9 patch bitmap.
@@ -44,7 +45,7 @@ namespace AndroidUI
          */
         public class InsetStruct
         {
-            InsetStruct(int opticalLeft, int opticalTop, int opticalRight, int opticalBottom,
+            internal InsetStruct(int opticalLeft, int opticalTop, int opticalRight, int opticalBottom,
                     int outlineLeft, int outlineTop, int outlineRight, int outlineBottom,
                     float outlineRadius, int outlineAlpha, float decodeScale)
             {
@@ -90,10 +91,10 @@ namespace AndroidUI
          *
          * @hide for use by android.graphics, but must not be used outside the module.
          */
-        public long mNativeChunk;
+        internal sbyte* mNativeChunk;
 
         private Paint mPaint;
-        private String mSrcName;
+        private string mSrcName;
 
         /**
          * Create a drawable projection from a bitmap to nine patches.
@@ -115,22 +116,20 @@ namespace AndroidUI
          *              bitmap is split apart and drawn.
          * @param srcName The name of the source for the bitmap. Might be null.
          */
-        public NinePatch(Bitmap bitmap, byte[] chunk, String srcName)
+        public NinePatch(Bitmap bitmap, byte[] chunk, string srcName)
         {
             mBitmap = bitmap;
             mSrcName = srcName;
-            // TODO: RESTORE ME
-            //mNativeChunk = validateNinePatchChunk(chunk);
+            mNativeChunk = validateNinePatchChunk(chunk);
         }
 
         ~NinePatch()
         {
-            if (mNativeChunk != 0)
+            if (mNativeChunk != null)
             {
                 // only attempt to destroy correctly initilized chunks
-                // TODO: RESTORE ME
-                //nativeFinalize(mNativeChunk);
-                mNativeChunk = 0;
+                nativeFinalize(mNativeChunk);
+                mNativeChunk = null;
             }
         }
 
@@ -183,7 +182,7 @@ namespace AndroidUI
          * @param canvas A container for the current matrix and clip used to draw the NinePatch.
          * @param location Where to draw the NinePatch.
          */
-        public void draw(SkiaSharp.SKCanvas canvas, RectF location)
+        public void draw(SKCanvas canvas, RectF location)
         {
             canvas.DrawPatch(this, location, mPaint.getNativeInstance());
         }
@@ -194,7 +193,7 @@ namespace AndroidUI
          * @param canvas A container for the current matrix and clip used to draw the NinePatch.
          * @param location Where to draw the NinePatch.
          */
-        public void draw(SkiaSharp.SKCanvas canvas, Rect location)
+        public void draw(SKCanvas canvas, Rect location)
         {
             canvas.DrawPatch(this, location, mPaint.getNativeInstance());
         }
@@ -207,7 +206,7 @@ namespace AndroidUI
          * @param location Where to draw the NinePatch.
          * @param paint The Paint to draw through.
          */
-        public void draw(SkiaSharp.SKCanvas canvas, Rect location, Paint paint)
+        public void draw(SKCanvas canvas, Rect location, Paint paint)
         {
             canvas.DrawPatch(this, location, paint.getNativeInstance());
         }
@@ -261,32 +260,236 @@ namespace AndroidUI
          */
         public Region getTransparentRegion(Rect bounds)
         {
-            // TODO: RESTORE ME
-
-            //long r = nativeGetTransparentRegion(mBitmap.getNativeInstance(),
-            //        mNativeChunk, bounds);
-            //return r != 0 ? new Region(r) : null;
-            return null;
+            ArgumentNullException.ThrowIfNull(bounds);
+            SKRegion r = nativeGetTransparentRegion(mBitmap.getNativeInstance(), mNativeChunk, ref bounds);
+            return r != null ? new Region(r) : null;
         }
 
-        ///**
-        // * Verifies that the specified byte array is a valid 9-patch data chunk.
-        // *
-        // * @param chunk A byte array representing a 9-patch data chunk.
-        // *
-        // * @return True if the specified byte array represents a 9-patch data chunk,
-        // *         false otherwise.
-        // */
-        //public native static boolean isNinePatchChunk(byte[] chunk);
+        /**
+         * Verifies that the specified byte array is a valid 9-patch data chunk.
+         *
+         * @param chunk A byte array representing a 9-patch data chunk.
+         *
+         * @return True if the specified byte array represents a 9-patch data chunk,
+         *         false otherwise.
+         */
+        public static unsafe bool isNinePatchChunk(byte[] chunk)
+        {
+            fixed (byte* c = chunk)
+            {
+                return Native.Additional.SkNinePatchGlue_isNinePatchChunk((sbyte*)c, chunk == null ? 0 : chunk.Length);
+            }
+        }
 
-        ///**
-        // * Validates the 9-patch chunk and throws an exception if the chunk is invalid.
-        // * If validation is successful, this method returns a native Res_png_9patch*
-        // * object used by the renderers.
-        // */
-        //private static native long validateNinePatchChunk(byte[] chunk);
-        //private static native void nativeFinalize(long chunk);
-        //private static native long nativeGetTransparentRegion(long bitmapHandle, long chunk,
-        //    Rect location);
+        /**
+         * Validates the 9-patch chunk and throws an exception if the chunk is invalid.
+         * If validation is successful, this method returns a native Res_png_9patch*
+         * object used by the renderers.
+         */
+        private static unsafe sbyte* validateNinePatchChunk(byte[] chunk)
+        {
+            fixed (byte* c = chunk)
+            {
+                return Native.Additional.SkNinePatchGlue_validateNinePatchChunk((sbyte*)c, chunk.Length);
+            }
+        }
+        private static unsafe void nativeFinalize(sbyte* chunk) => Native.Additional.SkNinePatchGlue_finalize(chunk);
+
+        internal static byte NumXDivs(sbyte * chunk)
+        {
+            unsafe
+            {
+                byte v;
+                Native.Additional.SkNinePatchGlue_getNumXDivs(chunk, &v);
+                return v;
+            }
+        }
+
+        internal static byte NumYDivs(sbyte* chunk)
+        {
+            unsafe
+            {
+                byte v;
+                Native.Additional.SkNinePatchGlue_getNumYDivs(chunk, &v);
+                return v;
+            }
+        }
+
+        internal static byte NumColors(sbyte* chunk)
+        {
+            unsafe
+            {
+                byte v;
+                Native.Additional.SkNinePatchGlue_getNumColors(chunk, &v);
+                return v;
+            }
+        }
+
+        internal static int* XDivs(sbyte* chunk)
+        {
+            unsafe
+            {
+                int* v;
+                Native.Additional.SkNinePatchGlue_getXDivs(chunk, &v);
+                return v;
+            }
+        }
+
+        internal static int* YDivs(sbyte* chunk)
+        {
+            unsafe
+            {
+                int* v;
+                Native.Additional.SkNinePatchGlue_getYDivs(chunk, &v);
+                return v;
+            }
+        }
+
+        internal static uint* Colors(sbyte* chunk)
+        {
+            unsafe
+            {
+                uint* v;
+                Native.Additional.SkNinePatchGlue_getColors(chunk, &v);
+                return v;
+            }
+        }
+
+        internal static int[] XDivsAsArray(sbyte* chunk, int truncate = 0) => Arrays.FromNative<int>(XDivs(chunk), NumXDivs(chunk) - truncate);
+
+        internal static int[] YDivsAsArray(sbyte* chunk, int truncate = 0) => Arrays.FromNative<int>(YDivs(chunk), NumYDivs(chunk) - truncate);
+
+        internal static uint[] ColorsAsArray(sbyte* chunk, int truncate = 0) => Arrays.FromNative<uint>(Colors(chunk), NumColors(chunk) - truncate);
+
+        internal static void SetLatticeDivs(ref SKLattice lattice, sbyte* chunk, int width, int height)
+        {
+            byte XCount = NumXDivs(chunk);
+            byte YCount = NumYDivs(chunk);
+            lattice.XDivs = XDivsAsArray(chunk);
+            lattice.YDivs = XDivsAsArray(chunk);
+            // We'll often see ninepatches where the last div is equal to the width or height.
+            // This doesn't provide any additional information and is not supported by Skia.
+            if (XCount > 0 && width == lattice.XDivs[XCount - 1]) {
+                lattice.XDivs = XDivsAsArray(chunk, 1);
+            }
+            if (YCount > 0 && height == lattice.YDivs[YCount - 1]) {
+                lattice.XDivs = XDivsAsArray(chunk, 1);
+            }
+        }
+
+        internal static int NumDistinctRects(ref SKLattice lattice, sbyte * chunk) {
+            int xRects;
+            byte XCount = NumXDivs(chunk);
+            byte YCount = NumYDivs(chunk);
+            if (XCount > 0) {
+                xRects = (0 == lattice.XDivs[0]) ? XCount : XCount + 1;
+            } else {
+                xRects = 1;
+            }
+
+            int yRects;
+            if (YCount > 0)
+            {
+                yRects = (0 == lattice.YDivs[0]) ? YCount : YCount + 1;
+            }
+            else
+            {
+                yRects = 1;
+            }
+            return xRects * yRects;
+        }
+
+        internal static void SetLatticeFlags(ref SKLattice lattice, MemoryPointer<SKLatticeRectType> flags,
+                                           int numFlags, sbyte * chunk, MemoryPointer<SKColor> colors) {
+            lattice.RectTypes = (SKLatticeRectType[])flags.GetArray();
+            lattice.Colors = (SKColor[])colors.GetArray();
+            flags.Fill(0, numFlags);
+            colors.Fill(0, numFlags);
+
+            byte XCount = NumXDivs(chunk);
+            byte YCount = NumYDivs(chunk);
+
+            bool needPadRow = YCount > 0 && 0 == lattice.YDivs[0];
+            bool needPadCol = XCount > 0 && 0 == lattice.XDivs[0];
+
+            int yCount = YCount;
+            if (needPadRow) {
+                // Skip flags for the degenerate first row of rects.
+                flags += XCount + 1;
+                colors += XCount + 1;
+                yCount--;
+            }
+
+            int i = 0;
+            bool setFlags = false;
+            uint[] colors_ = ColorsAsArray(chunk);
+            for (int y = 0; y < yCount + 1; y++) {
+                for (int x = 0; x < XCount + 1; x++) {
+                    if (0 == x && needPadCol) {
+                        // First rect of each column is degenerate, skip the flag.
+                        flags++;
+                        colors++;
+                        continue;
+                    }
+
+                    uint currentColor = colors_[i++];
+                    if (0 == currentColor) {
+                        flags[0] = SKLatticeRectType.Transparent;
+                        setFlags = true;
+                    } else if (1 != currentColor) {
+                        flags[0] = SKLatticeRectType.FixedColor;
+                        colors[0] = currentColor;
+                        setFlags = true;
+                    }
+
+                    flags++;
+                    colors++;
+                }
+            }
+
+            if (!setFlags) {
+                lattice.RectTypes = null;
+                lattice.Colors = null;
+            }
+        }
+
+
+        private static unsafe SKRegion nativeGetTransparentRegion(SKBitmap bitmapHandle, sbyte* chunk, ref Rect location)
+        {
+            SKRect dst = location.ToSKRect();
+
+            SKLattice lattice = new();
+            SKRectI src = SKRectI.Create(bitmapHandle.Width, bitmapHandle.Height);
+            lattice.Bounds = src;
+            SetLatticeDivs(ref lattice, chunk, bitmapHandle.Width, bitmapHandle.Height);
+            lattice.RectTypes = null;
+            lattice.Colors = null;
+
+            SKRegion region = null;
+            if (SKLatticeIter.Valid(bitmapHandle.Width, bitmapHandle.Height, ref lattice))
+            {
+                SKLatticeIter iter = new(ref lattice, ref dst);
+                if (iter.numRectsToDraw == NumColors(chunk))
+                {
+                    SKRect dummy = new();
+                    SKRect iterDst = new();
+                    int index = 0;
+                    uint[] colors = ColorsAsArray(chunk);
+                    while (iter.next(ref dummy, ref iterDst))
+                    {
+                        if (0 == colors[index++] && !iterDst.IsEmpty)
+                        {
+                            if (region == null)
+                            {
+                                region = new SKRegion();
+                            }
+
+                            region.Op(iterDst.Round(), SKRegionOperation.Union);
+                        }
+                    }
+                }
+            }
+            return region;
+        }
     }
 }

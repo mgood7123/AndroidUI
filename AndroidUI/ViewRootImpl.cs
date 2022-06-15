@@ -2173,9 +2173,8 @@ namespace AndroidUI
         private void updateViewTreeDisplayList(SKCanvas drawingCanvas, View view)
         {
             view.mPrivateFlags |= View.PFLAG_DRAWN;
-            view.mRecreateDisplayList = (view.mPrivateFlags & View.PFLAG_INVALIDATED)
-                    == View.PFLAG_INVALIDATED;
-            view.mPrivateFlags &= ~View.PFLAG_INVALIDATED;
+            view.mRecreateDisplayList = (view.mPrivateFlags & View.PFLAG_INVALIDATED) == View.PFLAG_INVALIDATED;
+            view.mPrivateFlags &= (int)~View.PFLAG_INVALIDATED;
             SKPicture displayList = view.updateDisplayListIfDirty();
             if (displayList != null)
             {
@@ -2290,7 +2289,6 @@ namespace AndroidUI
                 //}
 
 
-                //                getContentView()?.invalidate();
                 mContentParent?.invalidate();
 
                 if (DBG)
@@ -2356,6 +2354,11 @@ namespace AndroidUI
         public void onDescendantInvalidated(View view, View target)
         {
             invalidate();
+        }
+
+        public void childDrawableStateChanged(View child)
+        {
+            // no op
         }
     }
 }

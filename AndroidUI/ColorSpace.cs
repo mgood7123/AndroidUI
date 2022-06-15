@@ -3626,6 +3626,7 @@ namespace AndroidUI
              * Optimized connector for RGB->RGB conversions.
              */
             internal class Rgb : Connector {
+                // TODO: hides base fields
                 private readonly ColorSpace.Rgb mSource;
                 private readonly ColorSpace.Rgb mDestination;
                 private readonly float[] mTransform;

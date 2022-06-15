@@ -13,7 +13,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AndroidUI.Native.Nuget" Version="0.0.89" />
+    <PackageReference Include="AndroidUI.Native.Nuget" Version="0.0.107" />
   </ItemGroup>
 
   <ItemGroup>

@@ -11,9 +11,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="SkiaSharp.HarfBuzz" Version="2.88.0-preview.254" />
-    <PackageReference Include="SkiaSharp.Views" Version="2.88.0-preview.254" />
-    <PackageReference Include="SkiaSharp.Views.WindowsForms" Version="2.88.0-preview.254" />
+    <PackageReference Include="SkiaSharp.HarfBuzz" Version="2.88.1-preview.3223" />
+    <PackageReference Include="SkiaSharp.Views" Version="2.88.1-preview.3223" />
+    <PackageReference Include="SkiaSharp.Views.WindowsForms" Version="2.88.1-preview.3223" />
   </ItemGroup>
 
   <ItemGroup>

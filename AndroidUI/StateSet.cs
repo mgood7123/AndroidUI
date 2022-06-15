@@ -18,14 +18,13 @@ namespace AndroidUI
      * and not have static methods here but there is some concern about
      * performance since these methods are called during view drawing.
      */
-
     public class StateSet
     {
         /**
          * The order here is very important to
          * {@link android.view.View#getDrawableState()}
          */
-        private static readonly int[][] VIEW_STATE_SETS;
+        private static int[][] VIEW_STATE_SETS;
 
         /** @hide */
         public const int VIEW_STATE_WINDOW_FOCUSED = 1;
@@ -48,27 +47,59 @@ namespace AndroidUI
         /** @hide */
         public const int VIEW_STATE_DRAG_HOVERED = 1 << 9;
 
-        public const int VIEW_STATE_CHECKED = 1 << 10;
+        internal static class R
+        {
+            internal static class attr
+            {
+                internal static readonly int[] ViewDrawableStates ={
+                  0x0101009c, 0x0101009d, 0x0101009e, 0x010100a1,
+                  0x010100a7, 0x010102fe, 0x0101031b, 0x01010367,
+                  0x01010368, 0x01010369
+                };
+
+                /**
+                 * State value for {@link android.graphics.drawable.StateListDrawable StateListDrawable},
+                 * set when a view's window has input focus.
+                 * <p>May be a boolean value, such as "<code>true</code>" or
+                 * "<code>false</code>".
+                 */
+                internal const int state_window_focused = 0x0101009d;
+                internal const int state_selected = 0x010100a1;
+                internal const int state_focused = 0x0101009c;
+                internal const int state_enabled = 0x0101009e;
+                internal const int state_pressed = 0x010100a7;
+                internal const int state_activated = 0x010102fe;
+                internal const int state_accelerated = 0x0101031b;
+                internal const int state_hovered = 0x01010367;
+                internal const int state_drag_can_accept = 0x01010368;
+                internal const int state_drag_hovered = 0x01010369;
+                internal const int state_checked = 0x010100a0;
+            }
+        }
 
         static readonly int[] VIEW_STATE_IDS = new int[] {
-            VIEW_STATE_WINDOW_FOCUSED,
-            VIEW_STATE_SELECTED,
-            VIEW_STATE_FOCUSED,
-            VIEW_STATE_ENABLED,
-            VIEW_STATE_PRESSED,
-            VIEW_STATE_ACTIVATED,
-            VIEW_STATE_ACCELERATED,
-            VIEW_STATE_HOVERED,
-            VIEW_STATE_DRAG_CAN_ACCEPT,
-            VIEW_STATE_DRAG_HOVERED,
-            VIEW_STATE_CHECKED
+                R.attr.state_window_focused,    VIEW_STATE_WINDOW_FOCUSED,
+                R.attr.state_selected,          VIEW_STATE_SELECTED,
+                R.attr.state_focused,           VIEW_STATE_FOCUSED,
+                R.attr.state_enabled,           VIEW_STATE_ENABLED,
+                R.attr.state_pressed,           VIEW_STATE_PRESSED,
+                R.attr.state_activated,         VIEW_STATE_ACTIVATED,
+                R.attr.state_accelerated,       VIEW_STATE_ACCELERATED,
+                R.attr.state_hovered,           VIEW_STATE_HOVERED,
+                R.attr.state_drag_can_accept,   VIEW_STATE_DRAG_CAN_ACCEPT,
+                R.attr.state_drag_hovered,      VIEW_STATE_DRAG_HOVERED
         };
 
         static StateSet() {
+            if ((VIEW_STATE_IDS.Length / 2) != R.attr.ViewDrawableStates.Length) {
+                throw new Exceptions.IllegalStateException(
+                        "VIEW_STATE_IDs array length does not match ViewDrawableStates style array");
+            }
+
             int[] orderedIds = new int[VIEW_STATE_IDS.Length];
-            for (int i = 0; i<VIEW_STATE_IDS.Length; i++) {
-                int viewState = VIEW_STATE_IDS[i];
-                for (int j = 0; j<VIEW_STATE_IDS.Length; j += 2) {
+            for (int i = 0; i < R.attr.ViewDrawableStates.Length; i++) {
+                int viewState = R.attr.ViewDrawableStates[i];
+                for (int j = 0; j < VIEW_STATE_IDS.Length; j += 2) {
                     if (VIEW_STATE_IDS[j] == viewState) {
                         orderedIds[i * 2] = viewState;
                         orderedIds[i * 2 + 1] = VIEW_STATE_IDS[j + 1];
@@ -291,25 +322,25 @@ namespace AndroidUI
 
                 switch (states[i])
                 {
-                    case VIEW_STATE_WINDOW_FOCUSED:
+                    case R.attr.state_window_focused:
                         sb.Append("W ");
                         break;
-                    case VIEW_STATE_PRESSED:
+                    case R.attr.state_pressed:
                         sb.Append("P ");
                         break;
-                    case VIEW_STATE_SELECTED:
+                    case R.attr.state_selected:
                         sb.Append("S ");
                         break;
-                    case VIEW_STATE_FOCUSED:
+                    case R.attr.state_focused:
                         sb.Append("F ");
                         break;
-                    case VIEW_STATE_ENABLED:
+                    case R.attr.state_enabled:
                         sb.Append("E ");
                         break;
-                    case VIEW_STATE_CHECKED:
+                    case R.attr.state_checked:
                         sb.Append("C ");
                         break;
-                    case VIEW_STATE_ACTIVATED:
+                    case R.attr.state_activated:
                         sb.Append("A ");
                         break;
                 }

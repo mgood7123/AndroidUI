@@ -13,6 +13,8 @@ namespace AndroidUI
 
         int Offset => offset;
 
+        public override int Length => offset == 0 ? base.Length : base.Length - offset;
+
         public MemoryPointer(Array a) : base(a)
         {
         }
@@ -50,12 +52,12 @@ namespace AndroidUI
         {
             if (this.length < length)
             {
-                throw new ArgumentOutOfRangeException("given length (" + length + ") differs from this.length (" + this.length + ")");
+                throw new ArgumentOutOfRangeException("given length (" + length + ") is greater than this.length (" + this.length + ")");
             }
 
             if (dest.Length < length)
             {
-                throw new ArgumentOutOfRangeException("given length (" + length + ") differs from dest length (" + dest.Length + ")");
+                throw new ArgumentOutOfRangeException("given length (" + length + ") is greater than dest length (" + dest.Length + ")");
             }
 
             for (int i = 0; i < length; i++)

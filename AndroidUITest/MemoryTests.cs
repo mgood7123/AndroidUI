@@ -215,15 +215,15 @@ namespace AndroidUITest
                     Tools.ExpectEqual(x2.x, 2, "x2 2");
 
                     AndroidUI.ValueHolder<XY> x3 = new XY(55, 66);
-                    Tools.ExpectEqual(x3.value.x, 55, "x3 55");
-                    Tools.ExpectEqual(x3.value.y, 66, "x3 66");
+                    Tools.ExpectEqual(x3.Value.x, 55, "x3 55");
+                    Tools.ExpectEqual(x3.Value.y, 66, "x3 66");
                     AndroidUI.ContiguousArray<int> b = new AndroidUI.Mapper<AndroidUI.ValueHolder<XY>, int>[1] {
-                        new(x3, (obj, arrayIndex, index) => ref index == 0 ? ref obj.value.x : ref obj.value.y, 2)
+                        new(x3, (obj, arrayIndex, index) => ref index == 0 ? ref obj.Value.x : ref obj.Value.y, 2)
                     };
                     b[0] = 5577;
                     b[1] = 6677;
-                    Tools.ExpectEqual(x3.value.x, 5577, "x3 5577");
-                    Tools.ExpectEqual(x3.value.y, 6677, "x3 6677");
+                    Tools.ExpectEqual(x3.Value.x, 5577, "x3 5577");
+                    Tools.ExpectEqual(x3.Value.y, 6677, "x3 6677");
 
                     XY[] x4 = new XY[2] { new(55, 66), new(77, 88) };
                     Tools.ExpectEqual(x4[0].x, 55, "x4 55");

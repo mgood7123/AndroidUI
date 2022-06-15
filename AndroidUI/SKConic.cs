@@ -764,20 +764,17 @@ namespace AndroidUI
             bounds.setBounds(fPts, 3);
         }
 
-        //    /** Find the parameter value where the conic takes on its maximum curvature.
-        //     *
-        //     *  @param t   output scalar for max curvature.  Will be unchanged if
-        //     *             max curvature outside 0..1 range.
-        //     *
-        //     *  @return  true if max curvature found inside 0..1 range, false otherwise
-        //     */
-        //    //    bool findMaxCurvature(float* t) const;  // unimplemented
+        /** Find the parameter value where the conic takes on its maximum curvature.
+         *
+         *  @param t   output scalar for max curvature.  Will be unchanged if
+         *             max curvature outside 0..1 range.
+         *
+         *  @return  true if max curvature found inside 0..1 range, false otherwise
+         */
+        //    bool findMaxCurvature(float* t) const;  // unimplemented
 
-#if false
         public static float TransformW(SKPoint[] pts, float w, ref SKMatrix matrix) {
-            throw new NotImplementedException("this involves pointer casting");
-#if false
-            if (!matrix.hasPerspective())
+            if (!matrix.HasPerspective)
             {
                 return w;
             }
@@ -786,7 +783,7 @@ namespace AndroidUI
 
             ratquad_mapTo3D(pts, w, src);
 
-            matrix.mapHomogeneousPoints(dst, src, 3);
+            matrix.MapHomogeneousPoints(dst, src, 3);
 
             // w' = sqrt(w1*w1/w0*w2)
             // use doubles temporarily, to handle small numer/denom
@@ -794,7 +791,6 @@ namespace AndroidUI
             double w1 = dst[1].Z;
             double w2 = dst[2].Z;
             return sk_double_to_float(Math.Sqrt(sk_ieee_double_divide(w1 * w1, w0 * w2)));
-#endif
         }
 
         public const int kMaxConicsForArc = 5;
@@ -883,22 +879,17 @@ namespace AndroidUI
             }
 
             // now handle counter-clockwise and the initial unitStart rotation
-            throw new NotImplementedException("this involves pointer casting, which is currently not implemented");
-#if false
-            SKMatrix    matrix;
-            matrix.setSinCos(uStart.Y, uStart.X);
-            if (dir == kCCW_SkRotationDirection) {
-                matrix.preScale(SK_Scalar1, -SK_Scalar1);
+            SKMatrix matrix = SKMatrix.CreateSinCos(uStart.Y, uStart.X);
+            if (dir == SKPathDirection.Clockwise) {
+                matrix.PreScale(SK_Scalar1, -SK_Scalar1);
             }
-            if (userMatrix) {
-                matrix.postConcat(*userMatrix);
+            if (userMatrix != null) {
+                matrix.PostConcat(userMatrix);
             }
             for (int i = 0; i < conicCount; ++i) {
-                matrix.mapPoints(dst[i].fPts, 3);
+                matrix.MapPoints(dst[i].fPts);
             }
             return conicCount;
-#endif
         }
-#endif
     }
 }

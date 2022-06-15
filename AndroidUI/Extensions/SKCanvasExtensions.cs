@@ -4,11 +4,6 @@ namespace AndroidUI.Extensions
 {
     public static class SKCanvasExtensions
     {
-        internal static void setIsHardwareAccelerated(this SKCanvas this_canvas, bool value)
-        {
-            this_canvas.ExtensionProperties_SetValue("HardwareAccelerated", value);
-        }
-
         internal static void DisposeSurface(this SKCanvas this_canvas)
         {
             SKSurface s = (SKSurface)this_canvas.ExtensionProperties_GetValue("Surface", null);
@@ -24,10 +19,27 @@ namespace AndroidUI.Extensions
             this_canvas.ExtensionProperties_SetValue("Height", height);
         }
 
+        /// <summary>Experimental.</summary>
+        public static int densityDpi(this SKCanvas this_canvas)
+        {
+            return (int)this_canvas.ExtensionProperties_GetValue("DensityDpi", DensityManager.ScreenDpi);
+        }
+
+        /// <summary>Experimental.</summary>
+        public static void setDensityDpi(this SKCanvas this_canvas, int value)
+        {
+            this_canvas.ExtensionProperties_SetValue("DensityDpi", value);
+        }
+
         /// <summary>Returns true if this canvas is Hardware Accelerated.</summary>
         public static bool isHardwareAccelerated(this SKCanvas this_canvas)
         {
             return (bool)this_canvas.ExtensionProperties_GetValue("HardwareAccelerated", false);
+        }
+
+        internal static void setIsHardwareAccelerated(this SKCanvas this_canvas, bool value)
+        {
+            this_canvas.ExtensionProperties_SetValue("HardwareAccelerated", value);
         }
 
         /// <summary>Creates a Hardware Accelerated canvas.</summary>
@@ -165,7 +177,7 @@ namespace AndroidUI.Extensions
                 canvas.Restore();
             }
 
-            //	if (mCanvas->getSaveCount() == restoreCount + 1) {
+            //	if (mcanvasHandle.getSaveCount() == restoreCount + 1) {
             //		SkCanvasPriv::DrawBehind(mCanvas, filterPaint(paint));
 
             //		this->restore();
@@ -243,7 +255,7 @@ namespace AndroidUI.Extensions
             }
         }
 
-        public static void DrawPatch(this SKCanvas canvas, NinePatch patch, Rect dst, SKPaint paint)
+        public static unsafe void DrawPatch(this SKCanvas canvas, NinePatch patch, Rect dst, SKPaint paint)
         {
             Bitmap bitmap = patch.getBitmap();
             throwIfCannotDraw(bitmap);
@@ -252,7 +264,7 @@ namespace AndroidUI.Extensions
                     Bitmap.DENSITY_NONE, patch.getDensity());
         }
 
-        public static void DrawPatch(this SKCanvas canvas, NinePatch patch, RectF dst, SKPaint paint)
+        public static unsafe void DrawPatch(this SKCanvas canvas, NinePatch patch, RectF dst, SKPaint paint)
         {
             Bitmap bitmap = patch.getBitmap();
             throwIfCannotDraw(bitmap);
@@ -261,8 +273,8 @@ namespace AndroidUI.Extensions
                     Bitmap.DENSITY_NONE, patch.getDensity());
         }
 
-        public static void DrawNinePatch(
-            this SKCanvas canvas, SKBitmap bitmap, long nativeChunk,
+        public static unsafe void DrawNinePatch(
+            this SKCanvas canvas, SKBitmap bitmap, sbyte* nativeChunk,
             float left, float top, float right, float bottom,
             SKPaint paint, int dstDensity, int srcDensity
         )
@@ -281,48 +293,232 @@ namespace AndroidUI.Extensions
                 SKPaint filteredPaint = paint == null ? new SKPaint() : paint;
                 filteredPaint.FilterQuality = SKFilterQuality.Low;
 
-                canvas.DrawNinePatch(bitmap, nativeChunk, 0, 0, (right - left) / scale, (bottom - top) / scale,
-                        filteredPaint);
+                canvas.DrawNinePatch(bitmap, nativeChunk, 0, 0, (right - left) / scale, (bottom - top) / scale, filteredPaint);
                 canvas.Restore();
             }
         }
 
-        public static void DrawNinePatch(
-            this SKCanvas canvas, SKBitmap bitmap, long chunk,
+        public static unsafe void DrawNinePatch(
+            this SKCanvas canvas, SKBitmap bitmap, sbyte* chunk,
             float dstLeft, float dstTop, float dstRight, float dstBottom,
             SKPaint paint
         )
         {
-            throw new Exception("Canvas: DrawNinePatch is not implemented");
-#if false
-            SkCanvas::Lattice lattice;
-            NinePatchUtils::SetLatticeDivs(&lattice, chunk, bitmap.width(), bitmap.height());
+            SKLattice lattice = new();
+            NinePatch.SetLatticeDivs(ref lattice, chunk, bitmap.Width, bitmap.Height);
 
-            lattice.fRectTypes = nullptr;
-            lattice.fColors = nullptr;
+            lattice.RectTypes = null;
+            lattice.Colors = null;
             int numFlags = 0;
-            if (chunk.numColors > 0 && chunk.numColors == NinePatchUtils::NumDistinctRects(lattice))
+            int numColors = NinePatch.NumColors(chunk);
+            byte XCount = NinePatch.NumXDivs(chunk);
+            byte YCount = NinePatch.NumYDivs(chunk);
+            if (numColors > 0 && numColors == NinePatch.NumDistinctRects(ref lattice, chunk))
             {
                 // We can expect the framework to give us a color for every distinct rect.
                 // Skia requires a flag for every rect.
-                numFlags = (lattice.fXCount + 1) * (lattice.fYCount + 1);
+                numFlags = (XCount + 1) * (YCount + 1);
             }
 
-            SkAutoSTMalloc < 25, SkCanvas::Lattice::RectType > flags(numFlags);
-            SkAutoSTMalloc < 25, SkColor > colors(numFlags);
+            SKLatticeRectType[] flags = new SKLatticeRectType[numFlags];
+            SKColor[] colors = new SKColor[numColors];
             if (numFlags > 0)
             {
-                NinePatchUtils::SetLatticeFlags(&lattice, flags.get(), numFlags, chunk, colors.get());
+                NinePatch.SetLatticeFlags(ref lattice, flags, numFlags, chunk, colors);
             }
 
-            lattice.fBounds = nullptr;
-            SkRect dst = SkRect::MakeLTRB(dstLeft, dstTop, dstRight, dstBottom);
-            auto image = bitmap.makeImage();
-            applyLooper(paint, [&](const SkPaint&p) {
-                auto filter = SkSamplingOptions(p.getFilterQuality()).filter;
-                mCanvas->drawImageLattice(image.get(), lattice, dst, filter, &p);
-            });
-#endif
+            lattice.Bounds = null;
+            SKRect dst = SKRect.Create(dstLeft, dstTop, dstRight, dstBottom);
+            var image = bitmap.AsImage();
+            canvas.DrawImageLattice(image, lattice, dst, paint);
+        }
+
+
+        public static void DrawBitmap(this SKCanvas canvas, Bitmap bitmap, float left, float top, Paint paint)
+        {
+            throwIfCannotDraw(bitmap);
+            drawBitmap(canvas, bitmap.getNativeInstance(), left, top,
+                    paint?.getNativeInstance(), densityDpi(canvas), DensityManager.ScreenDpi,
+                    bitmap.mDensity);
+        }
+
+        public static void DrawBitmap(this SKCanvas canvas, Bitmap bitmap, SKMatrix matrix, Paint paint)
+        {
+            drawBitmapMatrix(canvas, bitmap.getNativeInstance(), ref matrix,
+                    paint?.getNativeInstance());
+        }
+
+        public static void DrawBitmap(this SKCanvas canvas, Bitmap bitmap, Rect src, Rect dst, Paint paint)
+        {
+            if (dst == null)
+            {
+                throw new NullReferenceException();
+            }
+            throwIfCannotDraw(bitmap);
+            SKPaint nativePaint = paint?.getNativeInstance();
+
+            int left, top, right, bottom;
+            if (src == null)
+            {
+                left = top = 0;
+                right = bitmap.getWidth();
+                bottom = bitmap.getHeight();
+            }
+            else
+            {
+                left = src.left;
+                right = src.right;
+                top = src.top;
+                bottom = src.bottom;
+            }
+
+            drawBitmapRect(canvas, bitmap.getNativeInstance(), left, top, right, bottom,
+                    dst.left, dst.top, dst.right, dst.bottom, nativePaint, DensityManager.ScreenDpi,
+                    bitmap.mDensity);
+        }
+
+        public static void DrawBitmap(this SKCanvas canvas, Bitmap bitmap, Rect src, RectF dst, Paint paint)
+        {
+            if (dst == null)
+            {
+                throw new NullReferenceException();
+            }
+            throwIfCannotDraw(bitmap);
+            SKPaint nativePaint = paint?.getNativeInstance();
+
+            float left, top, right, bottom;
+            if (src == null)
+            {
+                left = top = 0;
+                right = bitmap.getWidth();
+                bottom = bitmap.getHeight();
+            }
+            else
+            {
+                left = src.left;
+                right = src.right;
+                top = src.top;
+                bottom = src.bottom;
+            }
+
+            drawBitmapRect(canvas, bitmap.getNativeInstance(), left, top, right, bottom,
+                    dst.left, dst.top, dst.right, dst.bottom, nativePaint, DensityManager.ScreenDpi,
+                    bitmap.mDensity);
+        }
+
+        static void drawBitmap(SKCanvas canvasHandle, SKBitmap bitmapHandle,
+                               float left, float top, SKPaint paintHandle, int canvasDensity,
+                               int screenDensity, int bitmapDensity)
+        {
+
+            if (canvasDensity == bitmapDensity || canvasDensity == 0 || bitmapDensity == 0)
+            {
+                if (screenDensity != 0 && screenDensity != bitmapDensity)
+                {
+                    SKPaint filteredPaint = new();
+                    if (paintHandle != null)
+                    {
+                        filteredPaint = paintHandle;
+                    }
+                    filteredPaint.FilterQuality = SKFilterQuality.Low;
+                    canvasHandle.DrawImage(bitmapHandle.AsImage(), left, top, filteredPaint);
+                }
+                else
+                {
+                    canvasHandle.DrawImage(bitmapHandle.AsImage(), left, top, paintHandle);
+                }
+            }
+            else
+            {
+                canvasHandle.Save();
+                float scale = canvasDensity / (float)bitmapDensity;
+                canvasHandle.Translate(left, top);
+                canvasHandle.Scale(scale, scale);
+
+                SKPaint filteredPaint = new();
+                if (paintHandle != null)
+                {
+                    filteredPaint = paintHandle;
+                }
+                filteredPaint.FilterQuality = SKFilterQuality.Low;
+
+                canvasHandle.DrawImage(bitmapHandle.AsImage(), 0, 0, filteredPaint);
+                canvasHandle.Restore();
+            }
+        }
+
+        static void drawBitmap(SKCanvas canvasHandle, SKBitmap bitmapHandle,
+                               ref SKMatrix matrixHandle, SKPaint paintHandle) {
+            var image = bitmapHandle.AsImage();
+            using SKAutoCanvasRestore acr = new(canvasHandle, true);
+            canvasHandle.Concat(ref matrixHandle);
+            canvasHandle.DrawImage(image, 0, 0, paintHandle);
+        }
+
+
+        static void drawBitmapMatrix(SKCanvas canvasHandle, SKBitmap bitmapHandle,
+                                     ref SKMatrix matrixHandle, SKPaint paintHandle)
+        {
+            drawBitmap(canvasHandle, bitmapHandle, ref matrixHandle, paintHandle);
+        }
+
+        static void drawBitmap(SKCanvas canvasHandle, SKBitmap bitmapHandle,
+                               float srcLeft, float srcTop, float srcRight,
+                               float srcBottom, float dstLeft, float dstTop, float dstRight,
+                               float dstBottom, SKPaint paintHandle) {
+            var image = bitmapHandle.AsImage();
+            SKRect srcRect = SKRect.Create(srcLeft, srcTop, srcRight, srcBottom);
+            SKRect dstRect = SKRect.Create(dstLeft, dstTop, dstRight, dstBottom);
+            canvasHandle.DrawImage(image, srcRect, dstRect, paintHandle);
+        }
+
+        static void drawBitmapRect(SKCanvas canvasHandle, SKBitmap bitmapHandle,
+                                   float srcLeft, float srcTop, float srcRight, float srcBottom,
+                                   float dstLeft, float dstTop, float dstRight, float dstBottom,
+                                   SKPaint paintHandle, int screenDensity, int bitmapDensity)
+        {
+            if (screenDensity != 0 && screenDensity != bitmapDensity)
+            {
+                SKPaint filteredPaint = new();
+                if (paintHandle != null)
+                {
+                    filteredPaint = paintHandle;
+                }
+                filteredPaint.FilterQuality = SKFilterQuality.Low;
+                drawBitmap(canvasHandle, bitmapHandle, srcLeft, srcTop, srcRight, srcBottom,
+                                   dstLeft, dstTop, dstRight, dstBottom, filteredPaint);
+            }
+            else
+            {
+                drawBitmap(canvasHandle, bitmapHandle, srcLeft, srcTop, srcRight, srcBottom,
+                                   dstLeft, dstTop, dstRight, dstBottom, paintHandle);
+            }
+        }
+
+        static void drawBitmapArray(SKCanvas canvasHandle,
+                                    int[] jcolors, int offset, int stride,
+                                    float x, float y, int width, int height,
+                                    bool hasAlpha, SKPaint paintHandle)
+        {
+            // Note: If hasAlpha is false, kRGB_565_SkColorType will be used, which will
+            // correct the alphaType to kOpaque_SkAlphaType.
+            SKImageInfo info = SKImageInfo.Create(width, height,
+                                   hasAlpha ? SKImageInfo.PlatformColorType: SKColorType.Rgb565,
+                                   SKAlphaType.Premul);
+            SKBitmap bitmap = new();
+            bitmap.SetInfo(info);
+            SKBitmap androidBitmap = BitmapFactory.allocateHeapBitmap(bitmap);
+            if (androidBitmap != null)
+            {
+                return;
+            }
+
+            if (!BitmapFactory.SetPixels(jcolors, offset, stride, 0, 0, width, height, bitmap))
+            {
+                return;
+            }
+
+            canvasHandle.DrawImage(androidBitmap.AsImage(), x, y, paintHandle);
         }
     }
 }

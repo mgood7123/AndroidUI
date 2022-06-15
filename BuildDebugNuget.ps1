@@ -16,7 +16,7 @@ if ($?) {
 			$build_number++
 			echo $build_number > BUILD_NUMBER.txt
 
-			dotnet cake --target=nuget --buildall=true --buildnumber=$build_number
+			dotnet cake --target=nuget --buildall=true --buildnumber=$build_number --configuration=Debug
 
 			if ($?) {
 				dotnet remove C:\Users\small\source\repos\WindowsProject1\AndroidUI\AndroidUI.csproj package SkiaSharp

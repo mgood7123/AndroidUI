@@ -271,7 +271,7 @@ namespace AndroidUI
          *
          * @see android.content.pm.ActivityInfo
          */
-        public void setChangingConfigurations(int configs)
+        virtual public void setChangingConfigurations(int configs)
         {
             mChangingConfigurations = configs;
         }
@@ -295,6 +295,16 @@ namespace AndroidUI
         }
 
         /**
+         * Set to true to have the drawable dither its colors when drawn to a
+         * device with fewer than 8-bits per color component.
+         *
+         * @see android.graphics.Paint#setDither(boolean);
+         * @deprecated This property is ignored.
+         */
+        [Obsolete]
+        virtual public void setDither(bool dither) { }
+
+        /**
          * Set to true to have the drawable filter its bitmaps with bilinear
          * sampling when they are scaled or rotated.
          *
@@ -304,13 +314,13 @@ namespace AndroidUI
          * @see #isFilterBitmap()
          * @see android.graphics.Paint#setFilterBitmap(bool);
          */
-        public void setFilterBitmap(bool filter) { }
+        virtual public void setFilterBitmap(bool filter) { }
 
         /**
          * @return whether this drawable filters its bitmaps
          * @see #setFilterBitmap(bool)
          */
-        public bool isFilterBitmap()
+        virtual public bool isFilterBitmap()
         {
             return false;
         }
@@ -346,7 +356,7 @@ namespace AndroidUI
              * @param when The time (in milliseconds) to run.  The timebase is
              *             {@link android.os.SystemClock#uptimeMillis}
              */
-            void scheduleDrawable(Drawable who, Action what, long when);
+            void scheduleDrawable(Drawable who, Runnable what, long when);
 
             /**
              * A Drawable can call this to unschedule an action previously
@@ -358,7 +368,7 @@ namespace AndroidUI
              * @param who The drawable being unscheduled.
              * @param what The action being unscheduled.
              */
-            void unscheduleDrawable(Drawable who, Action what);
+            void unscheduleDrawable(Drawable who, Runnable what);
         }
 
         /**
@@ -415,7 +425,7 @@ namespace AndroidUI
          *
          * @see Callback#scheduleDrawable
          */
-        public void scheduleSelf(Action what, long when)
+        public void scheduleSelf(Runnable what, long when)
         {
             Callback callback = getCallback();
             if (callback != null)
@@ -433,7 +443,7 @@ namespace AndroidUI
          *
          * @see Callback#unscheduleDrawable
          */
-        public void unscheduleSelf(Action what)
+        public void unscheduleSelf(Runnable what)
         {
             Callback callback = getCallback();
             if (callback != null)
@@ -518,7 +528,7 @@ namespace AndroidUI
          * Drawables draw is private implementation detail, and not something apps
          * should rely upon.
          */
-        virtual internal void setXfermode(BlendMode mode)
+        virtual internal void setXfermode(Xfermode mode)
         {
             // Base implementation drops it on the floor for compatibility. Whee!
         }
@@ -848,7 +858,7 @@ namespace AndroidUI
          *
          * @param mirrored Set to true if the Drawable should be mirrored, false if not.
          */
-        public void setAutoMirrored(bool mirrored) {
+        virtual public void setAutoMirrored(bool mirrored) {
         }
 
         /**
@@ -857,7 +867,7 @@ namespace AndroidUI
          *
          * @return bool Returns true if this Drawable will be automatically mirrored.
          */
-        public bool isAutoMirrored() {
+        virtual public bool isAutoMirrored() {
             return false;
         }
 
@@ -910,7 +920,7 @@ namespace AndroidUI
          *
          * @see android.graphics.PixelFormat
          */
-        public abstract int getOpacity();
+        public abstract PixelFormat getOpacity();
 
         /**
          * Return the appropriate opacity value for two source opacities.  If
@@ -1001,7 +1011,7 @@ namespace AndroidUI
          *
          * @return the intrinsic width, or -1 if no intrinsic width
          */
-        public int getIntrinsicWidth() {
+        virtual public int getIntrinsicWidth() {
             return -1;
         }
 
@@ -1014,7 +1024,7 @@ namespace AndroidUI
          *
          * @return the intrinsic height, or -1 if no intrinsic height
          */
-        public int getIntrinsicHeight() {
+        virtual public int getIntrinsicHeight() {
             return -1;
         }
 
@@ -1027,7 +1037,7 @@ namespace AndroidUI
          * @return The minimum width suggested by this Drawable. If this Drawable
          *         doesn't have a suggested minimum width, 0 is returned.
          */
-        public int getMinimumWidth() {
+        virtual public int getMinimumWidth() {
             int intrinsicWidth = getIntrinsicWidth();
             return intrinsicWidth > 0 ? intrinsicWidth : 0;
         }
@@ -1041,7 +1051,7 @@ namespace AndroidUI
          * @return The minimum height suggested by this Drawable. If this Drawable
          *         doesn't have a suggested minimum height, 0 is returned.
          */
-        public int getMinimumHeight() {
+        virtual public int getMinimumHeight() {
             int intrinsicHeight = getIntrinsicHeight();
             return intrinsicHeight > 0 ? intrinsicHeight : 0;
         }
@@ -1054,7 +1064,7 @@ namespace AndroidUI
          * @return true if this drawable actually has a padding, else false. When false is returned,
          * the padding is always set to 0.
          */
-        public bool getPadding(Rect padding) {
+        virtual public bool getPadding(Rect padding) {
             padding.set(0, 0, 0, 0);
             return false;
         }
@@ -1064,7 +1074,7 @@ namespace AndroidUI
          * operations during layout.
          *
          */
-        public Insets getOpticalInsets() {
+        virtual public Insets getOpticalInsets() {
             return Insets.NONE;
         }
 
@@ -1112,7 +1122,7 @@ namespace AndroidUI
          *
          * @hide
          */
-        virtual public void clearMutated() {
+        virtual internal void clearMutated() {
             // Default implementation is no-op.
         }
 

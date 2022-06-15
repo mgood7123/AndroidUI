@@ -13,7 +13,7 @@
          * @return {@code true}  if this ComplexColor changes color based on state, {@code false}
          * otherwise.
          */
-        public bool isStateful() { return false; }
+        virtual public bool isStateful() { return false; }
 
         /**
          * @return the default color.
@@ -53,7 +53,7 @@
          *
          * @see android.content.pm.ActivityInfo
          */
-        public int getChangingConfigurations()
+        virtual public int getChangingConfigurations()
         {
             return mChangingConfigurations;
         }

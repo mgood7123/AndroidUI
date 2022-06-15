@@ -81,27 +81,27 @@ namespace AndroidUI
              * Replicate the edge color if the shader draws outside of its
              * original bounds.
              */
-            const int CLAMP = 0;
+            public static readonly TileMode CLAMP = new(0);
             /**
              * Repeat the shader's image horizontally and vertically.
              */
-            const int REPEAT = 1;
+            public static readonly TileMode REPEAT = new(1);
             /**
              * Repeat the shader's image horizontally and vertically, alternating
              * mirror images so that adjacent images always seam.
              */
-            const int MIRROR = 2;
+            public static readonly TileMode MIRROR = new(2);
             /**
              * Render the shader's image pixels only within its original bounds. If the shader
              * draws outside of its original bounds, transparent black is drawn instead.
              */
-            const int DECAL = 3;
+            public static readonly TileMode DECAL = new(3);
 
             TileMode(int nativeInt)
             {
                 this.nativeInt = nativeInt;
             }
-            int nativeInt;
+            internal int nativeInt;
 
             public static implicit operator SkiaSharp.SKShaderTileMode(TileMode value) => value.ToSKShaderTileMode();
 
@@ -109,13 +109,13 @@ namespace AndroidUI
             {
                 switch (nativeInt)
                 {
-                    case CLAMP:
+                    case 0:
                         return SkiaSharp.SKShaderTileMode.Clamp;
-                    case REPEAT:
+                    case 1:
                         return SkiaSharp.SKShaderTileMode.Repeat;
-                    case MIRROR:
+                    case 2:
                         return SkiaSharp.SKShaderTileMode.Mirror;
-                    case DECAL:
+                    case 3:
                         return SkiaSharp.SKShaderTileMode.Decal;
                     default:
                         throw new IllegalStateException();
@@ -173,7 +173,7 @@ namespace AndroidUI
         /**
          *  @hide Only to be used by subclasses in the graphics package.
          */
-        virtual protected SkiaSharp.SKShader createNativeInstance(SkiaSharp.SKMatrix nativeMatrix, bool filterFromPaint)
+        virtual protected SkiaSharp.SKShader createNativeInstance(SkiaSharp.SKMatrix? nativeMatrix, bool filterFromPaint)
         {
             return null;
         }
@@ -208,7 +208,7 @@ namespace AndroidUI
          * constructed native instance is still valid.
          *  @hide Only to be used by subclasses in the graphics package.
          */
-        protected bool shouldDiscardNativeInstance(bool filterBitmap)
+        virtual protected bool shouldDiscardNativeInstance(bool filterBitmap)
         {
             return false;
         }

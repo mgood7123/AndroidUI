@@ -502,7 +502,7 @@ namespace AndroidUI
         /**
          * @hide
          */
-        public static BlendMode fromValue(int value)
+        internal static BlendMode fromValue(int value)
         {
             foreach (BlendMode mode in BLEND_MODES)
             {

@@ -1,3 +1,6 @@
 [submodule "AndroidUI-Test-Framework"]
 	path = AndroidUI-Test-Framework
 	url = https://github.com/mgood7123/AndroidUI-Test-Framework.git
+[submodule "AndroidUI.Native/android_9_patch"]
+	path = AndroidUI.Native/android_9_patch
+	url = https://github.com/mgood7123/android_9_patch

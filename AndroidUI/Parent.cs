@@ -38,5 +38,13 @@
 
         void invalidateChild(View view, Rect damage); // no op
         void OnScreenDensityChanged();
+
+        /**
+         * This method is called on the parent when a child's drawable state
+         * has changed.
+         *
+         * @param child The child whose drawable state has changed.
+         */
+        public void childDrawableStateChanged(View child); // no op
     }
 }

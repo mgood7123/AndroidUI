@@ -1,25 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace AndroidUI
+﻿namespace AndroidUI
 {
-	/// <summary>
-	/// contains the current T as value member
-	/// <br></br>
-	/// <br></br>
-	/// can be used to wrap a Value Type as a reference
-	/// </summary>
-	public class ValueHolder<T>
+    /// <summary>
+    /// contains the current T as value member
+    /// <br></br>
+    /// <br></br>
+    /// can be used to wrap a Value Type as a reference
+    /// </summary>
+    public class ValueHolder<T>
 	{
-		public T value;
+		public T Value;
 		public ValueHolder() { }
 		public ValueHolder(T value)
 		{
-			this.value = value;
+			this.Value = value;
 		}
 
-		public static implicit operator T(ValueHolder<T> valueHolder) { return valueHolder.value; }
+		public static implicit operator T(ValueHolder<T> valueHolder) { return valueHolder.Value; }
 		public static implicit operator ValueHolder<T>(T value) { return new ValueHolder<T>(value); }
 	}
 }

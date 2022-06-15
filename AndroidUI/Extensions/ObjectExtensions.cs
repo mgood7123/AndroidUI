@@ -51,27 +51,5 @@ namespace AndroidUI.Extensions
         {
             return item.GetHashCode();
         }
-
-        /// <summary>
-        /// swaps a and b
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Swap<T>(this ref T a, ref T b) where T : struct
-        {
-            T tmp = a;
-            a = b;
-            b = tmp;
-        }
-
-        /// <summary>
-        /// swaps a and b
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Swap<T>(this T a, T b) where T : class
-        {
-            T tmp = a;
-            a = b;
-            b = tmp;
-        }
     }
 }

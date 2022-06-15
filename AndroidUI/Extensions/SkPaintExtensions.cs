@@ -4,20 +4,7 @@ namespace AndroidUI.Extensions
 {
     using static ColorHelper;
 
-    public static class SkExtentions
-    {
-        public static SKColor ToSKColor(this int i)
-        {
-            return new SKColor((uint)i);
-        }
-
-        public static SKColor ToSKColor(this long i)
-        {
-            return new SKColor((uint)i);
-        }
-    }
-
-    public static class SkPaintExtentions
+    public static class SkPaintExtensions
     {
         public static void SetToDefaultBlendMode(this SKPaint paint)
         {

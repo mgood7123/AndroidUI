@@ -26,45 +26,44 @@
 
         public static T Abs<T>(T a)
         {
-            Type requestedType = typeof(T);
             if (
-                requestedType == CastUtils.USHORT ||
-                requestedType == CastUtils.UINT ||
-                requestedType == CastUtils.ULONG ||
-                requestedType == CastUtils.BYTE
+                typeof(T) == typeof(ushort) ||
+                typeof(T) == typeof(uint) ||
+                typeof(T) == typeof(ulong) ||
+                typeof(T) == typeof(byte)
             )
             {
                 return a;
             }
-            else if (requestedType == CastUtils.SBYTE)
+            else if (typeof(T) == typeof(sbyte))
             {
                 return cast1<T, sbyte>(Math.Abs, a);
             }
-            else if (requestedType == CastUtils.SHORT)
+            else if (typeof(T) == typeof(short))
             {
                 return cast1<T, short>(Math.Abs, a);
             }
-            else if (requestedType == CastUtils.CHAR)
+            else if (typeof(T) == typeof(char))
             {
                 return cast1<T, short>(Math.Abs, a);
             }
-            else if (requestedType == CastUtils.INT)
+            else if (typeof(T) == typeof(int))
             {
                 return cast1<T, int>(Math.Abs, a);
             }
-            else if (requestedType == CastUtils.FLOAT)
+            else if (typeof(T) == typeof(float))
             {
                 return cast1<T, float>(Math.Abs, a);
             }
-            else if (requestedType == CastUtils.LONG)
+            else if (typeof(T) == typeof(long))
             {
                 return cast1<T, long>(Math.Abs, a);
             }
-            else if (requestedType == CastUtils.DOUBLE)
+            else if (typeof(T) == typeof(double))
             {
                 return cast1<T, double>(Math.Abs, a);
             }
-            else if (requestedType == CastUtils.DECIMAL)
+            else if (typeof(T) == typeof(decimal))
             {
                 return cast1<T, decimal>(Math.Abs, a);
             }
@@ -76,8 +75,8 @@
 
         static T FloatOrDouble__onlyTakesDouble<T>(Func<double, double> d, T a)
         {
-            Type requestedType = typeof(T);
-            if (requestedType == CastUtils.FLOAT)
+            
+            if (typeof(T) == typeof(float))
             {
                 return Union.ReinterpretCast<float, T>(
                     (float)d.Invoke(
@@ -85,7 +84,7 @@
                     )
                 );
             }
-            else if (requestedType == CastUtils.DOUBLE)
+            else if (typeof(T) == typeof(double))
             {
                 return cast1(d, a);
             }
@@ -97,8 +96,8 @@
 
         static T FloatOrDoubleOrDecimal__onlyTakesDoubleOrDecimal<T>(Func<double, double> d, Func<decimal, decimal> dec, T a)
         {
-            Type requestedType = typeof(T);
-            if (requestedType == CastUtils.FLOAT)
+            
+            if (typeof(T) == typeof(float))
             {
                 return Union.ReinterpretCast<float, T>(
                     (float)d.Invoke(
@@ -106,11 +105,11 @@
                     )
                 );
             }
-            else if (requestedType == CastUtils.DOUBLE)
+            else if (typeof(T) == typeof(double))
             {
                 return cast1(d, a);
             }
-            else if (requestedType == CastUtils.DECIMAL)
+            else if (typeof(T) == typeof(decimal))
             {
                 return cast1(dec, a);
             }
@@ -122,16 +121,16 @@
 
         static T FloatOrDoubleOrDecimal<T>(Func<float, float> f, Func<double, double> d, Func<decimal, decimal> dec, T a)
         {
-            Type requestedType = typeof(T);
-            if (requestedType == CastUtils.FLOAT)
+            
+            if (typeof(T) == typeof(float))
             {
                 return cast1(f, a);
             }
-            else if (requestedType == CastUtils.DOUBLE)
+            else if (typeof(T) == typeof(double))
             {
                 return cast1(d, a);
             }
-            else if (requestedType == CastUtils.DECIMAL)
+            else if (typeof(T) == typeof(decimal))
             {
                 return cast1(dec, a);
             }
@@ -143,12 +142,12 @@
 
         static T FloatOrDouble<T>(Func<float, float, float> f, Func<double, double, double> d, T a, T b)
         {
-            Type requestedType = typeof(T);
-            if (requestedType == CastUtils.FLOAT)
+            
+            if (typeof(T) == typeof(float))
             {
                 return cast2(f, a, b);
             }
-            else if (requestedType == CastUtils.DOUBLE)
+            else if (typeof(T) == typeof(double))
             {
                 return cast2(d, a, b);
             }
@@ -160,8 +159,8 @@
 
         static T FloatOrDouble__onlyTakesDouble<T>(Func<double, double, double> d, T a, T b)
         {
-            Type requestedType = typeof(T);
-            if (requestedType == CastUtils.FLOAT)
+            
+            if (typeof(T) == typeof(float))
             {
                 return Union.ReinterpretCast<float, T>(
                     (float)d.Invoke(
@@ -170,7 +169,7 @@
                     )
                 );
             }
-            else if (requestedType == CastUtils.DOUBLE)
+            else if (typeof(T) == typeof(double))
             {
                 return cast2(d, a, b);
             }
@@ -182,8 +181,8 @@
 
         static T FloatOrDoubleOrDecimal__onlyTakesDoubleOrDecimal<T>(Func<double, double, double> d, Func<decimal, decimal, decimal> dec, T a, T b)
         {
-            Type requestedType = typeof(T);
-            if (requestedType == CastUtils.FLOAT)
+            
+            if (typeof(T) == typeof(float))
             {
                 return Union.ReinterpretCast<float, T>(
                     (float)d.Invoke(
@@ -192,11 +191,11 @@
                     )
                 );
             }
-            else if (requestedType == CastUtils.DOUBLE)
+            else if (typeof(T) == typeof(double))
             {
                 return cast2(d, a, b);
             }
-            else if (requestedType == CastUtils.DECIMAL)
+            else if (typeof(T) == typeof(decimal))
             {
                 return cast2(dec, a, b);
             }
@@ -208,16 +207,16 @@
 
         static T FloatOrDoubleOrDecimal<T>(Func<float, float, float> f, Func<double, double, double> d, Func<decimal, decimal, decimal> dec, T a, T b)
         {
-            Type requestedType = typeof(T);
-            if (requestedType == CastUtils.FLOAT)
+            
+            if (typeof(T) == typeof(float))
             {
                 return cast2(f, a, b);
             }
-            else if (requestedType == CastUtils.DOUBLE)
+            else if (typeof(T) == typeof(double))
             {
                 return cast2(d, a, b);
             }
-            else if (requestedType == CastUtils.DECIMAL)
+            else if (typeof(T) == typeof(decimal))
             {
                 return cast2(dec, a, b);
             }
@@ -262,52 +261,52 @@
         public static T Log10<T>(T a) => FloatOrDouble__onlyTakesDouble(Math.Log10, a);
         public static T Min<T>(T a, T b)
         {
-            Type requestedType = typeof(T);
-            if (requestedType == CastUtils.USHORT)
+            
+            if (typeof(T) == typeof(ushort))
             {
                 return cast2<T, ushort>(Math.Min, a, b);
             }
-            else if (requestedType == CastUtils.UINT)
+            else if (typeof(T) == typeof(uint))
             {
                 return cast2<T, uint>(Math.Min, a, b);
             }
-            else if (requestedType == CastUtils.ULONG)
+            else if (typeof(T) == typeof(ulong))
             {
                 return cast2<T, ulong>(Math.Min, a, b);
             }
-            else if (requestedType == CastUtils.BYTE)
+            else if (typeof(T) == typeof(byte))
             {
                 return cast2<T, byte>(Math.Min, a, b);
             }
-            else if (requestedType == CastUtils.SBYTE)
+            else if (typeof(T) == typeof(sbyte))
             {
                 return cast2<T, sbyte>(Math.Min, a, b);
             }
-            else if (requestedType == CastUtils.SHORT)
+            else if (typeof(T) == typeof(short))
             {
                 return cast2<T, short>(Math.Min, a, b);
             }
-            else if (requestedType == CastUtils.CHAR)
+            else if (typeof(T) == typeof(char))
             {
                 return cast2<T, ushort>(Math.Min, a, b);
             }
-            else if (requestedType == CastUtils.INT)
+            else if (typeof(T) == typeof(int))
             {
                 return cast2<T, int>(Math.Min, a, b);
             }
-            else if (requestedType == CastUtils.FLOAT)
+            else if (typeof(T) == typeof(float))
             {
                 return cast2<T, float>(Math.Min, a, b);
             }
-            else if (requestedType == CastUtils.LONG)
+            else if (typeof(T) == typeof(long))
             {
                 return cast2<T, long>(Math.Min, a, b);
             }
-            else if (requestedType == CastUtils.DOUBLE)
+            else if (typeof(T) == typeof(double))
             {
                 return cast2<T, double>(Math.Min, a, b);
             }
-            else if (requestedType == CastUtils.DECIMAL)
+            else if (typeof(T) == typeof(decimal))
             {
                 return cast2<T, decimal>(Math.Min, a, b);
             }
@@ -318,52 +317,52 @@
         }
         public static T Max<T>(T a, T b)
         {
-            Type requestedType = typeof(T);
-            if (requestedType == CastUtils.USHORT)
+            
+            if (typeof(T) == typeof(ushort))
             {
                 return cast2<T, ushort>(Math.Max, a, b);
             }
-            else if (requestedType == CastUtils.UINT)
+            else if (typeof(T) == typeof(uint))
             {
                 return cast2<T, uint>(Math.Max, a, b);
             }
-            else if (requestedType == CastUtils.ULONG)
+            else if (typeof(T) == typeof(ulong))
             {
                 return cast2<T, ulong>(Math.Max, a, b);
             }
-            else if (requestedType == CastUtils.BYTE)
+            else if (typeof(T) == typeof(byte))
             {
                 return cast2<T, byte>(Math.Max, a, b);
             }
-            else if (requestedType == CastUtils.SBYTE)
+            else if (typeof(T) == typeof(sbyte))
             {
                 return cast2<T, sbyte>(Math.Max, a, b);
             }
-            else if (requestedType == CastUtils.SHORT)
+            else if (typeof(T) == typeof(short))
             {
                 return cast2<T, short>(Math.Max, a, b);
             }
-            else if (requestedType == CastUtils.CHAR)
+            else if (typeof(T) == typeof(char))
             {
                 return cast2<T, ushort>(Math.Max, a, b);
             }
-            else if (requestedType == CastUtils.INT)
+            else if (typeof(T) == typeof(int))
             {
                 return cast2<T, int>(Math.Max, a, b);
             }
-            else if (requestedType == CastUtils.FLOAT)
+            else if (typeof(T) == typeof(float))
             {
                 return cast2<T, float>(Math.Max, a, b);
             }
-            else if (requestedType == CastUtils.LONG)
+            else if (typeof(T) == typeof(long))
             {
                 return cast2<T, long>(Math.Max, a, b);
             }
-            else if (requestedType == CastUtils.DOUBLE)
+            else if (typeof(T) == typeof(double))
             {
                 return cast2<T, double>(Math.Max, a, b);
             }
-            else if (requestedType == CastUtils.DECIMAL)
+            else if (typeof(T) == typeof(decimal))
             {
                 return cast2<T, decimal>(Math.Max, a, b);
             }
@@ -375,8 +374,8 @@
         public static T Pow<T>(T a, T power) => FloatOrDouble__onlyTakesDouble(Math.Pow, a, power);
         public static T Round<T>(T a)
         {
-            Type requestedType = typeof(T);
-            if (requestedType == CastUtils.FLOAT)
+            
+            if (typeof(T) == typeof(float))
             {
                 return Union.ReinterpretCast<float, T>(
                     (float)Math.Round(
@@ -384,11 +383,11 @@
                     )
                 );
             }
-            else if (requestedType == CastUtils.DOUBLE)
+            else if (typeof(T) == typeof(double))
             {
                 return cast1<T, double>(Math.Round, a);
             }
-            else if (requestedType == CastUtils.DECIMAL)
+            else if (typeof(T) == typeof(decimal))
             {
                 return cast1<T, decimal>(Math.Round, a);
             }
@@ -401,8 +400,8 @@
         public static T Round<T>(T a, T decimals)
         {
             int decimals_ = Convert.ToInt32(decimals);
-            Type requestedType = typeof(T);
-            if (requestedType == CastUtils.FLOAT)
+            
+            if (typeof(T) == typeof(float))
             {
                 return Union.ReinterpretCast<float, T>(
                     (float)Math.Round(
@@ -410,7 +409,7 @@
                     )
                 );
             }
-            else if (requestedType == CastUtils.DOUBLE)
+            else if (typeof(T) == typeof(double))
             {
                 return Union.ReinterpretCast<double, T>(
                     Math.Round(
@@ -418,7 +417,7 @@
                     )
                 );
             }
-            else if (requestedType == CastUtils.DECIMAL)
+            else if (typeof(T) == typeof(decimal))
             {
                 return Union.ReinterpretCast<decimal, T>(
                     Math.Round(
@@ -435,8 +434,8 @@
         public static T Round_<T>(T a, T midpointRounding)
         {
             MidpointRounding midpointRounding_ = (MidpointRounding)Convert.ChangeType(midpointRounding, typeof(MidpointRounding));
-            Type requestedType = typeof(T);
-            if (requestedType == CastUtils.FLOAT)
+            
+            if (typeof(T) == typeof(float))
             {
                 return Union.ReinterpretCast<float, T>(
                     (float)Math.Round(
@@ -444,7 +443,7 @@
                     )
                 );
             }
-            else if (requestedType == CastUtils.DOUBLE)
+            else if (typeof(T) == typeof(double))
             {
                 return Union.ReinterpretCast<double, T>(
                     Math.Round(
@@ -452,7 +451,7 @@
                     )
                 );
             }
-            else if (requestedType == CastUtils.DECIMAL)
+            else if (typeof(T) == typeof(decimal))
             {
                 return Union.ReinterpretCast<decimal, T>(
                     Math.Round(
@@ -470,8 +469,8 @@
         {
             int decimals_ = Convert.ToInt32(decimals);
             MidpointRounding midpointRounding_ = (MidpointRounding)Convert.ChangeType(midpointRounding, typeof(MidpointRounding));
-            Type requestedType = typeof(T);
-            if (requestedType == CastUtils.FLOAT)
+            
+            if (typeof(T) == typeof(float))
             {
                 return Union.ReinterpretCast<float, T>(
                     (float)Math.Round(
@@ -479,7 +478,7 @@
                     )
                 );
             }
-            else if (requestedType == CastUtils.DOUBLE)
+            else if (typeof(T) == typeof(double))
             {
                 return Union.ReinterpretCast<double, T>(
                     Math.Round(
@@ -487,7 +486,7 @@
                     )
                 );
             }
-            else if (requestedType == CastUtils.DECIMAL)
+            else if (typeof(T) == typeof(decimal))
             {
                 return Union.ReinterpretCast<decimal, T>(
                     Math.Round(
@@ -505,52 +504,52 @@
 
         public static int Sign<T>(T a)
         {
-            Type requestedType = typeof(T);
-            if (requestedType == CastUtils.USHORT)
+            
+            if (typeof(T) == typeof(ushort))
             {
                 return Math.Sign(Union.ReinterpretCast<T, ushort>(a));
             }
-            else if (requestedType == CastUtils.UINT)
+            else if (typeof(T) == typeof(uint))
             {
                 return Math.Sign(Union.ReinterpretCast<T, uint>(a));
             }
-            else if (requestedType == CastUtils.ULONG)
+            else if (typeof(T) == typeof(ulong))
             {
                 return Math.Sign(Union.ReinterpretCast<T, long>(a));
             }
-            else if (requestedType == CastUtils.BYTE)
+            else if (typeof(T) == typeof(byte))
             {
                 return Math.Sign(Union.ReinterpretCast<T, byte>(a));
             }
-            else if (requestedType == CastUtils.SBYTE)
+            else if (typeof(T) == typeof(sbyte))
             {
                 return Math.Sign(Union.ReinterpretCast<T, sbyte>(a));
             }
-            else if (requestedType == CastUtils.SHORT)
+            else if (typeof(T) == typeof(short))
             {
                 return Math.Sign(Union.ReinterpretCast<T, short>(a));
             }
-            else if (requestedType == CastUtils.CHAR)
+            else if (typeof(T) == typeof(char))
             {
                 return Math.Sign(Union.ReinterpretCast<T, char>(a));
             }
-            else if (requestedType == CastUtils.INT)
+            else if (typeof(T) == typeof(int))
             {
                 return Math.Sign(Union.ReinterpretCast<T, int>(a));
             }
-            else if (requestedType == CastUtils.FLOAT)
+            else if (typeof(T) == typeof(float))
             {
                 return Math.Sign(Union.ReinterpretCast<T, float>(a));
             }
-            else if (requestedType == CastUtils.LONG)
+            else if (typeof(T) == typeof(long))
             {
                 return Math.Sign(Union.ReinterpretCast<T, long>(a));
             }
-            else if (requestedType == CastUtils.DOUBLE)
+            else if (typeof(T) == typeof(double))
             {
                 return Math.Sign(Union.ReinterpretCast<T, double>(a));
             }
-            else if (requestedType == CastUtils.DECIMAL)
+            else if (typeof(T) == typeof(decimal))
             {
                 return Math.Sign(Union.ReinterpretCast<T, decimal>(a));
             }

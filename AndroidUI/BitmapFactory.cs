@@ -389,9 +389,9 @@ namespace AndroidUI
             public ColorSpace outColorSpace;
 
             /**
-             * Temp storage to use for decoding.  Suggest 16K or so.
+             * Temp storage size to use for decoding.  Suggest 16K or so.
              */
-            public byte[] inTempStorage;
+            public int inTempStorageSize;
 
             /**
              * @deprecated As of {@link android.os.Build.VERSION_CODES#N}, see
@@ -517,7 +517,7 @@ namespace AndroidUI
             try
             {
                 stream = new FileStream(pathName, FileMode.Open);
-                bm = decodeStream(stream, null, opts);
+                bm = decodeStream(stream, opts);
             }
             catch (Exception e)
             {
@@ -675,12 +675,13 @@ namespace AndroidUI
          * <code>is.mark(1024)</code> would be called. As of
          * {@link android.os.Build.VERSION_CODES#KITKAT}, this is no longer the case.</p>
          */
-        public static Bitmap decodeStream(FileStream fileStream, Rect outPadding,
+        public static Bitmap decodeStream(Stream stream, out Rect outPadding,
             Options opts)
         {
+            outPadding = null;
             // we don't throw in this case, thus allowing the caller to only check
             // the cache, and not force the image to be decoded.
-            if (fileStream == null)
+            if (stream == null)
             {
                 return null;
             }
@@ -690,7 +691,65 @@ namespace AndroidUI
 
             try
             {
-                bm = decodeStreamInternal(fileStream, outPadding, opts);
+                bm = decodeStreamInternal(stream, out outPadding, opts);
+
+                if (bm == null && opts != null && opts.inBitmap != null)
+                {
+                    throw new IllegalArgumentException("Problem decoding into existing bitmap");
+                }
+
+                setDensityFromOptions(bm, opts);
+            }
+            finally
+            {
+            }
+
+            return bm;
+        }
+
+        /**
+         * Decode an input stream into a bitmap. If the input stream is null, or
+         * cannot be used to decode a bitmap, the function returns null.
+         * The stream's position will be where ever it was after the encoded data
+         * was read.
+         *
+         * @param is The input stream that holds the raw data to be decoded into a
+         *           bitmap.
+         * @param outPadding If not null, return the padding rect for the bitmap if
+         *                   it exists, otherwise set padding to [-1,-1,-1,-1]. If
+         *                   no bitmap is returned (null) then padding is
+         *                   unchanged.
+         * @param opts null-ok; Options that control downsampling and whether the
+         *             image should be completely decoded, or just is size returned.
+         * @return The decoded bitmap, or null if the image data could not be
+         *         decoded, or, if opts is non-null, if opts requested only the
+         *         size be returned (in opts.outWidth and opts.outHeight)
+         * @throws IllegalArgumentException if {@link BitmapFactory.Options#inPreferredConfig}
+         *         is {@link android.graphics.Bitmap.Config#HARDWARE}
+         *         and {@link BitmapFactory.Options#inMutable} is set, if the specified color space
+         *         is not {@link ColorSpace.Model#RGB RGB}, or if the specified color space's transfer
+         *         function is not an {@link ColorSpace.Rgb.TransferParameters ICC parametric curve}
+         *
+         * <p class="note">Prior to {@link android.os.Build.VERSION_CODES#KITKAT},
+         * if {@link InputStream#markSupported is.markSupported()} returns true,
+         * <code>is.mark(1024)</code> would be called. As of
+         * {@link android.os.Build.VERSION_CODES#KITKAT}, this is no longer the case.</p>
+         */
+        public static Bitmap decodeStream(Stream stream, Options opts)
+        {
+            // we don't throw in this case, thus allowing the caller to only check
+            // the cache, and not force the image to be decoded.
+            if (stream == null)
+            {
+                return null;
+            }
+            Options.validate(opts);
+
+            Bitmap bm = null;
+
+            try
+            {
+                bm = decodeStreamInternal(stream, opts);
 
                 if (bm == null && opts != null && opts.inBitmap != null)
                 {
@@ -710,14 +769,36 @@ namespace AndroidUI
          * Private helper function for decoding an InputStream natively. Buffers the input enough to
          * do a rewind as needed, and supplies temporary storage if necessary. is MUST NOT be null.
          */
-        private static Bitmap decodeStreamInternal(FileStream fileStream,
-                Rect outPadding, Options opts)
+        private static Bitmap decodeStreamInternal(Stream stream,
+                out Rect outPadding, Options opts)
         {
-            // ASSERT(is != null);
-            byte[] tempStorage = null;
-            if (opts != null) tempStorage = opts.inTempStorage;
-            if (tempStorage == null) tempStorage = new byte[DECODE_BUFFER_SIZE];
-            return nativeDecodeStream(fileStream, tempStorage, outPadding, opts,
+            ArgumentNullException.ThrowIfNull(stream);
+            if (!stream.CanRead)
+            {
+                throw new UnauthorizedAccessException("the given stream does not support reading");
+            }
+            int tempStorageSize = (opts != null && opts.inTempStorageSize > 0) ? opts.inTempStorageSize : DECODE_BUFFER_SIZE;
+            int[] padding;
+            Bitmap r = nativeDecodeStream(stream, tempStorageSize, out padding, opts,
+                    Options.nativeInBitmap(opts),
+                    Options.nativeColorSpace(opts));
+            outPadding = new(padding[0], padding[1], padding[2], padding[3]);
+            return r;
+        }
+
+        /**
+         * Private helper function for decoding an InputStream natively. Buffers the input enough to
+         * do a rewind as needed, and supplies temporary storage if necessary. is MUST NOT be null.
+         */
+        private static Bitmap decodeStreamInternal(Stream stream, Options opts)
+        {
+            ArgumentNullException.ThrowIfNull(stream);
+            if (!stream.CanRead)
+            {
+                throw new UnauthorizedAccessException("the given stream does not support reading");
+            }
+            int tempStorageSize = (opts != null && opts.inTempStorageSize > 0) ? opts.inTempStorageSize : DECODE_BUFFER_SIZE;
+            return nativeDecodeStream(stream, tempStorageSize, opts,
                     Options.nativeInBitmap(opts),
                     Options.nativeColorSpace(opts));
         }
@@ -732,9 +813,9 @@ namespace AndroidUI
          *           bitmap.
          * @return The decoded bitmap, or null if the image data could not be decoded.
          */
-        public static Bitmap decodeStream(FileStream fileStream)
+        public static Bitmap decodeStream(Stream stream)
         {
-            return decodeStream(fileStream, null, null);
+            return decodeStream(stream, null);
         }
 
         /**
@@ -756,7 +837,7 @@ namespace AndroidUI
          *         is not {@link ColorSpace.Model#RGB RGB}, or if the specified color space's transfer
          *         function is not an {@link ColorSpace.Rgb.TransferParameters ICC parametric curve}
          */
-        public static Bitmap decodeFileDescriptor(Microsoft.Win32.SafeHandles.SafeFileHandle fd, Rect outPadding, Options opts)
+        public static Bitmap decodeFileDescriptor(Microsoft.Win32.SafeHandles.SafeFileHandle fd, out Rect outPadding, Options opts)
         {
             Options.validate(opts);
             Bitmap bm;
@@ -766,7 +847,60 @@ namespace AndroidUI
                 FileStream fis = new FileStream(fd, FileAccess.Read);
                 try
                 {
-                    bm = decodeStreamInternal(fis, outPadding, opts);
+                    bm = decodeStreamInternal(fis, out outPadding, opts);
+                }
+                finally
+                {
+                    try
+                    {
+                        fis.Dispose();
+                    }
+                    catch (Exception) {/* ignore */}
+                }
+
+                if (bm == null && opts != null && opts.inBitmap != null)
+                {
+                    throw new IllegalArgumentException("Problem decoding into existing bitmap");
+                }
+
+                setDensityFromOptions(bm, opts);
+            }
+            finally
+            {
+            }
+            return bm;
+        }
+
+        /**
+         * Decode a bitmap from the file descriptor. If the bitmap cannot be decoded
+         * return null. The position within the descriptor will not be changed when
+         * this returns, so the descriptor can be used again as-is.
+         *
+         * @param fd The file descriptor containing the bitmap data to decode
+         * @param outPadding If not null, return the padding rect for the bitmap if
+         *                   it exists, otherwise set padding to [-1,-1,-1,-1]. If
+         *                   no bitmap is returned (null) then padding is
+         *                   unchanged.
+         * @param opts null-ok; Options that control downsampling and whether the
+         *             image should be completely decoded, or just its size returned.
+         * @return the decoded bitmap, or null
+         * @throws IllegalArgumentException if {@link BitmapFactory.Options#inPreferredConfig}
+         *         is {@link android.graphics.Bitmap.Config#HARDWARE}
+         *         and {@link BitmapFactory.Options#inMutable} is set, if the specified color space
+         *         is not {@link ColorSpace.Model#RGB RGB}, or if the specified color space's transfer
+         *         function is not an {@link ColorSpace.Rgb.TransferParameters ICC parametric curve}
+         */
+        public static Bitmap decodeFileDescriptor(Microsoft.Win32.SafeHandles.SafeFileHandle fd, Options opts)
+        {
+            Options.validate(opts);
+            Bitmap bm;
+
+            try
+            {
+                FileStream fis = new FileStream(fd, FileAccess.Read);
+                try
+                {
+                    bm = decodeStreamInternal(fis, opts);
                 }
                 finally
                 {
@@ -800,10 +934,10 @@ namespace AndroidUI
          */
         public static Bitmap decodeFileDescriptor(Microsoft.Win32.SafeHandles.SafeFileHandle fd)
         {
-            return decodeFileDescriptor(fd, null, null);
+            return decodeFileDescriptor(fd, null);
         }
 
-        string getMimeType(SKEncodedImageFormat format)
+        static string getMimeType(SKEncodedImageFormat format)
         {
             switch (format)
             {
@@ -821,13 +955,8 @@ namespace AndroidUI
                     return "image/webp";
                 case SKEncodedImageFormat.Heif:
                     return "image/heif";
-                // it seems SkiaSharp does not yet support Avif
-                // AVIF support was added to SkHeifCodec in Skia milestone 88
-                // also in SkEncodedImageFormat enum -
-                //   https://github.com/google/skia/blob/chrome/m88/include/core/SkEncodedImageFormat.h
-                //
-                //case SKEncodedImageFormat.Avif:
-                //    return "image/avif";
+                case SKEncodedImageFormat.Avif:
+                    return "image/avif";
                 case SKEncodedImageFormat.Wbmp:
                     return "image/vnd.wap.wbmp";
                 case SKEncodedImageFormat.Dng:
@@ -837,8 +966,185 @@ namespace AndroidUI
             }
         }
 
-        // class ScaleCheckingAllocator : public SkBitmap::HeapAllocator {
-        // class RecyclingPixelAllocator : public SkBitmap::Allocator {
+        /**
+        *  Abstract subclass of SkBitmap's allocator.
+        *  Allows the allocator to indicate if the memory it allocates
+        *  is zero initialized.
+        */
+        internal abstract class BRDAllocator : SKBitmap.Allocator
+        {
+            /**
+             *  Indicates if the memory allocated by this allocator is
+             *  zero initialized.
+             */
+            public abstract SKZeroInitialized zeroInit();
+        };
+
+        internal class ZeroInitHeapAllocator : BRDAllocator {
+
+            public override bool AllocPixelRef(SKBitmap bitmap)
+            {
+                mStorage = allocateHeapBitmap(bitmap);
+                return mStorage != null;
+            }
+
+            /**
+             * Fetches the backing allocation object. Must be called!
+             */
+            internal SKBitmap getStorageObjAndReset()
+            {
+                SKBitmap bm = mStorage;
+                mStorage = null;
+                return bm;
+            }
+
+            public override SKZeroInitialized zeroInit() { return SKZeroInitialized.Yes; }
+            SKBitmap mStorage;
+        };
+
+        static internal int SKColorTypeBytesPerPixel(SKColorType ct)
+        {
+            switch (ct)
+            {
+                case SKColorType.Unknown: return 0;
+                case SKColorType.Alpha8: return 1;
+                case SKColorType.Rgb565: return 2;
+                case SKColorType.Argb4444: return 2;
+                case SKColorType.Rgba8888: return 4;
+                case SKColorType.Bgra8888: return 4;
+                case SKColorType.Rgb888x: return 4;
+                case SKColorType.Rgba1010102: return 4;
+                case SKColorType.Rgb101010x: return 4;
+                case SKColorType.Bgra1010102: return 4;
+                case SKColorType.Bgr101010x: return 4;
+                case SKColorType.Gray8: return 1;
+                case SKColorType.RgbaF16Clamped: return 8;
+                case SKColorType.RgbaF16: return 8;
+                case SKColorType.RgbaF32: return 16;
+                case SKColorType.Rg88: return 2;
+                case SKColorType.Alpha16: return 2;
+                case SKColorType.Rg1616: return 4;
+                case SKColorType.AlphaF16: return 2;
+                case SKColorType.RgF16: return 4;
+                case SKColorType.Rgba16161616: return 8;
+            }
+            return 0;
+        }
+
+        internal class ScaleCheckingAllocator : SKBitmap.HeapAllocator
+        {
+            internal ScaleCheckingAllocator(float scale, int size)
+            {
+                mScale = scale;
+                mSize = size;
+            }
+
+            readonly float mScale;
+            readonly int mSize;
+
+            public override bool AllocPixelRef(SKBitmap bitmap)
+            {
+                // accounts for scale in final allocation, using eventual size and config
+                int bytesPerPixel = SKColorTypeBytesPerPixel(bitmap.ColorType);
+                int requestedSize = bytesPerPixel *
+                        (int)(bitmap.Width * mScale + 0.5f) *
+                        (int)(bitmap.Height * mScale + 0.5f);
+                if (requestedSize > mSize)
+                {
+                    Console.WriteLine("bitmap for alloc reuse (" + mSize + " bytes) can't fit scaled bitmap (" + requestedSize + " bytes)");
+                    return false;
+                }
+                return base.AllocPixelRef(bitmap);
+            }
+        }
+
+        internal class RecyclingPixelAllocator : SKBitmap.Allocator {
+            internal RecyclingPixelAllocator(SKBitmap bitmap, uint size)
+            {
+                mBitmap = bitmap;
+                mSize = size;
+            }
+
+            public override bool AllocPixelRef(SKBitmap bitmap)
+            {
+                SKImageInfo info = bitmap.Info;
+                if (info.ColorType == SKColorType.Unknown)
+                {
+                    Console.WriteLine("unable to reuse a bitmap as the target has an unknown bitmap configuration");
+                    return false;
+                }
+
+                long size = info.BytesSize64;
+                if (size > int.MaxValue)
+                {
+                    Console.WriteLine("bitmap is too large");
+                    return false;
+                }
+
+                if (size > mSize)
+                {
+                    Console.WriteLine("bitmap marked for reuse (" + mSize + " bytes) can't fit new bitmap (" + size + " bytes)");
+                    return false;
+                }
+
+                Bitmap_reconfigure(bitmap, info, mBitmap.PixelRef.Pixels, (IntPtr)bitmap.RowBytes);
+                return true;
+            }
+
+            SKBitmap mBitmap; // android::Bitmap*
+            uint mSize;
+        }
+
+        static internal void Bitmap_reconfigure(SKBitmap bitmapHandle,
+                int width, int height, Bitmap.Config configHandle, bool requestPremul)
+        {
+            ArgumentNullException.ThrowIfNull(bitmapHandle);
+            SKColorType colorType = configHandle.Native;
+
+            // ARGB_4444 is a deprecated format, convert automatically to 8888
+            if (colorType == SKColorType.Argb4444)
+            {
+                colorType = SKImageInfo.PlatformColorType;
+            }
+            int requestedSize = width * height * SKColorTypeBytesPerPixel(colorType);
+            if (requestedSize > bitmapHandle.ByteCount)
+            {
+                // done in native as there's no way to get BytesPerPixel in Java
+                throw new IllegalArgumentException("Bitmap not large enough to support new configuration");
+            }
+            SKAlphaType alphaType;
+            if (bitmapHandle.Info.ColorType != SKColorType.Rgb565
+                    && bitmapHandle.Info.AlphaType == SKAlphaType.Opaque)
+            {
+                // If the original bitmap was set to opaque, keep that setting, unless it
+                // was 565, which is required to be opaque.
+                alphaType = SKAlphaType.Opaque;
+            }
+            else
+            {
+                // Otherwise respect the premultiplied request.
+                alphaType = requestPremul ? SKAlphaType.Premul : SKAlphaType.Unpremul;
+            }
+
+            SKImageInfo info = SKImageInfo.Create(width, height, colorType, alphaType, bitmapHandle.Info.ColorSpace);
+            Bitmap_reconfigure(bitmapHandle, info);
+        }
+
+        static internal void Bitmap_reconfigure(SKBitmap bitmapHandle, SKImageInfo info)
+        {
+            Bitmap_reconfigure(bitmapHandle, info, (IntPtr)info.RowBytes);
+        }
+
+        static internal void Bitmap_reconfigure(SKBitmap bitmapHandle, SKImageInfo info, IntPtr rowBytes)
+        {
+            Bitmap_reconfigure(bitmapHandle, info, bitmapHandle.PixelRef.Pixels, rowBytes);
+        }
+
+        static internal void Bitmap_reconfigure(SKBitmap bitmapHandle, SKImageInfo info, IntPtr pixels, IntPtr rowBytes)
+        {
+            SKPixelRef n = new SKPixelRef(info.Width, info.Height, pixels, rowBytes);
+            bitmapHandle.SetPixelRef(n, 0, 0);
+        }
 
         // Necessary for decodes when the native decoder cannot scale to appropriately match the sampleSize
         // (for example, RAW). If the sampleSize divides evenly into the dimension, we require that the
@@ -859,9 +1165,23 @@ namespace AndroidUI
                    needsFineScale(fullSize.Height, decodedSize.Height, sampleSize);
         }
 
-        static Bitmap doDecode(SKStreamRewindable stream, object padding, Options options,
+        static Bitmap doDecode(SKStreamRewindable stream, Options options,
             SKBitmap bitmapHandle, SKColorSpace colorSpaceHandle)
         {
+            return doDecode(stream, false, out var padding, options, bitmapHandle, colorSpaceHandle);
+        }
+
+        static Bitmap doDecode(SKStreamRewindable stream, out int[] padding, Options options,
+            SKBitmap bitmapHandle, SKColorSpace colorSpaceHandle)
+        {
+            return doDecode(stream, true, out padding, options, bitmapHandle, colorSpaceHandle);
+        }
+
+        private static Bitmap doDecode(SKStreamRewindable stream, bool hasPadding, out int[] padding, Options options,
+            SKBitmap bitmapHandle, SKColorSpace colorSpaceHandle)
+        {
+            padding = null;
+
             // Set default values for the options parameters.
             int sampleSize = 1;
             bool onlyDecodeSize = false;
@@ -870,7 +1190,7 @@ namespace AndroidUI
             bool isMutable = false;
             float scale = 1.0f;
             bool requireUnpremultiplied = false;
-            object javaBitmap = null;
+            Bitmap javaBitmap = null;
             SKColorSpace prefColorSpace = colorSpaceHandle;
 
             // Update with options supplied by the client.
@@ -921,265 +1241,837 @@ namespace AndroidUI
             }
 
             // Create the codec.
-            NinePatchPeeker peeker;
-            SKAndroidCodec codec;
-            
-            SKCodecResult result;
-            SKCodec c = SKCodec.Create(stream, out result);
+            using NinePatchPeeker peeker = new();
+            SKCodecResult result_;
+
+            using SKCodec c = SKCodec.Create(stream, out result_, peeker);
 
             if (c == null)
             {
-                throw new IllegalArgumentException("Failed to create image decoder with message '" + Enum.GetName(typeof(SKCodecResult), result) + "'");
+                throw new IllegalArgumentException("Failed to create image decoder with message '" + Enum.GetName(typeof(SKCodecResult), result_) + "'");
             }
 
-            //codec = SKCodec.
-
-            return null;
-        }
-
-        /**
-         *  Abstract interface defining image codec functionality that is necessary for
-         *  Android.
-         */
-        class SKAndroidCodec
-        {
-            internal SKAndroidCodec(SKCodec codec)
+            using SKAndroidCodec codec = SKAndroidCodec.Create(c);
+            if (codec == null)
             {
-                fInfo = codec.Info;
-                fCodec = codec;
+                throw new IllegalArgumentException("SkAndroidCodec.Create returned null");
             }
 
-            /**
-             *  Pass ownership of an SkCodec to a newly-created SkAndroidCodec.
-             */
-            static SKAndroidCodec MakeFromCodec(SKCodec codec)
+            // Do not allow ninepatch decodes to 565.  In the past, decodes to 565
+            // would dither, and we do not want to pre-dither ninepatches, since we
+            // know that they will be stretched.  We no longer dither 565 decodes,
+            // but we continue to prevent ninepatches from decoding to 565, in order
+            // to maintain the old behavior.
+            if (peeker.HasPatch && SKColorType.Rgb565 == prefColorType)
             {
-                if (null == codec)
-                {
-                    return null;
-                }
-
-                switch(codec.EncodedFormat)
-                {
-                    case SKEncodedImageFormat.Png:
-                    case SKEncodedImageFormat.Ico:
-                    case SKEncodedImageFormat.Jpeg:
-                    case SKEncodedImageFormat.Gif:
-                    case SKEncodedImageFormat.Bmp:
-                    case SKEncodedImageFormat.Wbmp:
-                    case SKEncodedImageFormat.Heif:
-                        return new SKSampledCodec(codec);
-                }
-
-                return new SKAndroidCodec(codec);
+                prefColorType = SKImageInfo.PlatformColorType;
             }
 
-            public SKCodec codec() => fCodec;
+            // Determine the output size.
+            SKSizeI size = codec.GetSampledDimensions(sampleSize);
 
-            SKImageInfo fInfo;
-            SKCodec fCodec;
-        }
+            int scaledWidth = size.Width;
+            int scaledHeight = size.Height;
+            bool willScale = false;
 
-        /**
-         *  This class implements the functionality of SkAndroidCodec.  Scaling will
-         *  be provided by sampling if it cannot be provided by fCodec.
-         */
-        class SKSampledCodec : SKAndroidCodec
-        {
-            internal SKSampledCodec(SKCodec codec) : base(codec) { }
-
-            SKSizeI accountForNativeScaling(ref int sampleSizePtr)
+            // Apply a fine scaling step if necessary.
+            if (needsFineScale(codec.Info.Size, size, sampleSize))
             {
-                int unused;
-                return accountForNativeScaling(ref sampleSizePtr, out unused);
+                willScale = true;
+                scaledWidth = codec.Info.Width / sampleSize;
+                scaledHeight = codec.Info.Height / sampleSize;
             }
 
-            SKSizeI accountForNativeScaling(ref int sampleSizePtr, out int nativeSampleSize)
+            // Set the decode colorType
+            SKColorType decodeColorType = codec.ComputeOutputColorType(prefColorType);
+            if (decodeColorType == SKColorType.RgbaF16 && isHardware)
             {
-                // FIXME: Consider sharing with dm, nanbench, and tools.
-                static float get_scale_from_sample_size(int sampleSize)
+                decodeColorType = SKImageInfo.PlatformColorType;
+            }
+
+            SKColorSpace decodeColorSpace = codec.ComputeOutputColorSpace(decodeColorType, prefColorSpace);
+            // android colorspace
+            if (decodeColorSpace != null)
+            {
+                if (
+                    decodeColorSpace.GammaIsCloseToSrgb
+                    && !decodeColorSpace.GammaIsLinear
+                    && !decodeColorSpace.IsSrgb
+                )
                 {
-                    return 1.0f / ((float)sampleSize);
+                    // android adjusted RGB colorspace
+                    decodeColorSpace = ColorSpace.get(ColorSpace.Named.SRGB).getNativeInstance();
                 }
+            }
 
-                SKSizeI preSampledSize = codec().GetScaledDimensions(1);
-                int sampleSize = sampleSizePtr;
-                if (sampleSize < 1)
-                {
-                    throw new ArgumentException("sample size pointer must be greater than 1");
-                }
-
-                nativeSampleSize = 1;
-
-                // Only JPEG supports native downsampling.
-                if (codec().EncodedFormat == SKEncodedImageFormat.Jpeg)
-                {
-                    // See if libjpeg supports this scale directly
-                    switch (sampleSize)
+            // Set the options and return if the client only wants the size.
+            if (options != null)
+            {
+                options.outMimeType = getMimeType(codec.EncodedFormat);
+                options.outWidth = scaledWidth;
+                options.outHeight = scaledHeight;
+                Bitmap.Config colorTypeToLegacyBitmapConfig(SKColorType colorType) {
+                    if (colorType == SKImageInfo.PlatformColorType)
                     {
-                        case 2:
-                        case 4:
-                        case 8:
-                            // This class does not need to do any sampling.
-                            sampleSizePtr = 1;
-                            return codec().GetScaledDimensions(get_scale_from_sample_size(sampleSize));
+                        return Bitmap.Config.ARGB_8888;
+                    }
+                    switch (colorType)
+                    {
+                        case SKColorType.RgbaF16:
+                            return Bitmap.Config.RGBA_F16;
+                        case SKColorType.Argb4444:
+                            return Bitmap.Config.ARGB_4444;
+                        case SKColorType.Rgb565:
+                            return Bitmap.Config.RGB_565;
+                        case SKColorType.Alpha8:
+                            return Bitmap.Config.ALPHA_8;
+                        case SKColorType.Unknown:
                         default:
                             break;
                     }
-
-                    // Check if sampleSize is a multiple of something libjpeg can support.
-                    int remainder;
-                    int[] sampleSizes = { 8, 4, 2 };
-                    foreach (int supportedSampleSize in sampleSizes)
-                    {
-                        /**
-                         * Stores numer/denom and numer%denom into div and mod respectively.
-                         */
-                        void SkTDivMod(int numer, int denom, out int div, out int mod)
-                        {
-                            // On x86 this will just be a single idiv.
-                            div = (numer / denom);
-                            mod = (numer % denom);
-                        }
-                        int actualSampleSize;
-                        SkTDivMod(sampleSize, supportedSampleSize, out actualSampleSize, out remainder);
-                        if (0 == remainder)
-                        {
-                            float scale = get_scale_from_sample_size(supportedSampleSize);
-                            // this->codec() will scale to this size.
-                            preSampledSize = codec().GetScaledDimensions(scale);
-
-                            // And then this class will sample it.
-                            sampleSizePtr = actualSampleSize;
-                            nativeSampleSize = supportedSampleSize;
-                            break;
-                        }
-                    }
+                    return null;
                 }
-                return preSampledSize;
-            }
 
-            SKSizeI onGetSampledDimensions(ref int sampleSize) {
-                /*
-                 * returns a scaled dimension based on the original dimension and the sampleSize
-                 * NOTE: we round down here for scaled dimension to match the behavior of SkImageDecoder
-                 * FIXME: I think we should call this get_sampled_dimension().
-                 */
-                static int get_scaled_dimension(int srcDimension, int sampleSize)
+                ColorSpace getColorSpace(SKColorSpace decodeColorSpace, SKColorType decodeColorType) {
+                    if (decodeColorSpace == null || decodeColorType == SKColorType.Alpha8) {
+                        return null;
+                    }
+
+                    // Special checks for the common sRGB cases and their extended variants.
+                    ColorSpace.Named? namedCS = null;
+                    using SKColorSpace srgbLinear = SKColorSpace.CreateSrgbLinear();
+                    if (decodeColorType == SKColorType.RgbaF16) {
+                        // An F16 Bitmap will always report that it is EXTENDED if
+                        // it matches a ColorSpace that has an EXTENDED variant.
+                        if (decodeColorSpace.IsSrgb) {
+                            namedCS = ColorSpace.Named.EXTENDED_SRGB;
+                        } else if (decodeColorSpace == srgbLinear) {
+                            namedCS = ColorSpace.Named.LINEAR_EXTENDED_SRGB;
+                        }
+                    } else if (decodeColorSpace.IsSrgb) {
+                        namedCS = ColorSpace.Named.SRGB;
+                    } else if (decodeColorSpace == srgbLinear) {
+                        namedCS = ColorSpace.Named.LINEAR_SRGB;
+                    }
+
+                    if (namedCS != null) {
+                        return ColorSpace.get((ColorSpace.Named)namedCS);
+                    }
+
+                    // Try to match against known RGB color spaces using the CIE XYZ D50
+                    // conversion matrix and numerical transfer function parameters
+                    SKColorSpaceXyz colorSpaceXyz;
+                    if (!decodeColorSpace.ToColorSpaceXyz(out colorSpaceXyz))
+                    {
+                        throw new Exception("could not decode colorspace");
+                    }
+
+                    SKColorSpaceTransferFn transferParams;
+
+                    // We can only handle numerical transfer functions at the moment
+                    if (!decodeColorSpace.GetNumericalTransferFunction(out transferParams))
+                    {
+                        throw new Exception("We can only handle numerical transfer functions at the moment");
+                    }
+
+                    ColorSpace.Rgb.TransferParameters transferParameters = new(
+                        transferParams.A, transferParams.B, transferParams.C,
+                        transferParams.D, transferParams.E, transferParams.F,
+                        transferParams.G
+                    );
+
+                    ColorSpace colorSpace = ColorSpace.match(colorSpaceXyz.Values, transferParameters);
+
+                    if (colorSpace == null) {
+                        // We couldn't find an exact match, let's create a new color space
+                        // instance with the 3x3 conversion matrix and transfer function
+                        colorSpace = new ColorSpace.Rgb("Unknown", colorSpaceXyz.Values, transferParameters);
+                    }
+
+                    return colorSpace;
+                }
+
+                Bitmap.Config configID = colorTypeToLegacyBitmapConfig(decodeColorType);
+                if (isHardware)
                 {
-                    if (sampleSize > srcDimension)
-                    {
-                        return 1;
-                    }
-                    return srcDimension / sampleSize;
+                    configID = Bitmap.Config.HARDWARE;
                 }
-                SKSizeI size = accountForNativeScaling(ref sampleSize);
-                return new(get_scaled_dimension(size.Width, sampleSize),
-                                     get_scaled_dimension(size.Height, sampleSize));
+                options.outConfig = configID;
+                options.outColorSpace = getColorSpace(decodeColorSpace, decodeColorType);
+
+                if (onlyDecodeSize)
+                {
+                    return null;
+                }
             }
 
-            //SkCodec::Result SkSampledCodec::onGetAndroidPixels(const SkImageInfo& info, void* pixels,
-            //        size_t rowBytes, const AndroidOptions& options) {
-            //    const SkIRect* subset = options.fSubset;
-            //    if (!subset || subset->size() == this->codec()->dimensions()) {
-            //        if (this->codec()->dimensionsSupported(info.dimensions())) {
-            //            return this->codec()->getPixels(info, pixels, rowBytes, &options);
-            //        }
+            // Scale is necessary due to density differences.
+            if (scale != 1.0f)
+            {
+                willScale = true;
+                scaledWidth = (int)(scaledWidth * scale + 0.5f);
+                scaledHeight = (int)(scaledHeight * scale + 0.5f);
+            }
 
-            //        // If the native codec does not support the requested scale, scale by sampling.
-            //        return this->sampledDecode(info, pixels, rowBytes, options);
-            //    }
 
-            //    // We are performing a subset decode.
-            //    int sampleSize = options.fSampleSize;
-            //    SkISize scaledSize = this->getSampledDimensions(sampleSize);
-            //    if (!this->codec()->dimensionsSupported(scaledSize)) {
-            //        // If the native codec does not support the requested scale, scale by sampling.
-            //        return this->sampledDecode(info, pixels, rowBytes, options);
-            //    }
+            SKBitmap reuseBitmap = null; // android::Bitmap*
+            uint existingBufferSize = 0;
+            if (javaBitmap != null)
+            {
+                Console.WriteLine("WARNING: Bitmap reuse is experimental. BitmapFactory.cs line " + SKUtils.GetLineNumber());
+                reuseBitmap = bitmapHandle;
+                if (reuseBitmap.IsImmutable)
+                {
+                    Console.WriteLine("Unable to reuse an immutable bitmap as an image decoder target.");
+                    javaBitmap = null;
+                    reuseBitmap = null;
+                }
+                else
+                {
+                    existingBufferSize = (uint)reuseBitmap.ByteCount;
+                }
+            }
 
-            //    // Calculate the scaled subset bounds.
-            //    int scaledSubsetX = subset->x() / sampleSize;
-            //    int scaledSubsetY = subset->y() / sampleSize;
-            //    int scaledSubsetWidth = info.width();
-            //    int scaledSubsetHeight = info.height();
+            using ZeroInitHeapAllocator defaultAllocator = new();
+            using RecyclingPixelAllocator recyclingAllocator = new(reuseBitmap, existingBufferSize);
+            using ScaleCheckingAllocator scaleCheckingAllocator = new(scale, (int)existingBufferSize);
+            using SKBitmap.HeapAllocator heapAllocator = new();
+            SKBitmap.Allocator decodeAllocator;
 
-            //    const SkImageInfo scaledInfo = info.makeDimensions(scaledSize);
+            if (javaBitmap != null && willScale)
+            {
+                // This will allocate pixels using a HeapAllocator, since there will be an extra
+                // scaling step that copies these pixels into Java memory.  This allocator
+                // also checks that the recycled javaBitmap is large enough.
+                decodeAllocator = scaleCheckingAllocator;
+            }
+            else if (javaBitmap != null)
+            {
+                decodeAllocator = recyclingAllocator;
+            }
+            else if (willScale || isHardware)
+            {
+                // This will allocate pixels using a HeapAllocator,
+                // for scale case: there will be an extra scaling step.
+                // for hardware case: there will be extra swizzling & upload to gralloc step.
+                decodeAllocator = heapAllocator;
+            }
+            else
+            {
+                decodeAllocator = defaultAllocator;
+            }
 
-            //    // Copy so we can use a different fSubset.
-            //    AndroidOptions subsetOptions = options;
-            //    {
-            //        // Although startScanlineDecode expects the bottom and top to match the
-            //        // SkImageInfo, startIncrementalDecode uses them to determine which rows to
-            //        // decode.
-            //        SkIRect incrementalSubset = SkIRect::MakeXYWH(scaledSubsetX, scaledSubsetY,
-            //                                                      scaledSubsetWidth, scaledSubsetHeight);
-            //        subsetOptions.fSubset = &incrementalSubset;
-            //        const SkCodec::Result startResult = this->codec()->startIncrementalDecode(
-            //                scaledInfo, pixels, rowBytes, &subsetOptions);
-            //        if (SkCodec::kSuccess == startResult) {
-            //            int rowsDecoded = 0;
-            //            const SkCodec::Result incResult = this->codec()->incrementalDecode(&rowsDecoded);
-            //            if (incResult == SkCodec::kSuccess) {
-            //                return SkCodec::kSuccess;
-            //            }
-            //            SkASSERT(incResult == SkCodec::kIncompleteInput || incResult == SkCodec::kErrorInInput);
+            SKAlphaType alphaType = codec.ComputeOutputAlphaType(requireUnpremultiplied);
 
-            //            // FIXME: Can zero initialized be read from SkCodec::fOptions?
-            //            this->codec()->fillIncompleteImage(scaledInfo, pixels, rowBytes,
-            //                    options.fZeroInitialized, scaledSubsetHeight, rowsDecoded);
-            //            return incResult;
-            //        } else if (startResult != SkCodec::kUnimplemented) {
-            //            return startResult;
-            //        }
-            //        // Otherwise fall down to use the old scanline decoder.
-            //        // subsetOptions.fSubset will be reset below, so it will not continue to
-            //        // point to the object that is no longer on the stack.
-            //    }
+            SKImageInfo decodeInfo = SKImageInfo.Create(size.Width, size.Height,
+                    decodeColorType, alphaType, decodeColorSpace);
 
-            //    // Start the scanline decode.
-            //    SkIRect scanlineSubset = SkIRect::MakeXYWH(scaledSubsetX, 0, scaledSubsetWidth,
-            //            scaledSize.height());
-            //    subsetOptions.fSubset = &scanlineSubset;
+            SKImageInfo bitmapInfo = decodeInfo;
+            if (decodeColorType == SKColorType.Gray8)
+            {
+                // The legacy implementation of BitmapFactory used kAlpha8 for
+                // grayscale images (before kGray8 existed).  While the codec
+                // recognizes kGray8, we need to decode into a kAlpha8 bitmap
+                // in order to avoid a behavior change.
+                bitmapInfo =
+                        bitmapInfo.WithColorType(SKColorType.Alpha8).WithAlphaType(SKAlphaType.Premul);
+            }
 
-            //    SkCodec::Result result = this->codec()->startScanlineDecode(scaledInfo,
-            //            &subsetOptions);
-            //    if (SkCodec::kSuccess != result) {
-            //        return result;
-            //    }
+            SKBitmap decodingBitmap = new();
+            if (!decodingBitmap.SetInfo(bitmapInfo) ||
+                    !decodingBitmap.TryAllocPixels(decodeAllocator))
+            {
+                // SkAndroidCodec should recommend a valid SkImageInfo, so setInfo()
+                // should only only fail if the calculated value for rowBytes is too
+                // large.
+                // tryAllocPixels() can fail due to OOM on the Java heap, OOM on the
+                // native heap, or the recycled javaBitmap being too small to reuse.
+                return null;
+            }
 
-            //    // At this point, we are only concerned with subsetting.  Either no scale was
-            //    // requested, or the this->codec() is handling the scale.
-            //    // Note that subsetting is only supported for kTopDown, so this code will not be
-            //    // reached for other orders.
-            //    SkASSERT(this->codec()->getScanlineOrder() == SkCodec::kTopDown_SkScanlineOrder);
-            //    if (!this->codec()->skipScanlines(scaledSubsetY)) {
-            //        this->codec()->fillIncompleteImage(info, pixels, rowBytes, options.fZeroInitialized,
-            //                scaledSubsetHeight, 0);
-            //        return SkCodec::kIncompleteInput;
-            //    }
+            // Use SkAndroidCodec to perform the decode.
+            SKAndroidCodecOptions codecOptions = new();
+            codecOptions.ZeroInitialized = decodeAllocator == defaultAllocator ?
+                    SKZeroInitialized.Yes : SKZeroInitialized.No;
+            codecOptions.SampleSize = sampleSize;
+            SKCodecResult result = codec.GetAndroidPixels(
+                decodeInfo, decodingBitmap.GetPixels(), decodingBitmap.RowBytes, codecOptions
+            );
+            switch (result)
+            {
+                case SKCodecResult.Success:
+                case SKCodecResult.IncompleteInput:
+                    break;
+                default:
+                    Console.WriteLine("codec.GetAndroidPixels() failed.");
+                    return null;
+            }
 
-            //    int decodedLines = this->codec()->getScanlines(pixels, scaledSubsetHeight, rowBytes);
-            //    if (decodedLines != scaledSubsetHeight) {
-            //        return SkCodec::kIncompleteInput;
-            //    }
-            //    return SkCodec::kSuccess;
-            //}
+            // This is weird so let me explain: we could use the scale parameter
+            // directly, but for historical reasons this is how the corresponding
+            // Dalvik code has always behaved. We simply recreate the behavior here.
+            // The result is slightly different from simply using scale because of
+            // the 0.5f rounding bias applied when computing the target image size
+            float scaleX = scaledWidth / (float)decodingBitmap.Width;
+            float scaleY = scaledHeight / (float)decodingBitmap.Height;
+
+            byte[] ninePatchChunk = null;
+            if (peeker.HasPatch)
+            {
+                if (willScale)
+                {
+                    peeker.Scale(scaleX, scaleY, scaledWidth, scaledHeight);
+                }
+
+                nuint ninePatchArraySize = peeker.SerializedSize;
+                if (ninePatchArraySize > peeker.PatchSize)
+                {
+                    Console.WriteLine("WARNING: ninePatchArraySize (" + ninePatchArraySize + ") is greater than peeker.PatchSize (" + peeker.PatchSize + ")");
+                }
+
+                if (ninePatchArraySize > 0)
+                {
+                    try
+                    {
+                        ninePatchChunk = new byte[ninePatchArraySize];
+                    }
+                    catch (OutOfMemoryException)
+                    {
+                        Console.WriteLine("ninePatchChunk == null");
+                        return null;
+                    }
+
+                    peeker.CopyInto(ninePatchChunk);
+                }
+            }
+
+            NinePatch.InsetStruct ninePatchInsets = null;
+            if (peeker.HasInsets)
+            {
+                ninePatchInsets = peeker.createNinePatchInsets(scale);
+                if (ninePatchInsets == null)
+                {
+                    Console.WriteLine("nine patch insets == null");
+                    return null;
+                }
+                if (javaBitmap != null)
+                {
+                    javaBitmap.mNinePatchInsets = ninePatchInsets;
+                }
+            }
+
+            SKBitmap outputBitmap = new();
+            if (willScale)
+            {
+                // Set the allocator for the outputBitmap.
+                SKBitmap.Allocator outputAllocator;
+                if (javaBitmap != null)
+                {
+                    outputAllocator = recyclingAllocator;
+                }
+                else
+                {
+                    outputAllocator = defaultAllocator;
+                }
+
+                SKColorType scaledColorType = decodingBitmap.ColorType;
+                // FIXME: If the alphaType is kUnpremul and the image has alpha, the
+                // colors may not be correct, since Skia does not yet support drawing
+                // to/from unpremultiplied bitmaps.
+                outputBitmap.SetInfo(
+                        bitmapInfo.WithSize(scaledWidth, scaledHeight).WithColorType(scaledColorType));
+                if (!outputBitmap.TryAllocPixels(outputAllocator))
+                {
+                    // This should only fail on OOM.  The recyclingAllocator should have
+                    // enough memory since we check this before decoding using the
+                    // scaleCheckingAllocator.
+                    Console.WriteLine("allocation failed for scaled bitmap");
+                    return null;
+                }
+
+                using SKPaint paint = new();
+                // kSrc_Mode instructs us to overwrite the uninitialized pixels in
+                // outputBitmap.  Otherwise we would blend by default, which is not
+                // what we want.
+                paint.BlendMode = SKBlendMode.Src;
+
+                using SKCanvas canvas = new(outputBitmap);
+                canvas.Scale(scaleX, scaleY);
+                decodingBitmap.SetImmutable(); // so .asImage() doesn't make a copy
+
+                // new SkSamplingOptions(SkFilterMode::kLinear)
+                using SKImage i = decodingBitmap.AsImage();
+                /*
+                SKRect s = i.Info.Rect;
+                SKRectI si = new SKRectI((int)s.Left, (int)s.Top, (int)s.Right, (int)s.Bottom);
+                SKRectI u1;
+                SKPoint u2;
+                SKImage li;
+                using (SKImageFilter filter = SKImageFilter.CreateImage(i, s, s, SKFilterQuality.Low)) {
+                    li = i.ApplyImageFilter(filter, si, si, out u1, out u2);
+                }
+                */
+                canvas.DrawImage(i, 0.0f, 0.0f, paint);
+            }
+            else
+            {
+                SKUtils.Swap(ref outputBitmap, ref decodingBitmap);
+            }
+
+            if (hasPadding) padding = peeker.Padding;
+
+            // If we get here, the outputBitmap should have an installed pixelref.
+            if (outputBitmap.PixelRef == null)
+            {
+                Console.WriteLine("Got null SkPixelRef");
+                return null;
+            }
+
+            if (!isMutable && javaBitmap == null)
+            {
+                // promise we will never change our pixels (great for sharing and pictures)
+                outputBitmap.SetImmutable();
+            }
+
+            bool isPremultiplied = !requireUnpremultiplied;
+            if (javaBitmap != null)
+            {
+                SKImageInfo i = outputBitmap.Info;
+                javaBitmap.reinit(i.Width, i.Height, isPremultiplied);
+                outputBitmap.NotifyPixelsChanged();
+                // If a java bitmap was passed in for reuse, pass it back
+                return javaBitmap;
+            }
+
+            BitmapCreateFlags bitmapCreateFlags = BitmapCreateFlags.kBitmapCreateFlag_None;
+            if (isMutable) bitmapCreateFlags |= BitmapCreateFlags.kBitmapCreateFlag_Mutable;
+            if (isPremultiplied) bitmapCreateFlags |= BitmapCreateFlags.kBitmapCreateFlag_Premultiplied;
+
+            if (isHardware)
+            {
+                SKBitmap hardwareBitmap = allocateBitmap(outputBitmap, false);
+                if (hardwareBitmap == null)
+                {
+                    Console.WriteLine("Failed to allocate a hardware bitmap");
+                }
+                return createBitmap(hardwareBitmap, bitmapCreateFlags, ninePatchChunk, ninePatchInsets, -1, isHardware);
+            }
+
+            // now create the java bitmap
+            return createBitmap(defaultAllocator.getStorageObjAndReset(), bitmapCreateFlags, ninePatchChunk, ninePatchInsets, -1, isHardware);
         }
 
-        class NinePatchPeeker { }
+        // Assert that bitmap's SkAlphaType is consistent with isPremultiplied.
+        static bool assert_premultiplied(SKImageInfo info, bool isPremultiplied) {
+            // kOpaque_SkAlphaType and kIgnore_SkAlphaType mean that isPremultiplied is
+            // irrelevant. This just tests to ensure that the SkAlphaType is not
+            // opposite of isPremultiplied.
+            if (isPremultiplied) {
+                if(info.AlphaType == SKAlphaType.Unpremul)
+                {
+                    Console.WriteLine("bitmap must have alpha type of Premultiplied");
+                    return false;
+                }
+            } else {
+                if(info.AlphaType != SKAlphaType.Premul)
+                {
+                    Console.WriteLine("bitmap must have alpha type of Unpremultiplied");
+                    return false;
+                }
+            }
+            return true;
+        }
+
+
+        internal static Bitmap createBitmap(SKBitmap bitmap, BitmapCreateFlags bitmapCreateFlags)
+        {
+            return createBitmap(bitmap, bitmapCreateFlags, null, null, -1, false);
+        }
+
+        internal static Bitmap createBitmap(
+            SKBitmap bitmap, BitmapCreateFlags bitmapCreateFlags,
+            byte[] ninePatchChunk, NinePatch.InsetStruct ninePatchInsets,
+            int density, bool isHardware
+        )
+        {
+            bool isMutable = (bitmapCreateFlags & BitmapCreateFlags.kBitmapCreateFlag_Mutable) == BitmapCreateFlags.kBitmapCreateFlag_Mutable;
+            bool isPremultiplied = (bitmapCreateFlags & BitmapCreateFlags.kBitmapCreateFlag_Premultiplied) == BitmapCreateFlags.kBitmapCreateFlag_Premultiplied;
+            // The caller needs to have already set the alpha type properly, so the
+            // native SkBitmap stays in sync with the Java Bitmap.
+            if (!assert_premultiplied(bitmap.Info, isPremultiplied))
+            {
+                return null;
+            }
+            // always from malloc
+            if (!isMutable)
+            {
+                bitmap.SetImmutable();
+            }
+            return new Bitmap(bitmap, bitmap.Width, bitmap.Height, density, isPremultiplied, ninePatchChunk, ninePatchInsets, isHardware);
+        }
+
+        internal static SKBitmap allocateHeapBitmap(SKBitmap bitmap)
+        {
+            SKImageInfo info = bitmap.Info;
+            if (info.ColorType == SKColorType.Unknown)
+            {
+                Console.WriteLine("unknown bitmap configuration");
+                return null;
+            }
+            return allocateBitmap(bitmap, true);
+        }
+
+        internal static SKBitmap allocateBitmap(SKBitmap bitmap, bool respectAlreadySetRowBytes)
+        {
+            SKImageInfo info = bitmap.Info;
+            // skip for now
+            /*
+            if (respectAlreadySetRowBytes)
+            {
+                // we must respect the rowBytes value already set on the bitmap instead of
+                // attempting to compute our own.
+                const size_t rowBytes = bitmap->rowBytes();
+                if (!computeAllocationSize(rowBytes, bitmap->height(), ref size)) {
+                    return nullptr;
+                }
+            }
+            else
+            {
+                nuint size = 0;
+                if (!computeAllocationSize(info.RowBytes, info.Height, ref size))
+                {
+                    Console.WriteLine("trying to allocate too large bitmap");
+                    return null;
+                }
+            }
+            */
+
+            SKBitmap tmp = new SKBitmap(info, SKBitmapAllocFlags.ZeroPixels);
+            bitmap.SetInfo(info, tmp.RowBytes);
+            bitmap.SetPixelRef(tmp.PixelRef, 0, 0);
+            return tmp;
+        }
+
+        /*
+        bool computeAllocationSize(int rowBytes, int height, ref nuint size)
+        {
+            if (0 <= height && (nuint)height <= nuint.MaxValue)
+            {
+                bool overflowed = false;
+                checked
+                {
+                    size = (nuint)rowBytes * (nuint)height;
+                }
+                catch (OverflowException)
+                {
+                    overflowed = true;
+                }
+                if (!overflowed) return size <= int.MaxValue;
+            }
+            return false;
+        }
+        */
+
+        internal enum BitmapCreateFlags
+        {
+            kBitmapCreateFlag_None = 0x0,
+            kBitmapCreateFlag_Mutable = 0x1,
+            kBitmapCreateFlag_Premultiplied = 0x2,
+        };
+
+        internal static bool SetPixels(SKColor[] srcColors, int srcOffset, int srcStride,
+                int x, int y, int width, int height, SKBitmap dstBitmap)
+        {
+            SKColor[] src;
+            if (srcOffset == 0)
+            {
+                src = srcColors;
+            }
+            else
+            {
+                src = (srcColors.ToMemoryPointer<SKColor>() + srcOffset).ToArray();
+            }
+
+            SKColorSpace sRGB = SKColorSpace.CreateSrgb();
+            SKImageInfo srcInfo = SKImageInfo.Create(width, height, SKColorType.Bgra8888, SKAlphaType.Unpremul, sRGB);
+            uint[] tmp = Array.ConvertAll(src, new Converter<SKColor, uint>(v => (uint)v));
+            unsafe
+            {
+                fixed (uint* array = tmp)
+                {
+                    SKPixmap srcPM = new(srcInfo, (IntPtr)array, srcStride * 4);
+                    dstBitmap.WritePixels(srcPM, x, y);
+                }
+            }
+            return true;
+        }
+
+        internal static bool SetPixels(uint[] srcColors, int srcOffset, int srcStride,
+                int x, int y, int width, int height, SKBitmap dstBitmap)
+        {
+            uint[] src;
+            if (srcOffset == 0)
+            {
+                src = srcColors;
+            }
+            else
+            {
+                src = (srcColors.ToMemoryPointer<uint>() + srcOffset).ToArray();
+            }
+
+            SKColorSpace sRGB = SKColorSpace.CreateSrgb();
+            SKImageInfo srcInfo = SKImageInfo.Create(width, height, SKColorType.Bgra8888, SKAlphaType.Unpremul, sRGB);
+            unsafe
+            {
+                fixed (uint* array = src)
+                {
+                    SKPixmap srcPM = new(srcInfo, (IntPtr)array, srcStride * 4);
+                    dstBitmap.WritePixels(srcPM, x, y);
+                }
+            }
+            return true;
+        }
+
+        internal static bool SetPixels(int[] srcColors, int srcOffset, int srcStride,
+                int x, int y, int width, int height, SKBitmap dstBitmap)
+        {
+            int[] src;
+            if (srcOffset == 0)
+            {
+                src = srcColors;
+            }
+            else
+            {
+                src = (srcColors.ToMemoryPointer<int>() + srcOffset).ToArray();
+            }
+
+            SKColorSpace sRGB = SKColorSpace.CreateSrgb();
+            SKImageInfo srcInfo = SKImageInfo.Create(width, height, SKColorType.Bgra8888, SKAlphaType.Unpremul, sRGB);
+            unsafe
+            {
+                fixed (int* array = src)
+                {
+                    SKPixmap srcPM = new(srcInfo, (IntPtr)array, srcStride * 4);
+                    dstBitmap.WritePixels(srcPM, x, y);
+                }
+            }
+            return true;
+        }
+
+        ///////////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////////////////////////
+
+        internal static BitmapCreateFlags getPremulBitmapCreateFlags(bool isMutable)
+        {
+            BitmapCreateFlags flags = BitmapCreateFlags.kBitmapCreateFlag_Premultiplied;
+            if (isMutable) flags |= BitmapCreateFlags.kBitmapCreateFlag_Mutable;
+            return flags;
+        }
+
+        internal static Bitmap Bitmap_creator(int offset, int stride, int width, int height,
+                                      Bitmap.Config configHandle, bool isMutable,
+                                      SKColorSpace colorSpacePtr)
+        {
+            SKColorType colorType = configHandle.Native;
+
+            // ARGB_4444 is a deprecated format, convert automatically to 8888
+            if (colorType == SKColorType.Argb4444)
+            {
+                colorType = SKImageInfo.PlatformColorType;
+            }
+
+            SKColorSpace colorSpace;
+            if (colorType == SKColorType.Alpha8)
+            {
+                colorSpace = null;
+            }
+            else
+            {
+                colorSpace = colorSpacePtr;
+            }
+
+            SKBitmap bitmap = new();
+            bitmap.SetInfo(SKImageInfo.Create(width, height, colorType, SKAlphaType.Premul,
+                        colorSpace));
+
+            SKBitmap nativeBitmap = allocateHeapBitmap(bitmap);
+            if (nativeBitmap == null)
+            {
+                Console.WriteLine("OOM allocating Bitmap with dimensions " + width + " x " + height);
+                return null;
+            }
+
+            return createBitmap(nativeBitmap, getPremulBitmapCreateFlags(isMutable));
+        }
+
+        internal static Bitmap Bitmap_creator(SKColor[] jColors,
+                                      int offset, int stride, int width, int height,
+                                      Bitmap.Config configHandle, bool isMutable,
+                                      SKColorSpace colorSpacePtr)
+        {
+            SKColorType colorType = configHandle.Native;
+            if (null != jColors)
+            {
+                int n = jColors.Length;
+                if (n < (int)((nuint)SKUtils.SKAbs32(stride) * (nuint)height))
+                {
+                    Console.WriteLine("ERROR");
+                    return null;
+                }
+            }
+
+            // ARGB_4444 is a deprecated format, convert automatically to 8888
+            if (colorType == SKColorType.Argb4444)
+            {
+                colorType = SKImageInfo.PlatformColorType;
+            }
+
+            SKColorSpace colorSpace;
+            if (colorType == SKColorType.Alpha8)
+            {
+                colorSpace = null;
+            }
+            else
+            {
+                colorSpace = colorSpacePtr;
+            }
+
+            SKBitmap bitmap = new();
+            bitmap.SetInfo(SKImageInfo.Create(width, height, colorType, SKAlphaType.Premul,
+                        colorSpace));
+
+            SKBitmap nativeBitmap = allocateHeapBitmap(bitmap);
+            if (nativeBitmap == null)
+            {
+                Console.WriteLine("OOM allocating Bitmap with dimensions " + width + " x " + height);
+                return null;
+            }
+
+            if (jColors != null)
+            {
+                SetPixels(jColors, offset, stride, 0, 0, width, height, bitmap);
+            }
+
+            return createBitmap(nativeBitmap, getPremulBitmapCreateFlags(isMutable));
+        }
+
+        internal static Bitmap Bitmap_creator(uint[] jColors,
+                                      int offset, int stride, int width, int height,
+                                      Bitmap.Config configHandle, bool isMutable,
+                                      SKColorSpace colorSpacePtr)
+        {
+            SKColorType colorType = configHandle.Native;
+            if (null != jColors)
+            {
+                int n = jColors.Length;
+                if (n < (int)((nuint)SKUtils.SKAbs32(stride) * (nuint)height))
+                {
+                    Console.WriteLine("ERROR");
+                    return null;
+                }
+            }
+
+            // ARGB_4444 is a deprecated format, convert automatically to 8888
+            if (colorType == SKColorType.Argb4444)
+            {
+                colorType = SKImageInfo.PlatformColorType;
+            }
+
+            SKColorSpace colorSpace;
+            if (colorType == SKColorType.Alpha8)
+            {
+                colorSpace = null;
+            }
+            else
+            {
+                colorSpace = colorSpacePtr;
+            }
+
+            SKBitmap bitmap = new();
+            bitmap.SetInfo(SKImageInfo.Create(width, height, colorType, SKAlphaType.Premul,
+                        colorSpace));
+
+            SKBitmap nativeBitmap = allocateHeapBitmap(bitmap);
+            if (nativeBitmap == null)
+            {
+                Console.WriteLine("OOM allocating Bitmap with dimensions " + width + " x " + height);
+                return null;
+            }
+
+            if (jColors != null)
+            {
+                SetPixels(jColors, offset, stride, 0, 0, width, height, bitmap);
+            }
+
+            return createBitmap(nativeBitmap, getPremulBitmapCreateFlags(isMutable));
+        }
+
+        internal static Bitmap Bitmap_creator(int[] jColors,
+                                      int offset, int stride, int width, int height,
+                                      Bitmap.Config configHandle, bool isMutable,
+                                      SKColorSpace colorSpacePtr)
+        {
+            SKColorType colorType = configHandle.Native;
+            if (null != jColors)
+            {
+                int n = jColors.Length;
+                if (n < (int)((nuint)SKUtils.SKAbs32(stride) * (nuint)height))
+                {
+                    Console.WriteLine("ERROR");
+                    return null;
+                }
+            }
+
+            // ARGB_4444 is a deprecated format, convert automatically to 8888
+            if (colorType == SKColorType.Argb4444)
+            {
+                colorType = SKImageInfo.PlatformColorType;
+            }
+
+            SKColorSpace colorSpace;
+            if (colorType == SKColorType.Alpha8)
+            {
+                colorSpace = null;
+            }
+            else
+            {
+                colorSpace = colorSpacePtr;
+            }
+
+            SKBitmap bitmap = new();
+            bitmap.SetInfo(SKImageInfo.Create(width, height, colorType, SKAlphaType.Premul,
+                        colorSpace));
+
+            SKBitmap nativeBitmap = allocateHeapBitmap(bitmap);
+            if (nativeBitmap == null)
+            {
+                Console.WriteLine("OOM allocating Bitmap with dimensions " + width + " x " + height);
+                return null;
+            }
+
+            if (jColors != null)
+            {
+                SetPixels(jColors, offset, stride, 0, 0, width, height, bitmap);
+            }
+
+            return createBitmap(nativeBitmap, getPremulBitmapCreateFlags(isMutable));
+        }
 
         static Bitmap nativeDecodeStream(
-            FileStream fileStream, byte[] storage, object padding,
+            Stream stream, int size, Options options, SKBitmap inBitmapHandle, SKColorSpace colorSpaceHandle)
+        {
+            using SKFrontBufferedManagedStream a = new(stream, size, false);
+            using SKFrontBufferedManagedStream b = new(a, SKCodec.MinBufferedBytesNeeded, false);
+            return doDecode(b, options, inBitmapHandle, colorSpaceHandle);
+        }
+
+        static Bitmap nativeDecodeStream(
+            Stream stream, int size, out int[] padding,
             Options options, SKBitmap inBitmapHandle, SKColorSpace colorSpaceHandle)
         {
-            Bitmap bitmap = null;
-            fileStream.Read(storage, 0, storage.Length);
-            using SKStreamRewindable stream = new SKMemoryStream(storage);
-            using SKFrontBufferedManagedStream b = new(stream, SKCodec.MinBufferedBytesNeeded);
-            bitmap = doDecode(b, padding, options, inBitmapHandle,
-                                colorSpaceHandle);
-            return bitmap;
+            using SKFrontBufferedManagedStream a = new(stream, size, false);
+            using SKFrontBufferedManagedStream b = new(a, SKCodec.MinBufferedBytesNeeded, false);
+            return doDecode(b, out padding, options, inBitmapHandle, colorSpaceHandle);
         }
 
         static Bitmap nativeDecodeByteArray(
@@ -1187,9 +2079,16 @@ namespace AndroidUI
             int offset, int length,
             Options options, SKBitmap inBitmapHandle, SKColorSpace colorSpaceHandle)
         {
-            using SKMemoryStream s = new SKMemoryStream((ulong)length);
-            s.SetMemory((byteArray + offset).ToArray());
-            return doDecode(s, null, options, inBitmapHandle, colorSpaceHandle);
+            byte[] bytes = offset switch
+            {
+                // offset is zero, we dont need to copy, grab underlying array
+                0 => (byte[])byteArray.GetArray(),
+                // offset is not zero, we need to copy
+                _ => (byteArray + offset).ToArray(),
+            };
+            MemoryStream m = new MemoryStream(bytes, 0, length);
+            using SKFrontBufferedManagedStream a = new(m, length, false);
+            return doDecode(a, options, inBitmapHandle, colorSpaceHandle);
         }
     }
 }

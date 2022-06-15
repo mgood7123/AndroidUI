@@ -18,7 +18,7 @@ namespace AndroidUI.Extensions
             }
         }
 
-        // https://cs.android.com/android/platform/superproject/+/master:external/skia/src/core/SKPath.cpp;drc=bef7eda7d2a6f3d7ee543b53932e0fa9739d6c2d;l=3435
+        // https://cs.android.com/android/platform/superproject/+/master:external/skia/src/core/SkPath.cpp;l=3435
         public static bool IsRectContour(this SKPath path, bool allowPartial, ref int currVerb,
                                ref SKPoint[] ptsPtr, ref bool isClosed, ref SKPathDirection direction,
                                ref SKRect rect)

@@ -18,6 +18,7 @@ namespace AndroidUI
 {
     using AndroidUI.Exceptions;
     using AndroidUI.Extensions;
+    using SkiaSharp;
     using static CastUtils;
     /**
      * {@usesMathJax}
@@ -1318,6 +1319,18 @@ namespace AndroidUI
         }
 
         /**
+         * Return a color-int \([0..255]\) from a float component
+         * in the range \([0..1]\). If the component is out of range, the
+         * returned color is undefined.
+         *
+         * @param value component \([0..1]\) of a color component
+         */
+        public static int floatToInt(float value)
+        {
+            return (int)(value * 255.0f + 0.5f);
+        }
+
+        /**
          * Return a color-int from alpha, red, green, blue components.
          * These component values should be \([0..255]\), but there is no
          * range check performed, so if they are out of range, the
@@ -1397,7 +1410,7 @@ namespace AndroidUI
             if (colorString.ElementAt(0) == '#')
             {
                 // Use a long to avoid rollovers on #ffXXXXXX
-                long color = long.Parse(colorString.Substring(1), (System.Globalization.NumberStyles)16);
+                long color = long.Parse(colorString.Substring(1), System.Globalization.NumberStyles.HexNumber);
                 if (colorString.Length == 7)
                 {
                     // Set the alpha value
@@ -1502,7 +1515,7 @@ namespace AndroidUI
 
         private static void nativeRGBToHSV(int red, int green, int blue, float[] hsv)
         {
-            new SkiaSharp.SKColor((byte)red, (byte)green, (byte)blue).ToHsv(out hsv[0], out hsv[1], out hsv[2]);
+            new SKColor((byte)red, (byte)green, (byte)blue).ToHsv(out hsv[0], out hsv[1], out hsv[2]);
         }
         private static int nativeHSVToColor(int alpha, float[] hsv)
         {
@@ -1538,34 +1551,21 @@ namespace AndroidUI
             sColorNameMap.Add("teal", reinterpret_cast<int>(0xFF008080));
         }
 
-        public static SkiaSharp.SKColor toSKColor(int color)
-        {
-            return new SkiaSharp.SKColor(reinterpret_cast<uint>(color));
-        }
+        public static SKColor toSKColor(int color) => color.ToSKColor();
+        public static SKColor toSKColor(uint color) => color.ToSKColor();
+        public static SKColor toSKColor(long color) => color.ToSKColor();
+        public static SKColor toSKColor(ulong color) => color.ToSKColor();
+        public static SKColorF toSKColorF(int color) => color.ToSKColorF();
+        public static SKColorF toSKColorF(uint color) => color.ToSKColorF();
+        public static SKColorF toSKColorF(long color) => color.ToSKColorF();
+        public static SKColorF toSKColorF(ulong color) => color.ToSKColorF();
 
-        public SkiaSharp.SKColor toSKColor()
-        {
-            return new SkiaSharp.SKColor(reinterpret_cast<uint>(toArgb()));
-        }
+        public SKColor toSKColor() => toArgb().ToSKColor();
 
-        public static implicit operator SkiaSharp.SKColor(Color color)
-        {
-            return color.toSKColor();
-        }
+        public SKColorF toSKColorF() => toArgb().ToSKColorF();
 
-        public static SkiaSharp.SKColorF toSKColorF(long color)
-        {
-            return new SkiaSharp.SKColorF(red(color), green(color), blue(color), alpha(color));
-        }
+        public static implicit operator SKColor(Color color) => color.toSKColor();
 
-        public SkiaSharp.SKColorF toSKColorF()
-        {
-            return new SkiaSharp.SKColorF(red(), green(), blue(), alpha());
-        }
-
-        public static implicit operator SkiaSharp.SKColorF(Color color)
-        {
-            return color.toSKColorF();
-        }
+        public static implicit operator SKColorF(Color color) => color.toSKColorF();
     }
 }

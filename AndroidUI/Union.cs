@@ -101,11 +101,9 @@
 
             public T GetValue<T>()
             {
-                Type requestedType = typeof(T);
- 
                 if (valid_types != null)
                 {
-                    if (!valid_types.Contains(requestedType))
+                    if (!valid_types.Contains(typeof(T)))
                     {
                         throw new InvalidCastException("T must be one of the following types that where specified when this object was created: " + TypesToString(valid_types));
                     }
@@ -113,7 +111,7 @@
                 
                 T value;
 
-                if (requestedType.IsArray)
+                if (typeof(T).IsArray)
                 {
                     value = ReinterpretCast<object, T>(data);
                 }
@@ -123,67 +121,67 @@
                     {
                         fixed (byte* array = data)
                         {
-                            if (requestedType == CastUtils.SBYTE)
+                            if (typeof(T) == typeof(sbyte))
                             {
                                 sbyte source = *(sbyte*)array;
                                 value = ReinterpretCast<sbyte, T>(source);
                             }
-                            else if (requestedType == CastUtils.BYTE)
+                            else if (typeof(T) == typeof(byte))
                             {
                                 byte source = *array;
                                 value = ReinterpretCast<byte, T>(source);
                             }
-                            else if (requestedType == CastUtils.BOOL)
+                            else if (typeof(T) == typeof(bool))
                             {
                                 bool source = *(bool*)array;
                                 value = ReinterpretCast<bool, T>(source);
                             }
-                            else if (requestedType == CastUtils.USHORT)
+                            else if (typeof(T) == typeof(ushort))
                             {
                                 ushort source = *(ushort*)array;
                                 value = ReinterpretCast<ushort, T>(source);
                             }
-                            else if (requestedType == CastUtils.SHORT)
+                            else if (typeof(T) == typeof(short))
                             {
                                 short source = *(short*)array;
                                 value = ReinterpretCast<short, T>(source);
                             }
-                            else if (requestedType == CastUtils.CHAR)
+                            else if (typeof(T) == typeof(char))
                             {
                                 char source = *(char*)array;
                                 value = ReinterpretCast<char, T>(source);
                             }
-                            else if (requestedType == CastUtils.UINT)
+                            else if (typeof(T) == typeof(uint))
                             {
                                 uint source = *(uint*)array;
                                 value = ReinterpretCast<uint, T>(source);
                             }
-                            else if (requestedType == CastUtils.INT)
+                            else if (typeof(T) == typeof(int))
                             {
                                 int source = *(int*)array;
                                 value = ReinterpretCast<int, T>(source);
                             }
-                            else if (requestedType == CastUtils.FLOAT)
+                            else if (typeof(T) == typeof(float))
                             {
                                 float source = *(float*)array;
                                 value = ReinterpretCast<float, T>(source);
                             }
-                            else if (requestedType == CastUtils.ULONG)
+                            else if (typeof(T) == typeof(ulong))
                             {
                                 ulong source = *(ulong*)array;
                                 value = ReinterpretCast<ulong, T>(source);
                             }
-                            else if (requestedType == CastUtils.LONG)
+                            else if (typeof(T) == typeof(long))
                             {
                                 long source = *(long*)array;
                                 value = ReinterpretCast<long, T>(source);
                             }
-                            else if (requestedType == CastUtils.DOUBLE)
+                            else if (typeof(T) == typeof(double))
                             {
                                 double source = *(double*)array;
                                 value = ReinterpretCast<double, T>(source);
                             }
-                            else if (requestedType == CastUtils.DECIMAL)
+                            else if (typeof(T) == typeof(decimal))
                             {
                                 decimal source = *(decimal*)array;
                                 value = ReinterpretCast<decimal, T>(source);
@@ -241,14 +239,13 @@
         /// <exception cref="InvalidCastException"></exception>
         public void set<T>(T obj)
         {
-            Type t = typeof(T);
-            if (stored_types.Contains(t))
+            if (stored_types.Contains(typeof(T)))
             {
                 IBindable bind;
-                if (!t.IsArray && !t.IsClass && t.IsPrimitive && t.IsValueType)
+                if (!typeof(T).IsArray && !typeof(T).IsClass && typeof(T).IsPrimitive && typeof(T).IsValueType)
                 {
                     // wrap primative in array object
-                    bind = new ValueBindable<T>(CastUtils.SizeOfUnmanagedType(typeof(T)), stored_types);
+                    bind = new ValueBindable<T>(CastUtils.SizeOfUnmanagedType<T>(), stored_types);
                 }
                 else
                 {
@@ -273,8 +270,7 @@
         /// <exception cref="InvalidCastException"></exception>
         public T get<T>()
         {
-            Type t = typeof(T);
-            if (stored_types.Contains(t))
+            if (stored_types.Contains(typeof(T)))
             {
                 if (storage == null)
                 {
@@ -298,8 +294,7 @@
         /// <exception cref="InvalidCastException"></exception>
         internal IBindable getBindable<T>()
         {
-            Type t = typeof(T);
-            if (stored_types.Contains(t))
+            if (stored_types.Contains(typeof(T)))
             {
                 return (IBindable)storage;
             }

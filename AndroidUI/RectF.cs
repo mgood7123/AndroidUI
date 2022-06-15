@@ -92,6 +92,27 @@ namespace AndroidUI
             }
         }
 
+        public RectF(SkiaSharp.SKRectI r)
+        {
+            left = r.Left;
+            top = r.Top;
+            right = r.Right;
+            bottom = r.Bottom;
+        }
+
+        public RectF(SkiaSharp.SKRect r)
+        {
+            left = r.Left;
+            top = r.Top;
+            right = r.Right;
+            bottom = r.Bottom;
+        }
+
+
+        public static implicit operator RectF(SkiaSharp.SKRectI r) => new(r);
+
+        public static implicit operator RectF(SkiaSharp.SKRect r) => new(r);
+
         public SkiaSharp.SKRect ToSKRect()
         {
             return new SkiaSharp.SKRect(left, top, right, bottom);

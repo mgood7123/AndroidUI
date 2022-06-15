@@ -1,11 +1,23 @@
 ﻿using AndroidUI.Extensions;
 using SkiaSharp;
+using System.Runtime.CompilerServices;
 using static AndroidUI.Native;
 
 namespace AndroidUI
 {
     public static class SKUtils
     {
+        /// <summary>
+        /// Swaps a and b
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Swap<T>(ref T a, ref T b)
+        {
+            T tmp = a; // copy reference
+            a = b;
+            b = tmp;
+        }
+
         public const short SK_MaxS16 = short.MaxValue;
         public const short SK_MinS16 = -SK_MaxS16;
 
@@ -43,13 +55,19 @@ namespace AndroidUI
         /// <br></br>
         /// this is true for C# as well
         /// </summary>
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float sk_double_to_float(double v)
         {
             return (float)v;
         }
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float SkIntToScalar(int value)
+        {
+            return value;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float SkScalarInvert(float x)
         {
             return 1.0f / x;
@@ -60,13 +78,13 @@ namespace AndroidUI
             return MathUtils.sqrtf(0.5f + w * 0.5f);
         }
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Sk2s from_point(SKPoint point)
         {
             return Sk2s.Load(new float[] { point.X, point.Y });
         }
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static SKPoint to_point(Sk2s x)
         {
             SKPoint point = new SKPoint();
@@ -75,7 +93,7 @@ namespace AndroidUI
             return point;
         }
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Sk2s times_2(Sk2s value)
         {
             return value + value;
@@ -96,7 +114,7 @@ namespace AndroidUI
         /// <summary>
         /// Return the closest int for the given float. Returns SK_MaxS32FitsInFloat for NaN.
         /// </summary>
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int sk_float_saturate2int(float x)
         {
             x = x < SK_MaxS32FitsInFloat ? x : SK_MaxS32FitsInFloat;
@@ -208,7 +226,7 @@ namespace AndroidUI
         /// <summary>
         /// Return the closest int for the given double. Returns SK_MaxS32 for NaN.
         /// </summary>
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int sk_double_saturate2int(float x)
         {
             x = x < SK_MaxS32 ? x : SK_MaxS32;
@@ -226,49 +244,49 @@ namespace AndroidUI
             return (long)x;
         }
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float sk_float_sqrt(float x) => MathF.Sqrt(x);
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float sk_float_sin(float x) => MathF.Sin(x);
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float sk_float_cos(float x) => MathF.Cos(x);
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float sk_float_tan(float x) => MathF.Tan(x);
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float sk_float_floor(float x) => MathF.Floor(x);
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float sk_float_ceil(float x) => MathF.Ceiling(x);
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float sk_float_trunc(float x) => MathF.Truncate(x);
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float sk_float_acos(float x) => MathF.Acos(x);
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float sk_float_asin(float x) => MathF.Asin(x);
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float sk_float_atan2(float x, float y) => MathF.Atan2(x, y);
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float sk_float_abs(float x) => MathF.Abs(x);
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float sk_float_copysign(float x, float y) => MathF.CopySign(x, y);
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float sk_float_mod(float number, float denom) => MathUtils.fmod(number, denom);
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float sk_float_exp(float x) => MathF.Exp(x);
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float sk_float_log(float x) => MathF.Log(x);
 
         public static float sk_float_degrees_to_radians(float degrees)
@@ -281,25 +299,25 @@ namespace AndroidUI
             return radians * (180 / SK_FloatPI);
         }
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float sk_float_round(float x) => sk_float_floor((x) + 0.5f);
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float sk_float_log2(float x) => MathF.Log2(x);
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool sk_float_isfinite(float x)
         {
             return SkFloatBits_IsFinite(SkFloat2Bits(x));
         }
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool sk_floats_are_finite(float a, float b)
         {
             return sk_float_isfinite(a) && sk_float_isfinite(b);
         }
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool sk_floats_are_finite(float[] array, int count) {
             float prod = 0;
             for (int i = 0; i<count; ++i) {
@@ -309,37 +327,39 @@ namespace AndroidUI
             return prod == 0;   // if prod is NaN, this check will return false
         }
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool sk_float_isinf(float x)
         {
             return SkFloatBits_IsInf(SkFloat2Bits(x));
         }
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool sk_float_isnan(float x)
         {
             return !(x == x);
         }
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool sk_double_isnan(double x) => sk_float_isnan(sk_double_to_float(x));
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int SkFloat2Bits(float x) => x.ToRawIntBits();
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float SkBits2Float(int x) => x.BitsToFloat();
 
         const int gFloatBits_exponent_mask = 0x7F800000;
         const int gFloatBits_matissa_mask  = 0x007FFFFF;
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static int GetLineNumber([CallerLineNumber] int line = 0) => line;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool SkFloatBits_IsFinite(int bits)
         {
             return (bits & gFloatBits_exponent_mask) != gFloatBits_exponent_mask;
         }
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool SkFloatBits_IsInf(int bits)
         {
             return ((bits & gFloatBits_exponent_mask) == gFloatBits_exponent_mask) &&
@@ -349,7 +369,7 @@ namespace AndroidUI
         /// <summary>Convert a sign-bit int (i.e. float interpreted as int) into a 2s compliement
         /// int. This also converts -0 (0x80000000) to 0. Doing this to a float allows
         /// it to be compared using normal C operators (<, <=, etc.)</summary>
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int SkSignBitTo2sCompliment(int x)
         {
             if (x < 0)
@@ -362,7 +382,7 @@ namespace AndroidUI
 
         /// <summary>Convert a 2s compliment int to a sign-bit (i.e. int interpreted as float).
         /// This undoes the result of SkSignBitTo2sCompliment().</summary>
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int Sk2sComplimentToSignBit(int x)
         {
             int sign = x >> 31;
@@ -379,7 +399,7 @@ namespace AndroidUI
         /// not return the int equivalent of the float, just something cheaper for
         /// compares-only.
         /// </summary>
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int SkFloatAs2sCompliment(float x)
         {
             return SkSignBitTo2sCompliment(SkFloat2Bits(x));
@@ -387,46 +407,46 @@ namespace AndroidUI
 
         /// <summary>Return the 2s compliment int as a float. This undos the result of
         /// SkFloatAs2sCompliment</summary>
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float Sk2sComplimentAsFloat(int x)
         {
             return SkBits2Float(Sk2sComplimentToSignBit(x));
         }
 
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int sk_float_floor2int(float x) => sk_float_saturate2int(sk_float_floor(x));
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int sk_float_round2int(float x) => sk_float_saturate2int(sk_float_floor((x) + 0.5f));
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int sk_float_ceil2int(float x) => sk_float_saturate2int(sk_float_ceil(x));
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int sk_float_floor2int_no_saturate(float x) => (int)sk_float_floor(x);
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int sk_float_round2int_no_saturate(float x) => (int)sk_float_floor((x) + 0.5f);
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int sk_float_ceil2int_no_saturate(float x) => (int)sk_float_ceil(x);
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double sk_double_floor(double x) => Math.Floor(x);
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double sk_double_round(double x) => Math.Floor((x) + 0.5);
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double sk_double_ceil(double x) => Math.Ceiling(x);
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int sk_double_floor2int(double x) => (int)Math.Floor(x);
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int sk_double_round2int(double x) => (int)Math.Floor((x) + 0.5);
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int sk_double_ceil2int(double x) => (int)Math.Ceiling(x);
 
 
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float sk_float_rsqrt_portable(float x) => MathF.ReciprocalSqrtEstimate(x);
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float sk_float_rsqrt(float x) => MathF.ReciprocalSqrtEstimate(x);
 
         // Returns the log2 of the provided value, were that value to be rounded up to the next power of 2.
@@ -438,7 +458,7 @@ namespace AndroidUI
         //     sk_float_nextlog2((2..4]) -> 2
         //     sk_float_nextlog2((4..8]) -> 3
         //     ...
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int sk_float_nextlog2(float x)
         {
             uint bits = (uint)SkFloat2Bits(x);
@@ -450,35 +470,50 @@ namespace AndroidUI
         // IEEE defines how float divide behaves for non-finite values and zero-denoms, but C does not
         // so we have a helper that suppresses the possible undefined-behavior warnings.
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float sk_ieee_float_divide(float numer, float denom) {
             return numer / denom;
         }
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double sk_ieee_double_divide(double numer, double denom) {
             return numer / denom;
         }
 
         // While we clean up divide by zero, we'll replace places that do divide by zero with this TODO.
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float sk_ieee_float_divide_TODO_IS_DIVIDE_BY_ZERO_SAFE_HERE(float n, float d)
         {
             return sk_ieee_float_divide(n, d);
         }
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double sk_ieee_double_divide_TODO_IS_DIVIDE_BY_ZERO_SAFE_HERE(double n, double d)
         {
             return sk_ieee_double_divide(n, d);
         }
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float sk_fmaf(float f, float m, float a) => MathF.FusedMultiplyAdd(f, m, a);
 
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int ConvertConicToQuads(
             ref SKPoint p0, ref SKPoint p1, ref SKPoint p2,
             float w, SKPoint[] pts, int pow2
         ) => new SKConic(p0, p1, p2, w).chopIntoQuadsPOW2(pts, pow2);
+
+        public static int SKAbs32(int value)
+        {
+            // The most negative int32_t can't be negated.
+            // SkASSERT(value != );
+            if (value == SK_NaN32)
+            {
+                return 0;
+            }
+            if (value < 0)
+            {
+                value = -value;
+            }
+            return value;
+        }
     }
 }

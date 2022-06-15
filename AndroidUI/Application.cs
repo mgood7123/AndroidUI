@@ -187,5 +187,9 @@ namespace AndroidUI
         {
             DensityManager.INTERNAL_USE_ONLY____SET_DENSITY(density, dpi);
         }
+
+        public void childDrawableStateChanged(View child)
+        {
+        }
     }
 }

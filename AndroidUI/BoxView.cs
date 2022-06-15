@@ -2,9 +2,9 @@
 
 namespace AndroidUI
 {
-    public class Box : View
+    public class BoxView : View
     {
-        public Box()
+        public BoxView()
         {
             setWillDraw(true);
         }

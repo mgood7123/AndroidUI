@@ -1,6 +1,5 @@
 ﻿namespace AndroidUI.Extensions
 {
-    using static CastUtils;
     public static class FloatingPointExtensions
     {
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]

@@ -369,7 +369,7 @@ namespace AndroidUI
          *
          * @see android.content.pm.ActivityInfo
          */
-        public int getChangingConfigurations()
+        override public int getChangingConfigurations()
         {
             return base.getChangingConfigurations() | mChangingConfigurations;
         }
@@ -402,7 +402,7 @@ namespace AndroidUI
          *         otherwise.
          * @see #getColorForState(int[], int)
          */
-        public bool isStateful()
+        override public bool isStateful()
         {
             return mStateSpecs.Length >= 1 && mStateSpecs[0].Length > 0;
         }

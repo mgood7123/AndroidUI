@@ -617,7 +617,7 @@ namespace AndroidUI
         {
             ColorSpace cs = Color.colorSpace(color);
 
-            mNativePaint.SetColor(color.ToSKColor(), cs.getNativeInstance());
+            mNativePaint.SetColor(color.ToSKColorF(), cs.getNativeInstance());
 
             mColor = color;
         }
@@ -650,7 +650,7 @@ namespace AndroidUI
             float g = Color.green(mColor);
             float b = Color.blue(mColor);
             mColor = Color.pack(r, g, b, a * (1.0f / 255), cs);
-            mNativePaint.SetColor(mColor.ToSKColor(), cs.getNativeInstance());
+            mNativePaint.SetColor(mColor.ToSKColorF(), cs.getNativeInstance());
         }
 
         /**
@@ -1015,7 +1015,7 @@ namespace AndroidUI
         {
             SKColorSpace cs = Color.colorSpace(shadowColor).getNativeInstance();
 
-            SKColor color = shadowColor.ToSKColor();
+            SKColorF color = shadowColor.ToSKColorF();
             if (radius <= 0)
             {
                 mNativePaint.ExtensionProperties_SetValue("LOOPER", null);

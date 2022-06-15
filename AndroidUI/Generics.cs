@@ -32,8 +32,7 @@
 
             public static T UnaryMinus<T>(T op) where T : unmanaged
             {
-                Type t = typeof(T);
-                int s = CastUtils.SizeOfUnmanagedType(t);
+                int s = CastUtils.SizeOfUnmanagedType<T>();
                 switch (s)
                 {
                     case <= 4:
@@ -55,7 +54,7 @@
                     case 16:
                         return CastUtils.reinterpret_cast<T>(UnaryMinusAsDecimal(op));
                     default:
-                        throw new InvalidCastException(t.FullName + " cannot be given");
+                        throw new InvalidCastException(typeof(T).FullName + " cannot be given");
                 }
             }
 
@@ -89,8 +88,7 @@
 
             public static T UnaryAdd<T>(T op) where T : unmanaged
             {
-                Type t = typeof(T);
-                int s = CastUtils.SizeOfUnmanagedType(t);
+                int s = CastUtils.SizeOfUnmanagedType<T>();
                 switch (s)
                 {
                     case <= 4:
@@ -112,7 +110,7 @@
                     case 16:
                         return CastUtils.reinterpret_cast<T>(UnaryAddAsDecimal(op));
                     default:
-                        throw new InvalidCastException(t.FullName + " cannot be given");
+                        throw new InvalidCastException(typeof(T).FullName + " cannot be given");
                 }
             }
 
@@ -131,8 +129,7 @@
 
             public static T Tidal<T>(T op) where T : unmanaged
             {
-                Type t = typeof(T);
-                int s = CastUtils.SizeOfUnmanagedType(t);
+                int s = CastUtils.SizeOfUnmanagedType<T>();
                 switch (s)
                 {
                     case <= 4:
@@ -152,7 +149,7 @@
                                 return CastUtils.reinterpret_cast<T>(TidalAsLong(op));
                         }
                     default:
-                        throw new InvalidCastException(t.FullName + " cannot be given");
+                        throw new InvalidCastException(typeof(T).FullName + " cannot be given");
                 }
             }
 
@@ -173,7 +170,7 @@
             public static T BitShift<T>(T op, int bits, BitShiftDir direction) where T : unmanaged
             {
                 Type t = typeof(T);
-                int s = CastUtils.SizeOfUnmanagedType(t);
+                int s = CastUtils.SizeOfUnmanagedType<T>();
                 switch (s)
                 {
                     case <= 4:
@@ -193,7 +190,7 @@
                                 return CastUtils.reinterpret_cast<T>(BitShiftAsLong(op, bits, direction));
                         }
                     default:
-                        throw new InvalidCastException(t.FullName + " cannot be given");
+                        throw new InvalidCastException(typeof(T).FullName + " cannot be given");
                 }
             }
 
@@ -228,9 +225,9 @@
             public static object BinaryAdd<T1, T2>(T1 left, T2 right) where T1 : unmanaged where T2 : unmanaged
             {
                 Type t1 = typeof(T1);
-                int s1 = CastUtils.SizeOfUnmanagedType(t1);
+                int s1 = CastUtils.SizeOfUnmanagedType<T1>();
                 Type t2 = typeof(T2);
-                int s2 = CastUtils.SizeOfUnmanagedType(t2);
+                int s2 = CastUtils.SizeOfUnmanagedType<T2>();
                 switch (s1)
                 {
                     case <= 4:
@@ -268,7 +265,7 @@
                             case 16:
                                 return BinaryAddAsDecimal(left, right);
                             default:
-                                throw new InvalidCastException(t2.FullName + " cannot be given");
+                                throw new InvalidCastException(typeof(T2).FullName + " cannot be given");
                         }
                     case 8:
                         switch (s2)
@@ -291,12 +288,12 @@
                             case 16:
                                 return BinaryAddAsDecimal(left, right);
                             default:
-                                throw new InvalidCastException(t2.FullName + " cannot be given");
+                                throw new InvalidCastException(typeof(T2).FullName + " cannot be given");
                         }
                     case 16:
                         return BinaryAddAsDecimal(left, right);
                     default:
-                        throw new InvalidCastException(t1.FullName + " cannot be given");
+                        throw new InvalidCastException(typeof(T1).FullName + " cannot be given");
                 }
             }
 
@@ -330,10 +327,8 @@
 
             public static object BinarySubtract<T1, T2>(T1 left, T2 right) where T1 : unmanaged where T2 : unmanaged
             {
-                Type t1 = typeof(T1);
-                int s1 = CastUtils.SizeOfUnmanagedType(t1);
-                Type t2 = typeof(T2);
-                int s2 = CastUtils.SizeOfUnmanagedType(t2);
+                int s1 = CastUtils.SizeOfUnmanagedType<T1>();
+                int s2 = CastUtils.SizeOfUnmanagedType<T2>();
                 switch (s1)
                 {
                     case <= 4:
@@ -371,7 +366,7 @@
                             case 16:
                                 return BinarySubtractAsDecimal(left, right);
                             default:
-                                throw new InvalidCastException(t2.FullName + " cannot be given");
+                                throw new InvalidCastException(typeof(T2).FullName + " cannot be given");
                         }
                     case 8:
                         switch (s2)
@@ -394,12 +389,12 @@
                             case 16:
                                 return BinarySubtractAsDecimal(left, right);
                             default:
-                                throw new InvalidCastException(t2.FullName + " cannot be given");
+                                throw new InvalidCastException(typeof(T2).FullName + " cannot be given");
                         }
                     case 16:
                         return BinarySubtractAsDecimal(left, right);
                     default:
-                        throw new InvalidCastException(t1.FullName + " cannot be given");
+                        throw new InvalidCastException(typeof(T1).FullName + " cannot be given");
                 }
             }
 
@@ -433,10 +428,8 @@
 
             public static object BinaryMultiply<T1, T2>(T1 left, T2 right) where T1 : unmanaged where T2 : unmanaged
             {
-                Type t1 = typeof(T1);
-                int s1 = CastUtils.SizeOfUnmanagedType(t1);
-                Type t2 = typeof(T2);
-                int s2 = CastUtils.SizeOfUnmanagedType(t2);
+                int s1 = CastUtils.SizeOfUnmanagedType<T1>();
+                int s2 = CastUtils.SizeOfUnmanagedType<T2>();
                 switch (s1)
                 {
                     case <= 4:
@@ -474,7 +467,7 @@
                             case 16:
                                 return BinaryMultiplyAsDecimal(left, right);
                             default:
-                                throw new InvalidCastException(t2.FullName + " cannot be given");
+                                throw new InvalidCastException(typeof(T2).FullName + " cannot be given");
                         }
                     case 8:
                         switch (s2)
@@ -497,12 +490,12 @@
                             case 16:
                                 return BinaryMultiplyAsDecimal(left, right);
                             default:
-                                throw new InvalidCastException(t2.FullName + " cannot be given");
+                                throw new InvalidCastException(typeof(T2).FullName + " cannot be given");
                         }
                     case 16:
                         return BinaryMultiplyAsDecimal(left, right);
                     default:
-                        throw new InvalidCastException(t1.FullName + " cannot be given");
+                        throw new InvalidCastException(typeof(T1).FullName + " cannot be given");
                 }
             }
 
@@ -536,10 +529,8 @@
 
             public static object BinaryDivide<T1, T2>(T1 left, T2 right) where T1 : unmanaged where T2 : unmanaged
             {
-                Type t1 = typeof(T1);
-                int s1 = CastUtils.SizeOfUnmanagedType(t1);
-                Type t2 = typeof(T2);
-                int s2 = CastUtils.SizeOfUnmanagedType(t2);
+                int s1 = CastUtils.SizeOfUnmanagedType<T1>();
+                int s2 = CastUtils.SizeOfUnmanagedType<T2>();
                 switch (s1)
                 {
                     case <= 4:
@@ -577,7 +568,7 @@
                             case 16:
                                 return BinaryDivideAsDecimal(left, right);
                             default:
-                                throw new InvalidCastException(t2.FullName + " cannot be given");
+                                throw new InvalidCastException(typeof(T2).FullName + " cannot be given");
                         }
                     case 8:
                         switch (s2)
@@ -600,12 +591,12 @@
                             case 16:
                                 return BinaryDivideAsDecimal(left, right);
                             default:
-                                throw new InvalidCastException(t2.FullName + " cannot be given");
+                                throw new InvalidCastException(typeof(T2).FullName + " cannot be given");
                         }
                     case 16:
                         return BinaryDivideAsDecimal(left, right);
                     default:
-                        throw new InvalidCastException(t1.FullName + " cannot be given");
+                        throw new InvalidCastException(typeof(T1).FullName + " cannot be given");
                 }
             }
 
@@ -614,10 +605,8 @@
 
             public static object BitwiseAND<T1, T2>(T1 left, T2 right) where T1 : unmanaged where T2 : unmanaged
             {
-                Type t1 = typeof(T1);
-                int s1 = CastUtils.SizeOfUnmanagedType(t1);
-                Type t2 = typeof(T2);
-                int s2 = CastUtils.SizeOfUnmanagedType(t2);
+                int s1 = CastUtils.SizeOfUnmanagedType<T1>();
+                int s2 = CastUtils.SizeOfUnmanagedType<T2>();
                 switch (s1)
                 {
                     case <= 4:
@@ -699,7 +688,7 @@
                                         }
                                 }
                             default:
-                                throw new InvalidCastException(t2.FullName + " cannot be given");
+                                throw new InvalidCastException(typeof(T2).FullName + " cannot be given");
                         }
                     case 8:
                         switch (s2)
@@ -777,26 +766,24 @@
                                         }
                                 }
                             default:
-                                throw new InvalidCastException(t2.FullName + " cannot be given");
+                                throw new InvalidCastException(typeof(T2).FullName + " cannot be given");
                         }
                     default:
-                        throw new InvalidCastException(t1.FullName + " cannot be given");
+                        throw new InvalidCastException(typeof(T1).FullName + " cannot be given");
                 }
             }
         }
 
-        public static bool ToBool<T>(T a)
+        public static bool ToBool<T>(T value)
         {
-            Type f = typeof(T);
-            Type t = typeof(bool);
             bool c = false;
             try
             {
-                return (bool) Convert.ChangeType(a, t);
+                return (bool) Convert.ChangeType(value, typeof(bool));
             }
             catch (Exception e)
             {
-                string m = "could not convert type " + f.FullName + " to type " + t.FullName + " = " + c + "\n" + e;
+                string m = "could not convert type " + typeof(T).FullName + " to type " + typeof(bool).FullName + " = " + c + "\n" + e;
                 Console.WriteLine(m + "\n");
                 throw new InvalidCastException(m, e);
             }

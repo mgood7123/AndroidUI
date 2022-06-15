@@ -58,6 +58,17 @@ namespace AndroidUI
          */
         public Rect() { }
 
+        public Rect(SkiaSharp.SKRectI r)
+        {
+            left = r.Left;
+            top = r.Top;
+            right = r.Right;
+            bottom = r.Bottom;
+        }
+
+
+        public static implicit operator Rect(SkiaSharp.SKRectI r) => new(r);
+
         public SkiaSharp.SKRectI ToSKRectI()
         {
             return new SkiaSharp.SKRectI(left, top, right, bottom);
@@ -71,7 +82,6 @@ namespace AndroidUI
         }
 
         public static implicit operator SkiaSharp.SKRect(Rect r) => r.ToSKRectI();
-
 
 
         /**

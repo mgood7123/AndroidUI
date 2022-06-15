@@ -274,6 +274,19 @@ namespace AndroidUI
             return result;
         }
 
+        /// <summary>
+        /// creates a managed array containing a copy the contents pointed to by ptr
+        /// </summary>
+        public static unsafe T[] FromNative<T>(void* ptr, int length) where T : unmanaged
+        {
+            T[] array = new T[length];
+            fixed (T* p1 = array)
+            {
+                Os.memcpy(p1, ptr, (nuint)(length * sizeof(T)));
+            }
+            return array;
+        }
+
         /**
          * Returns a hash code based on the contents of the specified array.
          * For any two {@code short} arrays {@code a} and {@code b}

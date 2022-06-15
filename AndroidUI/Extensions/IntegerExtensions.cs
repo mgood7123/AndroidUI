@@ -1,8 +1,111 @@
-﻿namespace AndroidUI.Extensions
+﻿using SkiaSharp;
+
+namespace AndroidUI.Extensions
 {
-    using static CastUtils;
     public static class IntegerExtensions
     {
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static SKColor ToSKColor(this SKColorF colorF) => (SKColor)colorF;
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static SKColorF ToSKColorF(this SKColor color) => ToSKColorF((uint)color);
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static SKColor ToSKColor(this int i) => ToSKColor((uint)i);
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static SKColor ToSKColor(this uint i)
+        {
+            return new SKColor(i);
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static SKColorF ToSKColorF(this int i) => ToSKColorF((uint)i);
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static SKColorF ToSKColorF(this uint i)
+        {
+            float r = ((i >> 16) & 0xff) / 255.0f;
+            float g = ((i >> 8) & 0xff) / 255.0f;
+            float b = ((i) & 0xff) / 255.0f;
+            float a = ((i >> 24) & 0xff) / 255.0f;
+            return new SKColorF(r, g, b, a);
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static SKColor ToSKColor(this long i) => ToSKColor((ulong)i);
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static SKColor ToSKColor(this ulong i)
+        {
+            byte r = (byte)((byte)(i >> 16) & 0xff);
+            byte g = (byte)((byte)(i >> 8) & 0xff);
+            byte b = (byte)((byte)(i) & 0xff);
+            byte a = (byte)((byte)(i >> 24) & 0xff);
+            return new SKColor(r, g, b, a);
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static SKColorF ToSKColorF(this long i) => ToSKColorF((ulong)i);
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static SKColorF ToSKColorF(this ulong i)
+        {
+            float r = ((i >> 16) & 0xff) / 255.0f;
+            float g = ((i >> 8) & 0xff) / 255.0f;
+            float b = ((i) & 0xff) / 255.0f;
+            float a = ((i >> 24) & 0xff) / 255.0f;
+            return new SKColorF(r, g, b, a);
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static byte ToColorByte(this float value)
+        {
+            return (byte)(value * 255.0f + 0.5f);
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static int ToColorInt(this float value)
+        {
+            return (int)(value * 255.0f + 0.5f);
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static float ToColorFloat(this byte value)
+        {
+            return (float)(value / 255.0f);
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static float ToColorFloat(this int value)
+        {
+            return (float)(value / 255.0f);
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static byte ToColorByte(this double value)
+        {
+            return (byte)(value * 255.0f + 0.5f);
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static int ToColorInt(this double value)
+        {
+            return (int)(value * 255.0f + 0.5f);
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static double ToColorDouble(this byte value)
+        {
+            return (double)(value / 255.0f);
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static double ToColorDouble(this int value)
+        {
+            return (double)(value / 255.0f);
+        }
+
         public static int dipToPx(this int dip)
         {
             return (int)(DensityManager.ScreenDensityAsFloat * dip + 0.5f);

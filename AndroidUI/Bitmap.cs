@@ -15,6 +15,8 @@
  */
 
 using AndroidUI.Exceptions;
+using AndroidUI.Extensions;
+using SkiaSharp;
 
 namespace AndroidUI
 {
@@ -28,14 +30,14 @@ namespace AndroidUI
          * @see Bitmap#getDensity()
          * @see Bitmap#setDensity(int)
          */
-        public static int DENSITY_NONE = 0;
+        public static readonly int DENSITY_NONE = 0;
 
         // Estimated size of the Bitmap native allocation, not including
         // pixel data.
-        private static long NATIVE_ALLOCATION_SIZE = 32;
+        private static readonly long NATIVE_ALLOCATION_SIZE = 32;
 
         // Convenience for JNI access
-        private SkiaSharp.SKBitmap mNativePtr;
+        internal SKBitmap mNativePtr;
 
         /**
          * Represents whether the Bitmap's content is requested to be pre-multiplied.
@@ -52,7 +54,7 @@ namespace AndroidUI
         private bool mRequestPremultiplied;
 
         private byte[] mNinePatchChunk; // may be null
-        private NinePatch.InsetStruct mNinePatchInsets; // may be null
+        internal NinePatch.InsetStruct mNinePatchInsets; // may be null
         private int mWidth;
         private int mHeight;
         private bool mRecycled;
@@ -89,7 +91,17 @@ namespace AndroidUI
          * int (pointer).
          */
         // JNI now calls the version below this one. This is preserved due to UnsupportedAppUsage.
-        Bitmap(SkiaSharp.SKBitmap nativeBitmap, int width, int height, int density,
+        public Bitmap(SKBitmap nativeBitmap, int width, int height)
+            : this(nativeBitmap, width, height, DensityManager.ScreenDpi, false, null, null, true)
+        {
+        }
+
+        /**
+         * Private constructor that must receive an already allocated native bitmap
+         * int (pointer).
+         */
+        // JNI now calls the version below this one. This is preserved due to UnsupportedAppUsage.
+        internal Bitmap(SKBitmap nativeBitmap, int width, int height, int density,
                 bool requestPremultiplied, byte[] ninePatchChunk,
                 NinePatch.InsetStruct ninePatchInsets)
             : this(nativeBitmap, width, height, density, requestPremultiplied, ninePatchChunk,
@@ -98,7 +110,7 @@ namespace AndroidUI
         }
 
         // called from JNI and Bitmap_Delegate.
-        Bitmap(SkiaSharp.SKBitmap nativeBitmap, int width, int height, int density,
+        internal Bitmap(SKBitmap nativeBitmap, int width, int height, int density,
                 bool requestPremultiplied, byte[] ninePatchChunk,
                 NinePatch.InsetStruct ninePatchInsets, bool fromMalloc)
         {
@@ -128,7 +140,7 @@ namespace AndroidUI
          * Must be public for access from android.graphics.pdf,
          * but must not be called from outside the UI module.
          */
-        internal SkiaSharp.SKBitmap getNativeInstance()
+        internal SKBitmap getNativeInstance()
         {
             return mNativePtr;
         }
@@ -137,7 +149,7 @@ namespace AndroidUI
          * Native bitmap has been reconfigured, so set premult and cached
          * width/height values
          */
-        void reinit(int width, int height, bool requestPremultiplied)
+        internal void reinit(int width, int height, bool requestPremultiplied)
         {
             mWidth = width;
             mHeight = height;
@@ -253,12 +265,7 @@ namespace AndroidUI
                 throw new IllegalStateException("only mutable bitmaps may be reconfigured");
             }
 
-            if (mNativePtr != null)
-            {
-
-            }
-            // TODO: RESTORE ME
-            //nativeReconfigure(mNativePtr, width, height, config.nativeInt, mRequestPremultiplied);
+            BitmapFactory.Bitmap_reconfigure(mNativePtr, width, height, config, mRequestPremultiplied);
             mWidth = width;
             mHeight = height;
             mColorSpace = null;
@@ -371,7 +378,6 @@ namespace AndroidUI
             {
                 Log.w(TAG, "Called getGenerationId() on a recycle()'d bitmap! This is undefined behavior!");
             }
-            // TODO
             return mNativePtr.GenerationId;
         }
 
@@ -471,7 +477,7 @@ namespace AndroidUI
              * short color = (R & 0x1f) << 11 | (G & 0x3f) << 5 | (B & 0x1f);
              * </pre>
              */
-            public static readonly Config RGB_565 = new Config(3);
+            public static readonly Config RGB_565 = new Config(2);
 
             /**
              * Each pixel is stored on 2 bytes. The three RGB color channels
@@ -492,7 +498,7 @@ namespace AndroidUI
              * @deprecated Because of the poor quality of this configuration,
              *             it is advised to use {@link #ARGB_8888} instead.
              */
-            public static readonly Config ARGB_4444 = new Config(4);
+            public static readonly Config ARGB_4444 = new Config(3);
 
             /**
              * Each pixel is stored on 4 bytes. Each channel (RGB and alpha
@@ -507,7 +513,7 @@ namespace AndroidUI
              * int color = (A & 0xff) << 24 | (B & 0xff) << 16 | (G & 0xff) << 8 | (R & 0xff);
              * </pre>
              */
-            public static readonly Config ARGB_8888 = new Config(5);
+            public static readonly Config ARGB_8888 = new Config(4);
 
             /**
              * Each pixels is stored on 8 bytes. Each channel (RGB and alpha
@@ -522,7 +528,7 @@ namespace AndroidUI
              * long color = (A & 0xffff) << 48 | (B & 0xffff) << 32 | (G & 0xffff) << 16 | (R & 0xffff);
              * </pre>
              */
-            public static readonly Config RGBA_F16 = new Config(6);
+            public static readonly Config RGBA_F16 = new Config(5);
 
             /**
              * Special configuration, when bitmap is stored only in graphic memory.
@@ -531,23 +537,53 @@ namespace AndroidUI
              * It is optimal for cases, when the only operation with the bitmap is to draw it on a
              * screen.
              */
-            public static readonly Config HARDWARE = new Config(7);
+            public static readonly Config HARDWARE = new Config(6);
 
             internal int nativeInt;
-
-            private static readonly Config[] sConfigs = {
-                new Config(0), ALPHA_8, new Config(0), RGB_565,
-                ARGB_4444, ARGB_8888, RGBA_F16, HARDWARE
-            };
 
             internal Config(int ni)
             {
                 nativeInt = ni;
             }
 
-            internal static Config nativeToConfig(int ni)
+            internal static Config nativeToConfig(int ni) => ni switch
             {
-                return sConfigs[ni];
+                (int)SKColorType.Alpha8 => ALPHA_8,
+                (int)SKColorType.Rgb565 => RGB_565,
+                (int)SKColorType.Argb4444 => ARGB_4444,
+                (int)SKColorType.RgbaF16 => RGBA_F16,
+                _ => ARGB_8888,
+            };
+
+            public SKColorType Native
+            {
+                get
+                {
+                    if (this == ALPHA_8)
+                    {
+                        return SKColorType.Alpha8;
+                    }
+                    else if (this == RGB_565)
+                    {
+                        return SKColorType.Rgb565;
+                    }
+                    else if (this == ARGB_4444)
+                    {
+                        return SKColorType.Argb4444;
+                    }
+                    else if (this == ARGB_8888)
+                    {
+                        return SKImageInfo.PlatformColorType;
+                    }
+                    else if (this == RGBA_F16)
+                    {
+                        return SKColorType.RgbaF16;
+                    }
+                    else
+                    {
+                        return SKColorType.Unknown;
+                    }
+                }
             }
 
             public override bool Equals(object obj)
@@ -646,12 +682,16 @@ namespace AndroidUI
             src.Read(pixels, 0, pixels.Length);
         }
 
+        private static void noteSlowCall(string msg)
+        {
+                Log.w(TAG, "Warning: " + msg + ", which is very slow operation");
+        }
+
         private void noteHardwareBitmapSlowCall()
         {
             if (getConfig() == Config.HARDWARE)
             {
-                Log.w(TAG, "Warning: attempt to read pixels from hardware "
-                        + "bitmap, which is very slow operation");
+                noteSlowCall("attempt to read pixels from hardware bitmap");
             }
         }
 
@@ -679,56 +719,128 @@ namespace AndroidUI
                 throw new IllegalArgumentException("Hardware bitmaps are always immutable");
             }
             noteHardwareBitmapSlowCall();
-            // TODO: RESTORE ME
-            //Bitmap b = nativeCopy(mNativePtr, config.nativeInt, isMutable);
-            //if (b != null)
-            //{
-            //    b.setPremultiplied(mRequestPremultiplied);
-            //    b.mDensity = mDensity;
-            //}
-            return null; // b;
+            
+            Bitmap b = nativeCopy(mNativePtr, config, isMutable);
+            if (b != null)
+            {
+                b.setPremultiplied(mRequestPremultiplied);
+                b.mDensity = mDensity;
+            }
+            return b;
         }
 
-        /**
-         * Creates a new immutable bitmap backed by ashmem which can efficiently
-         * be passed between processes.
-         *
-         * @hide
-         */
-        public Bitmap createAshmemBitmap()
-        {
-            checkRecycled("Can't copy a recycled bitmap");
-            noteHardwareBitmapSlowCall();
-            // TODO: RESTORE ME
-            //Bitmap b = nativeCopyAshmem(mNativePtr);
-            //if (b != null)
-            //{
-            //    b.setPremultiplied(mRequestPremultiplied);
-            //    b.mDensity = mDensity;
-            //}
-            return null; // b;
+        static bool bitmapCopyTo(SKBitmap dst, SKColorType dstCT, SKBitmap src, SKBitmap.Allocator alloc) {
+            SKPixmap srcPM = new();
+            if (!src.PeekPixels(srcPM)) {
+                return false;
+            }
+
+            SKImageInfo dstInfo = srcPM.Info.WithColorType(dstCT);
+            switch (dstCT) {
+                case SKColorType.Rgb565:
+                    dstInfo = dstInfo.WithAlphaType(SKAlphaType.Opaque);
+                    break;
+                case SKColorType.Alpha8:
+                    dstInfo = dstInfo.WithColorSpace(null);
+                    break;
+                default:
+                    break;
+            }
+
+            if (dstInfo.ColorSpace != null && dstCT != SKColorType.Alpha8) {
+                SKColorSpace cs = SKColorSpace.CreateSrgb();
+                if (
+                    cs.GammaIsCloseToSrgb
+                    && !cs.GammaIsLinear
+                    && cs.IsSrgb
+                )
+                {
+                    // android adjusted RGB colorspace
+                    cs = ColorSpace.get(ColorSpace.Named.SRGB).getNativeInstance();
+                }
+                dstInfo = dstInfo.WithColorSpace(cs);
+            }
+
+            if (!dst.SetInfo(dstInfo)) {
+                return false;
+            }
+            if (!dst.TryAllocPixels(alloc)) {
+                return false;
+            }
+
+            SKPixmap dstPM = new();
+            if (!dst.PeekPixels(dstPM)) {
+                return false;
+            }
+
+            return srcPM.ReadPixels(dstPM);
         }
 
-        /**
-         * Return an immutable bitmap backed by shared memory which can be
-         * efficiently passed between processes via Parcelable.
-         *
-         * <p>If this bitmap already meets these criteria it will return itself.
-         */
-        public Bitmap asShared()
+        private Bitmap nativeCopy(SKBitmap mNativePtr, Config dstConfigHandle, bool isMutable)
         {
-            // TODO: RESTORE ME
-            //if (nativeIsBackedByAshmem(mNativePtr) && nativeIsImmutable(mNativePtr))
-            //{
-            //    return this;
-            //}
-            //Bitmap shared = createAshmemBitmap();
-            //if (shared == null)
-            //{
-            //    throw new RuntimeException("Failed to create shared Bitmap!");
-            //}
-            return null; // shared;
+            SKBitmap src = mNativePtr;
+            if (dstConfigHandle == Config.HARDWARE)
+            {
+                SKBitmap bitmap = BitmapFactory.allocateHeapBitmap(src);
+                if (bitmap == null)
+                {
+                    return null;
+                }
+                return BitmapFactory.createBitmap(bitmap, BitmapFactory.getPremulBitmapCreateFlags(isMutable));
+            }
+
+            SKColorType dstCT = dstConfigHandle.Native;
+            SKBitmap result = new();
+            BitmapFactory.ZeroInitHeapAllocator allocator = new();
+
+            if (!bitmapCopyTo(result, dstCT, src, allocator))
+            {
+                return null;
+            }
+            SKBitmap bm = allocator.getStorageObjAndReset();
+            return BitmapFactory.createBitmap(bm, BitmapFactory.getPremulBitmapCreateFlags(isMutable));
         }
+
+        ///**
+        // * Creates a new immutable bitmap backed by ashmem which can efficiently
+        // * be passed between processes.
+        // *
+        // * @hide
+        // */
+        //public Bitmap createAshmemBitmap()
+        //{
+        //    checkRecycled("Can't copy a recycled bitmap");
+        //    noteHardwareBitmapSlowCall();
+        //    // TODO: RESTORE ME
+        //    //Bitmap b = nativeCopyAshmem(mNativePtr);
+        //    //if (b != null)
+        //    //{
+        //    //    b.setPremultiplied(mRequestPremultiplied);
+        //    //    b.mDensity = mDensity;
+        //    //}
+        //    return null; // b;
+        //}
+
+        ///**
+        // * Return an immutable bitmap backed by shared memory which can be
+        // * efficiently passed between processes via Parcelable.
+        // *
+        // * <p>If this bitmap already meets these criteria it will return itself.
+        // */
+        //public Bitmap asShared()
+        //{
+        //    // TODO: RESTORE ME
+        //    //if (nativeIsBackedByAshmem(mNativePtr) && nativeIsImmutable(mNativePtr))
+        //    //{
+        //    //    return this;
+        //    //}
+        //    //Bitmap shared = createAshmemBitmap();
+        //    //if (shared == null)
+        //    //{
+        //    //    throw new RuntimeException("Failed to create shared Bitmap!");
+        //    //}
+        //    return null; // shared;
+        //}
 
         /**
          * Creates a new bitmap, scaled from an existing bitmap, when possible. If the
@@ -752,7 +864,7 @@ namespace AndroidUI
         public static Bitmap createScaledBitmap(Bitmap src, int dstWidth, int dstHeight,
                 bool filter)
         {
-            SkiaSharp.SKMatrix m = new SkiaSharp.SKMatrix();
+            SKMatrix m = new SKMatrix();
 
             int width = src.getWidth();
             int height = src.getHeight();
@@ -763,7 +875,7 @@ namespace AndroidUI
                 m.ScaleX = sx;
                 m.ScaleY = sy;
             }
-            return Bitmap.createBitmap(src, 0, 0, width, height, m, filter);
+            return createBitmap(src, 0, 0, width, height, m, filter);
         }
 
         /**
@@ -794,8 +906,7 @@ namespace AndroidUI
          */
         public static Bitmap createBitmap(Bitmap source, int x, int y, int width, int height)
         {
-            // TODO: RESTORE ME
-            return null; // createBitmap(source, x, y, width, height, new(), false);
+            return createBitmap(source, x, y, width, height, null, false);
         }
 
         /**
@@ -830,7 +941,7 @@ namespace AndroidUI
          *         or height is <= 0, or if the source bitmap has already been recycled
          */
         public static Bitmap createBitmap(Bitmap source, int x, int y, int width, int height,
-                SkiaSharp.SKMatrix m, bool filter)
+                ValueHolder<SKMatrix> m, bool filter)
         {
 
             checkXYSign(x, y);
@@ -850,7 +961,7 @@ namespace AndroidUI
 
             // check if we can just return our argument unchanged
             if (!source.isMutable() && x == 0 && y == 0 && width == source.getWidth() &&
-                    height == source.getHeight() && (m == null || m.IsIdentity))
+                    height == source.getHeight() && (m == null || m.Value.IsIdentity))
             {
                 return source;
             }
@@ -859,14 +970,12 @@ namespace AndroidUI
             if (isHardware)
             {
                 source.noteHardwareBitmapSlowCall();
-                // TODO: RESTORE ME
-                source = null; // nativeCopyPreserveInternalConfig(source.mNativePtr);
+                source = nativeCopyPreserveInternalConfig(source.mNativePtr);
             }
 
             int neww = width;
             int newh = height;
-            Bitmap bitmap;
-            Paint paint;
+            Paint paint = new();
 
             Rect srcR = new Rect(x, y, x + width, y + height);
             RectF dstR = new RectF(0, 0, width, height);
@@ -897,61 +1006,82 @@ namespace AndroidUI
 
             ColorSpace cs = source.getColorSpace();
 
-            // TODO: RESTORE ME
-            //if (m == null || m.IsIdentity)
-            //{
-            //    bitmap = createBitmap(null, neww, newh, new Config(newConfig), source.hasAlpha(), cs);
-            //    paint = null;   // not needed
-            //}
-            //else
-            //{
-            //    bool transformed = !m.rectStaysRect();
+            Bitmap bitmap;
+            if (m == null || m.Value.IsIdentity)
+            {
+                bitmap = createBitmap(DensityManager.ScreenDpi, neww, newh, newConfig, source.hasAlpha(), cs);
+                // paint not needed
+            }
+            else
+            {
+                bool transformed = !m.Value.RectStaysRect;
 
-            //    m.mapRect(deviceR, dstR);
+                SKRect dst = m.Value.MapRect(deviceR.ToSKRect());
+                dstR = new RectF(dst.Left, dst.Top, dst.Right, dst.Bottom);
 
-            //    neww = Math.round(deviceR.width());
-            //    newh = Math.round(deviceR.height());
+                neww = (int)Math.Round(deviceR.width());
+                newh = (int)Math.Round(deviceR.height());
 
-            //    Config transformedConfig = newConfig;
-            //    if (transformed)
-            //    {
-            //        if (transformedConfig != Config.ARGB_8888 && transformedConfig != Config.RGBA_F16)
-            //        {
-            //            transformedConfig = Config.ARGB_8888;
-            //            if (cs == null)
-            //            {
-            //                cs = ColorSpace.get(ColorSpace.Named.SRGB);
-            //            }
-            //        }
-            //    }
+                Config transformedConfig = newConfig;
+                if (transformed)
+                {
+                    if (transformedConfig != Config.ARGB_8888 && transformedConfig != Config.RGBA_F16)
+                    {
+                        transformedConfig = Config.ARGB_8888;
+                        if (cs == null)
+                        {
+                            cs = ColorSpace.get(ColorSpace.Named.SRGB);
+                        }
+                    }
+                }
 
-            //    bitmap = createBitmap(null, neww, newh, transformedConfig,
-            //            transformed || source.hasAlpha(), cs);
+                bitmap = createBitmap(DensityManager.ScreenDpi, neww, newh, transformedConfig,
+                        transformed || source.hasAlpha(), cs);
 
-            //    paint = new Paint();
-            //    paint.setFilterBitmap(filter);
-            //    if (transformed)
-            //    {
-            //        paint.setAntiAlias(true);
-            //    }
-            //}
+                paint = new Paint();
+                paint.setFilterBitmap(filter);
+                if (transformed)
+                {
+                    paint.setAntiAlias(true);
+                }
+            }
 
-            //// The new bitmap was created from a known bitmap source so assume that
-            //// they use the same density
-            //bitmap.mDensity = source.mDensity;
-            //bitmap.setHasAlpha(source.hasAlpha());
-            //bitmap.setPremultiplied(source.mRequestPremultiplied);
+            // The new bitmap was created from a known bitmap source so assume that
+            // they use the same density
+            bitmap.mDensity = source.mDensity;
+            bitmap.setHasAlpha(source.hasAlpha());
+            bitmap.setPremultiplied(source.mRequestPremultiplied);
 
-            //SkiaSharp.SKCanvas canvas = new SkiaSharp.SKCanvas(bitmap.getNativeInstance());
-            //canvas.Translate(-deviceR.left, -deviceR.top);
-            //canvas.Concat(m);
-            //canvas.DrawBitmap(source, srcR, dstR, paint);
-            ////canvas.SetBitmap(null);
-            //if (isHardware)
-            //{
-            //    return bitmap.copy(Config.HARDWARE, false);
-            //}
-            return null; // bitmap;
+            SKCanvas canvas = new SKCanvas(bitmap.getNativeInstance());
+            canvas.Translate(-deviceR.left, -deviceR.top);
+            canvas.Concat(ref m.Value);
+            canvas.DrawBitmap(source.mNativePtr, srcR.ToSKRect(), dstR.ToSKRect(), paint.getNativeInstance());
+            canvas.Dispose();
+            if (isHardware)
+            {
+                return bitmap.copy(Config.HARDWARE, false);
+            }
+            return bitmap;
+        }
+
+        private static Bitmap nativeCopyPreserveInternalConfig(SKBitmap bitmapHandle)
+        {
+            // always assume hardware
+            SKBitmap src = bitmapHandle;
+
+            if (src.PixelRef == null)
+            {
+                Console.WriteLine("Could not copy a hardware bitmap. (no pixel ref)");
+                return null;
+            }
+
+            SKBitmap bitmap = new SKBitmap();
+            if (!bitmap.InstallPixels(src.Info, src.PixelRef.Pixels))
+            {
+                Console.WriteLine("Could not install pixels");
+                return null;
+            }
+            return BitmapFactory.createBitmap(bitmap, BitmapFactory.getPremulBitmapCreateFlags(false));
         }
 
         /**
@@ -965,11 +1095,10 @@ namespace AndroidUI
          * @throws IllegalArgumentException if the width or height are <= 0, or if
          *         Config is Config.HARDWARE, because hardware bitmaps are always immutable
          */
-        // TODO: RESTORE ME
-        //public static Bitmap createBitmap(int width, int height, Config config)
-        //{
-        //    return createBitmap(width, height, config, true);
-        //}
+        public static Bitmap createBitmap(int width, int height, Config config)
+        {
+            return createBitmap(width, height, config, true);
+        }
 
         /**
          * Returns a mutable bitmap with the specified width and height.  Its
@@ -985,12 +1114,11 @@ namespace AndroidUI
          * @throws IllegalArgumentException if the width or height are <= 0, or if
          *         Config is Config.HARDWARE, because hardware bitmaps are always immutable
          */
-        // TODO: RESTORE ME
-        //public static Bitmap createBitmap(DisplayMetrics display, int width,
-        //        int height, Config config)
-        //{
-        //    return createBitmap(display, width, height, config, true);
-        //}
+        public static Bitmap createBitmap(int densityDpi, int width,
+                int height, Config config)
+        {
+            return createBitmap(densityDpi, width, height, config, true);
+        }
 
         /**
          * Returns a mutable bitmap with the specified width and height.  Its
@@ -1007,12 +1135,11 @@ namespace AndroidUI
          * @throws IllegalArgumentException if the width or height are <= 0, or if
          *         Config is Config.HARDWARE, because hardware bitmaps are always immutable
          */
-        // TODO: RESTORE ME
-        //public static Bitmap createBitmap(int width, int height,
-        //        Config config, bool hasAlpha)
-        //{
-        //    return createBitmap(null, width, height, config, hasAlpha);
-        //}
+        public static Bitmap createBitmap(int width, int height,
+                Config config, bool hasAlpha)
+        {
+            return createBitmap(DensityManager.ScreenDpi, width, height, config, hasAlpha);
+        }
 
         /**
          * Returns a mutable bitmap with the specified width and height.  Its
@@ -1036,12 +1163,11 @@ namespace AndroidUI
          *         {@link ColorSpace.Rgb.TransferParameters ICC parametric curve}, or if
          *         the color space is null
          */
-        // TODO: RESTORE ME
-        //public static Bitmap createBitmap(int width, int height, Config config,
-        //        bool hasAlpha, ColorSpace colorSpace)
-        //{
-        //    return createBitmap(null, width, height, config, hasAlpha, colorSpace);
-        //}
+        public static Bitmap createBitmap(int width, int height, Config config,
+                bool hasAlpha, ColorSpace colorSpace)
+        {
+            return createBitmap(DensityManager.ScreenDpi, width, height, config, hasAlpha, colorSpace);
+        }
 
         /**
          * Returns a mutable bitmap with the specified width and height.  Its
@@ -1061,13 +1187,11 @@ namespace AndroidUI
          * @throws IllegalArgumentException if the width or height are <= 0, or if
          *         Config is Config.HARDWARE, because hardware bitmaps are always immutable
          */
-        // TODO: RESTORE ME
-        //public static Bitmap createBitmap(DisplayMetrics display, int width, int height,
-        //        Config config, bool hasAlpha)
-        //{
-        //    return createBitmap(display, width, height, config, hasAlpha,
-        //            ColorSpace.get(ColorSpace.Named.SRGB));
-        //}
+        public static Bitmap createBitmap(int densityDpi, int width, int height,
+                Config config, bool hasAlpha)
+        {
+            return createBitmap(densityDpi, width, height, config, hasAlpha, ColorSpace.get(ColorSpace.Named.SRGB));
+        }
 
         /**
          * Returns a mutable bitmap with the specified width and height.  Its
@@ -1095,40 +1219,36 @@ namespace AndroidUI
          *         {@link ColorSpace.Rgb.TransferParameters ICC parametric curve}, or if
          *         the color space is null
          */
-        // TODO: RESTORE ME
-        //public static Bitmap createBitmap(DisplayMetrics display, int width, int height,
-        //        Config config, bool hasAlpha, ColorSpace colorSpace)
-        //{
-        //    if (width <= 0 || height <= 0)
-        //    {
-        //        throw new IllegalArgumentException("width and height must be > 0");
-        //    }
-        //    if (config == Config.HARDWARE)
-        //    {
-        //        throw new IllegalArgumentException("can't create mutable bitmap with Config.HARDWARE");
-        //    }
-        //    if (colorSpace == null && config != Config.ALPHA_8)
-        //    {
-        //        throw new IllegalArgumentException("can't create bitmap without a color space");
-        //    }
+        public static Bitmap createBitmap(int densityDpi, int width, int height,
+                Config config, bool hasAlpha, ColorSpace colorSpace)
+        {
+            if (width <= 0 || height <= 0)
+            {
+                throw new IllegalArgumentException("width and height must be > 0");
+            }
+            if (config == Config.HARDWARE)
+            {
+                throw new IllegalArgumentException("can't create mutable bitmap with Config.HARDWARE");
+            }
+            if (colorSpace == null && config != Config.ALPHA_8)
+            {
+                throw new IllegalArgumentException("can't create bitmap without a color space");
+            }
 
-        //    Bitmap bm = nativeCreate(null, 0, width, width, height, config.nativeInt, true,
-        //            colorSpace == null ? 0 : colorSpace.getNativeInstance());
+            Bitmap bm = BitmapFactory.Bitmap_creator(0, width, width, height, config, true,
+                    colorSpace == null ? null : colorSpace.getNativeInstance());
 
-        //    if (display != null)
-        //    {
-        //        bm.mDensity = display.densityDpi;
-        //    }
-        //    bm.setHasAlpha(hasAlpha);
-        //    if ((config == Config.ARGB_8888 || config == Config.RGBA_F16) && !hasAlpha)
-        //    {
-        //        nativeErase(bm.mNativePtr, 0xff000000);
-        //    }
-        //    // No need to initialize the bitmap to zeroes with other configs;
-        //    // it is backed by a VM byte array which is by definition preinitialized
-        //    // to all zeroes.
-        //    return bm;
-        //}
+            bm.mDensity = densityDpi;
+            bm.setHasAlpha(hasAlpha);
+            if ((config == Config.ARGB_8888 || config == Config.RGBA_F16) && !hasAlpha)
+            {
+                nativeErase(bm.mNativePtr, 0xff000000);
+            }
+            // No need to initialize the bitmap to zeroes with other configs;
+            // it is backed by a VM byte array which is by definition preinitialized
+            // to all zeroes.
+            return bm;
+        }
 
         /**
          * Returns a immutable bitmap with the specified width and height, with each
@@ -1149,11 +1269,10 @@ namespace AndroidUI
          * @throws IllegalArgumentException if the width or height are <= 0, or if
          *         the color array's length is less than the number of pixels.
          */
-        public static Bitmap createBitmap(int[] colors, int offset, int stride,
+        public static Bitmap createBitmap(uint[] colors, int offset, int stride,
                 int width, int height, Config config)
         {
-            // TODO: RESTORE ME
-            return null; // createBitmap(null, colors, offset, stride, width, height, config);
+            return createBitmap(DensityManager.ScreenDpi, colors, offset, stride, width, height, config);
         }
 
         /**
@@ -1178,37 +1297,33 @@ namespace AndroidUI
          * @throws IllegalArgumentException if the width or height are <= 0, or if
          *         the color array's length is less than the number of pixels.
          */
-        // TODO: RESTORE ME
-        //public static Bitmap createBitmap(DisplayMetrics display,
-        //        int[] colors, int offset, int stride,
-        //        int width, int height, Config config)
-        //{
+        public static Bitmap createBitmap(int densityDpi,
+                uint[] colors, int offset, int stride,
+                int width, int height, Config config)
+        {
 
-        //    checkWidthHeight(width, height);
-        //    if (Math.Abs(stride) < width)
-        //    {
-        //        throw new IllegalArgumentException("abs(stride) must be >= width");
-        //    }
-        //    int lastScanline = offset + (height - 1) * stride;
-        //    int length = colors.Length;
-        //    if (offset < 0 || (offset + width > length) || lastScanline < 0 ||
-        //            (lastScanline + width > length))
-        //    {
-        //        throw new IndexOutOfRangeException();
-        //    }
-        //    if (width <= 0 || height <= 0)
-        //    {
-        //        throw new IllegalArgumentException("width and height must be > 0");
-        //    }
-        //    ColorSpace sRGB = ColorSpace.get(ColorSpace.Named.SRGB);
-        //    Bitmap bm = nativeCreate(colors, offset, stride, width, height,
-        //                        config.nativeInt, false, sRGB.getNativeInstance());
-        //    if (display != null)
-        //    {
-        //        bm.mDensity = display.densityDpi;
-        //    }
-        //    return bm;
-        //}
+            checkWidthHeight(width, height);
+            if (Math.Abs(stride) < width)
+            {
+                throw new IllegalArgumentException("abs(stride) must be >= width");
+            }
+            int lastScanline = offset + (height - 1) * stride;
+            int length = colors.Length;
+            if (offset < 0 || (offset + width > length) || lastScanline < 0 ||
+                    (lastScanline + width > length))
+            {
+                throw new IndexOutOfRangeException();
+            }
+            if (width <= 0 || height <= 0)
+            {
+                throw new IllegalArgumentException("width and height must be > 0");
+            }
+            ColorSpace sRGB = ColorSpace.get(ColorSpace.Named.SRGB);
+            Bitmap bm = BitmapFactory.Bitmap_creator(colors, offset, stride, width, height,
+                                config, false, sRGB.getNativeInstance());
+            bm.mDensity = densityDpi;
+            return bm;
+        }
 
         /**
          * Returns a immutable bitmap with the specified width and height, with each
@@ -1226,11 +1341,10 @@ namespace AndroidUI
          * @throws IllegalArgumentException if the width or height are <= 0, or if
          *         the color array's length is less than the number of pixels.
          */
-        public static Bitmap createBitmap(int[] colors,
+        public static Bitmap createBitmap(uint[] colors,
                 int width, int height, Config config)
         {
-            // TODO: RESTORE ME
-            return null; // createBitmap(null, colors, 0, width, width, height, config);
+            return createBitmap(DensityManager.ScreenDpi, colors, 0, width, width, height, config);
         }
 
         /**
@@ -1252,12 +1366,11 @@ namespace AndroidUI
          * @throws IllegalArgumentException if the width or height are <= 0, or if
          *         the color array's length is less than the number of pixels.
          */
-        // TODO: RESTORE ME
-        //public static Bitmap createBitmap(DisplayMetrics display,
-        //        int[] colors, int width, int height, Config config)
-        //{
-        //    return createBitmap(display, colors, 0, width, width, height, config);
-        //}
+        public static Bitmap createBitmap(int densityDpi,
+                uint[] colors, int width, int height, Config config)
+        {
+            return createBitmap(densityDpi, colors, 0, width, width, height, config);
+        }
 
         /**
          * Creates a Bitmap from the given {@link Picture} source of recorded drawing commands.
@@ -1271,11 +1384,10 @@ namespace AndroidUI
          * @return An immutable bitmap with a HARDWARE config whose contents are created
          * from the recorded drawing commands in the Picture source.
          */
-        // TODO: RESTORE ME
-        //public static Bitmap createBitmap(Picture source)
-        //{
-        //    return createBitmap(source, source.getWidth(), source.getHeight(), Config.HARDWARE);
-        //}
+        public static Bitmap createBitmap(SKPictureRecorder source)
+        {
+            return createBitmap(source, source.RecordingCanvas.getWidth(), source.RecordingCanvas.getHeight(), Config.HARDWARE);
+        }
 
         /**
          * Creates a Bitmap from the given {@link Picture} source of recorded drawing commands.
@@ -1294,59 +1406,59 @@ namespace AndroidUI
          *
          * @return An immutable bitmap with a configuration specified by the config parameter
          */
-        // TODO: RESTORE ME
-        //public static Bitmap createBitmap(Picture source, int width, int height,
-        //        Config config)
-        //{
-        //    if (width <= 0 || height <= 0)
-        //    {
-        //        throw new IllegalArgumentException("width & height must be > 0");
-        //    }
-        //    if (config == null)
-        //    {
-        //        throw new IllegalArgumentException("Config must not be null");
-        //    }
-        //    source.endRecording();
-        //    if (source.requiresHardwareAcceleration() && config != Config.HARDWARE)
-        //    {
-        //        StrictMode.noteSlowCall("GPU readback");
-        //    }
-        //    if (config == Config.HARDWARE || source.requiresHardwareAcceleration())
-        //    {
-        //        RenderNode node = RenderNode.create("BitmapTemporary", null);
-        //        node.setLeftTopRightBottom(0, 0, width, height);
-        //        node.setClipToBounds(false);
-        //        node.setForceDarkAllowed(false);
-        //        RecordingCanvas canvas = node.beginRecording(width, height);
-        //        if (source.getWidth() != width || source.getHeight() != height)
-        //        {
-        //            canvas.scale(width / (float)source.getWidth(),
-        //                    height / (float)source.getHeight());
-        //        }
-        //        canvas.drawPicture(source);
-        //        node.endRecording();
-        //        Bitmap bitmap = ThreadedRenderer.createHardwareBitmap(node, width, height);
-        //        if (config != Config.HARDWARE)
-        //        {
-        //            bitmap = bitmap.copy(config, false);
-        //        }
-        //        return bitmap;
-        //    }
-        //    else
-        //    {
-        //        Bitmap bitmap = Bitmap.createBitmap(width, height, config);
-        //        Canvas canvas = new Canvas(bitmap);
-        //        if (source.getWidth() != width || source.getHeight() != height)
-        //        {
-        //            canvas.scale(width / (float)source.getWidth(),
-        //                    height / (float)source.getHeight());
-        //        }
-        //        canvas.drawPicture(source);
-        //        canvas.setBitmap(null);
-        //        bitmap.setImmutable();
-        //        return bitmap;
-        //    }
-        //}
+        public static Bitmap createBitmap(SKPictureRecorder source, int width, int height,
+                Config config)
+        {
+            if (width <= 0 || height <= 0)
+            {
+                throw new IllegalArgumentException("width & height must be > 0");
+            }
+            if (config == null)
+            {
+                throw new IllegalArgumentException("Config must not be null");
+            }
+            SKPicture picture = source.EndRecording();
+            if (source.RecordingCanvas.isHardwareAccelerated() && config != Config.HARDWARE) {
+                noteSlowCall("GPU readback");
+            }
+            if (config == Config.HARDWARE || source.RecordingCanvas.isHardwareAccelerated())
+            {
+                //RenderNode node = RenderNode.create("BitmapTemporary", null);
+                //node.setLeftTopRightBottom(0, 0, width, height);
+                //node.setClipToBounds(false);
+                //node.setForceDarkAllowed(false);
+
+                SKBitmap bm = new SKBitmap(width, height);
+                SKCanvas canvas = new SKCanvas(bm);
+                if (source.RecordingCanvas.getWidth() != width || source.RecordingCanvas.getHeight() != height)
+                {
+                    canvas.Scale(width / (float)source.RecordingCanvas.getWidth(),
+                            height / (float)source.RecordingCanvas.getHeight());
+                }
+                canvas.DrawPicture(picture);
+                canvas.Dispose();
+                Bitmap bitmap = new Bitmap(bm, width, height);
+                if (config != Config.HARDWARE)
+                {
+                    bitmap = bitmap.copy(config, false);
+                }
+                return bitmap;
+            }
+            else
+            {
+                Bitmap bitmap = createBitmap(width, height, config);
+                SKCanvas canvas = new SKCanvas(bitmap.mNativePtr);
+                if (source.RecordingCanvas.getWidth() != width || source.RecordingCanvas.getHeight() != height)
+                {
+                    canvas.Scale(width / (float)source.RecordingCanvas.getWidth(),
+                            height / (float)source.RecordingCanvas.getHeight());
+                }
+                canvas.DrawPicture(picture);
+                canvas.Dispose();
+                bitmap.setImmutable();
+                return bitmap;
+            }
+        }
 
         /**
          * Returns an optional array of private data, used by the UI system for
@@ -1383,7 +1495,7 @@ namespace AndroidUI
          * Must be public for access from android.graphics.drawable,
          * but must not be called from outside the UI module.
          */
-        public NinePatch.InsetStruct getNinePatchInsets()
+        internal NinePatch.InsetStruct getNinePatchInsets()
         {
             return mNinePatchInsets;
         }
@@ -1398,12 +1510,12 @@ namespace AndroidUI
              * compress for the smallest size. {@code 100} means compress for max
              * visual quality.
              */
-            public const int JPEG = 0;
+            public static readonly CompressFormat JPEG = new(0);
             /**
              * Compress to the PNG format. PNG is lossless, so {@code quality} is
              * ignored.
              */
-            public const int PNG = 1;
+            public static readonly CompressFormat PNG = new(1);
             /**
              * Compress to the WEBP format. {@code quality} of {@code 0} means
              * compress for the smallest size. {@code 100} means compress for max
@@ -1415,13 +1527,13 @@ namespace AndroidUI
              *             {@link CompressFormat#WEBP_LOSSY} and
              *             {@link CompressFormat#WEBP_LOSSLESS}.
              */
-            public const int WEBP = 2;
+            public static readonly CompressFormat WEBP = new(2);
             /**
              * Compress to the WEBP lossy format. {@code quality} of {@code 0} means
              * compress for the smallest size. {@code 100} means compress for max
              * visual quality.
              */
-            public const int WEBP_LOSSY = 3;
+            public static readonly CompressFormat WEBP_LOSSY = new(3);
             /**
              * Compress to the WEBP lossless format. {@code quality} refers to how
              * much effort to put into compression. A value of {@code 0} means to
@@ -1429,7 +1541,7 @@ namespace AndroidUI
              * {@code 100} means to spend more time compressing, resulting in a
              * smaller file.
              */
-            public const int WEBP_LOSSLESS = 4;
+            public static readonly CompressFormat WEBP_LOSSLESS = new(4);
 
             CompressFormat(int nativeInt)
             {
@@ -1459,25 +1571,23 @@ namespace AndroidUI
          * @param stream   The outputstream to write the compressed data.
          * @return true if successfully compressed to the specified stream.
          */
-        // TODO: RESTORE ME
-        //public bool compress(CompressFormat format, int quality, OutputStream stream)
-        //{
-        //    checkRecycled("Can't compress a recycled bitmap");
-        //    // do explicit check before calling the native method
-        //    if (stream == null)
-        //    {
-        //        throw new NullReferenceException();
-        //    }
-        //    if (quality < 0 || quality > 100)
-        //    {
-        //        throw new IllegalArgumentException("quality must be 0..100");
-        //    }
-        //    Log.w(TAG, "Compression of a bitmap is slow");
-        //    // TODO
-        //    bool result = nativeCompress(mNativePtr, format.nativeInt,
-        //            quality, stream, new byte[WORKING_COMPRESS_STORAGE]);
-        //    return result;
-        //}
+        public bool compress(CompressFormat format, int quality, Stream outStream)
+        {
+            checkRecycled("Can't compress a recycled bitmap");
+            // do explicit check before calling the native method
+            if (outStream == null)
+            {
+                throw new NullReferenceException(nameof(outStream));
+            }
+            if (quality < 0 || quality > 100)
+            {
+                throw new IllegalArgumentException("quality must be 0..100");
+            }
+            Log.w(TAG, "Compression of a bitmap is slow");
+            bool result = nativeCompress(mNativePtr, format,
+                    quality, outStream, WORKING_COMPRESS_STORAGE);
+            return result;
+        }
 
         /**
          * Returns true if the bitmap is marked as mutable (i.e.&nbsp;can be drawn into)
@@ -1562,18 +1672,17 @@ namespace AndroidUI
         {
             checkRecycled("setPremultiplied called on a recycled bitmap");
             mRequestPremultiplied = premultiplied;
-            if (!mNativePtr.Info.IsOpaque)
+            SKImageInfo info = mNativePtr.Info;
+            if (!info.IsOpaque)
             {
-                SkiaSharp.SKImageInfo info = mNativePtr.Info;
                 if (premultiplied)
                 {
-                    info.AlphaType = SkiaSharp.SKAlphaType.Premul;
+                    mNativePtr.UpdateInfo(info.WithAlphaType(SKAlphaType.Premul));
                 }
                 else
                 {
-                    info.AlphaType = SkiaSharp.SKAlphaType.Unpremul;
+                    mNativePtr.UpdateInfo(info.WithAlphaType(SKAlphaType.Unpremul));
                 }
-                // TODO update info
             }
         }
 
@@ -1601,41 +1710,37 @@ namespace AndroidUI
          * Convenience for calling {@link #getScaledWidth(int)} with the target
          * density of the given {@link Canvas}.
          */
-        public int getScaledWidth(Canvas canvas)
+        public int getScaledWidth(SKCanvas canvas)
         {
-            // TODO: RESTORE ME
-            return 0; //return scaleFromDensity(getWidth(), mDensity, canvas.mDensity);
+            return scaleFromDensity(getWidth(), mDensity, canvas.densityDpi());
         }
 
         /**
          * Convenience for calling {@link #getScaledHeight(int)} with the target
          * density of the given {@link Canvas}.
          */
-        public int getScaledHeight(Canvas canvas)
+        public int getScaledHeight(SKCanvas canvas)
         {
-            // TODO: RESTORE ME
-            return 0; // scaleFromDensity(getHeight(), mDensity, canvas.mDensity);
+            return scaleFromDensity(getHeight(), mDensity, canvas.densityDpi());
         }
 
         /**
          * Convenience for calling {@link #getScaledWidth(int)} with the target
          * density of the given {@link DisplayMetrics}.
          */
-        // TODO: RESTORE ME
-        //public int getScaledWidth(DisplayMetrics metrics)
-        //{
-        //    return scaleFromDensity(getWidth(), mDensity, DensityManager.ScreenDpi);
-        //}
+        public int getScaledWidth()
+        {
+            return scaleFromDensity(getWidth(), mDensity, DensityManager.ScreenDpi);
+        }
 
         /**
          * Convenience for calling {@link #getScaledHeight(int)} with the target
          * density of the given {@link DisplayMetrics}.
          */
-        // TODO: RESTORE ME
-        //public int getScaledHeight(DisplayMetrics metrics)
-        //{
-        //    return scaleFromDensity(getHeight(), mDensity, DensityManager.ScreenDpi);
-        //}
+        public int getScaledHeight()
+        {
+            return scaleFromDensity(getHeight(), mDensity, DensityManager.ScreenDpi);
+        }
 
         /**
          * Convenience method that returns the width of this bitmap divided
@@ -1792,17 +1897,71 @@ namespace AndroidUI
         public void setHasAlpha(bool hasAlpha)
         {
             checkRecycled("setHasAlpha called on a recycled bitmap");
-            SkiaSharp.SKImageInfo info = mNativePtr.Info;
-            if (hasAlpha)
+            SKImageInfo info = mNativePtr.Info;
+            if (!info.IsOpaque)
             {
-                info.AlphaType = mRequestPremultiplied ? SkiaSharp.SKAlphaType.Premul : SkiaSharp.SKAlphaType.Unpremul;
+                if (hasAlpha)
+                {
+                    mNativePtr.UpdateInfo(info.WithAlphaType(mRequestPremultiplied ? SKAlphaType.Premul : SKAlphaType.Unpremul));
+                }
+                else
+                {
+                    mNativePtr.UpdateInfo(info.WithAlphaType(SKAlphaType.Opaque));
+                }
             }
-            else
-            {
-                info.AlphaType = SkiaSharp.SKAlphaType.Opaque;
-            }
-            // TODO update info
         }
+
+        ///**
+        // * Indicates whether the renderer responsible for drawing this
+        // * bitmap should attempt to use mipmaps when this bitmap is drawn
+        // * scaled down.
+        // *
+        // * If you know that you are going to draw this bitmap at less than
+        // * 50% of its original size, you may be able to obtain a higher
+        // * quality
+        // *
+        // * This property is only a suggestion that can be ignored by the
+        // * renderer. It is not guaranteed to have any effect.
+        // *
+        // * @return true if the renderer should attempt to use mipmaps,
+        // *         false otherwise
+        // *
+        // * @see #setHasMipMap(boolean)
+        // */
+        //public sealed bool hasMipMap()
+        //{
+        //    if (mRecycled)
+        //    {
+        //        Log.w(TAG, "Called hasMipMap() on a recycle()'d bitmap! This is undefined behavior!");
+        //    }
+        //    return nativeHasMipMap(mNativePtr);
+        //}
+
+        ///**
+        // * Set a hint for the renderer responsible for drawing this bitmap
+        // * indicating that it should attempt to use mipmaps when this bitmap
+        // * is drawn scaled down.
+        // *
+        // * If you know that you are going to draw this bitmap at less than
+        // * 50% of its original size, you may be able to obtain a higher
+        // * quality by turning this property on.
+        // *
+        // * Note that if the renderer respects this hint it might have to
+        // * allocate extra memory to hold the mipmap levels for this bitmap.
+        // *
+        // * This property is only a suggestion that can be ignored by the
+        // * renderer. It is not guaranteed to have any effect.
+        // *
+        // * @param hasMipMap indicates whether the renderer should attempt
+        // *                  to use mipmaps
+        // *
+        // * @see #hasMipMap()
+        // */
+        //public final void setHasMipMap(boolean hasMipMap)
+        //{
+        //    checkRecycled("setHasMipMap called on a recycled bitmap");
+        //    nativeSetHasMipMap(mNativePtr, hasMipMap);
+        //}
 
         /**
          * Returns the color space associated with this bitmap. If the color
@@ -1815,8 +1974,8 @@ namespace AndroidUI
             {
                 object namedCS = null;
 
-                SkiaSharp.SKColorSpace decodedColorSpace = mNativePtr.Info.ColorSpace;
-                SkiaSharp.SKColorType decodedColorType = mNativePtr.Info.ColorType;
+                SKColorSpace decodedColorSpace = mNativePtr.Info.ColorSpace;
+                SKColorType decodedColorType = mNativePtr.Info.ColorType;
                 if (decodedColorSpace == null || decodedColorType == SkiaSharp.SKColorType.Alpha8)
                 {
                     mColorSpace = null;
@@ -1824,7 +1983,7 @@ namespace AndroidUI
                 else
                 {
                     // Special checks for the common sRGB cases and their extended variants.
-                    SkiaSharp.SKColorSpace srgbLinear = SkiaSharp.SKColorSpace.CreateSrgbLinear();
+                    SKColorSpace srgbLinear = SkiaSharp.SKColorSpace.CreateSrgbLinear();
                     if (decodedColorType == SkiaSharp.SKColorType.RgbaF16)
                     {
                         // An F16 Bitmap will always report that it is EXTENDED if
@@ -1856,7 +2015,7 @@ namespace AndroidUI
                         // Try to match against known RGB color spaces using the CIE XYZ D50
                         // conversion matrix and numerical transfer function parameters
 
-                        SkiaSharp.SKColorSpaceXyz xyzMatrix;
+                        SKColorSpaceXyz xyzMatrix;
 
                         if (!decodedColorSpace.ToColorSpaceXyz(out xyzMatrix))
                         {
@@ -1864,7 +2023,7 @@ namespace AndroidUI
                         }
 
                         // We can only handle numerical transfer functions at the moment
-                        SkiaSharp.SKColorSpaceTransferFn transferParams;
+                        SKColorSpaceTransferFn transferParams;
                         if (!decodedColorSpace.GetNumericalTransferFunction(out transferParams))
                         {
                             throw new Exception("We can only handle numerical transfer functions at the moment");
@@ -1926,9 +2085,7 @@ namespace AndroidUI
             // Keep track of the old ColorSpace for comparison, and so we can reset it in case of an
             // Exception.
             ColorSpace oldColorSpace = getColorSpace();
-            SkiaSharp.SKImageInfo info = mNativePtr.Info;
-            info.ColorSpace = colorSpace.getNativeInstance();
-            // TODO: update info
+            mNativePtr.SetInfo(mNativePtr.Info.WithColorSpace(colorSpace.getNativeInstance()));
 
             // This will update mColorSpace. It may not be the same as |colorSpace|, e.g. if we
             // corrected it because the Bitmap is F16.
@@ -1967,9 +2124,7 @@ namespace AndroidUI
             {
                 // Undo the change to the ColorSpace.
                 mColorSpace = oldColorSpace;
-                SkiaSharp.SKImageInfo info_ = mNativePtr.Info;
-                info_.ColorSpace = mColorSpace.getNativeInstance();
-                // TODO: update info
+                mNativePtr.SetInfo(mNativePtr.Info.WithColorSpace(mColorSpace.getNativeInstance()));
                 throw e;
             }
         }
@@ -1986,13 +2141,7 @@ namespace AndroidUI
             {
                 throw new IllegalStateException("cannot erase immutable bitmaps");
             }
-
-            SkiaSharp.SKPaint p = new();
-            p.SetColor(Color.toSKColor(color), mNativePtr.ColorSpace);
-            p.BlendMode = SkiaSharp.SKBlendMode.Src;
-            SkiaSharp.SKCanvas canvas = new(mNativePtr);
-            canvas.DrawPaint(p);
-            canvas.Dispose();
+            nativeErase(mNativePtr, (uint)color);
         }
 
         /**
@@ -2013,12 +2162,7 @@ namespace AndroidUI
             }
 
             ColorSpace cs = Color.colorSpace(color);
-            SkiaSharp.SKPaint p = new();
-            p.SetColor(Color.toSKColorF(color), cs.getNativeInstance());
-            p.BlendMode = SkiaSharp.SKBlendMode.Src;
-            SkiaSharp.SKCanvas canvas = new(mNativePtr);
-            canvas.DrawPaint(p);
-            canvas.Dispose();
+            nativeErase(mNativePtr, cs.getNativeInstance(), color);
         }
 
         /**
@@ -2039,7 +2183,7 @@ namespace AndroidUI
             checkHardware("unable to getPixel(), "
                     + "pixel access is not supported on Config#HARDWARE bitmaps");
             checkPixelAccess(x, y);
-            return (int)(uint)mNativePtr.GetPixel(x, y);
+            return nativeGetPixel(x, y);
         }
 
         private static float clamp(float value, ColorSpace cs, int index)
@@ -2069,11 +2213,11 @@ namespace AndroidUI
             ColorSpace cs = getColorSpace();
             if (cs.Equals(ColorSpace.get(ColorSpace.Named.SRGB)))
             {
-                return Color.valueOf((uint)mNativePtr.GetPixel(x, y));
+                return Color.valueOf(nativeGetPixel(x, y));
             }
             // The returned value is in kRGBA_F16_SkColorType, which is packed as
             // four half-floats, r,g,b,a.
-            long rgba = (uint)mNativePtr.GetPixel(x, y);
+            long rgba = (uint)nativeGetColor(x, y);
             float r = Half.toFloat((short)((rgba >> 0) & 0xffff));
             float g = Half.toFloat((short)((rgba >> 16) & 0xffff));
             float b = Half.toFloat((short)((rgba >> 32) & 0xffff));
@@ -2120,19 +2264,7 @@ namespace AndroidUI
                 return; // nothing to do
             }
             checkPixelsAccess(x, y, width, height, offset, stride, pixels);
-            SkiaSharp.SKPixmap p = new();
-            if (!mNativePtr.PeekPixels(p))
-            {
-                return;
-            }
-            unsafe
-            {
-                fixed (int* ptr = pixels)
-                {
-                    p.ReadPixels(mNativePtr.Info, (IntPtr)(ptr + offset), stride * 4, x, y);
-                }
-            }
-            p.Dispose();
+            nativeGetPixels(pixels, offset, stride, x, y, width, height);
         }
 
         /**
@@ -2225,8 +2357,139 @@ namespace AndroidUI
                 throw new IllegalStateException();
             }
             checkPixelAccess(x, y);
-            mNativePtr.SetPixel(x, y, Color.toSKColor(color));
+            nativeSetPixel(x, y, color);
         }
+
+        bool Compress(SKBitmap bitmap, CompressFormat format, int quality, SKWStream stream)
+        {
+            if (bitmap.ColorType == SKColorType.Alpha8)
+            {
+                // None of the JavaCompressFormats have a sensible way to compress an
+                // ALPHA_8 Bitmap. SkPngEncoder will compress one, but it uses a non-
+                // standard format that most decoders do not understand, so this is
+                // likely not useful.
+                return false;
+            }
+            SKPixmap pixmap = bitmap.PeekPixels();
+            if (pixmap == null) return false;
+            SKEncodedImageFormat fm;
+            if (format.nativeInt == CompressFormat.JPEG.nativeInt) {
+                fm = SKEncodedImageFormat.Jpeg;
+            }
+            else if (format.nativeInt == CompressFormat.PNG.nativeInt)
+            {
+                fm = SKEncodedImageFormat.Png;
+            }
+            else if (format.nativeInt == CompressFormat.WEBP.nativeInt)
+            {
+                fm = SKEncodedImageFormat.Webp;
+            }
+            else
+            {
+                SKWebpEncoderOptions options = new();
+                options.Quality = quality;
+                options.Compression = format.nativeInt == CompressFormat.WEBP_LOSSY.nativeInt ?
+                        SKWebpEncoderCompression.Lossy : SKWebpEncoderCompression.Lossless;
+                return pixmap.Encode(stream, options);
+            }
+
+            return pixmap.Encode(stream, fm, quality);
+        }
+
+        bool nativeCompress(SKBitmap bitmapHandle, CompressFormat format, int quality, Stream outputStream, int storageSize)
+        {
+            if (!outputStream.CanWrite)
+            {
+                throw new UnauthorizedAccessException("the given stream does not support writing");
+            }
+            using BufferedStream bufferedStream = new(outputStream, storageSize);
+            using SKWStream wstream = new SKManagedWStream(bufferedStream);
+            return Compress(bitmapHandle, format, quality, wstream);
+        }
+
+        static void bitmapErase(SKBitmap bitmap, SKColorF color, SKColorSpace colorSpace)
+        {
+            SKPaint p = new();
+            p.SetColor(color, colorSpace);
+            p.BlendMode = SKBlendMode.Src;
+            SKCanvas canvas = new(bitmap);
+            canvas.DrawPaint(p);
+        }
+
+        static void nativeErase(SKBitmap bitmapHandle, uint color)
+        {
+            bitmapErase(bitmapHandle, color.ToSKColorF(), ColorSpace.get(ColorSpace.Named.SRGB).getNativeInstance());
+        }
+
+        static void nativeErase(SKBitmap bitmapHandle, SKColorSpace colorSpace, long color)
+        {
+            bitmapErase(bitmapHandle, color.ToSKColorF(), colorSpace);
+        }
+
+        unsafe void nativeSetPixel(int x, int y, int color)
+        {
+            SKColorSpace sRGB = ColorSpace.get(ColorSpace.Named.SRGB).getNativeInstance();
+            SKImageInfo srcInfo = SKImageInfo.Create(1, 1, SKColorType.Bgra8888, SKAlphaType.Unpremul, sRGB);
+
+            SKPixmap srcPM = new(srcInfo, (IntPtr)(&color), srcInfo.RowBytes);
+            mNativePtr.WritePixels(srcPM, x, y);
+        }
+
+        unsafe void nativeSetPixels(long nativeBitmap, int[] colors,
+                                               int offset, int stride, int x, int y,
+                                               int width, int height)
+        {
+            fixed (int* ptr = colors)
+            {
+                int* src = ptr + offset;
+
+                SKColorSpace sRGB = ColorSpace.get(ColorSpace.Named.SRGB).getNativeInstance();
+
+                SKImageInfo srcInfo = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Unpremul, sRGB);
+
+                SKPixmap srcPM = new(srcInfo, (IntPtr)src, stride * 4);
+                mNativePtr.WritePixels(srcPM, x, y);
+            }
+        }
+
+        unsafe long nativeGetColor(int x, int y)
+        {
+            SKColorSpace sRGB = ColorSpace.get(ColorSpace.Named.SRGB).getNativeInstance();
+            SKImageInfo dstInfo = SKImageInfo.Create(
+                    1, 1, SKColorType.RgbaF16, SKAlphaType.Unpremul, sRGB);
+
+            IntPtr dst;
+            mNativePtr.ReadPixels(dstInfo, out dst, dstInfo.RowBytes, x, y);
+            return dst.ToInt64();
+        }
+
+        unsafe int nativeGetPixel(int x, int y)
+        {
+            SKColorSpace sRGB = ColorSpace.get(ColorSpace.Named.SRGB).getNativeInstance();
+            SKImageInfo dstInfo = SKImageInfo.Create(1, 1, SKColorType.Bgra8888, SKAlphaType.Unpremul, sRGB);
+
+            IntPtr dst;
+            mNativePtr.ReadPixels(dstInfo, out dst, dstInfo.RowBytes, x, y);
+            return (int)dst.ToInt64();
+        }
+
+        unsafe void nativeGetPixels(int[] pixels,
+                                               int offset, int stride, int x, int y,
+                                               int width, int height)
+        {
+            fixed (int* ptr = pixels)
+            {
+                int* src = ptr + offset;
+
+                SKColorSpace sRGB = ColorSpace.get(ColorSpace.Named.SRGB).getNativeInstance();
+
+                SKImageInfo srcInfo = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Unpremul, sRGB);
+
+                SKPixmap srcPM = new(srcInfo, (IntPtr)src, stride * 4);
+                srcPM.ReadPixels(srcInfo, mNativePtr.GetPixels(), srcInfo.RowBytes);
+            }
+        }
+
 
         /**
          * <p>Replace pixels in the bitmap with the colors in the array. Each element
@@ -2264,22 +2527,7 @@ namespace AndroidUI
                 return; // nothing to do
             }
             checkPixelsAccess(x, y, width, height, offset, stride, pixels);
-
-            unsafe
-            {
-                fixed (int* ptr = pixels)
-                {
-                    int* src = ptr + offset;
-
-                    SkiaSharp.SKColorSpace sRGB = SkiaSharp.SKColorSpace.CreateSrgb();
-
-                    SkiaSharp.SKImageInfo srcInfo = new SkiaSharp.SKImageInfo(width, height, SkiaSharp.SKColorType.Rgba8888, SkiaSharp.SKAlphaType.Unpremul, sRGB);
-
-                    SkiaSharp.SKPixmap srcPM = new(srcInfo, (IntPtr)src, stride * 4);
-                    srcPM.ReadPixels(srcInfo, mNativePtr.GetPixels(), srcInfo.RowBytes);
-                    srcPM.Dispose();
-                }
-            }
+            nativeGetPixels(pixels, offset, stride, x, y, width, height);
         }
 
         /**
@@ -2322,10 +2570,10 @@ namespace AndroidUI
         public Bitmap extractAlpha(Paint paint, int[] offsetXY)
         {
             checkRecycled("Can't extractAlpha on a recycled bitmap");
-            SkiaSharp.SKPaint nativePaint = paint?.getNativeInstance();
+            SKPaint nativePaint = paint?.getNativeInstance();
             noteHardwareBitmapSlowCall();
-            SkiaSharp.SKPointI o;
-            SkiaSharp.SKBitmap bitmap = new(mNativePtr.Info);
+            SKPointI o;
+            SKBitmap bitmap = new(mNativePtr.Info);
             if (!mNativePtr.ExtractAlpha(bitmap, nativePaint, out o))
             {
                 throw new Exception("Failed to extractAlpha on Bitmap");
@@ -2354,8 +2602,8 @@ namespace AndroidUI
             {
                 throw new IllegalArgumentException("Can't compare to a recycled bitmap!");
             }
-            SkiaSharp.SKBitmap bm0 = mNativePtr;
-            SkiaSharp.SKBitmap bm1 = other.mNativePtr;
+            SKBitmap bm0 = mNativePtr;
+            SKBitmap bm1 = other.mNativePtr;
 
             // Paying the price for making Hardware Bitmap as Config:
             // later check for colorType will pass successfully,
@@ -2368,7 +2616,7 @@ namespace AndroidUI
         || bm0.Height != bm1.Height
         || bm0.ColorType != bm1.ColorType
         || bm0.AlphaType != bm1.AlphaType
-        || !SkiaSharp.SKColorSpace.Equals(bm0.ColorSpace, bm1.ColorSpace))
+        || !SKColorSpace.Equal(bm0.ColorSpace, bm1.ColorSpace))
             {
                 return false;
             }
@@ -2401,13 +2649,7 @@ namespace AndroidUI
                         return true;
                     }
 
-                    [System.Runtime.InteropServices.DllImport(
-                        "msvcrt.dll",
-                        CallingConvention = System.Runtime.InteropServices.CallingConvention.Cdecl
-                    )]
-                    static extern int memcmp(void* b1, void* b2, long size);
-
-                    if (memcmp(bm0Addr, bm1Addr, size) != 0)
+                    if (Native.Memcmp(bm0Addr, bm1Addr, (nuint)size) != 0)
                     {
                         return false;
                     }
