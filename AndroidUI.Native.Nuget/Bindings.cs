@@ -50,7 +50,6 @@ namespace AndroidUI
             public Pointer(IntPtr handle, Action<IntPtr> dispose, bool ownsHandle) : this(handle, dispose, IntPtr.Zero, ownsHandle) { }
             private Pointer(IntPtr handle, Action<IntPtr> dispose, IntPtr invalidHandleValue, bool ownsHandle) : base(invalidHandleValue, ownsHandle)
             {
-                //Console.WriteLine("Acquire Handle: " + handle);
                 SetHandle(handle);
                 this.dispose = dispose;
                 invalid = invalidHandleValue;
@@ -66,13 +65,174 @@ namespace AndroidUI
 
             protected override bool ReleaseHandle()
             {
-                //Console.WriteLine("Release Handle: " + handle);
                 dispose.Invoke(handle);
                 handle = invalid;
                 return true;
             }
 
             public unsafe static implicit operator void*(Pointer a) => a.ToPointer();
+        }
+
+        public unsafe class Additional {
+            [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+            public static extern bool SkNinePatchGlue_isNinePatchChunk(sbyte* array, int length);
+
+            [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+            public static extern sbyte* SkNinePatchGlue_validateNinePatchChunk(sbyte* array, int length);
+
+            [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+            public static extern void SkNinePatchGlue_finalize(sbyte* patch);
+
+            [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+            public static extern bool SkNinePatchGlue_ReadChunk(
+                // ReadChunk
+                void* tag, void* data, IntPtr length,
+                // NPatch
+                void** mPatch, nuint* mPatchSize, bool* mHasInsets,
+                int** mOpticalInsets, int** mOutlineInsets,
+                float* mOutlineRadius, byte* mOutlineAlpha
+            );
+
+            [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+            public static extern void SkNinePatchGlue_delete(
+                void* mPatch
+            );
+
+            [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+            public static extern void SkNinePatchGlue_getPadding(
+                void* mPatch, int** outPadding
+            );
+
+            [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+            public static extern void SkNinePatchGlue_getNumXDivs(
+                void* mPatch, byte* outValue
+            );
+
+            [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+            public static extern void SkNinePatchGlue_getNumYDivs(
+                void* mPatch, byte* outValue
+            );
+
+            [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+            public static extern void SkNinePatchGlue_getNumColors(
+                void* mPatch, byte* outValue
+            );
+
+            [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+            public static extern void SkNinePatchGlue_getXDivs(
+                void* mPatch, int** outValue
+            );
+
+            [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+            public static extern void SkNinePatchGlue_getYDivs(
+                void* mPatch, int** outValue
+            );
+
+            [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+            public static extern void SkNinePatchGlue_getColors(
+                void* mPatch, uint** outValue
+            );
+
+            [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+            public static extern void SkNinePatchGlue_scale(
+                void* mPatch,
+                float scaleX, float scaleY, int scaledWidth, int scaledHeight
+            );
+
+            [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+            public static extern nuint SkNinePatchGlue_serializedSize(void* mPatch);
+        }
+
+        /// <summary>
+        /// calls the C api `memcpy`
+        /// </summary>
+        /// <param name="dst">destination</param>
+        /// <param name="src">source</param>
+        /// <param name="length">length</param>
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "c_memcpy")]
+        public static unsafe extern void Memcpy(void* dst, void* src, nuint length);
+
+        /// <summary>
+        /// calls the C api `memcpy`
+        /// </summary>
+        public static unsafe void Memcpy(IntPtr dst, IntPtr src, nuint length)
+        {
+            Memcpy((void*)dst, (void*)src, length);
+        }
+
+        /// <summary>
+        /// calls the C api `memcpy`, the input src and dst arrays are not copied
+        /// </summary>
+        /// <param name="dst">destination</param>
+        /// <param name="src">source</param>
+        /// <param name="length">length</param>
+        public static unsafe void Memcpy<T1, T2>(T1[] dst, T2[] src, nuint length)
+            where T1 : unmanaged
+            where T2 : unmanaged
+        {
+            fixed (void* destination = dst)
+            fixed (void* source = src)
+            {
+                Memcpy(destination, source, length);
+            }
+        }
+
+        /// <summary>
+        /// calls the C api `memcmp`
+        /// </summary>
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "c_memcmp")]
+        public static unsafe extern int Memcmp(void* buf1, void* buf2, nuint length);
+
+        /// <summary>
+        /// calls the C api `memcmp`
+        /// </summary>
+        public static unsafe void Memcmp(IntPtr buf1, IntPtr buf2, nuint length)
+        {
+            Memcmp((void*)buf1, (void*)buf2, length);
+        }
+
+        /// <summary>
+        /// calls the C api `memcmp`, the input buf1 and buf2 arrays are not copied
+        /// </summary>
+        public static unsafe void Memcmp<T1, T2>(T1[] buf1, T2[] buf2, nuint length)
+            where T1 : unmanaged
+            where T2 : unmanaged
+        {
+            fixed (void* bufferA = buf1)
+            fixed (void* bufferB = buf2)
+            {
+                Memcmp(bufferA, bufferB, length);
+            }
+        }
+
+        /// <summary>
+        /// calls the C api `memset`
+        /// </summary>
+        /// <returns>the input pointer</returns>
+        [DllImport("AndroidUI.Native.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "c_memset")]
+        public static unsafe extern void* Memset(void* buf, int value, nuint length);
+
+        /// <summary>
+        /// calls the C api `memset`
+        /// </summary>
+        /// <returns>the input pointer</returns>
+        public static unsafe IntPtr Memset(IntPtr buf, int value, nuint length)
+        {
+            return (IntPtr)Memset((void*)buf, value, length);
+        }
+
+        /// <summary>
+        /// calls the C api `memset`, the input array is not copied
+        /// </summary>
+        /// <returns>the input array</returns>
+        public static unsafe T1[] Memset<T1>(T1[] buf, int value, nuint length)
+            where T1 : unmanaged
+        {
+            fixed (void* bufferA = buf)
+            {
+                Memset(bufferA, value, length);
+            }
+            return buf;
         }
 
         public static unsafe Sk2f fma(Sk2f a, Sk2f b, Sk2f c)

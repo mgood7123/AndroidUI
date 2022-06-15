@@ -1,5 +1,9 @@
 #pragma once
 
+#define NOMINMAX
+
+#include "android_9_patch/NinePatchBindings.h"
+
 #include "SkNx.h"
 
 /*

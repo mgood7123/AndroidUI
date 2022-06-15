@@ -11,5 +11,30 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)SkNx.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)TmpPtr.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)C_API.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)android_9_patch\9patch.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)android_9_patch\ByteOrder.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)android_9_patch\Compat.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)android_9_patch\endian.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)android_9_patch\Errors.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)android_9_patch\FileMap.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)android_9_patch\image.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)android_9_patch\JenkinsHash.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)android_9_patch\macros.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)android_9_patch\map_ptr.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)android_9_patch\NinePatchBindings.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)android_9_patch\StringPiece.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)android_9_patch\TypeHelpers.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)android_9_patch\Unicode.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)android_9_patch\9patch.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)android_9_patch\Errors.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)android_9_patch\FileMap.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)android_9_patch\JenkinsHash.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)android_9_patch\map_ptr.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)android_9_patch\NinePatch.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)android_9_patch\NinePatchBindings.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)android_9_patch\Unicode.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)sk.cpp" />
   </ItemGroup>
 </Project>
