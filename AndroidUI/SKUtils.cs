@@ -504,7 +504,6 @@ namespace AndroidUI
         public static int SKAbs32(int value)
         {
             // The most negative int32_t can't be negated.
-            // SkASSERT(value != );
             if (value == SK_NaN32)
             {
                 return 0;
