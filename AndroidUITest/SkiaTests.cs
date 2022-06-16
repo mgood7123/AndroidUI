@@ -127,7 +127,7 @@ namespace AndroidUITest
                 {
                     AndroidUI.Integer<T> maxSqrtFloor = AndroidUI.Integer<T>.ConvertFrom(Math.Floor(Math.Sqrt(max.ConvertTo<double>())));
                     AndroidUI.Integer<T> maxSqrtFloorPlus1 = maxSqrtFloor + one;
-                    AndroidUI.SKSafeMath safe = new();
+                    SkiaSharp.SKSafeMath safe = new();
                     Tools.AssertTrue(safe.Mul<T>(maxSqrtFloor, maxSqrtFloor) == maxSqrtFloor * maxSqrtFloor);
                     Tools.AssertTrue(safe);
                     if (flip)
@@ -157,14 +157,14 @@ namespace AndroidUITest
 
             private static void C<T>(AndroidUI.Integer<T> max) where T : unmanaged
             {
-                AndroidUI.SKSafeMath safe = new();
+                SkiaSharp.SKSafeMath safe = new();
                 safe.Mul<T>(max, max);
                 Tools.AssertTrue(!safe);
             }
 
             private static void B<T>(AndroidUI.Integer<T> max) where T : unmanaged
             {
-                AndroidUI.SKSafeMath safe = new();
+                SkiaSharp.SKSafeMath safe = new();
                 safe.Add<T>(max, max);
                 Tools.AssertTrue(!safe);
             }
@@ -173,7 +173,7 @@ namespace AndroidUITest
             {
                 AndroidUI.Integer<T> halfMax = max >> 1;
                 AndroidUI.Integer<T> halfMaxPlus1 = halfMax + one;
-                AndroidUI.SKSafeMath safe = new();
+                SkiaSharp.SKSafeMath safe = new();
                 Tools.AssertTrue(safe.Add<T>(halfMax, halfMax) == two * halfMax);
                 Tools.AssertTrue(safe);
                 if (flip)
@@ -215,7 +215,7 @@ namespace AndroidUITest
                     int halfBits = bits / 2;
                     AndroidUI.Integer<T> sqrtMax = max >> halfBits;
                     AndroidUI.Integer<T> sqrtMaxPlus1 = sqrtMax + one;
-                    AndroidUI.SKSafeMath safe = new();
+                    SkiaSharp.SKSafeMath safe = new();
                     Tools.AssertTrue(safe.Mul<T>(sqrtMax, sqrtMax) == sqrtMax * sqrtMax);
                     Tools.AssertTrue(safe);
                     if (flip)
@@ -306,7 +306,7 @@ namespace AndroidUITest
                 AndroidUI.Integer<T> zero = AndroidUI.Integer<T>.ConvertFrom(0);
 
                 {
-                    AndroidUI.SKSafeMath safe = new();
+                    SkiaSharp.SKSafeMath safe = new();
                     Tools.AssertTrue(safe.Add(one, zero) == one);
                     Tools.AssertTrue(safe);
                     Tools.AssertTrue(safe.Add(zero, zero) == zero);
@@ -316,7 +316,7 @@ namespace AndroidUITest
                 }
 
                 {
-                    AndroidUI.SKSafeMath safe = new();
+                    SkiaSharp.SKSafeMath safe = new();
                     Tools.AssertTrue(safe.Mul(one, zero) == zero);
                     Tools.AssertTrue(safe);
                     Tools.AssertTrue(safe.Mul(zero, zero) == zero);

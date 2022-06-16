@@ -96,24 +96,14 @@ namespace AndroidUI
             GC.SuppressFinalize(this);
         }
 
-        public static implicit operator SafeFileHandle(FileDescriptor descriptor)
-        {
-            return descriptor == null ? null : descriptor.ToSafeFileHandle();
-        }
-
-        public SafeFileHandle ToSafeFileHandle()
-        {
-            return !IsValid ? null : new SafeFileHandle(handle.DangerousGetHandle(), true);
-        }
-
-        public FileStream ToFileInputStream() => !IsValid ? null : new FileStream(this, FileAccess.Read);
-        public FileStream ToFileInputStream(int bufferSize) => !IsValid ? null : new FileStream(this, FileAccess.Read, bufferSize);
+        public FileStream ToFileInputStream(bool takeOwnership = false) => !IsValid ? null : new SafeFileStream(handle, FileAccess.Read, takeOwnership);
+        public FileStream ToFileInputStream(int bufferSize, bool takeOwnership = false) => !IsValid ? null : new SafeFileStream(handle, FileAccess.Read, bufferSize, takeOwnership);
 
 
-        public FileStream ToFileOutputStream() => !IsValid ? null : new FileStream(this, FileAccess.Write);
-        public FileStream ToFileOutputStream(int bufferSize) => !IsValid ? null : new FileStream(this, FileAccess.Write, bufferSize);
+        public FileStream ToFileOutputStream(bool takeOwnership = false) => !IsValid ? null : new SafeFileStream(handle, FileAccess.Write, takeOwnership);
+        public FileStream ToFileOutputStream(int bufferSize, bool takeOwnership = false) => !IsValid ? null : new SafeFileStream(handle, FileAccess.Write, bufferSize, takeOwnership);
 
-        public FileStream ToFileInputOutputStream() => !IsValid ? null : new FileStream(this, FileAccess.ReadWrite);
-        public FileStream ToFileInputOutputStream(int bufferSize) => !IsValid ? null : new FileStream(this, FileAccess.ReadWrite, bufferSize);
+        public FileStream ToFileInputOutputStream(bool takeOwnership = false) => !IsValid ? null : new SafeFileStream(handle, FileAccess.ReadWrite, takeOwnership);
+        public FileStream ToFileInputOutputStream(int bufferSize, bool takeOwnership = false) => !IsValid ? null : new SafeFileStream(handle, FileAccess.ReadWrite, bufferSize, takeOwnership);
     }
 }
