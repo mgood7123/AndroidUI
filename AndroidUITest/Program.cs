@@ -1,1 +1,1 @@
-﻿AndroidUITestFramework.Main.Run(typeof(AndroidUITest.UnionTests));
+﻿AndroidUITestFramework.Main.Run("AndroidUITest");
