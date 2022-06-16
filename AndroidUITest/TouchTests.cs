@@ -286,7 +286,7 @@ namespace AndroidUITest
                         expectTouchDataDidNotMove(touch.getTouchAt(1), "added second", 1, 3, 3, 3, 3, 1, 1, Touch.State.TOUCH_DOWN);
                         touch.moveTouch(1, 68, 68, 81, 81);
                         expectTouchDataDidMove(touch.getTouchAt(0), "moved first", 0, 6, 6, 1, 1, 1, 1, Touch.State.TOUCH_MOVE);
-                        expectTouchDataDidMove(touch.getTouchAt(1), "moved second", 1, 68, 68, 81, 81, 1, 1, Touch.State.TOUCH_DOWN);
+                        expectTouchDataDidMove(touch.getTouchAt(1), "moved second", 1, 68, 68, 81, 81, 1, 1, Touch.State.TOUCH_MOVE);
                     }
                 }
 

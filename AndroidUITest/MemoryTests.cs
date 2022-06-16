@@ -23,7 +23,7 @@ namespace AndroidUITest
                     AndroidUI.MemoryPointer<int> a = new int[] { 1, 2 };
                     a += 1;
                     Tools.AssertEqual(a.offset, 1);
-                    Tools.AssertEqual(a.Length, 2);
+                    Tools.AssertEqual(a.Length, 1);
                     a -= 1;
                     Tools.AssertEqual(a.offset, 0);
                     Tools.AssertEqual(a.Length, 2);
@@ -99,13 +99,13 @@ namespace AndroidUITest
                     AndroidUI.MemoryPointer<int> a = new int[][] { new int[] { 1, 2 }, new int[] { 3, 4 } };
                     a += 1;
                     Tools.AssertEqual(a.offset, 1);
-                    Tools.AssertEqual(a.Length, 4);
+                    Tools.AssertEqual(a.Length, 3);
                     a += 1;
                     Tools.AssertEqual(a.offset, 2);
-                    Tools.AssertEqual(a.Length, 4);
+                    Tools.AssertEqual(a.Length, 2);
                     a -= 1;
                     Tools.AssertEqual(a.offset, 1);
-                    Tools.AssertEqual(a.Length, 4);
+                    Tools.AssertEqual(a.Length, 3);
                     a -= 1;
                     Tools.AssertEqual(a.offset, 0);
                     Tools.AssertEqual(a.Length, 4);
