@@ -656,7 +656,7 @@
                                         switch (right)
                                         {
                                             case float:
-                                            case Double:
+                                            case double:
                                                 return (
                                                     Convert.ToDouble(left)
                                                         .ToRawULongBits() &
@@ -674,7 +674,7 @@
                                         switch (right)
                                         {
                                             case float:
-                                            case Double:
+                                            case double:
                                                 return (
                                                     Convert.ToUInt64(left) &
                                                     Convert.ToDouble(right)

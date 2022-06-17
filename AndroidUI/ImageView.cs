@@ -352,7 +352,7 @@ namespace AndroidUI
             return mDrawable;
         }
 
-        private class ImageDrawableCallback : AndroidUI.Runnable
+        private class ImageDrawableCallback : Runnable
         {
             ImageView outer;
             private readonly Drawable drawable;

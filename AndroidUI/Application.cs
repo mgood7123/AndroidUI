@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+using AndroidUI.Execution;
 using SkiaSharp;
 
 namespace AndroidUI
@@ -22,10 +23,15 @@ namespace AndroidUI
     {
         View.AttachInfo mAttachInfo;
 
+        Handler handler;
+        Looper looper;
+        public Handler Handler => handler;
+        public Looper Looper => looper;
+
         public Application()
         {
             mAttachInfo = new();
-            mAttachInfo.mViewRootImpl = new();
+            mAttachInfo.mViewRootImpl = new(mAttachInfo);
             mAttachInfo.mViewRootImpl.SetApplication(this);
         }
 
@@ -85,8 +91,40 @@ namespace AndroidUI
 
         public void INTERNAL_ERROR(string error) => applicationDelegate?.INTERNAL_ERROR(error);
 
+        internal void handleAppVisibility(bool isVisible)
+        {
+            if (isVisible)
+            {
+                if (looper == null)
+                {
+                    looper = Looper.myLooper();
+                    if (looper == null)
+                    {
+                        Looper.prepare();
+                        looper = Looper.myLooper();
+                    }
+                    handler = new Handler(looper);
+                }
+            }
+            else
+            {
+                if (looper != null)
+                {
+                    looper.quitSafely();
+                    Looper.loopUI();
+                    looper = null;
+                    handler = null;
+                }
+            }
+            mAttachInfo.mViewRootImpl.handleAppVisibility(isVisible);
+        }
+
         internal void Draw(SKCanvas canvas)
         {
+            if (looper != null)
+            {
+                Looper.loopUI();
+            }
             if (mAttachInfo.mViewRootImpl.hasContent())
             {
                 mAttachInfo.mViewRootImpl.draw(canvas);
@@ -148,11 +186,6 @@ namespace AndroidUI
             mAttachInfo.mViewRootImpl.onTouch(ev);
         }
 
-        internal void handleAppVisibility(bool isVisible)
-        {
-            mAttachInfo.mViewRootImpl.handleAppVisibility(isVisible);
-        }
-
         public void onDescendantInvalidated(View view, View target)
         {
             invalidate();
@@ -181,6 +214,11 @@ namespace AndroidUI
 
         public void invalidateChild(View view, Rect damage)
         {
+        }
+
+        public Parent invalidateChildInParent(int[] location, Rect r)
+        {
+            return null;
         }
 
         public static void SetDensity(float density, int dpi)

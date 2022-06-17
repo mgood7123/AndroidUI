@@ -265,7 +265,7 @@ namespace AndroidUI.Extensions
             {
                 double xx = dx;
                 double yy = dy;
-                return SKUtils.sk_double_to_float(Math.Sqrt(xx * xx + yy * yy));
+                return sk_double_to_float(Math.Sqrt(xx * xx + yy * yy));
             }
         }
 

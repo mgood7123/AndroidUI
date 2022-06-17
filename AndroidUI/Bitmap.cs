@@ -1645,7 +1645,7 @@ namespace AndroidUI
             {
                 Log.w(TAG, "Called isPremultiplied() on a recycle()'d bitmap! This is undefined behavior!");
             }
-            return mNativePtr.Info.AlphaType == SkiaSharp.SKAlphaType.Premul;
+            return mNativePtr.Info.AlphaType == SKAlphaType.Premul;
         }
 
         /**
@@ -1976,15 +1976,15 @@ namespace AndroidUI
 
                 SKColorSpace decodedColorSpace = mNativePtr.Info.ColorSpace;
                 SKColorType decodedColorType = mNativePtr.Info.ColorType;
-                if (decodedColorSpace == null || decodedColorType == SkiaSharp.SKColorType.Alpha8)
+                if (decodedColorSpace == null || decodedColorType == SKColorType.Alpha8)
                 {
                     mColorSpace = null;
                 }
                 else
                 {
                     // Special checks for the common sRGB cases and their extended variants.
-                    SKColorSpace srgbLinear = SkiaSharp.SKColorSpace.CreateSrgbLinear();
-                    if (decodedColorType == SkiaSharp.SKColorType.RgbaF16)
+                    SKColorSpace srgbLinear = SKColorSpace.CreateSrgbLinear();
+                    if (decodedColorType == SKColorType.RgbaF16)
                     {
                         // An F16 Bitmap will always report that it is EXTENDED if
                         // it matches a ColorSpace that has an EXTENDED variant.

@@ -51,5 +51,90 @@ namespace AndroidUI.Extensions
         {
             return item.GetHashCode();
         }
+
+        public static void Lock(this object obj)
+        {
+            Monitor.Enter(obj);
+        }
+
+        public static void Lock(this object obj, ref bool lockTaken)
+        {
+            Monitor.Enter(obj, ref lockTaken);
+        }
+
+        public static bool TryLock(this object obj)
+        {
+            return Monitor.TryEnter(obj);
+        }
+
+        public static void TryLock(this object obj, ref bool lockTaken)
+        {
+            Monitor.TryEnter(obj, ref lockTaken);
+        }
+
+        public static void TryLock(this object obj, int millisecondsTimeout)
+        {
+            Monitor.TryEnter(obj, millisecondsTimeout);
+        }
+
+        public static void TryLock(this object obj, TimeSpan timeout)
+        {
+            Monitor.TryEnter(obj, timeout);
+        }
+
+        public static void TryLock(this object obj, int millisecondsTimeout, ref bool lockTaken)
+        {
+            Monitor.TryEnter(obj, millisecondsTimeout, ref lockTaken);
+        }
+
+        public static void TryLock(this object obj, TimeSpan timeout, ref bool lockTaken)
+        {
+            Monitor.TryEnter(obj, timeout, ref lockTaken);
+        }
+
+        public static bool IsLockedByCurrentThread(this object obj)
+        {
+            return Monitor.IsEntered(obj);
+        }
+
+        public static void Unlock(this object obj)
+        {
+            Monitor.Exit(obj);
+        }
+
+        public static bool Wait(this object obj)
+        {
+            return Monitor.Wait(obj);
+        }
+
+        public static bool Wait(this object obj, int millisecondsTimeout)
+        {
+            return Monitor.Wait(obj, millisecondsTimeout);
+        }
+
+        public static bool Wait(this object obj, TimeSpan timeout)
+        {
+            return Monitor.Wait(obj, timeout);
+        }
+
+        public static bool Wait(this object obj, int millisecondsTimeout, bool exitContext)
+        {
+            return Monitor.Wait(obj, millisecondsTimeout, exitContext);
+        }
+
+        public static bool Wait(this object obj, TimeSpan timeout, bool exitContext)
+        {
+            return Monitor.Wait(obj, timeout, exitContext);
+        }
+
+        public static void Notify(this object obj)
+        {
+            Monitor.Pulse(obj);
+        }
+
+        public static void NotifyAll(this object obj)
+        {
+            Monitor.PulseAll(obj);
+        }
     }
 }

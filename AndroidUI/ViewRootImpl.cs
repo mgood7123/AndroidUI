@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+using AndroidUI.Execution;
 using SkiaSharp;
 
 namespace AndroidUI
@@ -47,9 +48,67 @@ namespace AndroidUI
         {
         }
 
-        public void invalidateChild(View view, Rect damage)
+        public void invalidateChild(View view, Rect dirty)
         {
+            invalidateChildInParent(null, dirty);
         }
+
+
+        public Parent invalidateChildInParent(int[] location, Rect dirty)
+        {
+            //checkThread();
+            if (DEBUG_DRAW) Log.v(mTag, "Invalidate child: " + dirty);
+
+            if (dirty == null)
+            {
+                invalidate();
+                return null;
+            }
+            else if (dirty.isEmpty() && !mIsAnimating)
+            {
+                return null;
+            }
+
+            if (mCurScrollY != 0)
+            {
+                mTempRect.set(dirty);
+                dirty = mTempRect;
+                if (mCurScrollY != 0)
+                {
+                    dirty.offset(0, -mCurScrollY);
+                }
+                if (mAttachInfo.mScalingRequired)
+                {
+                    dirty.inset(-1, -1);
+                }
+            }
+
+            invalidateRectOnScreen(dirty);
+
+            return null;
+        }
+
+        private void invalidateRectOnScreen(Rect dirty)
+        {
+            Rect localDirty = mDirty;
+
+            // Add the new dirty rect to the current one
+            localDirty.union(dirty.left, dirty.top, dirty.right, dirty.bottom);
+            // Intersect with the bounds of the window to skip
+            // updates that lie outside of the visible region
+            float appScale = mAttachInfo.mApplicationScale;
+            bool intersected = localDirty.intersect(0, 0,
+                    (int)(mWidth * appScale + 0.5f), (int)(mHeight * appScale + 0.5f));
+            if (!intersected)
+            {
+                localDirty.setEmpty();
+            }
+            if (!mWillDrawSoon && (intersected || mIsAnimating))
+            {
+                scheduleTraversals();
+            }
+        }
+
         private Application application;
 
         internal Application GetApplication()
@@ -134,7 +193,7 @@ namespace AndroidUI
         }
 
         View.AttachInfo mAttachInfo;
-        bool mFirst = true; // true for the first time the view is added
+        bool mFirst; // true for the first time the view is added
         private bool mWillDrawSoon;
         private bool mNewSurfaceNeeded;
         private bool mActivityRelaunched;
@@ -384,6 +443,7 @@ namespace AndroidUI
         }
 
         internal Rect frame;
+        Rect mTempRect = new();
 
         private bool measureHierarchy(View host,
             object lp_unused, // WindowManager.LayoutParams lp,
@@ -470,6 +530,7 @@ namespace AndroidUI
                 desiredWindowHeight = canvasHeight;
                 if (mAttachInfo == null)
                 {
+                    throw new Exception("null attach info");
                     mAttachInfo = new();
                     mAttachInfo.mViewRootImpl = this;
                 }
@@ -505,7 +566,7 @@ namespace AndroidUI
             }
 
             // Execute enqueued actions on every traversal in case a detached view enqueued an action
-            //getRunQueue().executeActions(mAttachInfo.mHandler);
+            getRunQueue().executeActions(mAttachInfo.mHandler);
 
             bool layoutRequested = mLayoutRequested && (
                 !mStopped ||
@@ -1353,21 +1414,253 @@ namespace AndroidUI
         private int mCanvasOffsetY;
         private bool mIsAnimating;
         private bool mInvalidateRootRequested;
-        internal bool mAppVisible = true;
+        internal bool mAppVisible = false;
 
-        public ViewRootImpl()
+        internal sealed class InvalidateOnAnimationRunnable : Runnable
         {
+
+            private bool mPosted;
+            readonly object LOCK = new();
+            private List<View> mViews = new List<View>();
+            private readonly List<View.AttachInfo.InvalidateInfo> mViewRects =
+                    new List<View.AttachInfo.InvalidateInfo>();
+            private View[] mTempViews;
+            private View.AttachInfo.InvalidateInfo[] mTempViewRects;
+            ViewRootImpl impl;
+
+            public InvalidateOnAnimationRunnable(ViewRootImpl impl)
+            {
+                this.impl = impl;
+            }
+
+            public void addView(View view)
+            {
+                lock(LOCK) {
+                    mViews.Add(view);
+                    postIfNeededLocked();
+                }
+            }
+
+            public void addViewRect(View.AttachInfo.InvalidateInfo info)
+            {
+                lock(LOCK) {
+                    mViewRects.Add(info);
+                    postIfNeededLocked();
+                }
+            }
+
+            public void removeView(View view)
+            {
+                lock(LOCK) {
+                    mViews.Remove(view);
+
+                    for (int i = mViewRects.Count; i-- > 0;)
+                    {
+                        View.AttachInfo.InvalidateInfo info = mViewRects.ElementAt(i);
+                        if (info.target == view)
+                        {
+                            mViewRects.RemoveAt(i);
+                            info.recycle();
+                        }
+                    }
+
+                    if (mPosted && mViews.Count == 0 && mViewRects.Count == 0)
+                    {
+                        // no cheographer
+                        impl.mHandler.removeCallbacks(this, View.CALLBACK_ANIMATION);
+
+                        //mChoreographer.removeCallbacks(Choreographer.CALLBACK_ANIMATION, this, null);
+                        mPosted = false;
+                    }
+                }
+            }
+
+            override public void run()
+            {
+                int viewCount;
+                int viewRectCount;
+                lock(LOCK) {
+                    mPosted = false;
+
+                    viewCount = mViews.Count;
+                    if (viewCount != 0)
+                    {
+                        mTempViews = mViews.ToArray();
+                        mViews.Clear();
+                    }
+
+                    viewRectCount = mViewRects.Count;
+                    if (viewRectCount != 0)
+                    {
+                        mTempViewRects = mViewRects.ToArray();
+                        mViewRects.Clear();
+                    }
+                }
+
+                for (int i = 0; i < viewCount; i++)
+                {
+                    mTempViews[i].invalidate();
+                    mTempViews[i] = null;
+                }
+
+                for (int i = 0; i < viewRectCount; i++)
+                {
+                    View.AttachInfo.InvalidateInfo info = mTempViewRects[i];
+                    info.target.invalidate(info.left, info.top, info.right, info.bottom);
+                    info.recycle();
+                }
+            }
+
+            private void postIfNeededLocked()
+            {
+                if (!mPosted)
+                {
+                    // no cheographer
+                    impl.mHandler.post(this, View.CALLBACK_ANIMATION);
+
+                    //mChoreographer.postCallback(Choreographer.CALLBACK_ANIMATION, this, null);
+                    mPosted = true;
+                }
+            }
+        }
+        internal readonly InvalidateOnAnimationRunnable mInvalidateOnAnimationRunnable;
+
+        private const int MSG_INVALIDATE = 1;
+        private const int MSG_INVALIDATE_RECT = 2;
+
+        sealed class ViewRootHandler : Handler {
+            public ViewRootHandler()
+            {
+            }
+
+            public ViewRootHandler(Callback callback) : base(callback)
+            {
+            }
+
+            public ViewRootHandler(Looper looper) : base(looper)
+            {
+            }
+
+            public ViewRootHandler(Looper looper, Callback callback) : base(looper, callback)
+            {
+            }
+
+            internal ViewRootHandler(bool async) : base(async)
+            {
+            }
+
+            internal ViewRootHandler(Callback callback, bool async) : base(callback, async)
+            {
+            }
+
+            internal ViewRootHandler(Looper looper, Callback callback, bool async) : base(looper, callback, async)
+            {
+            }
+
+            override
+            public String getMessageName(Message message) {
+                switch (message.what) {
+                    case MSG_INVALIDATE:
+                        return "MSG_INVALIDATE";
+                    case MSG_INVALIDATE_RECT:
+                        return "MSG_INVALIDATE_RECT";
+                }
+                return base.getMessageName(message);
+            }
+
+            override
+            public void handleMessage(Message msg) {
+                //if (Trace.isTagEnabled(Trace.TRACE_TAG_VIEW)) {
+                //    Trace.traceBegin(Trace.TRACE_TAG_VIEW, getMessageName(msg));
+                //}
+                try {
+                    handleMessageImpl(msg);
+                } finally {
+                    //Trace.traceEnd(Trace.TRACE_TAG_VIEW);
+                }
+            }
+
+            private void handleMessageImpl(Message msg) {
+                switch (msg.what) {
+                    case MSG_INVALIDATE:
+                        ((View) msg.obj).invalidate();
+                        break;
+                    case MSG_INVALIDATE_RECT:
+                        View.AttachInfo.InvalidateInfo info =
+                                (View.AttachInfo.InvalidateInfo) msg.obj;
+                        info.target.invalidate(info.left, info.top, info.right, info.bottom);
+                        info.recycle();
+                        break;
+                }
+            }
+        }
+
+        ViewRootHandler mHandler;
+        internal Thread mThread;
+
+        internal void dispatchInvalidateDelayed(View view, long delayMilliseconds)
+        {
+            Message msg = mHandler.obtainMessage(MSG_INVALIDATE, view);
+            mHandler.sendMessageDelayed(msg, delayMilliseconds);
+        }
+
+        internal void dispatchInvalidateRectDelayed(View.AttachInfo.InvalidateInfo info,
+                long delayMilliseconds)
+        {
+            Message msg = mHandler.obtainMessage(MSG_INVALIDATE_RECT, info);
+            mHandler.sendMessageDelayed(msg, delayMilliseconds);
+        }
+
+        internal void dispatchInvalidateOnAnimation(View view)
+        {
+            mInvalidateOnAnimationRunnable.addView(view);
+        }
+
+        internal void dispatchInvalidateRectOnAnimation(View.AttachInfo.InvalidateInfo info)
+        {
+            mInvalidateOnAnimationRunnable.addViewRect(info);
+        }
+
+        public void cancelInvalidate(View view)
+        {
+            mHandler.removeMessages(MSG_INVALIDATE, view);
+            // fixme: might leak the AttachInfo.InvalidateInfo objects instead of returning
+            // them to the pool
+            mHandler.removeMessages(MSG_INVALIDATE_RECT, view);
+            mInvalidateOnAnimationRunnable.removeView(view);
+        }
+
+        public ViewRootImpl() : this(null) { }
+
+        internal ViewRootImpl(View.AttachInfo info)
+        {
+            mAttachInfo = info;
+            mFirst = true;
             mView = new()
             {
                 mLayoutParams = View.MATCH_PARENT__MATCH_PARENT
             };
             mView.assignParent(this);
+            mThread = Thread.CurrentThread;
+            mViewVisibility = View.GONE;
+            mInvalidateOnAnimationRunnable = new InvalidateOnAnimationRunnable(this);
         }
 
         internal void handleAppVisibility(bool visible)
         {
             if (mAppVisible != visible)
             {
+                // we have a main looper set up for us
+                if (visible)
+                {
+                    mHandler = new ViewRootHandler(application.Looper);
+                    mAttachInfo.mHandler = mHandler;
+                }
+                else
+                {
+                    mAttachInfo.mHandler = null;
+                    mHandler = null;
+                }
                 mAppVisible = visible;
                 mAppVisibilityChanged = true;
                 scheduleTraversals();
@@ -1655,19 +1948,16 @@ namespace AndroidUI
                             {
                                 List<View> finalRequesters = validLayoutRequesters;
                                 // Post second-pass requests to the next frame
-                                //getRunQueue().post(new Runnable() {
-                                //    public override void run()
-                                //    {
-                                //        int numValidRequests = finalRequesters.size();
-                                //        for (int i = 0; i < numValidRequests; ++i)
-                                //        {
-                                //            View view = finalRequesters.get(i);
-                                //            Log.w("View", "requestLayout() improperly called by " + view +
-                                //                    " during second layout pass: posting in next frame");
-                                //            view.requestLayout();
-                                //        }
-                                //    }
-                                //});
+                                getRunQueue().post(new Runnable.ActionRunnable(() => {
+                                        int numValidRequests = finalRequesters.Count;
+                                        for (int i = 0; i < numValidRequests; ++i)
+                                        {
+                                            View view = finalRequesters.ElementAt(i);
+                                            Log.w("View", "requestLayout() improperly called by " + view +
+                                                    " during second layout pass: posting in next frame");
+                                            view.requestLayout();
+                                        }
+                                }));
                             }
                         }
                     }
@@ -1925,17 +2215,17 @@ namespace AndroidUI
                 trackFPS();
             }
 
-            //if (!sFirstDrawComplete)
-            //{
-            //    synchronized(sFirstDrawHandlers) {
-            //        sFirstDrawComplete = true;
-            //        int count = sFirstDrawHandlers.size();
-            //        for (int i = 0; i < count; i++)
-            //        {
-            //            mHandler.post(sFirstDrawHandlers.get(i));
-            //        }
-            //    }
-            //}
+            if (!sFirstDrawComplete)
+            {
+                lock(sFirstDrawHandlers) {
+                    sFirstDrawComplete = true;
+                    int count = sFirstDrawHandlers.Count;
+                    for (int i = 0; i < count; i++)
+                    {
+                        mHandler.post(sFirstDrawHandlers.ElementAt(i));
+                    }
+                }
+            }
 
             scrollToRectOrFocus(null, false);
 
@@ -2023,7 +2313,7 @@ namespace AndroidUI
                 //}
             }
 
-            mAttachInfo.mDrawingTime = (int)(NanoTime.currentTimeNanos() / 1000000); // mChoreographer.getFrameTimeNanos() / TimeUtils.NANOS_PER_MS;
+            mAttachInfo.mDrawingTime = (int)(NanoTime.currentTimeNanos() / NanoTime.NANOS_PER_MS); // mChoreographer.getFrameTimeNanos() / TimeUtils.NANOS_PER_MS;
 
             bool useAsyncReport = false;
             if (!dirty.isEmpty() || mIsAnimating || accessibilityFocusDirty
@@ -2337,6 +2627,7 @@ namespace AndroidUI
         {
             return true;
         }
+
         /**
          * Return true if child is an ancestor of parent, (or equal to the parent).
          */
@@ -2351,14 +2642,34 @@ namespace AndroidUI
             return (theParent is View) && isViewDescendantOf((View)theParent, parent);
         }
 
-        public void onDescendantInvalidated(View view, View target)
+        public void onDescendantInvalidated(View view, View descendant)
         {
+            if ((descendant.mPrivateFlags & View.PFLAG_DRAW_ANIMATION) != 0)
+            {
+                mIsAnimating = true;
+            }
             invalidate();
         }
 
         public void childDrawableStateChanged(View child)
         {
             // no op
+        }
+
+        static ThreadLocal<HandlerActionQueue> sRunQueues = new ThreadLocal<HandlerActionQueue>();
+        static readonly List<Runnable> sFirstDrawHandlers = new();
+        static bool sFirstDrawComplete = false;
+
+        static HandlerActionQueue getRunQueue()
+        {
+            HandlerActionQueue rq = sRunQueues.Value;
+            if (rq != null)
+            {
+                return rq;
+            }
+            rq = new HandlerActionQueue();
+            sRunQueues.Value = rq;
+            return rq;
         }
     }
 }

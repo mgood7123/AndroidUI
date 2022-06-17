@@ -46,17 +46,17 @@ namespace AndroidUI.Extensions
         }
 
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static SKColorF ToSKColorF(this long i) => ToSKColorF((ulong)i);
-
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static SKColorF ToSKColorF(this ulong i)
+        public static SKColorF ToSKColorF(this long i)
         {
-            float r = ((i >> 16) & 0xff) / 255.0f;
-            float g = ((i >> 8) & 0xff) / 255.0f;
-            float b = ((i) & 0xff) / 255.0f;
-            float a = ((i >> 24) & 0xff) / 255.0f;
+            float r = Color.red(i);
+            float g = Color.green(i);
+            float b = Color.blue(i);
+            float a = Color.alpha(i);
             return new SKColorF(r, g, b, a);
         }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static SKColorF ToSKColorF(this ulong i) => ToSKColorF((long)i);
 
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static byte ToColorByte(this float value)

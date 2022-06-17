@@ -137,7 +137,7 @@ namespace AndroidUI
          * Returns the name of this NinePatch object if one was specified
          * when calling the constructor.
          */
-        public String getName()
+        public string getName()
         {
             return mSrcName;
         }

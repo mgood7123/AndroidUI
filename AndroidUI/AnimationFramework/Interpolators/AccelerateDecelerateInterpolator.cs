@@ -14,30 +14,13 @@
  * limitations under the License.
  */
 
-namespace AndroidUI
+namespace AndroidUI.AnimationFramework.Interpolators
 {
-    public abstract class Runnable
+    internal class AccelerateDecelerateInterpolator : BaseInterpolator
     {
-        public abstract void run();
-
-        public class ActionRunnable : Runnable
+        public override float getInterpolation(float input)
         {
-            Action action;
-
-            public ActionRunnable(Action action)
-            {
-                this.action = action;
-            }
-
-            public override void run()
-            {
-                action?.Invoke();
-            }
-        }
-
-        public static Runnable Create(Action value)
-        {
-            return new ActionRunnable(value);
+            return (float)(Math.Cos((input + 1) * Math.PI) / 2.0f) + 0.5f;
         }
     }
 }

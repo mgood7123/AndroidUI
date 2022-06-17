@@ -16,28 +16,8 @@
 
 namespace AndroidUI
 {
-    public abstract class Runnable
+    public interface ICloneable
     {
-        public abstract void run();
-
-        public class ActionRunnable : Runnable
-        {
-            Action action;
-
-            public ActionRunnable(Action action)
-            {
-                this.action = action;
-            }
-
-            public override void run()
-            {
-                action?.Invoke();
-            }
-        }
-
-        public static Runnable Create(Action value)
-        {
-            return new ActionRunnable(value);
-        }
+        virtual public object Clone() => null;
     }
 }

@@ -1,1 +1,1 @@
-﻿AndroidUITestFramework.Main.Run("AndroidUITest");
+﻿AndroidUITestFramework.Main.Run(typeof(AndroidUITest.LooperTests));

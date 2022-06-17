@@ -15,6 +15,7 @@
  */
 
 using System.Drawing;
+using AndroidUI.AnimationFramework;
 using AndroidUI.Exceptions;
 using AndroidUI.Extensions;
 using SkiaSharp;
@@ -47,8 +48,12 @@ namespace AndroidUI
          */
         const bool sUseZeroUnspecifiedMeasureSpec = false; // always false
 
+        private readonly Paint sparePaint;
+
         public View()
         {
+            sparePaint = new();
+            sparePaint.setColor(Color.WHITE);
             initView();
         }
 
@@ -312,6 +317,53 @@ namespace AndroidUI
                 mHardwareAccelerated = true;
                 mTmpInvalRect = new();
             }
+
+            /**
+             * InvalidateInfo is used to post invalidate(int, int, int, int) messages
+             * to a Handler. This class contains the target (View) to invalidate and
+             * the coordinates of the dirty rectangle.
+             *
+             * For performance purposes, this class also implements a pool of up to
+             * POOL_LIMIT objects that get reused. This reduces memory allocations
+             * whenever possible.
+             */
+            internal class InvalidateInfo
+            {
+
+                internal InvalidateInfo()
+                {
+                }
+
+                private const int POOL_LIMIT = 10;
+
+                private static readonly SynchronizedPool<InvalidateInfo> sPool =
+                        new SynchronizedPool<InvalidateInfo>(POOL_LIMIT);
+
+                internal View target;
+
+                internal int left;
+                internal int top;
+                internal int right;
+                internal int bottom;
+
+                public static InvalidateInfo obtain()
+                {
+                    InvalidateInfo instance = sPool.Aquire();
+                    return (instance != null) ? instance : new InvalidateInfo();
+                }
+
+                public void recycle()
+                {
+                    target = null;
+                    sPool.Release(this);
+                }
+            }
+
+            /**
+             * A Handler supplied by a view's {@link android.view.ViewRootImpl}. This
+             * handler can be used to pump events in the UI events queue.
+             */
+            internal Execution.Handler mHandler;
             internal ViewRootImpl mViewRootImpl;
             internal bool mInTouchMode;
             internal bool mViewVisibilityChanged;
@@ -566,6 +618,50 @@ namespace AndroidUI
         }
 
         /**
+         * Called when a view's visibility has changed. Notify the parent to take any appropriate
+         * action.
+         *
+         * @param child The view whose visibility has changed
+         * @param oldVisibility The previous visibility value (GONE, INVISIBLE, or VISIBLE).
+         * @param newVisibility The new visibility value (GONE, INVISIBLE, or VISIBLE).
+         * @hide
+         */
+        protected void onChildVisibilityChanged(View child, int oldVisibility, int newVisibility)
+        {
+            //if (mTransition != null)
+            //{
+            //    if (newVisibility == VISIBLE)
+            //    {
+            //        mTransition.showChild(this, child, oldVisibility);
+            //    }
+            //    else
+            //    {
+            //        mTransition.hideChild(this, child, newVisibility);
+            //        if (mTransitioningViews != null && mTransitioningViews.contains(child))
+            //        {
+            //            // Only track this on disappearing views - appearing views are already visible
+            //            // and don't need special handling during drawChild()
+            //            if (mVisibilityChangingChildren == null)
+            //            {
+            //                mVisibilityChangingChildren = new ArrayList<View>();
+            //            }
+            //            mVisibilityChangingChildren.add(child);
+            //            addDisappearingView(child);
+            //        }
+            //    }
+            //}
+
+            // in all cases, for drags
+            //if (newVisibility == VISIBLE && mCurrentDragStartEvent != null)
+            //{
+            //    if (!mChildrenInterestedInDrag.contains(child))
+            //    {
+            //        notifyChildOfDragStart(child);
+            //    }
+            //}
+        }
+
+        /**
          * Dispatch a view visibility change down the view hierarchy.
          * Views should override to route to their children.
          * @param changedView The view whose visibility changed. Could be 'this' or
@@ -577,6 +673,12 @@ namespace AndroidUI
                 int visibility)
         {
             onVisibilityChanged(changedView, visibility);
+            int count = mChildrenCount;
+            View[] children = mChildren;
+            for (int i = 0; i < count; i++)
+            {
+                children[i].dispatchVisibilityChanged(changedView, visibility);
+            }
         }
 
         /**
@@ -588,7 +690,7 @@ namespace AndroidUI
          * @param visibility The new visibility, one of {@link #VISIBLE},
          *                   {@link #INVISIBLE} or {@link #GONE}.
          */
-        protected void onVisibilityChanged(View changedView, int visibility)
+        virtual protected void onVisibilityChanged(View changedView, int visibility)
         {
         }
 
@@ -653,11 +755,11 @@ namespace AndroidUI
                 mPrivateFlags |= PFLAG_SCROLL_CONTAINER_ADDED;
             }
             // Transfer all pending runnables.
-            //if (mRunQueue != null)
-            //{
-            //mRunQueue.executeActions(info.mHandler);
-            //mRunQueue = null;
-            //}
+            if (mRunQueue != null)
+            {
+                mRunQueue.executeActions(info.mHandler);
+                mRunQueue = null;
+            }
             //performCollectViewAttributes(mAttachInfo, visibility);
             onAttachedToWindow();
 
@@ -1445,7 +1547,7 @@ namespace AndroidUI
             //destroyDrawingCache();
 
             cleanupDraw();
-            //mCurrentAnimation = null;
+            mCurrentAnimation = null;
 
             //if ((mViewFlags & TOOLTIP) == TOOLTIP)
             //{
@@ -3086,7 +3188,124 @@ namespace AndroidUI
             }
         }
 
-        public class Runnable { };
+        /**
+         * <p>Causes the Runnable to be added to the message queue.
+         * The runnable will be run on the user interface thread.</p>
+         *
+         * @param action The Runnable that will be executed.
+         *
+         * @return Returns true if the Runnable was successfully placed in to the
+         *         message queue.  Returns false on failure, usually because the
+         *         looper processing the message queue is exiting.
+         *
+         * @see #postDelayed
+         * @see #removeCallbacks
+         */
+        public bool post(Runnable action)
+        {
+            AttachInfo attachInfo = mAttachInfo;
+            if (attachInfo != null)
+            {
+                return attachInfo.mHandler.post(action);
+            }
+
+            // Postpone the runnable until we know on which thread it needs to run.
+            // Assume that the runnable will be successfully placed after attach.
+            getRunQueue().post(action);
+            return true;
+        }
+
+        /**
+         * <p>Causes the Runnable to be added to the message queue, to be run
+         * after the specified amount of time elapses.
+         * The runnable will be run on the user interface thread.</p>
+         *
+         * @param action The Runnable that will be executed.
+         * @param delayMillis The delay (in milliseconds) until the Runnable
+         *        will be executed.
+         *
+         * @return true if the Runnable was successfully placed in to the
+         *         message queue.  Returns false on failure, usually because the
+         *         looper processing the message queue is exiting.  Note that a
+         *         result of true does not mean the Runnable will be processed --
+         *         if the looper is quit before the delivery time of the message
+         *         occurs then the message will be dropped.
+         *
+         * @see #post
+         * @see #removeCallbacks
+         */
+        public bool postDelayed(Runnable action, long delayMillis)
+        {
+            AttachInfo attachInfo = mAttachInfo;
+            if (attachInfo != null)
+            {
+                return attachInfo.mHandler.postDelayed(action, delayMillis);
+            }
+
+            // Postpone the runnable until we know on which thread it needs to run.
+            // Assume that the runnable will be successfully placed after attach.
+            getRunQueue().postDelayed(action, delayMillis);
+            return true;
+        }
+
+        /**
+         * <p>Causes the Runnable to execute on the next animation time step.
+         * The runnable will be run on the user interface thread.</p>
+         *
+         * @param action The Runnable that will be executed.
+         *
+         * @see #postOnAnimationDelayed
+         * @see #removeCallbacks
+         */
+        public void postOnAnimation(Runnable action)
+        {
+            AttachInfo attachInfo = mAttachInfo;
+            if (attachInfo != null)
+            {
+                // no cheographer
+                mAttachInfo.mHandler.post(action, CALLBACK_ANIMATION);
+
+                //attachInfo.mViewRootImpl.mChoreographer.postCallback(
+                //        Choreographer.CALLBACK_ANIMATION, action, null);
+            }
+            else
+            {
+                // Postpone the runnable until we know
+                // on which thread it needs to run.
+                getRunQueue().post(action);
+            }
+        }
+
+        /**
+         * <p>Causes the Runnable to execute on the next animation time step,
+         * after the specified amount of time elapses.
+         * The runnable will be run on the user interface thread.</p>
+         *
+         * @param action The Runnable that will be executed.
+         * @param delayMillis The delay (in milliseconds) until the Runnable
+         *        will be executed.
+         *
+         * @see #postOnAnimation
+         * @see #removeCallbacks
+         */
+        public void postOnAnimationDelayed(Runnable action, long delayMillis)
+        {
+            AttachInfo attachInfo = mAttachInfo;
+            if (attachInfo != null)
+            {
+                // no cheographer
+                mAttachInfo.mHandler.postDelayed(action, CALLBACK_ANIMATION, delayMillis);
+
+                //attachInfo.mViewRootImpl.mChoreographer.postCallbackDelayed(
+                //        Choreographer.CALLBACK_ANIMATION, action, null, delayMillis);
+            }
+            else
+            {
+                // Postpone the runnable until we know
+                // on which thread it needs to run.
+                getRunQueue().postDelayed(action, delayMillis);
+            }
+        }
 
         /**
          * <p>Removes the specified Runnable from the message queue.</p>
@@ -3107,25 +3326,50 @@ namespace AndroidUI
         {
             if (action != null)
             {
-                //AttachInfo attachInfo = mAttachInfo;
-                //if (attachInfo != null)
-                //{
-                //    attachInfo.mHandler.removeCallbacks(action);
-                //    attachInfo.mViewRootImpl.mChoreographer.removeCallbacks(
-                //            Choreographer.CALLBACK_ANIMATION, action, null);
-                //}
-                //getRunQueue().removeCallbacks(action);
+                AttachInfo attachInfo = mAttachInfo;
+                if (attachInfo != null)
+                {
+                    // no cheographer
+                    attachInfo.mHandler.removeCallbacks(action, CALLBACK_ANIMATION);
+
+                    //attachInfo.mViewRootImpl.mChoreographer.removeCallbacks(Choreographer.CALLBACK_ANIMATION, action, null);
+                }
+                getRunQueue().removeCallbacks(action);
             }
             return true;
         }
 
-        class CheckForLongPress : Runnable { }
+        class CheckForLongPress : Runnable
+        {
+            public override void run()
+            {
+                //throw new NotImplementedException();
+            }
+        }
         private CheckForLongPress mPendingCheckForLongPress;
-        class CheckForTap : Runnable { }
+        class CheckForTap : Runnable
+        {
+            public override void run()
+            {
+                //throw new NotImplementedException();
+            }
+        }
         private CheckForTap mPendingCheckForTap = null;
-        class PerformClick : Runnable { }
+        class PerformClick : Runnable
+        {
+            public override void run()
+            {
+                //throw new NotImplementedException();
+            }
+        }
         private PerformClick mPerformClick;
-        class UnsetPressedState : Runnable { }
+        class UnsetPressedState : Runnable
+        {
+            public override void run()
+            {
+                //throw new NotImplementedException();
+            }
+        }
         private UnsetPressedState mUnsetPressedState;
 
         /**
@@ -4232,7 +4476,7 @@ namespace AndroidUI
                         ViewRootImpl viewRootImpl = getViewRootImpl();
                         if (focusableChangedByAuto == 0
                                 || viewRootImpl == null
-                                || true//viewRootImpl.mThread == Thread.currentThread()
+                                || viewRootImpl.mThread == Thread.CurrentThread
                         )
                         {
                             shouldNotifyFocusableAvailable = canTakeFocus();
@@ -4359,8 +4603,7 @@ namespace AndroidUI
                 if (mParent is View)
                 {
                     View parent = (View)mParent;
-                    //parent.onChildVisibilityChanged(this, (changed & VISIBILITY_MASK),
-                    //        newVisibility);
+                    parent.onChildVisibilityChanged(this, (changed & VISIBILITY_MASK), newVisibility);
                     parent.invalidate(true);
                 }
                 else if (mParent != null)
@@ -5807,8 +6050,7 @@ namespace AndroidUI
          */
         private bool skipInvalidate()
         {
-            return (mViewFlags & VISIBILITY_MASK) != VISIBLE
-                //&& mCurrentAnimation == null
+            return (mViewFlags & VISIBILITY_MASK) != VISIBLE && mCurrentAnimation == null
                 && (
                     !(mParent is View)
                 //|| !((View)Parent).isViewTransitioning(this)
@@ -5875,15 +6117,54 @@ namespace AndroidUI
                 }
 
                 // Damage the entire projection receiver, if necessary.
-                //if (mBackground != null && mBackground.isProjected())
-                //{
-                //    View receiver = getProjectionReceiver();
-                //    if (receiver != null)
-                //    {
-                //        receiver.damageInParent();
-                //    }
-                //}
+                if (mBackground != null && mBackground.isProjected())
+                {
+                    View receiver = getProjectionReceiver();
+                    if (receiver != null)
+                    {
+                        receiver.damageInParent();
+                    }
+                }
             }
+        }
+
+        /**
+         * Tells the parent view to damage this view's bounds.
+         *
+         * @hide
+         */
+        protected void damageInParent()
+        {
+            if (mParent != null && mAttachInfo != null)
+            {
+                mParent.onDescendantInvalidated(this, this);
+            }
+        }
+
+        /**
+         * @return this view's projection receiver, or {@code null} if none exists
+         */
+        private View getProjectionReceiver()
+        {
+            Parent p = getParent();
+            while (p != null && p is View) {
+                View v = (View)p;
+                if (v.isProjectionReceiver())
+                {
+                    return v;
+                }
+                p = p.getParent();
+            }
+
+            return null;
+        }
+
+        /**
+         * @return whether the view is a projection receiver
+         */
+        private bool isProjectionReceiver()
+        {
+            return mBackground != null;
         }
 
         public void onDescendantInvalidated(View child, View target)
@@ -5896,7 +6177,7 @@ namespace AndroidUI
              */
 
             // if set, combine the animation flag into the parent
-            //mPrivateFlags |= (target.mPrivateFlags & PFLAG_DRAW_ANIMATION);
+            mPrivateFlags |= (target.mPrivateFlags & PFLAG_DRAW_ANIMATION);
 
             if ((target.mPrivateFlags & ~PFLAG_DIRTY_MASK) != 0)
             {
@@ -5916,6 +6197,7 @@ namespace AndroidUI
             uint f = (uint)mPrivateFlags;
             f |= PFLAG_INVALIDATED | PFLAG_DIRTY;
             mPrivateFlags = (int)f;
+            // TODO: RESTORE ME ?
             //target = this;
             //}
 
@@ -6057,6 +6339,77 @@ namespace AndroidUI
             //        }
             //    } while (parent != null);
             //}
+        }
+
+        /**
+         * Don't call or override this method. It is used for the implementation of
+         * the view hierarchy.
+         *
+         * This implementation returns null if this ViewGroup does not have a parent,
+         * if this ViewGroup is already fully invalidated or if the dirty rectangle
+         * does not intersect with this ViewGroup's bounds.
+         *
+         * @deprecated Use {@link #onDescendantInvalidated(View, View)} instead to observe updates to
+         * draw state in descendants.
+         */
+        public Parent invalidateChildInParent(int[] location, Rect dirty)
+        {
+            if ((mPrivateFlags & (PFLAG_DRAWN | PFLAG_DRAWING_CACHE_VALID)) != 0)
+            {
+                // either DRAWN, or DRAWING_CACHE_VALID
+                if ((mGroupFlags & (FLAG_OPTIMIZE_INVALIDATE | FLAG_ANIMATION_DONE))
+                        != FLAG_OPTIMIZE_INVALIDATE)
+                {
+                    dirty.offset(location[CHILD_LEFT_INDEX] - mScrollX,
+                            location[CHILD_TOP_INDEX] - mScrollY);
+                    if ((mGroupFlags & FLAG_CLIP_CHILDREN) == 0)
+                    {
+                        dirty.union(0, 0, mRight - mLeft, mBottom - mTop);
+                    }
+
+                    int left = mLeft;
+                    int top = mTop;
+
+                    if ((mGroupFlags & FLAG_CLIP_CHILDREN) == FLAG_CLIP_CHILDREN)
+                    {
+                        if (!dirty.intersect(0, 0, mRight - left, mBottom - top))
+                        {
+                            dirty.setEmpty();
+                        }
+                    }
+
+                    location[CHILD_LEFT_INDEX] = left;
+                    location[CHILD_TOP_INDEX] = top;
+                }
+                else
+                {
+
+                    if ((mGroupFlags & FLAG_CLIP_CHILDREN) == FLAG_CLIP_CHILDREN)
+                    {
+                        dirty.set(0, 0, mRight - mLeft, mBottom - mTop);
+                    }
+                    else
+                    {
+                        // in case the dirty rect extends outside the bounds of this container
+                        dirty.union(0, 0, mRight - mLeft, mBottom - mTop);
+                    }
+                    location[CHILD_LEFT_INDEX] = mLeft;
+                    location[CHILD_TOP_INDEX] = mTop;
+
+                    mPrivateFlags &= ~PFLAG_DRAWN;
+                }
+                mPrivateFlags &= ~PFLAG_DRAWING_CACHE_VALID;
+                //if (mLayerType != LAYER_TYPE_NONE)
+                //{
+                    uint f = (uint)mPrivateFlags;
+                    f |= PFLAG_INVALIDATED;
+                    mPrivateFlags = (int)f;
+                //}
+
+                return mParent;
+            }
+
+            return null;
         }
 
         private SKRect rect;
@@ -6504,9 +6857,9 @@ namespace AndroidUI
                 }
             }
 
-            public void run()
+            public override void run()
             {
-                long now = 0; //AnimationUtils.currentAnimationTimeMillis();
+                long now = NanoTime.currentTimeMillis(); //AnimationUtils.currentAnimationTimeMillis();
                 if (now >= fadeStartTime)
                 {
 
@@ -6837,7 +7190,7 @@ namespace AndroidUI
             {
                 View child = children[i];
                 if (((child.mViewFlags & VISIBILITY_MASK) == VISIBLE
-                    //|| child.getAnimation() != null
+                    || child.getAnimation() != null
                     ))
                 {
                     recreateChildDisplayList(child);
@@ -7070,7 +7423,7 @@ namespace AndroidUI
             // Step 1, draw the background, if needed
             int saveCount;
 
-            //drawBackground(canvas);
+            drawBackground(canvas);
 
             // skip step 2 & 5 if possible (common case)
             int viewFlags = mViewFlags;
@@ -7093,7 +7446,7 @@ namespace AndroidUI
                 //}
 
                 // Step 6, draw decorations (foreground, scrollbars)
-                //onDrawForeground(canvas);
+                onDrawForeground(canvas);
 
                 // Step 7, draw the default focus highlight
                 //drawDefaultFocusHighlight(canvas);
@@ -7314,8 +7667,130 @@ namespace AndroidUI
             }
         }
 
+        /**
+         * Draws the background onto the specified canvas.
+         *
+         * @param canvas Canvas on which to draw the background
+         */
+        private void drawBackground(SKCanvas canvas)
+        {
+            Drawable background = mBackground;
+            if (background == null)
+            {
+                return;
+            }
+
+            setBackgroundBounds();
+
+            // Attempt to use a display list if requested.
+            //if (canvas.isHardwareAccelerated() && mAttachInfo != null )
+            //{
+            //    mBackgroundRenderNode = getDrawableRenderNode(background, mBackgroundRenderNode);
+
+            //    RenderNode renderNode = mBackgroundRenderNode;
+            //    if (renderNode != null && renderNode.hasDisplayList())
+            //    {
+            //        setBackgroundRenderNodeProperties(renderNode);
+            //        ((RecordingCanvas)canvas).drawRenderNode(renderNode);
+            //        return;
+            //    }
+            //}
+
+            int scrollX = mScrollX;
+            int scrollY = mScrollY;
+            if ((scrollX | scrollY) == 0)
+            {
+                background.draw(canvas);
+            }
+            else
+            {
+                canvas.Translate(scrollX, scrollY);
+                background.draw(canvas);
+                canvas.Translate(-scrollX, -scrollY);
+            }
+        }
+
+        /**
+         * Sets the correct background bounds and rebuilds the outline, if needed.
+         * <p/>
+         * This is called by LayoutLib.
+         */
+        void setBackgroundBounds()
+        {
+            if (mBackgroundSizeChanged && mBackground != null)
+            {
+                mBackground.setBounds(0, 0, mRight - mLeft, mBottom - mTop);
+                mBackgroundSizeChanged = false;
+                //rebuildOutline();
+            }
+        }
+
+        /**
+         * Draw any foreground content for this view.
+         *
+         * <p>Foreground content may consist of scroll bars, a {@link #setForeground foreground}
+         * drawable or other view-specific decorations. The foreground is drawn on top of the
+         * primary view content.</p>
+         *
+         * @param canvas canvas to draw into
+         */
+        public void onDrawForeground(SKCanvas canvas)
+        {
+            //onDrawScrollIndicators(canvas);
+            //onDrawScrollBars(canvas);
+
+            Drawable foreground = mForegroundInfo != null ? mForegroundInfo.mDrawable : null;
+            if (foreground != null)
+            {
+                if (mForegroundInfo.mBoundsChanged)
+                {
+                    mForegroundInfo.mBoundsChanged = false;
+                    Rect selfBounds = mForegroundInfo.mSelfBounds;
+                    Rect overlayBounds = mForegroundInfo.mOverlayBounds;
+
+                    if (mForegroundInfo.mInsidePadding)
+                    {
+                        selfBounds.set(0, 0, getWidth(), getHeight());
+                    }
+                    else
+                    {
+                        selfBounds.set(getPaddingLeft(), getPaddingTop(),
+                                getWidth() - getPaddingRight(), getHeight() - getPaddingBottom());
+                    }
+
+                    int ld = getLayoutDirection();
+                    Gravity.apply(mForegroundInfo.mGravity, foreground.getIntrinsicWidth(),
+                            foreground.getIntrinsicHeight(), selfBounds, overlayBounds, ld);
+                    foreground.setBounds(overlayBounds);
+                }
+
+                foreground.draw(canvas);
+            }
+        }
+
         protected virtual void onDraw(SKCanvas canvas)
         {
+        }
+
+        /**
+         * Queue of pending runnables. Used to postpone calls to post() until this
+         * view is attached and has a handler.
+         */
+        private Execution.HandlerActionQueue mRunQueue;
+
+
+        /**
+         * Returns the queue of runnable for this view.
+         *
+         * @return the queue of runnables for this view
+         */
+        private Execution.HandlerActionQueue getRunQueue()
+        {
+            if (mRunQueue == null)
+            {
+                mRunQueue = new Execution.HandlerActionQueue();
+            }
+            return mRunQueue;
         }
 
         public void requestDisallowInterceptTouchEvent(bool disallowIntercept)
@@ -9052,7 +9527,7 @@ namespace AndroidUI
             /**
              * Used to animate layouts.
              */
-            //public LayoutAnimationController.AnimationParameters layoutAnimationParameters;
+            public LayoutAnimationController.AnimationParameters layoutAnimationParameters;
 
             /**
              * Creates a new set of layout parameters with the specified width
@@ -9601,7 +10076,7 @@ namespace AndroidUI
         public bool hasIdentityMatrix()
         {
             //return mRenderNode.hasIdentityMatrix();
-            return false;
+            return mTransformationInfo == null ? false : mTransformationInfo.mMatrix.IsIdentity;
         }
 
         public class TransformationInfo
@@ -10190,12 +10665,34 @@ namespace AndroidUI
         // a child needs to be invalidated and FLAG_OPTIMIZE_INVALIDATE is set
         internal const int FLAG_INVALIDATE_REQUIRED = 0x4;
 
-        // If set, this View has padding; if unset there is no padding and we don't need
+        // When set, dispatchDraw() will run the layout animation and unset the flag
+        internal const int FLAG_RUN_ANIMATION = 0x8;
+
+        // When set, there is either no layout animation on the ViewGroup or the layout
+        // animation is over
+        // Set by default
+        internal const int FLAG_ANIMATION_DONE = 0x10;
+
+        // If set, this ViewGroup has padding; if unset there is no padding and we don't need
         // to clip it, even if FLAG_CLIP_TO_PADDING is set
         internal const int FLAG_PADDING_NOT_NULL = 0x20;
 
+        /** @deprecated - functionality removed */
+        internal const int FLAG_ANIMATION_CACHE = 0x40;
+
+        // When set, this ViewGroup converts calls to invalidate(Rect) to invalidate() during a
+        // layout animation; this avoid clobbering the hierarchy
+        // Automatically set when the layout animation starts, depending on the animation's
+        // characteristics
+        internal const int FLAG_OPTIMIZE_INVALIDATE = 0x80;
+
         // When set, the next call to drawChild() will clear mChildTransformation's matrix
         internal const int FLAG_CLEAR_TRANSFORMATION = 0x100;
+
+        // When set, this ViewGroup invokes mAnimationListener.onAnimationEnd() and removes
+        // the children's Bitmap caches if necessary
+        // This flag is set when the layout animation is over (after FLAG_ANIMATION_DONE is set)
+        internal const int FLAG_NOTIFY_ANIMATION_LISTENER = 0x200;
 
         /**
          * When set, the drawing method will call {@link #getChildDrawingOrder(int, int)}
@@ -10225,6 +10722,10 @@ namespace AndroidUI
          */
         protected const int CLIP_TO_PADDING_MASK = FLAG_CLIP_TO_PADDING | FLAG_PADDING_NOT_NULL;
 
+        // Index of the child's left position in the mLocation array
+        private const int CHILD_LEFT_INDEX = 0;
+        // Index of the child's top position in the mLocation array
+        private const int CHILD_TOP_INDEX = 1;
 
 
         /**
@@ -10316,8 +10817,8 @@ namespace AndroidUI
             }
             mGroupFlags |= FLAG_CLIP_CHILDREN;
             mGroupFlags |= FLAG_CLIP_TO_PADDING;
-            //mGroupFlags |= FLAG_ANIMATION_DONE;
-            //mGroupFlags |= FLAG_ANIMATION_CACHE;
+            mGroupFlags |= FLAG_ANIMATION_DONE;
+            mGroupFlags |= FLAG_ANIMATION_CACHE;
             mGroupFlags |= FLAG_ALWAYS_DRAWN_WITH_CACHE;
 
             mGroupFlags |= FLAG_SPLIT_MOTION_EVENTS;
@@ -11794,30 +12295,6 @@ namespace AndroidUI
             return child;
         }
 
-        class Transformation
-        {
-            internal void clear()
-            {
-                throw new NotImplementedException();
-            }
-
-            internal int getTransformationType()
-            {
-                throw new NotImplementedException();
-            }
-        }
-
-        Transformation mChildTransformation;
-
-        Transformation getChildTransformation()
-        {
-            if (mChildTransformation == null)
-            {
-                mChildTransformation = new Transformation();
-            }
-            return mChildTransformation;
-        }
-
         /**
          * When set, this View supports static transformations on children; this causes
          * {@link #getChildStaticTransformation(View, android.view.animation.Transformation)} to be
@@ -11898,38 +12375,38 @@ namespace AndroidUI
             Transformation transformToApply = null;
             bool concatMatrix = false;
             bool scalingRequired = mAttachInfo != null && mAttachInfo.mScalingRequired;
-            //Animation a = getAnimation();
-            //if (a != null)
-            //{
-            //    more = applyLegacyAnimation(parent, drawingTime, a, scalingRequired);
-            //    concatMatrix = a.willChangeTransformationMatrix();
-            //    if (concatMatrix)
-            //    {
-            //        mPrivateFlags3 |= PFLAG3_VIEW_IS_ANIMATING_TRANSFORM;
-            //    }
-            //    transformToApply = parent.getChildTransformation();
-            //}
-            //else
-            //{
-            //if ((mPrivateFlags3 & PFLAG3_VIEW_IS_ANIMATING_TRANSFORM) != 0)
-            //{
-            //    // No longer animating: clear out old animation matrix
-            //    mRenderNode.setAnimationMatrix(null);
-            //    mPrivateFlags3 &= ~PFLAG3_VIEW_IS_ANIMATING_TRANSFORM;
-            //}
-            if (!drawingWithRenderNode
-                    && (parentFlags & FLAG_SUPPORT_STATIC_TRANSFORMATIONS) != 0)
+            Animation a = getAnimation();
+            if (a != null)
             {
-                Transformation t = parent.getChildTransformation();
-                bool hasTransform = parent.getChildStaticTransformation(this, t);
-                if (hasTransform)
+                more = applyLegacyAnimation(parent, drawingTime, a, scalingRequired);
+                concatMatrix = a.willChangeTransformationMatrix();
+                if (concatMatrix)
                 {
-                    int transformType = t.getTransformationType();
-                    transformToApply = null; //transformType != Transformation.TYPE_IDENTITY ? t : null;
-                    concatMatrix = false; // (transformType & Transformation.TYPE_MATRIX) != 0;
+                    mPrivateFlags3 |= PFLAG3_VIEW_IS_ANIMATING_TRANSFORM;
+                }
+                transformToApply = parent.getChildTransformation();
+            }
+            else
+            {
+                if ((mPrivateFlags3 & PFLAG3_VIEW_IS_ANIMATING_TRANSFORM) != 0)
+                {
+                    // No longer animating: clear out old animation matrix
+                    //mRenderNode.setAnimationMatrix(null);
+                    mPrivateFlags3 &= ~PFLAG3_VIEW_IS_ANIMATING_TRANSFORM;
+                }
+                if (!drawingWithRenderNode
+                    && (parentFlags & FLAG_SUPPORT_STATIC_TRANSFORMATIONS) != 0)
+                {
+                    Transformation t = parent.getChildTransformation();
+                    bool hasTransform = parent.getChildStaticTransformation(this, t);
+                    if (hasTransform)
+                    {
+                        int transformType = t.getTransformationType();
+                        transformToApply = transformType != Transformation.TYPE_IDENTITY ? t : null;
+                        concatMatrix = (transformType & Transformation.TYPE_MATRIX) != 0;
+                    }
                 }
             }
-            //}
 
             concatMatrix |= !childHasIdentityMatrix;
 
@@ -12049,22 +12526,23 @@ namespace AndroidUI
                     {
                         if (concatMatrix)
                         {
-                            if (drawingWithRenderNode)
-                            {
-                                //renderNode.setAnimationMatrix(transformToApply.getMatrix());
-                            }
-                            else
-                            {
+                            //if (drawingWithRenderNode)
+                            //{
+                            //    //renderNode.setAnimationMatrix(transformToApply.getMatrix());
+                            //}
+                            //else
+                            //{
                                 // Undo the scroll translation, apply the transformation matrix,
                                 // then redo the scroll translate to get the correct result.
                                 canvas.Translate(-transX, -transY);
-                                //canvas.Concat(transformToApply.getMatrix());
+                                var m = transformToApply.getMatrix();
+                                canvas.Concat(ref m);
                                 canvas.Translate(transX, transY);
-                            }
+                            //}
                             parent.mGroupFlags |= FLAG_CLEAR_TRANSFORMATION;
                         }
 
-                        float transformAlpha = 1.0f; //transformToApply.getAlpha();
+                        float transformAlpha = transformToApply.getAlpha();
                         if (transformAlpha < 1)
                         {
                             alpha *= transformAlpha;
@@ -12072,7 +12550,9 @@ namespace AndroidUI
                         }
                     }
 
-                    if (!childHasIdentityMatrix && !drawingWithRenderNode)
+                    if (!childHasIdentityMatrix
+                        // && !drawingWithRenderNode
+                    )
                     {
                         canvas.Translate(-transX, -transY);
                         var m = getMatrix();
@@ -12084,7 +12564,7 @@ namespace AndroidUI
                 // Deal with alpha if it is or used to be <1
                 if (alpha < 1
                     || (mPrivateFlags3 & PFLAG3_VIEW_IS_ANIMATING_ALPHA) != 0
-                    )
+                )
                 {
                     if (alpha < 1)
                     {
@@ -12097,30 +12577,30 @@ namespace AndroidUI
                     parent.mGroupFlags |= FLAG_CLEAR_TRANSFORMATION;
                     if (!drawingWithDrawingCache)
                     {
-                        //int multipliedAlpha = (int)(255 * alpha);
-                        //if (!onSetAlpha(multipliedAlpha))
-                        //{
-                        //    if (drawingWithRenderNode)
-                        //    {
-                        //        renderNode.setAlpha(alpha * getAlpha() * getTransitionAlpha());
-                        //    }
-                        //    else if (layerType == LAYER_TYPE_NONE)
-                        //    {
-                        //        canvas.saveLayerAlpha(sx, sy, sx + getWidth(), sy + getHeight(),
-                        //                multipliedAlpha);
-                        //    }
-                        //}
-                        //else
-                        //{
-                        //    // Alpha is handled by the child directly, clobber the layer's alpha
-                        //    mPrivateFlags |= PFLAG_ALPHA_SET;
-                        //}
+                        int multipliedAlpha = (int)(255 * alpha);
+                        if (!onSetAlpha(multipliedAlpha))
+                        {
+                            //if (drawingWithRenderNode)
+                            //{
+                            //    renderNode.setAlpha(alpha * getAlpha() * getTransitionAlpha());
+                            //}
+                            //else if (layerType == LAYER_TYPE_NONE)
+                            //{
+                            //    canvas.saveLayerAlpha(sx, sy, sx + getWidth(), sy + getHeight(),
+                            //            multipliedAlpha);
+                            //}
+                        }
+                        else
+                        {
+                            // Alpha is handled by the child directly, clobber the layer's alpha
+                            mPrivateFlags |= PFLAG_ALPHA_SET;
+                        }
                     }
                 }
             }
             else if ((mPrivateFlags & PFLAG_ALPHA_SET) == PFLAG_ALPHA_SET)
             {
-            //    onSetAlpha(255);
+                onSetAlpha(255);
                 mPrivateFlags &= ~PFLAG_ALPHA_SET;
             }
 
@@ -12159,7 +12639,11 @@ namespace AndroidUI
                 {
                     mPrivateFlags &= ~PFLAG_DIRTY_MASK;
                     //((RecordingCanvas)canvas).drawRenderNode(renderNode);
-                    canvas.DrawPicture(renderNode, 0, 0);
+                    if (a != null && a.hasAlpha())
+                    {
+                        sparePaint.setAlpha(alpha.ToColorInt());
+                    }
+                    canvas.DrawPicture(renderNode, 0, 0, sparePaint);
                 }
                 else
                 {
@@ -12215,22 +12699,22 @@ namespace AndroidUI
                 canvas.RestoreToCount(restoreTo);
             }
 
-            //if (a != null && !more)
-            //{
-            //    if (!hardwareAcceleratedCanvas && !a.getFillAfter())
-            //    {
-            //        onSetAlpha(255);
-            //    }
-            //    parent.finishAnimatingView(this, a);
-            //}
+            if (a != null && !more)
+            {
+                if (!hardwareAcceleratedCanvas && !a.getFillAfter())
+                {
+                    onSetAlpha(255);
+                }
+                parent.finishAnimatingView(this, a);
+            }
 
             if (more && hardwareAcceleratedCanvas)
             {
-                //if (a.hasAlpha() && (mPrivateFlags & PFLAG_ALPHA_SET) == PFLAG_ALPHA_SET)
-                //{
-                //    // alpha animations should cause the child to recreate its display list
-                //    invalidate(true);
-                //}
+                if (a.hasAlpha() && (mPrivateFlags & PFLAG_ALPHA_SET) == PFLAG_ALPHA_SET)
+                {
+                    // alpha animations should cause the child to recreate its display list
+                    invalidate(true);
+                }
             }
 
             mRecreateDisplayList = false;
@@ -12238,6 +12722,65 @@ namespace AndroidUI
             cache?.Dispose();
             return more;
         }
+
+        /**
+         * Invoked if there is a Transform that involves alpha. Subclass that can
+         * draw themselves with the specified alpha should return true, and then
+         * respect that alpha when their onDraw() is called. If this returns false
+         * then the view may be redirected to draw into an offscreen buffer to
+         * fulfill the request, which will look fine, but may be slower than if the
+         * subclass handles it internally. The default implementation returns false.
+         *
+         * @param alpha The alpha (0..255) to apply to the view's drawing
+         * @return true if the view can draw with the specified alpha.
+         */
+        virtual protected bool onSetAlpha(int alpha)
+        {
+            return false;
+        }
+
+        /**
+         * Cleanup a view when its animation is done. This may mean removing it from
+         * the list of disappearing views.
+         *
+         * @param view The view whose animation has finished
+         * @param animation The animation, cannot be null
+         */
+        void finishAnimatingView(View view, Animation animation)
+        {
+            //final ArrayList<View> disappearingChildren = mDisappearingChildren;
+            //if (disappearingChildren != null)
+            //{
+            //    if (disappearingChildren.contains(view))
+            //    {
+            //        disappearingChildren.remove(view);
+
+            //        if (view.mAttachInfo != null)
+            //        {
+            //            view.dispatchDetachedFromWindow();
+            //        }
+
+            //        view.clearAnimation();
+            //        mGroupFlags |= FLAG_INVALIDATE_REQUIRED;
+            //    }
+            //}
+
+            if (animation != null && !animation.getFillAfter())
+            {
+                view.clearAnimation();
+            }
+
+            if ((view.mPrivateFlags & PFLAG_ANIMATION_STARTED) == PFLAG_ANIMATION_STARTED)
+            {
+                view.onAnimationEnd();
+                // Should be performed by onAnimationEnd() but this avoid an infinite loop,
+                // so we'd rather be safe than sorry
+                view.mPrivateFlags &= ~PFLAG_ANIMATION_STARTED;
+                // Draw one more frame after the animation is done
+                mGroupFlags |= FLAG_INVALIDATE_REQUIRED;
+            }
+        }
+
 
         /**
          * Draw one child of this View Group. This method is responsible for getting
@@ -12255,7 +12798,6 @@ namespace AndroidUI
             return child.draw(canvas, this, drawingTime);
         }
 
-
         /**
          * Called by draw to draw the child views. This may be overridden
          * by derived classes to gain control just before its children are drawn
@@ -12268,30 +12810,35 @@ namespace AndroidUI
             View[] children = mChildren;
             int flags = mGroupFlags;
 
-            //if ((flags & FLAG_RUN_ANIMATION) != 0 && canAnimate()) {
-            //    for (int i = 0; i < childrenCount; i++) {
-            //        View child = children[i];
-            //        if ((child.mViewFlags & VISIBILITY_MASK) == VISIBLE) {
-            //            LayoutParams params = child.getLayoutParams();
-            //            attachLayoutAnimationParameters(child, params, i, childrenCount);
-            //            bindLayoutAnimation(child);
-            //        }
-            //    }
+            if ((flags & FLAG_RUN_ANIMATION) != 0 && canAnimate())
+            {
+                for (int i = 0; i < childrenCount; i++)
+                {
+                    View child = children[i];
+                    if ((child.mViewFlags & VISIBILITY_MASK) == VISIBLE)
+                    {
+                        LayoutParams params_ = child.getLayoutParams();
+                        attachLayoutAnimationParameters(child, params_, i, childrenCount);
+                        bindLayoutAnimation(child);
+                    }
+                }
 
-            //    LayoutAnimationController controller = mLayoutAnimationController;
-            //    if (controller.willOverlap()) {
-            //        mGroupFlags |= FLAG_OPTIMIZE_INVALIDATE;
-            //    }
+                LayoutAnimationController controller = mLayoutAnimationController;
+                if (controller.willOverlap())
+                {
+                    mGroupFlags |= FLAG_OPTIMIZE_INVALIDATE;
+                }
 
-            //    controller.start();
+                controller.start();
 
-            //    mGroupFlags &= ~FLAG_RUN_ANIMATION;
-            //    mGroupFlags &= ~FLAG_ANIMATION_DONE;
+                mGroupFlags &= ~FLAG_RUN_ANIMATION;
+                mGroupFlags &= ~FLAG_ANIMATION_DONE;
 
-            //    if (mAnimationListener != null) {
-            //        mAnimationListener.onAnimationStart(controller.getAnimation());
-            //    }
-            //}
+                if (mAnimationListener != null)
+                {
+                    mAnimationListener.onAnimationStart(controller.getAnimation());
+                }
+            }
 
             int clipSaveCount = 0;
             bool clipToPadding = (flags & CLIP_TO_PADDING_MASK) == CLIP_TO_PADDING_MASK;
@@ -12304,7 +12851,7 @@ namespace AndroidUI
             }
 
             // We will draw our child's animation, let's reset the flag
-            //mPrivateFlags &= ~PFLAG_DRAW_ANIMATION;
+            mPrivateFlags &= ~PFLAG_DRAW_ANIMATION;
             mGroupFlags &= ~FLAG_INVALIDATE_REQUIRED;
 
             bool more = false;
@@ -12341,7 +12888,7 @@ namespace AndroidUI
                 int childIndex = getAndVerifyPreorderedIndex(childrenCount, i, customOrder);
                 View child = getAndVerifyPreorderedView(preorderedList, children, childIndex);
                 if ((child.mViewFlags & VISIBILITY_MASK) == VISIBLE
-                    //|| child.getAnimation() != null
+                    || child.getAnimation() != null
                     )
                 {
                     more |= drawChild(canvas, child, drawingTime);
@@ -12398,23 +12945,34 @@ namespace AndroidUI
                 invalidate(true);
             }
 
-            //if ((flags & FLAG_ANIMATION_DONE) == 0 && (flags & FLAG_NOTIFY_ANIMATION_LISTENER) == 0 &&
-            //        mLayoutAnimationController.isDone() && !more) {
-            //    // We want to erase the drawing cache and notify the listener after the
-            //    // next frame is drawn because one extra invalidate() is caused by
-            //    // drawChild() after the animation is over
-            //    mGroupFlags |= FLAG_NOTIFY_ANIMATION_LISTENER;
-            //    Runnable end = new Runnable() {
-            //       @Override
-            //       public void run() {
-            //           notifyAnimationListener();
-            //       }
-            //    };
-            //    post(end);
-            //}
+            if ((flags & FLAG_ANIMATION_DONE) == 0 && (flags & FLAG_NOTIFY_ANIMATION_LISTENER) == 0 &&
+                    mLayoutAnimationController.isDone() && !more)
+            {
+                // We want to erase the drawing cache and notify the listener after the
+                // next frame is drawn because one extra invalidate() is caused by
+                // drawChild() after the animation is over
+                mGroupFlags |= FLAG_NOTIFY_ANIMATION_LISTENER;
+                Runnable end = new Runnable.ActionRunnable(() => notifyAnimationListener());
+                post(end);
+            }
         }
 
+        private void notifyAnimationListener()
+        {
+            mGroupFlags &= ~FLAG_NOTIFY_ANIMATION_LISTENER;
+            mGroupFlags |= FLAG_ANIMATION_DONE;
 
+            if (mAnimationListener != null)
+            {
+                Runnable end = new Runnable.ActionRunnable(() =>
+                {
+                    mAnimationListener.onAnimationEnd(mLayoutAnimationController.getAnimation());
+                });
+                post(end);
+            }
+
+            invalidate(true);
+        }
 
         int getId() => NO_ID;
 
@@ -12532,15 +13090,15 @@ namespace AndroidUI
                 numFlags++;
             }
 
-            //if ((privateFlags & PFLAG_SELECTED) == PFLAG_SELECTED)
-            //{
-            //    if (numFlags > 0)
-            //    {
-            //        output += " ";
-            //    }
-            //    output += "SELECTED";
-            //    numFlags++;
-            //}
+            if ((privateFlags & PFLAG_SELECTED) == PFLAG_SELECTED)
+            {
+                if (numFlags > 0)
+                {
+                    output += " ";
+                }
+                output += "SELECTED";
+                numFlags++;
+            }
 
             if ((privateFlags & PFLAG_IS_ROOT_NAMESPACE) == PFLAG_IS_ROOT_NAMESPACE)
             {
@@ -12905,13 +13463,16 @@ namespace AndroidUI
          * @param when the time at which the action must occur. Uses the
          *        {@link SystemClock#uptimeMillis} timebase.
          */
-        public void scheduleDrawable(Drawable who, AndroidUI.Runnable what, long when)
+        public void scheduleDrawable(Drawable who, Runnable what, long when)
         {
             if (verifyDrawable(who) && what != null)
             {
                 long delay = when - NanoTime.currentTimeMillis();
                 if (mAttachInfo != null)
                 {
+                    // no cheographer
+                    mAttachInfo.mHandler.postDelayed(what, CALLBACK_ANIMATION, delay);
+
                     //mAttachInfo.mViewRootImpl.mChoreographer.postCallbackDelayed(
                     //        Choreographer.CALLBACK_ANIMATION, what, who,
                     //        Choreographer.subtractFrameDelay(delay));
@@ -12920,10 +13481,12 @@ namespace AndroidUI
                 {
                     // Postpone the runnable until we know
                     // on which thread it needs to run.
-                    //getRunQueue().postDelayed(what, delay);
+                    getRunQueue().postDelayed(what, delay);
                 }
             }
         }
+
+        internal const int CALLBACK_ANIMATION = 1;
 
         /**
          * Cancels a scheduled action on a drawable.
@@ -12931,16 +13494,19 @@ namespace AndroidUI
          * @param who the recipient of the action
          * @param what the action to cancel
          */
-        public void unscheduleDrawable(Drawable who, AndroidUI.Runnable what)
+        public void unscheduleDrawable(Drawable who, Runnable what)
         {
             if (verifyDrawable(who) && what != null)
             {
                 if (mAttachInfo != null)
                 {
+                    // no cheographer
+                    mAttachInfo.mHandler.removeCallbacks(what, CALLBACK_ANIMATION);
+
                     //mAttachInfo.mViewRootImpl.mChoreographer.removeCallbacks(
                     //        Choreographer.CALLBACK_ANIMATION, what, who);
                 }
-                //getRunQueue().removeCallbacks(what);
+                getRunQueue().removeCallbacks(what);
             }
         }
 
@@ -12957,6 +13523,9 @@ namespace AndroidUI
         {
             if (mAttachInfo != null && who != null)
             {
+                // no cheographer
+                mAttachInfo.mHandler.removeMessages(CALLBACK_ANIMATION, who);
+
                 //mAttachInfo.mViewRootImpl.mChoreographer.removeCallbacks(
                 //        Choreographer.CALLBACK_ANIMATION, null, who);
             }
@@ -13002,7 +13571,7 @@ namespace AndroidUI
             // LAYOUT_DIRECTION_LOCALE, we can "cheat" and we don't need to wait for the layout
             // direction to be resolved as its resolved value will be the same as its raw value.
             if (!isLayoutDirectionResolved() &&
-                    getRawLayoutDirection() == View.LAYOUT_DIRECTION_INHERIT)
+                    getRawLayoutDirection() == LAYOUT_DIRECTION_INHERIT)
             {
                 return;
             }
@@ -14312,5 +14881,310 @@ namespace AndroidUI
             return (mPrivateFlags & PFLAG_ACTIVATED) != 0;
         }
 
+
+
+        /**
+         * The animation currently associated with this view.
+         * @hide
+         */
+        protected Animation mCurrentAnimation = null;
+
+        /**
+         * Get the animation currently associated with this view.
+         *
+         * @return The animation that is currently playing or
+         *         scheduled to play for this view.
+         */
+        public Animation getAnimation()
+        {
+            return mCurrentAnimation;
+        }
+
+
+
+        /**
+         * Start the specified animation now.
+         *
+         * @param animation the animation to start now
+         */
+        public void startAnimation(Animation animation)
+        {
+            animation.setStartTime(Animation.START_ON_FIRST_FRAME);
+            setAnimation(animation);
+            invalidateParentCaches();
+            invalidate(true);
+        }
+
+        /**
+         * Cancels any animations for this view.
+         */
+        public void clearAnimation()
+        {
+            if (mCurrentAnimation != null)
+            {
+                mCurrentAnimation.detach();
+            }
+            mCurrentAnimation = null;
+            invalidateParentIfNeeded();
+        }
+
+        /**
+         * Sets the next animation to play for this view.
+         * If you want the animation to play immediately, use
+         * {@link #startAnimation(android.view.animation.Animation)} instead.
+         * This method provides allows fine-grained
+         * control over the start time and invalidation, but you
+         * must make sure that 1) the animation has a start time set, and
+         * 2) the view's parent (which controls animations on its children)
+         * will be invalidated when the animation is supposed to
+         * start.
+         *
+         * @param animation The next animation, or null.
+         */
+        public void setAnimation(Animation animation)
+        {
+            mCurrentAnimation = animation;
+
+            if (animation != null)
+            {
+                setLayoutAnimation(new(animation));
+            }
+
+            if (animation != null)
+            {
+                // If the screen is off assume the animation start time is now instead of
+                // the next frame we draw. Keeping the START_ON_FIRST_FRAME start time
+                // would cause the animation to start when the screen turns back on
+                if (mAttachInfo != null && animation.getStartTime() == Animation.START_ON_FIRST_FRAME)
+                {
+                    animation.setStartTime(NanoTime.currentTimeMillis());
+                }
+                animation.reset();
+            }
+        }
+
+        /**
+         * Invoked by a parent ViewGroup to notify the start of the animation
+         * currently associated with this view. If you override this method,
+         * always call super.onAnimationStart();
+         *
+         * @see #setAnimation(android.view.animation.Animation)
+         * @see #getAnimation()
+         */
+        //@CallSuper
+        protected void onAnimationStart()
+        {
+            mPrivateFlags |= PFLAG_ANIMATION_STARTED;
+        }
+
+        /**
+         * A Transformation used when drawing children, to
+         * apply on the child being drawn.
+         */
+        private Transformation mChildTransformation;
+
+        Transformation getChildTransformation()
+        {
+            if (mChildTransformation == null)
+            {
+                mChildTransformation = new Transformation();
+            }
+            return mChildTransformation;
+        }
+
+        /**
+         * Used to track the current invalidation region.
+         */
+        RectF mInvalidateRegion;
+
+        /**
+         * A Transformation used to calculate a correct
+         * invalidation area when the application is autoscaled.
+         */
+        Transformation mInvalidationTransformation;
+
+        /**
+         * Invoked by a parent ViewGroup to notify the end of the animation
+         * currently associated with this view. If you override this method,
+         * always call super.onAnimationEnd();
+         *
+         * @see #setAnimation(android.view.animation.Animation)
+         * @see #getAnimation()
+         */
+        //@CallSuper
+        protected void onAnimationEnd()
+        {
+            mPrivateFlags &= ~PFLAG_ANIMATION_STARTED;
+        }
+
+        /**
+         * Utility function, called by draw(canvas, parent, drawingTime) to handle the less common
+         * case of an active Animation being run on the view.
+         */
+        private bool applyLegacyAnimation(View parent, long drawingTime,
+                Animation a, bool scalingRequired)
+        {
+            Transformation invalidationTransform;
+            int flags = parent.mGroupFlags;
+            bool initialized = a.isInitialized();
+            if (!initialized)
+            {
+                a.initialize(mRight - mLeft, mBottom - mTop, parent.getWidth(), parent.getHeight());
+                a.initializeInvalidateRegion(0, 0, mRight - mLeft, mBottom - mTop);
+                if (mAttachInfo != null) a.setListenerHandler(mAttachInfo.mHandler);
+                onAnimationStart();
+            }
+
+            Transformation t = parent.getChildTransformation();
+            bool more = a.getTransformation(drawingTime, t, 1f);
+            if (scalingRequired && mAttachInfo.mApplicationScale != 1f)
+            {
+                if (parent.mInvalidationTransformation == null)
+                {
+                    parent.mInvalidationTransformation = new Transformation();
+                }
+                invalidationTransform = parent.mInvalidationTransformation;
+                a.getTransformation(drawingTime, invalidationTransform, 1f);
+            }
+            else
+            {
+                invalidationTransform = t;
+            }
+
+            if (more)
+            {
+                if (!a.willChangeBounds())
+                {
+                    if ((flags & (FLAG_OPTIMIZE_INVALIDATE | FLAG_ANIMATION_DONE)) ==
+                            FLAG_OPTIMIZE_INVALIDATE)
+                    {
+                        parent.mGroupFlags |= FLAG_INVALIDATE_REQUIRED;
+                    }
+                    else if ((flags & FLAG_INVALIDATE_REQUIRED) == 0)
+                    {
+                        // The child need to draw an animation, potentially offscreen, so
+                        // make sure we do not cancel invalidate requests
+                        parent.mPrivateFlags |= PFLAG_DRAW_ANIMATION;
+                        parent.invalidate(mLeft, mTop, mRight, mBottom);
+                    }
+                }
+                else
+                {
+                    if (parent.mInvalidateRegion == null)
+                    {
+                        parent.mInvalidateRegion = new RectF();
+                    }
+                    RectF region = parent.mInvalidateRegion;
+                    a.getInvalidateRegion(0, 0, mRight - mLeft, mBottom - mTop, region,
+                            invalidationTransform);
+
+                    // The child need to draw an animation, potentially offscreen, so
+                    // make sure we do not cancel invalidate requests
+                    parent.mPrivateFlags |= PFLAG_DRAW_ANIMATION;
+
+                    int left = mLeft + (int)region.left;
+                    int top = mTop + (int)region.top;
+                    parent.invalidate(left, top, left + (int)(region.width() + .5f),
+                            top + (int)(region.height() + .5f));
+                }
+            }
+            return more;
+        }
+
+        // Layout animation
+        private LayoutAnimationController mLayoutAnimationController;
+        private Animation.AnimationListener mAnimationListener;
+
+        /**
+         * Indicates whether the view group has the ability to animate its children
+         * after the first layout.
+         *
+         * @return true if the children can be animated, false otherwise
+         */
+        protected bool canAnimate()
+        {
+            return mLayoutAnimationController != null;
+        }
+
+        private void bindLayoutAnimation(View child)
+        {
+            Animation a = mLayoutAnimationController.getAnimationForView(child);
+            child.setAnimation(a);
+        }
+
+        /**
+         * Subclasses should override this method to set layout animation
+         * parameters on the supplied child.
+         *
+         * @param child the child to associate with animation parameters
+         * @param params the child's layout parameters which hold the animation
+         *        parameters
+         * @param index the index of the child in the view group
+         * @param count the number of children in the view group
+         */
+        virtual protected void attachLayoutAnimationParameters(View child,
+                LayoutParams params_, int index, int count)
+        {
+            LayoutAnimationController.AnimationParameters animationParams =
+                        params_.layoutAnimationParameters;
+            if (animationParams == null)
+            {
+                animationParams = new LayoutAnimationController.AnimationParameters();
+            params_.layoutAnimationParameters = animationParams;
+            }
+
+            animationParams.count = count;
+            animationParams.index = index;
+        }
+
+        /**
+         * Runs the layout animation. Calling this method triggers a relayout of
+         * this view group.
+         */
+        public void startLayoutAnimation()
+        {
+            if (mLayoutAnimationController != null)
+            {
+                mGroupFlags |= FLAG_RUN_ANIMATION;
+                requestLayout();
+            }
+        }
+
+        /**
+         * Schedules the layout animation to be played after the next layout pass
+         * of this view group. This can be used to restart the layout animation
+         * when the content of the view group changes or when the activity is
+         * paused and resumed.
+         */
+        public void scheduleLayoutAnimation()
+        {
+            mGroupFlags |= FLAG_RUN_ANIMATION;
+        }
+
+        /**
+         * Sets the layout animation controller used to animate the group's
+         * children after the first layout.
+         *
+         * @param controller the animation controller
+         */
+        public void setLayoutAnimation(LayoutAnimationController controller)
+        {
+            mLayoutAnimationController = controller;
+            if (mLayoutAnimationController != null)
+            {
+                mGroupFlags |= FLAG_RUN_ANIMATION;
+            }
+        }
+
+        /**
+         * Returns the layout animation controller used to animate the group's
+         * children.
+         *
+         * @return the current animation controller
+         */
+        public LayoutAnimationController getLayoutAnimation()
+        {
+            return mLayoutAnimationController;
+        }
     }
 }

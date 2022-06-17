@@ -200,7 +200,7 @@ namespace AndroidUI
             }
         }
 
-        public bool Return(T value)
+        public bool Release(T value)
         {
             int thisThreadID = Thread.CurrentThread.ManagedThreadId;
 
@@ -249,7 +249,7 @@ namespace AndroidUI
             return globalPool.Return(value);
         }
 
-        public T Take()
+        public T Aquire()
         {
             int thisThreadID = Thread.CurrentThread.ManagedThreadId;
 

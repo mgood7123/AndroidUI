@@ -1,4 +1,7 @@
-﻿using System;
+﻿using AndroidUI.AnimationFramework;
+using AndroidUI.Extensions;
+using SkiaSharp;
+using System;
 
 namespace MainApp
 {
@@ -73,6 +76,36 @@ namespace MainApp
 
         class TestApp : AndroidUI.Application
         {
+            class A : AndroidUI.View
+            {
+                public A()
+                {
+                    setWillDraw(true);
+                }
+
+                protected override void onDraw(SKCanvas canvas)
+                {
+                    base.onDraw(canvas);
+                    var bm = AndroidUI.BitmapFactory.decodeFile("C:/Users/small/Pictures/Screenshot 2022-05-19 034147.jpeg");
+                    var p = new AndroidUI.Paint();
+                    p.setColor(AndroidUI.Color.WHITE);
+                    canvas.DrawBitmap(bm, 0, 0, p);
+                    bm.recycle();
+                }
+            }
+
+            class l : Animation.AnimationListener
+            {
+                public void onAnimationEnd(Animation animation)
+                    => Console.WriteLine("ANIMATION END: " + animation);
+
+                public void onAnimationRepeat(Animation animation)
+                    => Console.WriteLine("ANIMATION REPEAT: " + animation);
+
+                public void onAnimationStart(Animation animation)
+                    => Console.WriteLine("ANIMATION START: " + animation);
+            }
+
             public override void OnCreate()
             {
 
@@ -93,17 +126,28 @@ namespace MainApp
                 {
                     if (false)
                     {
-                        SetContentView(new AndroidUI.BoxView());
+                        if (false)
+                        {
+                            SetContentView(new A());
+                        }
+                        else
+                        {
+                            SetContentView(new AndroidUI.BoxView());
+                        }
                     }
                     else
                     {
-                        //SkiaSharp.SKNativeObject.LOG_ALLOCATIONS = true;
 
                         var image = new AndroidUI.ImageView();
                         var bm = AndroidUI.BitmapFactory.decodeFile("C:/Users/small/Pictures/Screenshot 2022-05-19 034147.jpeg");
                         image.setImageBitmap(bm);
-                        //image.setImageDrawable(new AndroidUI.ColorDrawable((int)(uint)SkiaSharp.SKColors.Firebrick));
                         image.setScaleType(AndroidUI.ImageView.ScaleType.CENTER_INSIDE);
+                        AlphaAnimation anim = new(0.15f, 1.0f);
+                        anim.setDuration(120);
+                        anim.setRepeatCount(Animation.INFINITE);
+                        anim.setRepeatMode(Animation.REVERSE);
+                        anim.setAnimationListener(new l());
+                        image.startAnimation(anim);
                         SetContentView(image);
                     }
                 }
@@ -126,7 +170,7 @@ namespace MainApp
             application.onVisibilityChanged(isVisible);
         }
 
-        public void OnPaint(SkiaSharp.GRContext context, SkiaSharp.GRBackendRenderTarget r, SkiaSharp.SKSurface surface)
+        public void OnPaint(GRContext context, GRBackendRenderTarget r, SKSurface surface)
         {
             application.OnPaintSurface(context, r, surface);
         }

@@ -14,30 +14,10 @@
  * limitations under the License.
  */
 
-namespace AndroidUI
+namespace AndroidUI.Execution
 {
-    public abstract class Runnable
+    internal interface IMessenger
     {
-        public abstract void run();
-
-        public class ActionRunnable : Runnable
-        {
-            Action action;
-
-            public ActionRunnable(Action action)
-            {
-                this.action = action;
-            }
-
-            public override void run()
-            {
-                action?.Invoke();
-            }
-        }
-
-        public static Runnable Create(Action value)
-        {
-            return new ActionRunnable(value);
-        }
+        public void send(Message message);
     }
 }

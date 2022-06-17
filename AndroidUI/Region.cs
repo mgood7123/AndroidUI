@@ -174,7 +174,7 @@ namespace AndroidUI
          * Return the boundary of the region as a new Path. If the region is empty,
          * the path will also be empty.
          */
-        public AndroidUI.Path getBoundaryPath()
+        public Path getBoundaryPath()
         {
             Path path = new Path();
             // TODO
@@ -354,7 +354,7 @@ namespace AndroidUI
             return !mNativeRegion.IsEmpty;
         }
 
-        override public String ToString()
+        override public string ToString()
         {
             return mNativeRegion.ToString();
         }
@@ -366,7 +366,7 @@ namespace AndroidUI
          */
         internal static Region obtain()
         {
-            Region region = sPool.Take();
+            Region region = sPool.Aquire();
             return (region != null) ? region : new Region();
         }
 
@@ -392,11 +392,11 @@ namespace AndroidUI
         public void recycle()
         {
             setEmpty();
-            sPool.Return(this);
+            sPool.Release(this);
         }
 
 
-        override public bool Equals(Object obj)
+        override public bool Equals(object obj)
         {
             if (obj == null || !(obj is Region))
             {

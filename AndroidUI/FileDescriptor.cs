@@ -105,5 +105,15 @@ namespace AndroidUI
 
         public FileStream ToFileInputOutputStream(bool takeOwnership = false) => !IsValid ? null : new SafeFileStream(handle, FileAccess.ReadWrite, takeOwnership);
         public FileStream ToFileInputOutputStream(int bufferSize, bool takeOwnership = false) => !IsValid ? null : new SafeFileStream(handle, FileAccess.ReadWrite, bufferSize, takeOwnership);
+
+        internal int getInt()
+        {
+            return !IsValid ? 0 : Handle.DangerousGetHandle().ToInt32();
+        }
+
+        internal long getLong()
+        {
+            return !IsValid ? 0 : Handle.DangerousGetHandle().ToInt64();
+        }
     }
 }

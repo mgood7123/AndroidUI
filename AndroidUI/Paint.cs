@@ -23,12 +23,17 @@ namespace AndroidUI
     * The Paint class holds the style and color information about how to draw
     * geometries, text and bitmaps.
     */
-    public class Paint
+    public class Paint : IDisposable
     {
 
         private SKPaint mNativePaint;
         private SKShader mNativeShader;
         private SKColorFilter mNativeColorFilter;
+
+        public static implicit operator SKPaint(Paint paint) => paint?.mNativePaint;
+        public static implicit operator SKShader(Paint paint) => paint?.mNativeShader;
+        public static implicit operator SKColorFilter(Paint paint) => paint?.mNativeColorFilter;
+
 
         private long mColor;
         private ColorFilter mColorFilter;
@@ -45,7 +50,7 @@ namespace AndroidUI
         private float mShadowLayerDx;
         private float mShadowLayerDy;
         private long mShadowLayerColor;
-
+        private bool disposedValue;
         static readonly Style[] sStyleArray = {
             new Style(Style.FILL), new Style(Style.STROKE), new Style(Style.FILL_AND_STROKE)
         };
@@ -649,8 +654,9 @@ namespace AndroidUI
             float r = Color.red(mColor);
             float g = Color.green(mColor);
             float b = Color.blue(mColor);
-            mColor = Color.pack(r, g, b, a * (1.0f / 255), cs);
-            mNativePaint.SetColor(mColor.ToSKColorF(), cs.getNativeInstance());
+            float a_ = a * (1.0f / 255);
+            mColor = Color.pack(r, g, b, a_, cs);
+            mNativePaint.SetColor(new SKColorF(r, g, b, a_), cs.getNativeInstance());
         }
 
         /**
@@ -1113,6 +1119,35 @@ namespace AndroidUI
         public long getShadowLayerColorLong()
         {
             return mShadowLayerColor;
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    // TODO: dispose managed state (managed objects)
+                }
+
+                mNativePaint?.Dispose();
+                mNativeShader?.Dispose();
+                mNativeColorFilter?.Dispose();
+                disposedValue = true;
+            }
+        }
+
+        ~Paint()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: false);
+        }
+
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }

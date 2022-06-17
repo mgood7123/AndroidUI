@@ -22,7 +22,7 @@ namespace NATIVE_TEST
     {
         protected override void prepareBenchmark(XManager runner)
         {
-            var m = Int32.MaxValue / 4;
+            var m = int.MaxValue / 4;
             runner.AddSession(
                 new XSession(
                     m + " Nothings",

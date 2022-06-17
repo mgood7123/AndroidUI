@@ -1519,7 +1519,7 @@ namespace AndroidUI
         }
         private static int nativeHSVToColor(int alpha, float[] hsv)
         {
-            return (int)(uint)SkiaSharp.SKColor.FromHsv(hsv[0], hsv[1], hsv[2], (byte)alpha);
+            return (int)(uint)SKColor.FromHsv(hsv[0], hsv[1], hsv[2], (byte)alpha);
         }
 
         private static readonly Dictionary<string, int> sColorNameMap;

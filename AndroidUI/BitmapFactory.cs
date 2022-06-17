@@ -371,7 +371,7 @@ namespace AndroidUI
              * If known, this string is set to the mimetype of the decoded image.
              * If not known, or there is an error, it is set to null.
              */
-            public String outMimeType;
+            public string outMimeType;
 
             /**
              * If known, the config the decoded bitmap will have.
@@ -509,7 +509,7 @@ namespace AndroidUI
          *         is not {@link ColorSpace.Model#RGB RGB}, or if the specified color space's transfer
          *         function is not an {@link ColorSpace.Rgb.TransferParameters ICC parametric curve}
          */
-        public static Bitmap decodeFile(String pathName, Options opts)
+        public static Bitmap decodeFile(string pathName, Options opts)
         {
             Options.validate(opts);
             Bitmap bm = null;
@@ -550,7 +550,7 @@ namespace AndroidUI
          * @param pathName complete path name for the file to be decoded.
          * @return the resulting decoded bitmap, or null if it could not be decoded.
          */
-        public static Bitmap decodeFile(String pathName)
+        public static Bitmap decodeFile(string pathName)
         {
             return decodeFile(pathName, null);
         }

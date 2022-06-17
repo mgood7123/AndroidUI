@@ -19,12 +19,12 @@ if ($?) {
 			dotnet cake --target=nuget --buildall=true --buildnumber=$build_number
 
 			if ($?) {
-				dotnet remove C:\Users\small\source\repos\WindowsProject1\AndroidUI\AndroidUI.csproj package SkiaSharp
+				dotnet remove K:\Windows\WindowsProject1\AndroidUI\AndroidUI.csproj package SkiaSharp
 
-				dotnet add C:\Users\small\source\repos\WindowsProject1\AndroidUI\AndroidUI.csproj package SkiaSharp --version 2.88.1-preview.$build_number --source=K:\AndroidUI-SkiaSharp\output\nugets
+				dotnet add K:\Windows\WindowsProject1\AndroidUI\AndroidUI.csproj package SkiaSharp --version 2.88.1-preview.$build_number --source=K:\AndroidUI-SkiaSharp\output\nugets
 
 				if ($?) {
-					dotnet run --project C:\Users\small\source\repos\WindowsProject1\AndroidUITest\AndroidUITest.csproj
+					dotnet run --project K:\Windows\WindowsProject1\AndroidUITest\AndroidUITest.csproj
 				}
 			}
 		}

@@ -120,7 +120,7 @@ namespace AndroidUI
 
         public static implicit operator SkiaSharp.SKRect(RectF r) => r.ToSKRect();
 
-        public override bool Equals(Object o)
+        public override bool Equals(object o)
         {
             if (this == o) return true;
             if (o == null || this.getClass() != o.getClass()) return false;
@@ -138,7 +138,7 @@ namespace AndroidUI
             return result;
         }
 
-        override public String ToString()
+        override public string ToString()
         {
             return "RectF(" + left + ", " + top + ", "
                           + right + ", " + bottom + ")";
@@ -147,7 +147,7 @@ namespace AndroidUI
         /**
          * Return a string representation of the rectangle in a compact form.
          */
-        public String toShortString()
+        public string toShortString()
         {
             return toShortString(new System.Text.StringBuilder(32));
         }
@@ -156,7 +156,7 @@ namespace AndroidUI
          * Return a string representation of the rectangle in a compact form.
          * @hide
          */
-        public String toShortString(System.Text.StringBuilder sb)
+        public string toShortString(System.Text.StringBuilder sb)
         {
             sb.Length = 0;
             sb.Append('['); sb.Append(left); sb.Append(',');

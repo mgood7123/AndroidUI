@@ -43,7 +43,7 @@ namespace AndroidUI
      */
     public class BitmapDrawable : Drawable {
         private static readonly int DEFAULT_PAINT_FLAGS =
-                AndroidUI.Paint.FILTER_BITMAP_FLAG | AndroidUI.Paint.DITHER_FLAG;
+                Paint.FILTER_BITMAP_FLAG | Paint.DITHER_FLAG;
 
         // Constants for {@link android.R.styleable#BitmapDrawable_tileMode}.
         private const int TILE_MODE_UNDEFINED = -2;
@@ -96,7 +96,7 @@ namespace AndroidUI
         /**
          * Create a drawable by opening a given file path and decoding the bitmap.
          */
-        public BitmapDrawable(String filepath) {
+        public BitmapDrawable(string filepath) {
             Bitmap bitmap = BitmapFactory.decodeFile(filepath);
             //try {
                 //Stream stream = new StreamReader(filepath);

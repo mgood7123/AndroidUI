@@ -14,30 +14,21 @@
  * limitations under the License.
  */
 
-namespace AndroidUI
+namespace AndroidUI.AnimationFramework.Interpolators
 {
-    public abstract class Runnable
+    /**
+     * An interpolator where the rate of change is constant
+     */
+    public class LinearInterpolator : BaseInterpolator
     {
-        public abstract void run();
 
-        public class ActionRunnable : Runnable
+        public LinearInterpolator()
         {
-            Action action;
-
-            public ActionRunnable(Action action)
-            {
-                this.action = action;
-            }
-
-            public override void run()
-            {
-                action?.Invoke();
-            }
         }
 
-        public static Runnable Create(Action value)
+        override public float getInterpolation(float input)
         {
-            return new ActionRunnable(value);
+            return input;
         }
     }
 }

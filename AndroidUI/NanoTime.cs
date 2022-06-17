@@ -2,6 +2,8 @@
 {
     public static class NanoTime
     {
+        public const long NANOS_PER_MS = 1000000;
+
         public static long currentTimeNanos()
         {
             long nano = 10000L * System.Diagnostics.Stopwatch.GetTimestamp();
