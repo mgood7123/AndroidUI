@@ -28,13 +28,40 @@ namespace AndroidUI.AnimationFramework
     public class Animation : ICloneable
     {
         internal Context context;
-        public Animation Clone()
+
+        virtual public Animation Clone()
         {
-            Animation animation = (Animation)MemberwiseClone();
+            Animation animation = (Animation)ICloneable.Clone(this);
+            // this state is dependant on animation runtime progress
+            animation.mEnded = false;
+            animation.mStarted = false;
+            animation.mCycleFlip = false;
+            animation.mRepeated = 0;
+            animation.mMore = true;
+            animation.mOneMoreTime = true;
+            // these can safely be copied without affecting state
+            animation.mInitialized = mInitialized;
+            animation.mFillBefore = mFillBefore;
+            animation.mFillAfter = mFillAfter;
+            animation.mFillEnabled = mFillEnabled;
+            animation.mStartTime = mStartTime;
+            animation.mStartOffset = mStartOffset;
+            animation.mDuration = mDuration;
+            animation.mRepeatCount = mRepeatCount;
+            animation.mRepeatMode = mRepeatMode;
+            // do not deep clone the interpolator
+            animation.mInterpolator = mInterpolator;
+            // do not clone the listener
+            animation.mZAdjustment = mZAdjustment;
+            animation.mBackgroundColor = mBackgroundColor;
+            animation.mScaleFactor = mScaleFactor;
+            animation.mShowWallpaper = mShowWallpaper;
+            animation.mHasRoundedCorners = mHasRoundedCorners;
             animation.mPreviousRegion = new RectF();
             animation.mRegion = new RectF();
             animation.mTransformation = new Transformation();
             animation.mPreviousTransformation = new Transformation();
+            // do not deep clone the context
             animation.context = context;
             return animation;
         }
@@ -64,6 +91,23 @@ namespace AndroidUI.AnimationFramework
         public const int START_ON_FIRST_FRAME = -1;
 
         /**
+         * The specified dimension is an absolute number of pixels.
+         */
+        public const int ABSOLUTE = 0;
+
+        /**
+         * The specified dimension holds a float and should be multiplied by the
+         * height or width of the object being animated.
+         */
+        public const int RELATIVE_TO_SELF = 1;
+
+        /**
+         * The specified dimension holds a float and should be multiplied by the
+         * height or width of the parent of the object being animated.
+         */
+        public const int RELATIVE_TO_PARENT = 2;
+
+        /**
          * Requests that the content being animated be kept in its current Z
          * order.
          */
@@ -84,81 +128,81 @@ namespace AndroidUI.AnimationFramework
         /**
          * Set by {@link #getTransformation(long, Transformation)} when the animation ends.
          */
-        bool mEnded = false;
+        protected bool mEnded = false;
 
         /**
          * Set by {@link #getTransformation(long, Transformation)} when the animation starts.
          */
-        bool mStarted = false;
+        protected bool mStarted = false;
 
         /**
          * Set by {@link #getTransformation(long, Transformation)} when the animation repeats
          * in REVERSE mode.
          */
-        bool mCycleFlip = false;
+        protected bool mCycleFlip = false;
 
         /**
          * This value must be set to true by {@link #initialize(int, int, int, int)}. It
          * indicates the animation was successfully initialized and can be played.
          */
-        bool mInitialized = false;
+        protected bool mInitialized = false;
 
         /**
          * Indicates whether the animation transformation should be applied before the
          * animation starts. The value of this variable is only relevant if mFillEnabled is true;
          * otherwise it is assumed to be true.
          */
-        bool mFillBefore = true;
+        protected bool mFillBefore = true;
 
         /**
          * Indicates whether the animation transformation should be applied after the
          * animation ends.
          */
-        bool mFillAfter = false;
+        protected bool mFillAfter = false;
 
         /**
          * Indicates whether fillBefore should be taken into account.
          */
-        bool mFillEnabled = false;
+        protected bool mFillEnabled = false;
 
         /**
          * The time in milliseconds at which the animation must start;
          */
-        long mStartTime = -1;
+        protected long mStartTime = -1;
 
         /**
          * The delay in milliseconds after which the animation must start. When the
          * start offset is > 0, the start time of the animation is startTime + startOffset.
          */
-        long mStartOffset;
+        protected long mStartOffset;
 
         /**
          * The duration of one animation cycle in milliseconds.
          */
-        long mDuration;
+        protected long mDuration;
 
         /**
          * The number of times the animation must repeat. By default, an animation repeats
          * indefinitely.
          */
-        int mRepeatCount = 0;
+        protected int mRepeatCount = 0;
 
         /**
          * Indicates how many times the animation was repeated.
          */
-        int mRepeated = 0;
+        protected int mRepeated = 0;
 
         /**
          * The behavior of the animation when it repeats. The repeat mode is either
          * {@link #RESTART} or {@link #REVERSE}.
          *
          */
-        int mRepeatMode = RESTART;
+        protected int mRepeatMode = RESTART;
 
         /**
          * The interpolator used by the animation to smooth the movement.
          */
-        Interpolator mInterpolator;
+        internal Interpolator mInterpolator;
 
         /**
          * An animation listener to be notified when the animation starts, ends or repeats.
@@ -190,13 +234,13 @@ namespace AndroidUI.AnimationFramework
         private bool mOneMoreTime = true;
 
 
-        RectF mPreviousRegion = new RectF();
+        protected RectF mPreviousRegion = new RectF();
 
-        RectF mRegion = new RectF();
+        protected RectF mRegion = new RectF();
 
-        Transformation mTransformation = new Transformation();
+        protected Transformation mTransformation = new Transformation();
 
-        Transformation mPreviousTransformation = new Transformation();
+        protected Transformation mPreviousTransformation = new Transformation();
 
         private Handler mListenerHandler;
         private Runnable mOnStart;
@@ -218,7 +262,7 @@ namespace AndroidUI.AnimationFramework
          *
          * @see #initialize(int, int, int, int)
          */
-        public void reset()
+        virtual public void reset()
         {
             mPreviousRegion.setEmpty();
             mPreviousTransformation.clear();
@@ -292,7 +336,7 @@ namespace AndroidUI.AnimationFramework
          * @param parentWidth Width of the animated object's parent
          * @param parentHeight Height of the animated object's parent
          */
-        public void initialize(int width, int height, int parentWidth, int parentHeight)
+        virtual public void initialize(int width, int height, int parentWidth, int parentHeight)
         {
             reset();
             mInitialized = true;
@@ -321,7 +365,7 @@ namespace AndroidUI.AnimationFramework
          * @param i The interpolator which defines the acceleration curve
          * @attr ref android.R.styleable#Animation_interpolator
          */
-        public void setInterpolator(Interpolator i)
+        virtual public void setInterpolator(Interpolator i)
         {
             mInterpolator = i;
         }
@@ -335,7 +379,7 @@ namespace AndroidUI.AnimationFramework
          *                    the start time of the root AnimationSet.
          * @attr ref android.R.styleable#Animation_startOffset
          */
-        public void setStartOffset(long startOffset)
+        virtual public void setStartOffset(long startOffset)
         {
             mStartOffset = startOffset;
         }
@@ -349,7 +393,7 @@ namespace AndroidUI.AnimationFramework
          *
          * @attr ref android.R.styleable#Animation_duration
          */
-        public void setDuration(long durationMillis)
+        virtual public void setDuration(long durationMillis)
         {
             if (durationMillis < 0)
             {
@@ -367,7 +411,7 @@ namespace AndroidUI.AnimationFramework
          * @param durationMillis The maximum duration the animation is allowed
          * to run.
          */
-        public void restrictDuration(long durationMillis)
+        virtual public void restrictDuration(long durationMillis)
         {
             // If we start after the duration, then we just won't run.
             if (mStartOffset > durationMillis)
@@ -412,7 +456,7 @@ namespace AndroidUI.AnimationFramework
          *
          * @param scale The amount to scale the duration.
          */
-        public void scaleCurrentDuration(float scale)
+        virtual public void scaleCurrentDuration(float scale)
         {
             mDuration = (long)(mDuration * scale);
             mStartOffset = (long)(mStartOffset * scale);
@@ -428,7 +472,7 @@ namespace AndroidUI.AnimationFramework
          *
          * @param startTimeMillis the start time in milliseconds
          */
-        public void setStartTime(long startTimeMillis)
+        virtual public void setStartTime(long startTimeMillis)
         {
             mStartTime = startTimeMillis;
             mStarted = mEnded = false;
@@ -441,7 +485,7 @@ namespace AndroidUI.AnimationFramework
          * Convenience method to start the animation the first time
          * {@link #getTransformation(long, Transformation)} is invoked.
          */
-        public void start()
+        virtual public void start()
         {
             setStartTime(-1);
         }
@@ -450,7 +494,7 @@ namespace AndroidUI.AnimationFramework
          * Convenience method to start the animation at the current time in
          * milliseconds.
          */
-        public void startNow()
+        virtual public void startNow()
         {
             setStartTime(AnimationUtils.currentAnimationTimeMillis(context));
         }
@@ -463,7 +507,7 @@ namespace AndroidUI.AnimationFramework
          * @param repeatMode {@link #RESTART} or {@link #REVERSE}
          * @attr ref android.R.styleable#Animation_repeatMode
          */
-        public void setRepeatMode(int repeatMode)
+        virtual public void setRepeatMode(int repeatMode)
         {
             mRepeatMode = repeatMode;
         }
@@ -477,7 +521,7 @@ namespace AndroidUI.AnimationFramework
          * @param repeatCount the number of times the animation should be repeated
          * @attr ref android.R.styleable#Animation_repeatCount
          */
-        public void setRepeatCount(int repeatCount)
+        virtual public void setRepeatCount(int repeatCount)
         {
             if (repeatCount < 0)
             {
@@ -508,7 +552,7 @@ namespace AndroidUI.AnimationFramework
          * @see #setFillBefore(bool)
          * @see #setFillAfter(bool)
          */
-        public void setFillEnabled(bool fillEnabled)
+        virtual public void setFillEnabled(bool fillEnabled)
         {
             mFillEnabled = fillEnabled;
         }
@@ -527,7 +571,7 @@ namespace AndroidUI.AnimationFramework
          *
          * @see #setFillEnabled(bool)
          */
-        public void setFillBefore(bool fillBefore)
+        virtual public void setFillBefore(bool fillBefore)
         {
             mFillBefore = fillBefore;
         }
@@ -544,7 +588,7 @@ namespace AndroidUI.AnimationFramework
          *
          * @see #setFillEnabled(bool)
          */
-        public void setFillAfter(bool fillAfter)
+        virtual public void setFillAfter(bool fillAfter)
         {
             mFillAfter = fillAfter;
         }
@@ -556,7 +600,7 @@ namespace AndroidUI.AnimationFramework
          * {@link #ZORDER_TOP}, or {@link #ZORDER_BOTTOM}.
          * @attr ref android.R.styleable#Animation_zAdjustment
          */
-        public void setZAdjustment(int zAdjustment)
+        virtual public void setZAdjustment(int zAdjustment)
         {
             mZAdjustment = zAdjustment;
         }
@@ -638,7 +682,7 @@ namespace AndroidUI.AnimationFramework
          * @return the {@link Interpolator} associated to this animation
          * @attr ref android.R.styleable#Animation_interpolator
          */
-        public Interpolator getInterpolator()
+        virtual public Interpolator getInterpolator()
         {
             return mInterpolator;
         }
@@ -650,7 +694,7 @@ namespace AndroidUI.AnimationFramework
          * @return the time in milliseconds when the animation should start or
          *         {@link #START_ON_FIRST_FRAME}
          */
-        public long getStartTime()
+        virtual public long getStartTime()
         {
             return mStartTime;
         }
@@ -661,7 +705,7 @@ namespace AndroidUI.AnimationFramework
          * @return the duration in milliseconds of the animation
          * @attr ref android.R.styleable#Animation_duration
          */
-        public long getDuration()
+        virtual public long getDuration()
         {
             return mDuration;
         }
@@ -672,7 +716,7 @@ namespace AndroidUI.AnimationFramework
          * @return the start offset in milliseconds
          * @attr ref android.R.styleable#Animation_startOffset
          */
-        public long getStartOffset()
+        virtual public long getStartOffset()
         {
             return mStartOffset;
         }
@@ -695,7 +739,7 @@ namespace AndroidUI.AnimationFramework
          * @return the number of times the animation should repeat, or {@link #INFINITE}
          * @attr ref android.R.styleable#Animation_repeatCount
          */
-        public int getRepeatCount()
+        virtual public int getRepeatCount()
         {
             return mRepeatCount;
         }
@@ -860,7 +904,7 @@ namespace AndroidUI.AnimationFramework
          *        caller and will be filled in by the animation.
          * @return True if the animation is still running
          */
-        public bool getTransformation(long currentTime, Transformation outTransformation)
+        virtual public bool getTransformation(long currentTime, Transformation outTransformation)
         {
             if (mStartTime == -1)
             {
@@ -1049,8 +1093,32 @@ namespace AndroidUI.AnimationFramework
          * @param t The Transformation object to fill in with the current
          *        transforms.
          */
-        virtual protected void applyTransformation(float interpolatedTime, Transformation t)
+        virtual public void applyTransformation(float interpolatedTime, Transformation t)
         {
+        }
+
+        /**
+         * Convert the information in the description of a size to an actual
+         * dimension
+         *
+         * @param type One of Animation.ABSOLUTE, Animation.RELATIVE_TO_SELF, or
+         *             Animation.RELATIVE_TO_PARENT.
+         * @param value The dimension associated with the type parameter
+         * @param size The size of the object being animated
+         * @param parentSize The size of the parent of the object being animated
+         * @return The dimension to use for the animation
+         */
+        virtual protected float resolveSize(int type, float value, int size, int parentSize) {
+            switch (type) {
+                case ABSOLUTE:
+                    return value;
+                case RELATIVE_TO_SELF:
+                    return size * value;
+                case RELATIVE_TO_PARENT:
+                    return parentSize * value;
+                default:
+                    return value;
+            }
         }
 
         /**
@@ -1063,7 +1131,7 @@ namespace AndroidUI.AnimationFramework
          *
          * @hide
          */
-        internal void getInvalidateRegion(int left, int top, int right, int bottom,
+        virtual internal void getInvalidateRegion(int left, int top, int right, int bottom,
                 RectF invalidate, Transformation transformation)
         {
 
@@ -1071,7 +1139,7 @@ namespace AndroidUI.AnimationFramework
             RectF previousRegion = mPreviousRegion;
 
             invalidate.set(left, top, right, bottom);
-            transformation.getMatrix().MapRect(invalidate);
+            transformation.getMatrix().Value.MapRect(invalidate);
             // Enlarge the invalidate region to account for rounding errors
             invalidate.inset(-1.0f, -1.0f);
             tempRegion.set(invalidate);
@@ -1095,7 +1163,7 @@ namespace AndroidUI.AnimationFramework
          *
          * @hide
          */
-        internal void initializeInvalidateRegion(int left, int top, int right, int bottom)
+        virtual internal void initializeInvalidateRegion(int left, int top, int right, int bottom)
         {
             RectF region = mPreviousRegion;
             region.set(left, top, right, bottom);

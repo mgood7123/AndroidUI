@@ -320,6 +320,9 @@ namespace AndroidUI
                 mScalingRequired = false;
                 mHardwareAccelerated = true;
                 mTmpInvalRect = new();
+                mTmpTransformRect = new();
+                mTmpTransformation = new();
+                mInvalidateChildLocation = new int[2];
                 this.context = context;
             }
 
@@ -387,6 +390,15 @@ namespace AndroidUI
             internal bool mScalingRequired;
             internal int mDrawingTime;
             internal bool mHardwareAccelerated;
+            internal RectF mTmpTransformRect;
+            internal Transformation mTmpTransformation;
+            /**
+             * Global to the view hierarchy used as a temporary for dealing with
+             * x/y points in the ViewGroup.invalidateChild implementation.
+             */
+            internal int[] mInvalidateChildLocation;
+
+
 
             /**
              * Used to track which View originated a requestLayout() call, used when
@@ -6250,111 +6262,112 @@ namespace AndroidUI
                 throw new Exception("attempting to invalidate a non hardware accelerated window");
             }
 
-            //Parent parent = this;
-            //if (attachInfo != null)
-            //{
-            //    // If the child is drawing an animation, we want to copy this flag onto
-            //    // ourselves and the parent to make sure the invalidate request goes
-            //    // through
-            //    bool drawAnimation = (child.mPrivateFlags & PFLAG_DRAW_ANIMATION) != 0;
+            Parent parent = this;
+            if (attachInfo != null)
+            {
+                // If the child is drawing an animation, we want to copy this flag onto
+                // ourselves and the parent to make sure the invalidate request goes
+                // through
+                bool drawAnimation = (child.mPrivateFlags & PFLAG_DRAW_ANIMATION) != 0;
 
-            //    // Check whether the child that requests the invalidate is fully opaque
-            //    // Views being animated or transformed are not considered opaque because we may
-            //    // be invalidating their old position and need the parent to paint behind them.
-            //    SKMatrix childMatrix = child.getMatrix();
-            //    // Mark the child as dirty, using the appropriate flag
-            //    // Make sure we do not set both flags at the same time
+                // Check whether the child that requests the invalidate is fully opaque
+                // Views being animated or transformed are not considered opaque because we may
+                // be invalidating their old position and need the parent to paint behind them.
+                ValueHolder<SKMatrix> childMatrix = child.getMatrix();
+                // Mark the child as dirty, using the appropriate flag
+                // Make sure we do not set both flags at the same time
 
-            //    //if (child.mLayerType != LAYER_TYPE_NONE)
-            //    //{
-            //    //    mPrivateFlags |= PFLAG_INVALIDATED;
-            //    //    mPrivateFlags &= ~PFLAG_DRAWING_CACHE_VALID;
-            //    //}
+                //if (child.mLayerType != LAYER_TYPE_NONE)
+                //{
+                //    mPrivateFlags |= PFLAG_INVALIDATED;
+                //    mPrivateFlags &= ~PFLAG_DRAWING_CACHE_VALID;
+                //}
 
-            //    int[] location = attachInfo.mInvalidateChildLocation;
-            //    location[CHILD_LEFT_INDEX] = child.mLeft;
-            //    location[CHILD_TOP_INDEX] = child.mTop;
-            //    if (!childMatrix.isIdentity() ||
-            //            (mGroupFlags & ViewGroup.FLAG_SUPPORT_STATIC_TRANSFORMATIONS) != 0)
-            //    {
-            //        RectF boundingRect = attachInfo.mTmpTransformRect;
-            //        boundingRect.set(dirty);
-            //        SKMatrix transformMatrix;
-            //        if ((mGroupFlags & View.FLAG_SUPPORT_STATIC_TRANSFORMATIONS) != 0)
-            //        {
-            //            Transformation t = attachInfo.mTmpTransformation;
-            //            bool transformed = getChildStaticTransformation(child, t);
-            //            if (transformed)
-            //            {
-            //                transformMatrix = attachInfo.mTmpMatrix;
-            //                transformMatrix.set(t.getMatrix());
-            //                if (!childMatrix.isIdentity())
-            //                {
-            //                    transformMatrix.preConcat(childMatrix);
-            //                }
-            //            }
-            //            else
-            //            {
-            //                transformMatrix = childMatrix;
-            //            }
-            //        }
-            //        else
-            //        {
-            //            transformMatrix = childMatrix;
-            //        }
-            //        transformMatrix.mapRect(boundingRect);
-            //        dirty.set((int)Math.floor(boundingRect.left),
-            //                (int)Math.floor(boundingRect.top),
-            //                (int)Math.ceil(boundingRect.right),
-            //                (int)Math.ceil(boundingRect.bottom));
-            //    }
+                int[] location = attachInfo.mInvalidateChildLocation;
+                location[CHILD_LEFT_INDEX] = child.mLeft;
+                location[CHILD_TOP_INDEX] = child.mTop;
+                if (!childMatrix.Value.IsIdentity ||
+                        (mGroupFlags & FLAG_SUPPORT_STATIC_TRANSFORMATIONS) != 0)
+                {
+                    RectF boundingRect = attachInfo.mTmpTransformRect;
+                    boundingRect.set(dirty);
+                    ValueHolder<SKMatrix> transformMatrix;
+                    if ((mGroupFlags & View.FLAG_SUPPORT_STATIC_TRANSFORMATIONS) != 0)
+                    {
+                        Transformation t = attachInfo.mTmpTransformation;
+                        bool transformed = getChildStaticTransformation(child, t);
+                        if (transformed)
+                        {
+                            transformMatrix = t.getMatrix();
+                            if (!childMatrix.Value.IsIdentity)
+                            {
+                                transformMatrix.Value.PreConcat(childMatrix.Value);
+                            }
+                        }
+                        else
+                        {
+                            transformMatrix = childMatrix;
+                        }
+                    }
+                    else
+                    {
+                        transformMatrix = childMatrix;
+                    }
+                    transformMatrix.Value.MapRect(boundingRect);
+                    dirty.set((int)Math.Floor(boundingRect.left),
+                            (int)Math.Floor(boundingRect.top),
+                            (int)Math.Ceiling(boundingRect.right),
+                            (int)Math.Ceiling(boundingRect.bottom));
+                }
 
-            //    do
-            //    {
-            //        View view = null;
-            //        if (parent is View) {
-            //            view = (View)parent;
-            //        }
+                do
+                {
+                    View view = null;
+                    if (parent is View)
+                    {
+                        view = (View)parent;
+                    }
 
-            //        if (drawAnimation)
-            //        {
-            //            if (view != null)
-            //            {
-            //                view.mPrivateFlags |= PFLAG_DRAW_ANIMATION;
-            //            }
-            //            else if (parent is ViewRootImpl) {
-            //                ((ViewRootImpl)parent).mIsAnimating = true;
-            //            }
-            //        }
+                    if (drawAnimation)
+                    {
+                        if (view != null)
+                        {
+                            view.mPrivateFlags |= PFLAG_DRAW_ANIMATION;
+                        }
+                        else if (parent is ViewRootImpl)
+                        {
+                            ((ViewRootImpl)parent).mIsAnimating = true;
+                        }
+                    }
 
-            //        // If the parent is dirty opaque or not dirty, mark it dirty with the opaque
-            //        // flag coming from the child that initiated the invalidate
-            //        if (view != null)
-            //        {
-            //            if ((view.mPrivateFlags & PFLAG_DIRTY_MASK) != PFLAG_DIRTY)
-            //            {
-            //                view.mPrivateFlags = (view.mPrivateFlags & ~PFLAG_DIRTY_MASK) | PFLAG_DIRTY;
-            //            }
-            //        }
+                    // If the parent is dirty opaque or not dirty, mark it dirty with the opaque
+                    // flag coming from the child that initiated the invalidate
+                    if (view != null)
+                    {
+                        if ((view.mPrivateFlags & PFLAG_DIRTY_MASK) != PFLAG_DIRTY)
+                        {
+                            view.mPrivateFlags = (view.mPrivateFlags & ~PFLAG_DIRTY_MASK) | PFLAG_DIRTY;
+                        }
+                    }
 
-            //        parent = parent.invalidateChildInParent(location, dirty);
-            //        if (view != null)
-            //        {
-            //            // Account for transform on current parent
-            //            SKMatrix m = view.getMatrix();
-            //            if (!m.isIdentity())
-            //            {
-            //                RectF boundingRect = attachInfo.mTmpTransformRect;
-            //                boundingRect.set(dirty);
-            //                m.mapRect(boundingRect);
-            //                dirty.set((int)Math.floor(boundingRect.left),
-            //                        (int)Math.floor(boundingRect.top),
-            //                        (int)Math.ceil(boundingRect.right),
-            //                        (int)Math.ceil(boundingRect.bottom));
-            //            }
-            //        }
-            //    } while (parent != null);
-            //}
+                    parent = parent.invalidateChildInParent(location, dirty);
+                    if (view != null)
+                    {
+                        // Account for transform on current parent
+                        ValueHolder<SKMatrix> m = view.getMatrix();
+                        if (!m.Value.IsIdentity)
+                        {
+                            RectF boundingRect = attachInfo.mTmpTransformRect;
+                            boundingRect.set(dirty);
+                            m.Value.MapRect(boundingRect);
+                            dirty.set((int)Math.Floor(boundingRect.left),
+                                    (int)Math.Floor(boundingRect.top),
+                                    (int)Math.Ceiling(boundingRect.right),
+                                    (int)Math.Ceiling(boundingRect.bottom));
+                        }
+                    }
+                } while (parent != null);
+            }
         }
 
         /**
@@ -8203,10 +8216,10 @@ namespace AndroidUI
                 float offsetX = mScrollX - child.mLeft;
                 float offsetY = mScrollY - child.mTop;
                 transformedEvent.offsetLocation(offsetX, offsetY);
-                //if (!child.hasIdentityMatrix())
-                //{
-                //transformedEvent.transform(child.getInverseMatrix());
-                //}
+                if (!child.hasIdentityMatrix())
+                {
+                    //transformedEvent.transform(child.getInverseMatrix());
+                }
 
                 handled = child.dispatchTouchEvent(transformedEvent);
             }
@@ -10234,7 +10247,7 @@ namespace AndroidUI
         internal bool hasIdentityMatrix()
         {
             //return mRenderNode.hasIdentityMatrix();
-            return mTransformationInfo == null ? false : mTransformationInfo.mMatrix.IsIdentity;
+            return mTransformationInfo == null ? false : mTransformationInfo.mMatrix.Value.IsIdentity;
         }
 
         public class TransformationInfo
@@ -10246,7 +10259,7 @@ namespace AndroidUI
              * Do *not* use this variable directly; instead call getMatrix(), which will
              * load the value from the View's RenderNode.
              */
-            public readonly SKMatrix mMatrix = new();
+            public readonly ValueHolder<SKMatrix> mMatrix = new(new());
 
             /**
              * The inverse transform matrix for the View. This transform is calculated
@@ -10255,7 +10268,7 @@ namespace AndroidUI
              * Do *not* use this variable directly; instead call getInverseMatrix(),
              * which will load the value from the View's RenderNode.
              */
-            public SKMatrix mInverseMatrix;
+            public ValueHolder<SKMatrix> mInverseMatrix;
 
             /**
              * The opacity of the View. This is a value from 0 to 1, where 0 means
@@ -10285,10 +10298,10 @@ namespace AndroidUI
          * @see #getPivotY()
          * @return The current transform matrix for the view
          */
-        public SKMatrix getMatrix()
+        public ValueHolder<SKMatrix> getMatrix()
         {
             ensureTransformationInfo();
-            SKMatrix matrix = mTransformationInfo.mMatrix;
+            ValueHolder<SKMatrix> matrix = mTransformationInfo.mMatrix;
             //mRenderNode.getMatrix(matrix);
             return matrix;
         }
@@ -10317,7 +10330,7 @@ namespace AndroidUI
                 mTransformationInfo.mInverseMatrix = new SKMatrix();
             }
             //mRenderNode.getInverseMatrix(matrix);
-            return mTransformationInfo.mInverseMatrix.Invert();
+            return mTransformationInfo.mInverseMatrix.Value.Invert();
         }
 
 
@@ -12723,8 +12736,7 @@ namespace AndroidUI
                                 // Undo the scroll translation, apply the transformation matrix,
                                 // then redo the scroll translate to get the correct result.
                                 canvas.Translate(-transX, -transY);
-                                var m = transformToApply.getMatrix();
-                                canvas.Concat(ref m);
+                                canvas.Concat(ref transformToApply.getMatrix().Value);
                                 canvas.Translate(transX, transY);
                             //}
                             parent.mGroupFlags |= FLAG_CLEAR_TRANSFORMATION;
@@ -12743,8 +12755,7 @@ namespace AndroidUI
                     )
                     {
                         canvas.Translate(-transX, -transY);
-                        var m = getMatrix();
-                        canvas.Concat(ref m);
+                        canvas.Concat(ref getMatrix().Value);
                         canvas.Translate(transX, transY);
                     }
                 }

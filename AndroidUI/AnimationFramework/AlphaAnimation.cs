@@ -27,6 +27,14 @@ namespace AndroidUI.AnimationFramework
         private float mFromAlpha;
         private float mToAlpha;
 
+        public override AlphaAnimation Clone()
+        {
+            var obj = (AlphaAnimation)base.Clone();
+            obj.mFromAlpha = mFromAlpha;
+            obj.mToAlpha = mToAlpha;
+            return obj;
+        }
+
         /**
          * Constructor to use when building an AlphaAnimation from code
          * 
@@ -44,7 +52,7 @@ namespace AndroidUI.AnimationFramework
          * Changes the alpha property of the supplied {@link Transformation}
          */
         override
-            protected void applyTransformation(float interpolatedTime, Transformation t)
+            public void applyTransformation(float interpolatedTime, Transformation t)
         {
             float alpha = mFromAlpha;
             t.setAlpha(alpha + ((mToAlpha - alpha) * interpolatedTime));

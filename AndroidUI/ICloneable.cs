@@ -14,10 +14,23 @@
  * limitations under the License.
  */
 
+using System.Runtime.Serialization;
+
 namespace AndroidUI
 {
     public interface ICloneable
     {
-        virtual public object Clone() => null;
+        /// <summary>
+        /// returns a new UNINITIALIZED instance of this object
+        /// <br></br>
+        /// <br></br> this is useful when since there is no way to know what constructors the subclasses will have, nor how to call them
+        /// </summary>
+        public static object Clone(object obj) => obj == null ? null : FormatterServices.GetUninitializedObject(obj.GetType());
+
+        /// <summary>
+        /// when overriding this class, `virtual public YOUR_CLASS_HERE Clone()` if you directly implement ICloneable, call ICloneable.Clone(this)
+        /// <br></br><br></br><inheritdoc cref="Clone(object)"/>
+        /// </summary>
+        public virtual object Clone() => null;
     }
 }

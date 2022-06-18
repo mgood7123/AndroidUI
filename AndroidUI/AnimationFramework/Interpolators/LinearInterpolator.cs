@@ -21,11 +21,6 @@ namespace AndroidUI.AnimationFramework.Interpolators
      */
     public class LinearInterpolator : BaseInterpolator
     {
-
-        public LinearInterpolator()
-        {
-        }
-
         override public float getInterpolation(float input)
         {
             return input;

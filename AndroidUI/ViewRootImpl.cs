@@ -1393,13 +1393,13 @@ namespace AndroidUI
          * require to notify the WM drawing is complete.
          */
         int mDrawsNeededToReport = 0;
-        private int mScrollY;
-        private int mCurScrollY;
-        private Rect mDirty = new();
-        private int mCanvasOffsetX;
-        private int mCanvasOffsetY;
-        private bool mIsAnimating;
-        private bool mInvalidateRootRequested;
+        internal int mScrollY;
+        internal int mCurScrollY;
+        internal Rect mDirty = new();
+        internal int mCanvasOffsetX;
+        internal int mCanvasOffsetY;
+        internal bool mIsAnimating;
+        internal bool mInvalidateRootRequested;
         internal bool mAppVisible = false;
 
         internal sealed class InvalidateOnAnimationRunnable : Runnable

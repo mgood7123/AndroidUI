@@ -143,12 +143,17 @@ namespace MainApp
                         var bm = AndroidUI.BitmapFactory.decodeFile("C:/Users/small/Pictures/Screenshot 2022-05-19 034147.jpeg");
                         image.setImageBitmap(bm);
                         image.setScaleType(AndroidUI.ImageView.ScaleType.CENTER_INSIDE);
-                        AlphaAnimation anim = new(Context, 0.15f, 1.0f);
-                        anim.setDuration(120);
+                        
+                        //AlphaAnimation anim = new(Context, 0.15f, 1.0f);
+                        RotateAnimation anim = new(Context, 0, 180);
+                        //TranslateAnimation anim = new(Context, 0, 100, 0, 100);
+
+                        anim.setDuration(2200);
                         anim.setRepeatCount(Animation.INFINITE);
                         anim.setRepeatMode(Animation.REVERSE);
                         anim.setAnimationListener(new l());
                         image.startAnimation(anim);
+
                         SetContentView(image);
                     }
                 }

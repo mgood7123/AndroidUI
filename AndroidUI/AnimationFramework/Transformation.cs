@@ -110,7 +110,7 @@ namespace AndroidUI.AnimationFramework
         public void set(Transformation t)
         {
             mAlpha = t.getAlpha();
-            mMatrix.Value = t.getMatrix();
+            mMatrix.Value = t.getMatrix().Value;
             if (t.mHasClipRect)
             {
                 setClipRect(t.getClipRect());
@@ -131,7 +131,7 @@ namespace AndroidUI.AnimationFramework
         public void compose(Transformation t)
         {
             mAlpha *= t.getAlpha();
-            mMatrix.Value.PreConcat(t.getMatrix());
+            mMatrix.Value.PreConcat(t.getMatrix().Value);
             if (t.mHasClipRect)
             {
                 Rect bounds = t.getClipRect();
@@ -155,7 +155,7 @@ namespace AndroidUI.AnimationFramework
         public void postCompose(Transformation t)
         {
             mAlpha *= t.getAlpha();
-            mMatrix.Value.PostConcat(t.getMatrix());
+            mMatrix.Value.PostConcat(t.getMatrix().Value);
             if (t.mHasClipRect)
             {
                 Rect bounds = t.getClipRect();
@@ -172,12 +172,12 @@ namespace AndroidUI.AnimationFramework
         }
 
         /**
-         * @return The 3x3 Matrix representing the trnasformation to apply to the
+         * @return The 3x3 Matrix representing the transformation to apply to the
          * coordinates of the object being animated
          */
-        public SKMatrix getMatrix()
+        public ValueHolder<SKMatrix> getMatrix()
         {
-            return mMatrix.Value;
+            return mMatrix;
         }
 
         /**

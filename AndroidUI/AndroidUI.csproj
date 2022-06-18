@@ -19,7 +19,7 @@
   <ItemGroup>
     <PackageReference Include="AndroidUI.Native.Nuget" Version="0.0.107" />
     <PackageReference Include="HPSocket.Net" Version="5.8.8.2" />
-    <PackageReference Include="SkiaSharp" Version="2.88.1-preview.3288" />
+    <PackageReference Include="SkiaSharp" Version="2.88.1-preview.3292" />
     <PackageReference Include="SkiaSharp.HarfBuzz" Version="2.88.1-preview.3223" />
     <PackageReference Include="SkiaSharp.Views" Version="2.88.1-preview.3223" />
     <PackageReference Include="System.IO.Pipelines" Version="7.0.0-preview.4.22229.4" />

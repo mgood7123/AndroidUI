@@ -234,7 +234,7 @@ namespace AndroidUI.AnimationFramework
          *
          * @return true if animations will overlap, false otherwise
          */
-        public bool willOverlap()
+        virtual public bool willOverlap()
         {
             return mDelay < 1.0f;
         }
@@ -311,7 +311,7 @@ namespace AndroidUI.AnimationFramework
          * @see #getTransformedIndex(android.view.animation.LayoutAnimationController.AnimationParameters)
          * @see android.view.ViewGroup.LayoutParams
          */
-        protected long getDelayForView(View view)
+        virtual protected long getDelayForView(View view)
         {
             View.LayoutParams lp = view.getLayoutParams();
             AnimationParameters params_ = lp.layoutAnimationParameters;
@@ -358,7 +358,7 @@ namespace AndroidUI.AnimationFramework
                     {
                         mRandomizer = new Random();
                     }
-                    return (int)(params_.count * (float)mRandomizer.NextDouble());
+                    return (int)(params_.count * mRandomizer.NextSingle());
                 case ORDER_NORMAL:
                 default:
                     return params_.index;

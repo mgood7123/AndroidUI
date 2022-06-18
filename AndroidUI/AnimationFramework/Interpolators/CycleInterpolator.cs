@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2006 The Android Open Source Project
+ * Copyright (C) 2007 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,30 @@
 
 namespace AndroidUI.AnimationFramework.Interpolators
 {
-    public class AccelerateDecelerateInterpolator : BaseInterpolator
+    /**
+     * Repeats the animation for a specified number of cycles. The
+     * rate of change follows a sinusoidal pattern.
+     *
+     */
+    public class CycleInterpolator : BaseInterpolator, ICloneable
     {
+        virtual public CycleInterpolator Clone()
+        {
+            var obj = (CycleInterpolator)ICloneable.Clone(this);
+            obj.mCycles = mCycles;
+            return obj;
+        }
+
+        public CycleInterpolator(float cycles)
+        {
+            mCycles = cycles;
+        }
+
         public override float getInterpolation(float input)
         {
-            return (float)(Math.Cos((input + 1) * Math.PI) / 2.0f) + 0.5f;
+            return (float)(Math.Sin(2 * mCycles * Math.PI * input));
         }
+
+        private float mCycles;
     }
 }

@@ -21,24 +21,6 @@ namespace AndroidUI.AnimationFramework.Interpolators
      */
     abstract public class BaseInterpolator : Interpolator
     {
-        private int mChangingConfiguration;
-
         public abstract float getInterpolation(float input);
-
-        /**
-         * @hide
-         */
-        internal int getChangingConfiguration()
-        {
-            return mChangingConfiguration;
-        }
-
-        /**
-         * @hide
-         */
-        internal void setChangingConfiguration(int changingConfiguration)
-        {
-            mChangingConfiguration = changingConfiguration;
-        }
     }
 }
