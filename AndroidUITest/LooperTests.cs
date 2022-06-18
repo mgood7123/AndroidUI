@@ -34,7 +34,7 @@ namespace AndroidUITest
 
             public override void Run(TestGroup nullableInstance)
             {
-                Tools.SKIP();
+                //Tools.SKIP();
                 AndroidUI.Context c = new();
                 Looper m = null;
                 Handler h = null;
@@ -49,7 +49,7 @@ namespace AndroidUITest
                     Console.WriteLine("obtained handle");
                     Console.WriteLine("looping...");
                     Looper.loop(c);
-                    Console.WriteLine("finished looping");
+                    Console.WriteLine("finished looping, sleeping for 5 seconds");
                     Thread.Sleep(5000);
                 });
                 Console.WriteLine("joining for 1 second...");
