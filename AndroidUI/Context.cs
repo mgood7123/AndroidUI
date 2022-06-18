@@ -180,12 +180,15 @@ namespace AndroidUI
         {
             mAttachInfo = new(this);
 
-            if (application.context != null)
+            if (application != null)
             {
-                throw new ApplicationException("Application already has a context");
+                if (application.context != null)
+                {
+                    throw new ApplicationException("Application already has a context");
+                }
+                application.context = this;
+                this.application = application;
             }
-            application.context = this;
-            this.application = application;
             storage = new();
         }
     }
