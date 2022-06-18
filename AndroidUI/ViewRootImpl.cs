@@ -77,7 +77,7 @@ namespace AndroidUI
                 {
                     dirty.offset(0, -mCurScrollY);
                 }
-                if (mAttachInfo.mScalingRequired)
+                if (context.mAttachInfo.mScalingRequired)
                 {
                     dirty.inset(-1, -1);
                 }
@@ -96,7 +96,7 @@ namespace AndroidUI
             localDirty.union(dirty.left, dirty.top, dirty.right, dirty.bottom);
             // Intersect with the bounds of the window to skip
             // updates that lie outside of the visible region
-            float appScale = mAttachInfo.mApplicationScale;
+            float appScale = context.mAttachInfo.mApplicationScale;
             bool intersected = localDirty.intersect(0, 0,
                     (int)(mWidth * appScale + 0.5f), (int)(mHeight * appScale + 0.5f));
             if (!intersected)
@@ -107,18 +107,6 @@ namespace AndroidUI
             {
                 scheduleTraversals();
             }
-        }
-
-        private Application application;
-
-        internal Application GetApplication()
-        {
-            return application;
-        }
-
-        internal void SetApplication(Application value)
-        {
-            application = value;
         }
 
         private View mContentParent;
@@ -192,7 +180,7 @@ namespace AndroidUI
         {
         }
 
-        View.AttachInfo mAttachInfo;
+        Context context;
         bool mFirst; // true for the first time the view is added
         private bool mWillDrawSoon;
         private bool mNewSurfaceNeeded;
@@ -292,12 +280,12 @@ namespace AndroidUI
         private bool ensureTouchModeLocally(bool inTouchMode)
         {
             if (DBG) Log.v("touchmode", "ensureTouchModeLocally(" + inTouchMode + "), current "
-                    + "touch mode is " + mAttachInfo.mInTouchMode);
+                    + "touch mode is " + context.mAttachInfo.mInTouchMode);
 
-            if (mAttachInfo.mInTouchMode == inTouchMode) return false;
+            if (context.mAttachInfo.mInTouchMode == inTouchMode) return false;
 
-            mAttachInfo.mInTouchMode = inTouchMode;
-            //mAttachInfo.mTreeObserver.dispatchOnTouchModeChanged(inTouchMode);
+            context.mAttachInfo.mInTouchMode = inTouchMode;
+            //context.mAttachInfo.mTreeObserver.dispatchOnTouchModeChanged(inTouchMode);
 
             return (inTouchMode) ? enterTouchMode() : leaveTouchMode();
         }
@@ -528,13 +516,11 @@ namespace AndroidUI
                 mLayoutRequested = true;
                 desiredWindowWidth = canvasWidth;
                 desiredWindowHeight = canvasHeight;
-                if (mAttachInfo == null)
+                if (context == null)
                 {
-                    throw new Exception("null attach info");
-                    mAttachInfo = new();
-                    mAttachInfo.mViewRootImpl = this;
+                    throw new Exception("null context");
                 }
-                mView.dispatchAttachedToWindow(mAttachInfo, 0);
+                mView.dispatchAttachedToWindow(context.mAttachInfo, 0);
             }
             else
             {
@@ -552,7 +538,7 @@ namespace AndroidUI
 
             if (viewVisibilityChanged)
             {
-                mAttachInfo.mWindowVisibility = viewVisibility;
+                context.mAttachInfo.mWindowVisibility = viewVisibility;
                 host.dispatchWindowVisibilityChanged(viewVisibility);
                 if (viewUserVisibilityChanged)
                 {
@@ -566,7 +552,7 @@ namespace AndroidUI
             }
 
             // Execute enqueued actions on every traversal in case a detached view enqueued an action
-            getRunQueue().executeActions(mAttachInfo.mHandler);
+            getRunQueue().executeActions(context.mAttachInfo.mHandler);
 
             bool layoutRequested = mLayoutRequested && (
                 !mStopped ||
@@ -581,7 +567,7 @@ namespace AndroidUI
                 {
                     // make sure touch mode code executes by setting cached value
                     // to opposite of the added touch mode.
-                    mAttachInfo.mInTouchMode = true; // !mAddedTouchMode;
+                    context.mAttachInfo.mInTouchMode = true; // !mAddedTouchMode;
                     ensureTouchModeLocally(mAddedTouchMode);
                 }
                 else
@@ -598,24 +584,24 @@ namespace AndroidUI
             //    params = lp;
             //}
 
-            //if (mAttachInfo.mForceReportNewAttributes)
+            //if (context.mAttachInfo.mForceReportNewAttributes)
             //{
-            //    mAttachInfo.mForceReportNewAttributes = false;
+            //    context.mAttachInfo.mForceReportNewAttributes = false;
             //    params = lp;
             //}
 
-            if (mFirst || mAttachInfo.mViewVisibilityChanged)
+            if (mFirst || context.mAttachInfo.mViewVisibilityChanged)
             {
-                mAttachInfo.mViewVisibilityChanged = false;
+                context.mAttachInfo.mViewVisibilityChanged = false;
                 //int resizeMode = mSoftInputMode & SOFT_INPUT_MASK_ADJUST;
                 // If we are in auto resize mode, then we need to determine
                 // what mode to use now.
                 //if (resizeMode == WindowManager.LayoutParams.SOFT_INPUT_ADJUST_UNSPECIFIED)
                 //{
-                //    int N = mAttachInfo.mScrollContainers.size();
+                //    int N = context.mAttachInfo.mScrollContainers.size();
                 //    for (int i = 0; i < N; i++)
                 //    {
-                //        if (mAttachInfo.mScrollContainers.get(i).isShown())
+                //        if (context.mAttachInfo.mScrollContainers.get(i).isShown())
                 //        {
                 //            resizeMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE;
                 //        }
@@ -667,8 +653,8 @@ namespace AndroidUI
             // If there are no inset listeners remaining then we may still need to compute
             // insets in case the old insets were non-empty and must be reset.
             bool computesInternalInsets = false
-            //        mAttachInfo.mTreeObserver.hasComputeInternalInsetsListeners()
-            //        || mAttachInfo.mHasNonEmptyGivenInternalInsets
+            //        context.mAttachInfo.mTreeObserver.hasComputeInternalInsetsListeners()
+            //        || context.mAttachInfo.mHasNonEmptyGivenInternalInsets
                 ;
 
             bool insetsPending = false;
@@ -738,12 +724,12 @@ namespace AndroidUI
                                 host.getMeasuredHeight()); // + ", params=" + params);
                     }
 
-                    //if (mAttachInfo.mThreadedRenderer != null)
+                    //if (context.mAttachInfo.mThreadedRenderer != null)
                     //{
                     //    // relayoutWindow may decide to destroy mSurface. As that decision
                     //    // happens in WindowManager service, we need to be defensive here
                     //    // and stop using the surface in case it gets destroyed.
-                    //    if (mAttachInfo.mThreadedRenderer.pause())
+                    //    if (context.mAttachInfo.mThreadedRenderer.pause())
                     //    {
                     //        // Animations were running so we need to push a frame
                     //        // to resume them
@@ -809,7 +795,7 @@ namespace AndroidUI
                     //mLastSurfaceSize.set(mSurfaceSize.x, mSurfaceSize.y);
                     //}
                     //bool alwaysConsumeSystemBarsChanged = 
-                    //mPendingAlwaysConsumeSystemBars != mAttachInfo.mAlwaysConsumeSystemBars;
+                    //mPendingAlwaysConsumeSystemBars != context.mAttachInfo.mAlwaysConsumeSystemBars;
                     //updateColorModeIfNeeded(lp.getColorMode());
                     //surfaceCreated = !hadSurface && mSurface.isValid();
                     //surfaceDestroyed = hadSurface && !mSurface.isValid();
@@ -827,7 +813,7 @@ namespace AndroidUI
 
                     //if (alwaysConsumeSystemBarsChanged)
                     //{
-                    //    mAttachInfo.mAlwaysConsumeSystemBars = mPendingAlwaysConsumeSystemBars;
+                    //    context.mAttachInfo.mAlwaysConsumeSystemBars = mPendingAlwaysConsumeSystemBars;
                     //    dispatchApplyInsets = true;
                     //}
                     //if (updateCaptionInsets())
@@ -835,9 +821,9 @@ namespace AndroidUI
                     //    dispatchApplyInsets = true;
                     //}
                     //if (dispatchApplyInsets || mLastSystemUiVisibility !=
-                    //        mAttachInfo.mSystemUiVisibility || mApplyInsetsRequested)
+                    //        context.mAttachInfo.mSystemUiVisibility || mApplyInsetsRequested)
                     //{
-                    //    mLastSystemUiVisibility = mAttachInfo.mSystemUiVisibility;
+                    //    mLastSystemUiVisibility = context.mAttachInfo.mSystemUiVisibility;
                     //    dispatchApplyInsets(host);
                     //    // We applied insets so force contentInsetsChanged to ensure the
                     //    // hierarchy is measured below.
@@ -859,17 +845,17 @@ namespace AndroidUI
                         // Only initialize up-front if transparent regions are not
                         // requested, otherwise defer to see if the entire window
                         // will be transparent
-                        //if (mAttachInfo.mThreadedRenderer != null)
+                        //if (context.mAttachInfo.mThreadedRenderer != null)
                         //{
                         //    try
                         //    {
-                        //        hwInitialized = mAttachInfo.mThreadedRenderer.initialize(mSurface);
+                        //        hwInitialized = context.mAttachInfo.mThreadedRenderer.initialize(mSurface);
                         //        if (hwInitialized && (host.mPrivateFlags
                         //                        & View.PFLAG_REQUEST_TRANSPARENT_REGIONS) == 0)
                         //        {
                         //            // Don't pre-allocate if transparent regions
                         //            // are requested as they may not be needed
-                        //            mAttachInfo.mThreadedRenderer.allocateBuffers();
+                        //            context.mAttachInfo.mThreadedRenderer.allocateBuffers();
                         //        }
                         //    }
                         //    catch (OutOfResourcesException e)
@@ -898,13 +884,13 @@ namespace AndroidUI
                         //// Our surface is gone
                         //if (isHardwareEnabled())
                         //{
-                        //    mAttachInfo.mThreadedRenderer.destroy();
+                        //    context.mAttachInfo.mThreadedRenderer.destroy();
                         //}
                     }
                     else if ((surfaceReplaced
                           || surfaceSizeChanged || windowRelayoutWasForced)
                     //&& mSurfaceHolder == null
-                    //&& mAttachInfo.mThreadedRenderer != null
+                    //&& context.mAttachInfo.mThreadedRenderer != null
                     //&& mSurface.isValid()
                     )
                     {
@@ -919,7 +905,7 @@ namespace AndroidUI
                             // Note that frame size change doesn't always imply surface size change (eg.
                             // drag resizing uses fullscreen surface), need to check surfaceSizeChanged
                             // flag from WindowManager.
-                            //mAttachInfo.mThreadedRenderer.updateSurface(mSurface);
+                            //context.mAttachInfo.mThreadedRenderer.updateSurface(mSurface);
                         }
                         catch (OutOfMemoryException e)
                         {
@@ -940,7 +926,7 @@ namespace AndroidUI
                     //                        && mWinFrame.height() == mPendingBackDropFrame.height();
                     //        // TODO: Need cutout?
                     //        startDragResizing(mPendingBackDropFrame, !backdropSizeMatchesFrame,
-                    //                mAttachInfo.mContentInsets, mAttachInfo.mStableInsets, mResizeMode);
+                    //                context.mAttachInfo.mContentInsets, context.mAttachInfo.mStableInsets, mResizeMode);
                     //    }
                     //    else
                     //    {
@@ -968,8 +954,8 @@ namespace AndroidUI
                 if (DEBUG_ORIENTATION) Log.v(
                         TAG, "Relayout returned: frame=" + frame);
 
-                mAttachInfo.mWindowLeft = frame.left;
-                mAttachInfo.mWindowTop = frame.top;
+                context.mAttachInfo.mWindowLeft = frame.left;
+                context.mAttachInfo.mWindowTop = frame.top;
 
                 // !!FIXME!! This next section handles the case where we did not get the
                 // window size we asked for. We should avoid this by getting a maximum size from
@@ -1039,7 +1025,7 @@ namespace AndroidUI
                     }
                 }
 
-                //ThreadedRenderer threadedRenderer = mAttachInfo.mThreadedRenderer;
+                //ThreadedRenderer threadedRenderer = context.mAttachInfo.mThreadedRenderer;
                 //if (threadedRenderer != null && threadedRenderer.isEnabled())
                 //{
                 //    if (hwInitialized
@@ -1144,7 +1130,7 @@ namespace AndroidUI
 
             bool didLayout = layoutRequested && (!mStopped || wasReportNextDraw);
             bool triggerGlobalLayoutListener = didLayout
-                    || mAttachInfo.mRecomputeGlobalAttributes;
+                    || context.mAttachInfo.mRecomputeGlobalAttributes;
             if (didLayout)
             {
                 performLayout(
@@ -1214,19 +1200,19 @@ namespace AndroidUI
 
             if (triggerGlobalLayoutListener)
             {
-                mAttachInfo.mRecomputeGlobalAttributes = false;
-                //mAttachInfo.mTreeObserver.dispatchOnGlobalLayout();
+                context.mAttachInfo.mRecomputeGlobalAttributes = false;
+                //context.mAttachInfo.mTreeObserver.dispatchOnGlobalLayout();
             }
 
             if (computesInternalInsets)
             {
                 //// Clear the original insets.
-                //ViewTreeObserver.InternalInsetsInfo insets = mAttachInfo.mGivenInternalInsets;
+                //ViewTreeObserver.InternalInsetsInfo insets = context.mAttachInfo.mGivenInternalInsets;
                 //insets.reset();
 
                 //// Compute new insets in place.
-                //mAttachInfo.mTreeObserver.dispatchOnComputeInternalInsets(insets);
-                //mAttachInfo.mHasNonEmptyGivenInternalInsets = !insets.isEmpty();
+                //context.mAttachInfo.mTreeObserver.dispatchOnComputeInternalInsets(insets);
+                //context.mAttachInfo.mHasNonEmptyGivenInternalInsets = !insets.isEmpty();
 
                 //// Tell the window manager.
                 //if (insetsPending || !mLastGivenInsets.equals(insets))
@@ -1310,7 +1296,7 @@ namespace AndroidUI
             }
 
             bool changedVisibility = (viewVisibilityChanged || mFirst) && isViewVisible;
-            bool hasWindowFocus = mAttachInfo.mHasWindowFocus && isViewVisible;
+            bool hasWindowFocus = context.mAttachInfo.mHasWindowFocus && isViewVisible;
             bool regainedFocus = hasWindowFocus && mLostWindowFocus;
             if (regainedFocus)
             {
@@ -1350,7 +1336,7 @@ namespace AndroidUI
             }
 
             bool cancelDraw =
-                //mAttachInfo.mTreeObserver.dispatchOnPreDraw() ||
+                //context.mAttachInfo.mTreeObserver.dispatchOnPreDraw() ||
                 !isViewVisible
             ;
 
@@ -1394,7 +1380,7 @@ namespace AndroidUI
                 }
             }
 
-            //if (mAttachInfo.mContentCaptureEvents != null)
+            //if (context.mAttachInfo.mContentCaptureEvents != null)
             //{
             //    notifyContentCatpureEvents();
             //}
@@ -1529,11 +1515,11 @@ namespace AndroidUI
         private const int MSG_INVALIDATE_RECT = 2;
 
         sealed class ViewRootHandler : Handler {
-            public ViewRootHandler()
+            public ViewRootHandler(Context context) : base(context)
             {
             }
 
-            public ViewRootHandler(Callback callback) : base(callback)
+            public ViewRootHandler(Context context, Callback callback) : base(context, callback)
             {
             }
 
@@ -1545,11 +1531,11 @@ namespace AndroidUI
             {
             }
 
-            internal ViewRootHandler(bool async) : base(async)
+            internal ViewRootHandler(Context context, bool async) : base(context, async)
             {
             }
 
-            internal ViewRootHandler(Callback callback, bool async) : base(callback, async)
+            internal ViewRootHandler(Context context, Callback callback, bool async) : base(context, callback, async)
             {
             }
 
@@ -1632,9 +1618,9 @@ namespace AndroidUI
 
         public ViewRootImpl() : this(null) { }
 
-        internal ViewRootImpl(View.AttachInfo info)
+        internal ViewRootImpl(Context context)
         {
-            mAttachInfo = info;
+            this.context = context;
             mFirst = true;
             mView = new()
             {
@@ -1653,12 +1639,12 @@ namespace AndroidUI
                 // we have a main looper set up for us
                 if (visible)
                 {
-                    mHandler = new ViewRootHandler(application.Looper);
-                    mAttachInfo.mHandler = mHandler;
+                    mHandler = new ViewRootHandler(context.application.Looper);
+                    context.mAttachInfo.mHandler = mHandler;
                 }
                 else
                 {
-                    mAttachInfo.mHandler = null;
+                    context.mAttachInfo.mHandler = null;
                     mHandler = null;
                 }
                 mAppVisible = visible;
@@ -1755,7 +1741,7 @@ namespace AndroidUI
                     bool canUseAsync = draw(canvas, fullRedrawNeeded);
                     //if (usingAsyncReport && !canUseAsync)
                     //{
-                    //    mAttachInfo.mThreadedRenderer.setFrameCompleteCallback(null);
+                    //    context.mAttachInfo.mThreadedRenderer.setFrameCompleteCallback(null);
                     //    usingAsyncReport = false;
                     //}
                 }
@@ -1771,14 +1757,14 @@ namespace AndroidUI
 
                 // For whatever reason we didn't create a HardwareRenderer, end any
                 // hardware animations that are now dangling
-                if (mAttachInfo.mPendingAnimatingRenderNodes != null)
+                if (context.mAttachInfo.mPendingAnimatingRenderNodes != null)
                 {
-                    int count = mAttachInfo.mPendingAnimatingRenderNodes.Count;
+                    int count = context.mAttachInfo.mPendingAnimatingRenderNodes.Count;
                     for (int i = 0; i < count; i++)
                     {
-                        //mAttachInfo.mPendingAnimatingRenderNodes.ElementAt(i).endAllAnimators();
+                        //context.mAttachInfo.mPendingAnimatingRenderNodes.ElementAt(i).endAllAnimators();
                     }
-                    mAttachInfo.mPendingAnimatingRenderNodes.Clear();
+                    context.mAttachInfo.mPendingAnimatingRenderNodes.Clear();
                 }
 
                 if (mReportNextDraw)
@@ -1799,9 +1785,9 @@ namespace AndroidUI
                     //    mWindowDrawCountDown = null;
                     //}
 
-                    //if (mAttachInfo.mThreadedRenderer != null)
+                    //if (context.mAttachInfo.mThreadedRenderer != null)
                     //{
-                    //    mAttachInfo.mThreadedRenderer.setStopped(mStopped);
+                    //    context.mAttachInfo.mThreadedRenderer.setStopped(mStopped);
                     //}
 
                     if (DEBUG_DRAW)
@@ -1818,9 +1804,9 @@ namespace AndroidUI
                     //}
                     //else if (!usingAsyncReport)
                     //{
-                    //    if (mAttachInfo.mThreadedRenderer != null)
+                    //    if (context.mAttachInfo.mThreadedRenderer != null)
                     //    {
-                    //        mAttachInfo.mThreadedRenderer.fence();
+                    //        context.mAttachInfo.mThreadedRenderer.fence();
                     //    }
                     //    pendingDrawFinished();
                     //}
@@ -2058,8 +2044,8 @@ namespace AndroidUI
 
         bool scrollToRectOrFocus(Rect rectangle, bool immediate)
         {
-            //Rect ci = mAttachInfo.mContentInsets;
-            //Rect vi = mAttachInfo.mVisibleInsets;
+            //Rect ci = context.mAttachInfo.mContentInsets;
+            //Rect vi = context.mAttachInfo.mVisibleInsets;
             int scrollY = 0;
             bool handled = false;
 
@@ -2217,22 +2203,23 @@ namespace AndroidUI
 
             if (!sFirstDrawComplete)
             {
-                lock(sFirstDrawHandlers) {
-                    sFirstDrawComplete = true;
-                    int count = sFirstDrawHandlers.Count;
+                var firstdrawHandlers = sFirstDrawHandlers.Value;
+                lock (firstdrawHandlers) {
+                    sFirstDrawComplete.Value = true;
+                    int count = firstdrawHandlers.Count;
                     for (int i = 0; i < count; i++)
                     {
-                        mHandler.post(sFirstDrawHandlers.ElementAt(i));
+                        mHandler.post(firstdrawHandlers.ElementAt(i));
                     }
                 }
             }
 
             scrollToRectOrFocus(null, false);
 
-            if (mAttachInfo.mViewScrollChanged)
+            if (context.mAttachInfo.mViewScrollChanged)
             {
-                mAttachInfo.mViewScrollChanged = false;
-                //mAttachInfo.mTreeObserver.dispatchOnScrollChanged();
+                context.mAttachInfo.mViewScrollChanged = false;
+                //context.mAttachInfo.mTreeObserver.dispatchOnScrollChanged();
             }
 
             bool animating = false; // mScroller != null && mScroller.computeScrollOffset();
@@ -2254,8 +2241,8 @@ namespace AndroidUI
                 //}
             }
 
-            float appScale = mAttachInfo.mApplicationScale;
-            //bool scalingRequired = mAttachInfo.mScalingRequired;
+            float appScale = context.mAttachInfo.mApplicationScale;
+            //bool scalingRequired = context.mAttachInfo.mScalingRequired;
 
             Rect dirty = mDirty;
             //if (mSurfaceHolder != null)
@@ -2282,7 +2269,7 @@ namespace AndroidUI
                         appScale + ", width=" + mWidth + ", height=" + mHeight);
             }
 
-            //mAttachInfo.mTreeObserver.dispatchOnDraw();
+            //context.mAttachInfo.mTreeObserver.dispatchOnDraw();
 
             int xOffset = -mCanvasOffsetX;
             int yOffset = -mCanvasOffsetY + curScrollY;
@@ -2298,10 +2285,10 @@ namespace AndroidUI
             }
 
             bool accessibilityFocusDirty = false;
-            Drawable drawable = null; // mAttachInfo.mAccessibilityFocusDrawable;
+            Drawable drawable = null; // context.mAttachInfo.mAccessibilityFocusDrawable;
             if (drawable != null)
             {
-                //Rect bounds = mAttachInfo.mTmpInvalRect;
+                //Rect bounds = context.mAttachInfo.mTmpInvalRect;
                 //bool hasFocus = getAccessibilityFocusedRect(bounds);
                 //if (!hasFocus)
                 //{
@@ -2313,7 +2300,7 @@ namespace AndroidUI
                 //}
             }
 
-            mAttachInfo.mDrawingTime = (int)(NanoTime.currentTimeNanos() / NanoTime.NANOS_PER_MS); // mChoreographer.getFrameTimeNanos() / TimeUtils.NANOS_PER_MS;
+            context.mAttachInfo.mDrawingTime = (int)(NanoTime.currentTimeNanos() / NanoTime.NANOS_PER_MS); // mChoreographer.getFrameTimeNanos() / TimeUtils.NANOS_PER_MS;
 
             bool useAsyncReport = false;
             if (!dirty.isEmpty() || mIsAnimating || accessibilityFocusDirty
@@ -2338,7 +2325,7 @@ namespace AndroidUI
 
                     if (invalidateRoot)
                     {
-                        //mAttachInfo.mThreadedRenderer.invalidateRoot();
+                        //context.mAttachInfo.mThreadedRenderer.invalidateRoot();
                     }
 
                     dirty.setEmpty();
@@ -2352,7 +2339,7 @@ namespace AndroidUI
                         // report next draw overrides setStopped()
                         // This value is re-sync'd to the value of mStopped
                         // in the handling of mReportNextDraw post-draw.
-                        //mAttachInfo.mThreadedRenderer.setStopped(false);
+                        //context.mAttachInfo.mThreadedRenderer.setStopped(false);
                     }
 
                     //if (updated)
@@ -2362,8 +2349,8 @@ namespace AndroidUI
 
                     useAsyncReport = true;
 
-                    //mAttachInfo.mThreadedRenderer.
-                    draw(canvas, mView, mAttachInfo, this);
+                    //context.mAttachInfo.mThreadedRenderer.
+                    draw(canvas, mView, context.mAttachInfo, this);
                 }
                 else
                 {
@@ -2375,15 +2362,15 @@ namespace AndroidUI
                     // Before we request a new frame we must however attempt to reinitiliaze the
                     // hardware renderer if it's in requested state. This would happen after an
                     // eglTerminate() for instance.
-                    //if (mAttachInfo.mThreadedRenderer != null &&
-                    //        !mAttachInfo.mThreadedRenderer.isEnabled() &&
-                    //        mAttachInfo.mThreadedRenderer.isRequested() &&
+                    //if (context.mAttachInfo.mThreadedRenderer != null &&
+                    //        !context.mAttachInfo.mThreadedRenderer.isEnabled() &&
+                    //        context.mAttachInfo.mThreadedRenderer.isRequested() &&
                     //        mSurface.isValid())
                     //{
 
                     //    try
                     //    {
-                    //        mAttachInfo.mThreadedRenderer.initializeIfNeeded(
+                    //        context.mAttachInfo.mThreadedRenderer.initializeIfNeeded(
                     //                mWidth, mHeight, mAttachInfo, mSurface, surfaceInsets);
                     //    }
                     //    catch (OutOfResourcesException e)
@@ -2545,7 +2532,7 @@ namespace AndroidUI
             if (!mTraversalScheduled)
             {
                 mTraversalScheduled = true;
-                application.invalidate();
+                context.application.invalidate();
 
                 //mTraversalBarrier = mHandler.getLooper().getQueue().postSyncBarrier();
                 //mChoreographer.postCallback(
@@ -2610,7 +2597,7 @@ namespace AndroidUI
             }
 
             // just in case
-            //application.invalidate();
+            //context.application.invalidate();
         }
 
         public bool isLayoutDirectionResolved()
@@ -2656,19 +2643,51 @@ namespace AndroidUI
             // no op
         }
 
-        static ThreadLocal<HandlerActionQueue> sRunQueues = new ThreadLocal<HandlerActionQueue>();
-        static readonly List<Runnable> sFirstDrawHandlers = new();
-        static bool sFirstDrawComplete = false;
-
-        static HandlerActionQueue getRunQueue()
+        ValueHolder<HandlerActionQueue> sRunQueues
         {
-            HandlerActionQueue rq = sRunQueues.Value;
+            get
+            {
+                if (context == null)
+                {
+                    return null;
+                }
+                return context.storage.GetOrCreate<HandlerActionQueue>(StorageKeys.ViewRootImplHandlerActionQueue, new());
+            }
+        }
+        ValueHolder<List<Runnable>> sFirstDrawHandlers
+        {
+            get
+            {
+                if (context == null)
+                {
+                    return null;
+                }
+                return context.storage.GetOrCreate<List<Runnable>>(StorageKeys.ViewRootImplFirstDrawHandlers, new());
+            }
+        }
+        ValueHolder<bool> sFirstDrawComplete
+        {
+            get
+            {
+                if (context == null)
+                {
+                    return null;
+                }
+                return context.storage.GetOrCreate<bool>(StorageKeys.ViewRootImplFirstDrawComplete, false);
+            }
+        }
+
+
+        HandlerActionQueue getRunQueue()
+        {
+            var s = sRunQueues;
+            HandlerActionQueue rq = s.Value;
             if (rq != null)
             {
                 return rq;
             }
             rq = new HandlerActionQueue();
-            sRunQueues.Value = rq;
+            s.Value = rq;
             return rq;
         }
     }

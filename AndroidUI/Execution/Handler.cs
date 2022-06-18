@@ -69,7 +69,6 @@ namespace AndroidUI.Execution
          */
         internal static bool FIND_POTENTIAL_LEAKS = false;
         private const string TAG = "Handler";
-        private static Handler MAIN_THREAD_HANDLER = null;
 
         /**
          * Callback interface you can use when instantiating a Handler to avoid
@@ -146,7 +145,7 @@ namespace AndroidUI.Execution
          *   {@code new Handler(Looper.myLooper())} to make it clear to readers.
          *
          */
-        public Handler() : this(null, false)
+        public Handler(Context context) : this(context, null, false)
         {
         }
 
@@ -169,7 +168,7 @@ namespace AndroidUI.Execution
          *   similar. If the implicit thread local behavior is required for compatibility, use
          *   {@code new Handler(Looper.myLooper(), callback)} to make it clear to readers.
          */
-        public Handler(Callback callback) : this(callback, false)
+        public Handler(Context context, Callback callback) : this(context, callback, false)
         {
         }
 
@@ -209,7 +208,7 @@ namespace AndroidUI.Execution
          *
          * @hide
          */
-        internal Handler(bool async) : this(null, async)
+        internal Handler(Context context, bool async) : this(context, null, async)
         {
         }
 
@@ -230,7 +229,7 @@ namespace AndroidUI.Execution
          *
          * @hide
          */
-        internal Handler(Callback callback, bool async)
+        internal Handler(Context context, Callback callback, bool async)
         {
             //if (FIND_POTENTIAL_LEAKS)
             //{
@@ -243,7 +242,7 @@ namespace AndroidUI.Execution
             //    }
             //}
 
-            mLooper = Looper.myLooper();
+            mLooper = Looper.myLooper(context);
             if (mLooper == null)
             {
                 throw new Exception(
@@ -320,19 +319,25 @@ namespace AndroidUI.Execution
         }
 
         /** @hide */
-        internal static Handler getMain()
+        internal static Handler getMain(Context context)
         {
-            if (MAIN_THREAD_HANDLER == null)
+            var s = context.storage.Get<Handler>(StorageKeys.MAIN_THREAD_HANDLER);
+            if (s == null)
             {
-                MAIN_THREAD_HANDLER = new Handler(Looper.getMainLooper());
+                var handler = new Handler(Looper.getMainLooper(context));
+                context.storage.SetOrCreate(StorageKeys.MAIN_THREAD_HANDLER, handler);
+                return handler;
             }
-            return MAIN_THREAD_HANDLER;
+            else
+            {
+                return s.Value;
+            }
         }
 
         /** @hide */
-        internal static Handler mainIfNull(Handler handler)
+        internal static Handler mainIfNull(Context context, Handler handler)
         {
-            return handler == null ? getMain() : handler;
+            return handler == null ? getMain(context) : handler;
         }
 
         /** {@hide} */
@@ -632,7 +637,7 @@ namespace AndroidUI.Execution
                 throw new IllegalArgumentException("timeout must be non-negative");
             }
 
-            if (Looper.myLooper() == mLooper)
+            if (Looper.myLooper(mLooper.context) == mLooper)
             {
                 r.run();
                 return true;
@@ -816,7 +821,7 @@ namespace AndroidUI.Execution
          */
         internal bool executeOrSendMessage(Message msg)
         {
-            if (mLooper == Looper.myLooper())
+            if (mLooper == Looper.myLooper(mLooper.context))
             {
                 dispatchMessage(msg);
                 return true;
@@ -828,7 +833,7 @@ namespace AndroidUI.Execution
                 long uptimeMillis)
         {
             msg.target = this;
-            msg.workSourceUid = ThreadLocalWorkSource.getUid();
+            msg.workSourceUid = mLooper.context.storage.GetOrCreate<ThreadLocalWorkSource>(StorageKeys.TLW, new()).Value.getUid();
 
             if (mAsynchronous)
             {

@@ -27,6 +27,7 @@ namespace AndroidUI.AnimationFramework
      */
     public class Animation : ICloneable
     {
+        internal Context context;
         public Animation Clone()
         {
             Animation animation = (Animation)MemberwiseClone();
@@ -34,6 +35,7 @@ namespace AndroidUI.AnimationFramework
             animation.mRegion = new RectF();
             animation.mTransformation = new Transformation();
             animation.mPreviousTransformation = new Transformation();
+            animation.context = context;
             return animation;
         }
 
@@ -205,9 +207,10 @@ namespace AndroidUI.AnimationFramework
          * Creates a new animation with a duration of 0ms, the default interpolator, with
          * fillBefore set to true and fillAfter set to false
          */
-        public Animation()
+        public Animation(Context context)
         {
             ensureInterpolator();
+            this.context = context;
         }
 
         /**
@@ -449,8 +452,7 @@ namespace AndroidUI.AnimationFramework
          */
         public void startNow()
         {
-            //setStartTime(AnimationUtils.currentAnimationTimeMillis());
-            setStartTime(NanoTime.currentTimeMillis());
+            setStartTime(AnimationUtils.currentAnimationTimeMillis(context));
         }
 
         /**

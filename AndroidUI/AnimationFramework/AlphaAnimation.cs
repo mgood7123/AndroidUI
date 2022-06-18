@@ -34,7 +34,7 @@ namespace AndroidUI.AnimationFramework
          *        fully opaque and 0.0 means fully transparent.
          * @param toAlpha Ending alpha value for the animation.
          */
-        public AlphaAnimation(float fromAlpha, float toAlpha)
+        public AlphaAnimation(Context context, float fromAlpha, float toAlpha) : base(context)
         {
             mFromAlpha = fromAlpha;
             mToAlpha = toAlpha;

@@ -40,7 +40,8 @@ namespace AndroidUI.Execution
     internal sealed class ThreadLocalWorkSource
     {
         public const int UID_NONE = Message.UID_NONE;
-        private static readonly ThreadLocal<int> sWorkSourceUid = new(() => { return UID_NONE; });
+
+        private readonly ThreadLocal<int> sWorkSourceUid = new(() => { return UID_NONE; });
 
         /**
          * Returns the UID to blame for the code currently executed on this thread.
@@ -49,7 +50,7 @@ namespace AndroidUI.Execution
          * and automatically propagated inside system server.
          * <p>It can also be set manually using {@link #setUid(int)}.
          */
-        public static int getUid()
+        public int getUid()
         {
             return sWorkSourceUid.Value;
         }
@@ -64,7 +65,7 @@ namespace AndroidUI.Execution
          *
          * @return a token that can be used to restore the state.
          */
-        public static long setUid(int uid)
+        public long setUid(int uid)
         {
             long token = getToken();
             sWorkSourceUid.Value = uid;
@@ -74,7 +75,7 @@ namespace AndroidUI.Execution
         /**
          * Restores the state using the provided token.
          */
-        public static void restore(long token)
+        public void restore(long token)
         {
             sWorkSourceUid.Value = parseUidFromToken(token);
         }
@@ -92,22 +93,22 @@ namespace AndroidUI.Execution
          *
          * @return a token that can be used to restore the state.
          **/
-        public static long clear()
+        public long clear()
         {
             return setUid(UID_NONE);
         }
 
-        private static int parseUidFromToken(long token)
+        private int parseUidFromToken(long token)
         {
             return (int)token;
         }
 
-        private static long getToken()
+        private long getToken()
         {
             return sWorkSourceUid.Value;
         }
 
-        private ThreadLocalWorkSource()
+        internal ThreadLocalWorkSource()
         {
         }
     }

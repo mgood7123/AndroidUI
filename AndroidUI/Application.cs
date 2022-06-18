@@ -21,7 +21,9 @@ namespace AndroidUI
 {
     public class Application : Parent
     {
-        View.AttachInfo mAttachInfo;
+        internal Context context;
+
+        public Context Context => context;
 
         Handler handler;
         Looper looper;
@@ -30,19 +32,18 @@ namespace AndroidUI
 
         public Application()
         {
-            mAttachInfo = new();
-            mAttachInfo.mViewRootImpl = new(mAttachInfo);
-            mAttachInfo.mViewRootImpl.SetApplication(this);
+            context = new(this);
+            context.mAttachInfo.mViewRootImpl = new(context);
         }
 
         public void OnScreenDensityChanged()
         {
-            mAttachInfo.mViewRootImpl.OnScreenDensityChanged();
+            context.mAttachInfo.mViewRootImpl.OnScreenDensityChanged();
         }
 
         private ViewRootImpl getViewRootImpl()
         {
-            return mAttachInfo.mViewRootImpl;
+            return context.mAttachInfo.mViewRootImpl;
         }
 
         private ApplicationDelegate applicationDelegate;
@@ -64,12 +65,12 @@ namespace AndroidUI
 
         public View GetContentView()
         {
-            return mAttachInfo.mViewRootImpl.getContentView();
+            return context.mAttachInfo.mViewRootImpl.getContentView();
         }
 
         public void SetContentView(View view, View.LayoutParams layoutParams)
         {
-            mAttachInfo.mViewRootImpl.setContentView(view, layoutParams);
+            context.mAttachInfo.mViewRootImpl.setContentView(view, layoutParams);
         }
 
         public virtual void OnCreate()
@@ -97,11 +98,11 @@ namespace AndroidUI
             {
                 if (looper == null)
                 {
-                    looper = Looper.myLooper();
+                    looper = Looper.myLooper(context);
                     if (looper == null)
                     {
-                        Looper.prepare();
-                        looper = Looper.myLooper();
+                        Looper.prepare(context);
+                        looper = Looper.myLooper(context);
                     }
                     handler = new Handler(looper);
                 }
@@ -111,79 +112,79 @@ namespace AndroidUI
                 if (looper != null)
                 {
                     looper.quitSafely();
-                    Looper.loopUI();
+                    Looper.loopUI(context);
                     looper = null;
                     handler = null;
                 }
             }
-            mAttachInfo.mViewRootImpl.handleAppVisibility(isVisible);
+            context.mAttachInfo.mViewRootImpl.handleAppVisibility(isVisible);
         }
 
         internal void Draw(SKCanvas canvas)
         {
             if (looper != null)
             {
-                Looper.loopUI();
+                Looper.loopUI(context);
             }
-            if (mAttachInfo.mViewRootImpl.hasContent())
+            if (context.mAttachInfo.mViewRootImpl.hasContent())
             {
-                mAttachInfo.mViewRootImpl.draw(canvas);
+                context.mAttachInfo.mViewRootImpl.draw(canvas);
             }
         }
 
         internal void onSizeChanged(int width, int height)
         {
-            mAttachInfo.mViewRootImpl.onSizeChanged(width, height);
+            context.mAttachInfo.mViewRootImpl.onSizeChanged(width, height);
         }
 
         public bool isVisible()
         {
-            return mAttachInfo.mViewRootImpl.mAppVisible;
+            return context.mAttachInfo.mViewRootImpl.mAppVisible;
         }
 
         public Parent getParent()
         {
-            return ((Parent)mAttachInfo.mViewRootImpl).getParent();
+            return ((Parent)context.mAttachInfo.mViewRootImpl).getParent();
         }
 
         public void requestChildFocus(View view1, View view2)
         {
-            ((Parent)mAttachInfo.mViewRootImpl).requestChildFocus(view1, view2);
+            ((Parent)context.mAttachInfo.mViewRootImpl).requestChildFocus(view1, view2);
         }
 
         public View focusSearch(View view, int direction)
         {
-            return ((Parent)mAttachInfo.mViewRootImpl).focusSearch(view, direction);
+            return ((Parent)context.mAttachInfo.mViewRootImpl).focusSearch(view, direction);
         }
 
         public void focusableViewAvailable(View view)
         {
-            ((Parent)mAttachInfo.mViewRootImpl).focusableViewAvailable(view);
+            ((Parent)context.mAttachInfo.mViewRootImpl).focusableViewAvailable(view);
         }
 
         public bool isLayoutRequested()
         {
-            return ((Parent)mAttachInfo.mViewRootImpl).isLayoutRequested();
+            return ((Parent)context.mAttachInfo.mViewRootImpl).isLayoutRequested();
         }
 
         public void requestLayout()
         {
-            ((Parent)mAttachInfo.mViewRootImpl).requestLayout();
+            ((Parent)context.mAttachInfo.mViewRootImpl).requestLayout();
         }
 
         public bool isLayoutDirectionResolved()
         {
-            return ((Parent)mAttachInfo.mViewRootImpl).isLayoutDirectionResolved();
+            return ((Parent)context.mAttachInfo.mViewRootImpl).isLayoutDirectionResolved();
         }
 
         public int getLayoutDirection()
         {
-            return ((Parent)mAttachInfo.mViewRootImpl).getLayoutDirection();
+            return ((Parent)context.mAttachInfo.mViewRootImpl).getLayoutDirection();
         }
 
         public void onTouch(Touch ev)
         {
-            mAttachInfo.mViewRootImpl.onTouch(ev);
+            context.mAttachInfo.mViewRootImpl.onTouch(ev);
         }
 
         public void onDescendantInvalidated(View view, View target)

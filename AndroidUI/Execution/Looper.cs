@@ -50,7 +50,8 @@ namespace AndroidUI.Execution
       */
     public sealed class Looper
     {
-        //private static readonly object LOCK = new();
+        internal Context context;
+
         /*
          * API Implementation Note:
          *
@@ -62,11 +63,6 @@ namespace AndroidUI.Execution
          */
 
         private const String TAG = "Looper";
-
-        // sThreadLocal.get() will return null unless you've called prepare().
-        static readonly ThreadLocal<Looper> sThreadLocal = new();
-        private static Looper sMainLooper;  // guarded by Looper.class
-        private static Observer sObserver;
 
         internal MessageQueue mQueue;
         internal Thread mThread;
@@ -97,18 +93,19 @@ namespace AndroidUI.Execution
           * {@link #loop()} after calling this method, and end it by calling
           * {@link #quit()}.
           */
-        public static void prepare()
+        public static void prepare(Context context)
         {
-            prepare(true);
+            prepare(context, true, Thread.CurrentThread);
         }
 
-        private static void prepare(bool quitAllowed)
+        private static void prepare(Context context, bool quitAllowed, Thread thread = null)
         {
-            if (sThreadLocal.Value != null)
+            var looper = context.storage.Get<Looper>(StorageKeys.LOOPER, thread);
+            if (looper != null)
             {
                 throw new Exception("Only one Looper may be created per thread");
             }
-            sThreadLocal.Value = new Looper(quitAllowed);
+            context.storage.SetOrCreate<Looper>(StorageKeys.LOOPER, new(context, quitAllowed), thread);
         }
 
         /**
@@ -118,26 +115,22 @@ namespace AndroidUI.Execution
          * @deprecated The main looper for your application is created by the Android environment,
          *   so you should never need to call this function yourself.
          */
-        internal static void prepareMainLooper()
+        internal static void prepareMainLooper(Context context)
         {
-            prepare(false);
-            //lock(LOCK) {
-                if (sMainLooper != null)
-                {
-                    throw new IllegalStateException("The main Looper has already been prepared.");
-                }
-                sMainLooper = myLooper();
-            //}
+            var looper = context.storage.Get<Looper>(StorageKeys.LOOPER);
+            if (looper != null)
+            {
+                throw new IllegalStateException("The main Looper has already been prepared.");
+            }
+            prepare(context, false);
         }
 
         /**
          * Returns the application's main looper, which lives in the main thread of the application.
          */
-        public static Looper getMainLooper()
+        public static Looper getMainLooper(Context context)
         {
-            //lock(LOCK) {
-            return sMainLooper;
-            //}
+            return context.storage.Get<Looper>(StorageKeys.LOOPER)?.Value;
         }
 
         /**
@@ -145,9 +138,9 @@ namespace AndroidUI.Execution
          *
          * @hide
          */
-        internal static void setObserver(Observer observer)
+        internal static void setObserver(Context context, Observer observer)
         {
-            sObserver = observer;
+            context.storage.SetOrCreate<Observer>(StorageKeys.LOOPER_OBSERVER, observer);
         }
 
         static void LogEnter(TextWriter logging, string msg)
@@ -170,9 +163,9 @@ namespace AndroidUI.Execution
          * Run the message queue in this thread. Be sure to call
          * {@link #quit()} to end the loop.
          */
-        public static void loopUI()
+        public static void loopUI(Context context)
         {
-            Looper me = myLooper();
+            Looper me = myLooper(context);
             if (me == null)
             {
                 throw new Exception("No Looper; Looper.prepare() wasn't called on this thread.");
@@ -233,7 +226,7 @@ namespace AndroidUI.Execution
             LogEnter(logging, "Dispatching to " + msg.target + " " + msg.callback + ": " + msg.what);
 
             // Make sure the observer won't change while processing a transaction.
-            Observer observer = sObserver;
+            Observer observer = me.context.storage.Get<Observer>(StorageKeys.LOOPER_OBSERVER)?.Value;
 
             long traceTag = me.mTraceTag;
             long slowDispatchThresholdMs = me.mSlowDispatchThresholdMs;
@@ -261,6 +254,9 @@ namespace AndroidUI.Execution
             {
                 token = observer.messageDispatchStarting();
             }
+
+            ThreadLocalWorkSource ThreadLocalWorkSource = me.context.storage.GetOrCreate<ThreadLocalWorkSource>(StorageKeys.TLW, new()).Value;
+
             long origWorkSource = ThreadLocalWorkSource.setUid(msg.workSourceUid);
             try
             {
@@ -277,7 +273,7 @@ namespace AndroidUI.Execution
                 {
                     observer.dispatchingThrewException(token, msg, exception);
                 }
-                throw exception;
+                throw;
             }
             finally
             {
@@ -335,9 +331,9 @@ namespace AndroidUI.Execution
          * Run the message queue in this thread. Be sure to call
          * {@link #quit()} to end the loop.
          */
-        public static void loop()
+        public static void loop(Context context)
         {
-            Looper me = myLooper();
+            Looper me = myLooper(context);
             if (me == null)
             {
                 throw new Exception("No Looper; Looper.prepare() wasn't called on this thread.");
@@ -395,7 +391,7 @@ namespace AndroidUI.Execution
             LogEnter(logging, "Dispatching to " + msg.target + " " + msg.callback + ": " + msg.what);
 
             // Make sure the observer won't change while processing a transaction.
-            Observer observer = sObserver;
+            Observer observer = me.context.storage.Get<Observer>(StorageKeys.LOOPER_OBSERVER)?.Value;
 
             long traceTag = me.mTraceTag;
             long slowDispatchThresholdMs = me.mSlowDispatchThresholdMs;
@@ -423,6 +419,8 @@ namespace AndroidUI.Execution
             {
                 token = observer.messageDispatchStarting();
             }
+            ThreadLocalWorkSource ThreadLocalWorkSource = me.context.storage.GetOrCreate<ThreadLocalWorkSource>(StorageKeys.TLW, new()).Value;
+
             long origWorkSource = ThreadLocalWorkSource.setUid(msg.workSourceUid);
             try
             {
@@ -512,9 +510,9 @@ namespace AndroidUI.Execution
          * Return the Looper object associated with the current thread.  Returns
          * null if the calling thread is not associated with a Looper.
          */
-        public static Looper myLooper()
+        public static Looper myLooper(Context context)
         {
-            return sThreadLocal.Value;
+            return context.storage.Get<Looper>(StorageKeys.LOOPER, Thread.CurrentThread)?.Value;
         }
 
         /**
@@ -522,13 +520,14 @@ namespace AndroidUI.Execution
          * thread.  This must be called from a thread running a Looper, or a
          * NullPointerException will be thrown.
          */
-        public static MessageQueue myQueue()
+        public static MessageQueue myQueue(Context context)
         {
-            return myLooper().mQueue;
+            return myLooper(context).mQueue;
         }
 
-        private Looper(bool quitAllowed)
+        private Looper(Context context, bool quitAllowed)
         {
+            this.context = context;
             mQueue = new MessageQueue(quitAllowed);
             mThread = Thread.CurrentThread;
         }

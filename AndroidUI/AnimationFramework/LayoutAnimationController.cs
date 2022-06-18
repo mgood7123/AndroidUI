@@ -48,6 +48,7 @@ namespace AndroidUI.AnimationFramework
      */
     public class LayoutAnimationController
     {
+        Context context;
         /**
          * Distributes the animation delays in the order in which view were added
          * to their view group.
@@ -94,7 +95,7 @@ namespace AndroidUI.AnimationFramework
          *
          * @param animation the animation to use on each child of the view group
          */
-        public LayoutAnimationController(Animation animation) : this(animation, 0.5f)
+        public LayoutAnimationController(Context context, Animation animation) : this(context, animation, 0.5f)
         {
         }
 
@@ -105,8 +106,9 @@ namespace AndroidUI.AnimationFramework
          * @param animation the animation to use on each child of the view group
          * @param delay the delay by which each child's animation must be offset
          */
-        public LayoutAnimationController(Animation animation, float delay)
+        public LayoutAnimationController(Context context, Animation animation, float delay)
         {
+            this.context = context;
             mDelay = delay;
             setAnimation(animation);
         }
@@ -281,7 +283,7 @@ namespace AndroidUI.AnimationFramework
          */
         public bool isDone()
         {
-            return AnimationUtils.currentAnimationTimeMillis() >
+            return AnimationUtils.currentAnimationTimeMillis(context) >
                     mAnimation.getStartTime() + mMaxDelay + mDuration;
         }
 

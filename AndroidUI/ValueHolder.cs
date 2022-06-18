@@ -12,10 +12,15 @@
 		public ValueHolder() { }
 		public ValueHolder(T value)
 		{
-			this.Value = value;
+			Value = value;
 		}
 
-		public static implicit operator T(ValueHolder<T> valueHolder) { return valueHolder.Value; }
+        public ValueHolder(ref T value)
+        {
+            Value = value;
+        }
+        
+        public static implicit operator T(ValueHolder<T> valueHolder) { return valueHolder.Value; }
 		public static implicit operator ValueHolder<T>(T value) { return new ValueHolder<T>(value); }
-	}
+    }
 }

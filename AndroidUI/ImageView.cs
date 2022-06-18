@@ -1051,7 +1051,7 @@ namespace AndroidUI
         }
 
         override
-            protected bool setFrame(int l, int t, int r, int b)
+            internal bool setFrame(int l, int t, int r, int b)
         {
             bool changed = base.setFrame(l, t, r, b);
             mHaveFrame = true;

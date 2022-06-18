@@ -2124,7 +2124,7 @@ namespace AndroidUI
                 this.gravity = source.gravity;
             }
 
-            public override string debug(string output)
+            internal override string debug(string output)
             {
                 return output + "LinearLayout.LayoutParams={width=" + sizeToString(width) +
                         ", height=" + sizeToString(height) + " weight=" + weight + "}";

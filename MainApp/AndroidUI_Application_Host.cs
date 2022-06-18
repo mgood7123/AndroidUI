@@ -78,6 +78,7 @@ namespace MainApp
         {
             class A : AndroidUI.View
             {
+
                 public A()
                 {
                     setWillDraw(true);
@@ -142,7 +143,7 @@ namespace MainApp
                         var bm = AndroidUI.BitmapFactory.decodeFile("C:/Users/small/Pictures/Screenshot 2022-05-19 034147.jpeg");
                         image.setImageBitmap(bm);
                         image.setScaleType(AndroidUI.ImageView.ScaleType.CENTER_INSIDE);
-                        AlphaAnimation anim = new(0.15f, 1.0f);
+                        AlphaAnimation anim = new(Context, 0.15f, 1.0f);
                         anim.setDuration(120);
                         anim.setRepeatCount(Animation.INFINITE);
                         anim.setRepeatMode(Animation.REVERSE);

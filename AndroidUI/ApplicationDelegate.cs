@@ -24,7 +24,8 @@ namespace AndroidUI
 
         public Application Application
         {
-            get => application; set
+            get => application;
+            set
             {
                 if (application != null)
                 {
@@ -86,35 +87,6 @@ namespace AndroidUI
                     Application.Draw(canvas);
 
                     canvas.Flush();
-
-                    //SKPaint paint = new() { Color = new SKColor(50, 50, 50) };
-
-                    //canvas.DrawRect(new SKRect(0, 0, 200, 200), paint);
-
-                    //Topten_RichTextKit_TextView tv = new();
-                    //tv.setTextSize(100);
-                    //tv.setTextColor(SKColors.AliceBlue);
-                    //tv.setText("Rich text");
-                    //tv.measure(
-                    //    View.MeasureSpec.makeMeasureSpec(w, View.MeasureSpec.EXACTLY),
-                    //    View.MeasureSpec.makeMeasureSpec(h, View.MeasureSpec.EXACTLY)
-                    //);
-                    //tv.layout(0, 0, w, h);
-                    //tv.draw(canvas);
-
-                    //Topten.RichTextKit.TextBlock textBlock = new();
-                    //Topten.RichTextKit.Style style = new();
-
-                    //style.FontSize = 100;
-                    //style.TextColor = SKColors.AliceBlue;
-                    //string text = "Rich text";
-                    //textBlock.Clear();
-                    //textBlock.AddText(text, style);
-
-                    //textBlock.MaxWidth = w;
-                    //textBlock.MaxHeight = h;
-
-                    //textBlock.Paint(canvas);
 
                     canvas.DrawToCanvas(surface.Canvas, 0, 0);
                 }

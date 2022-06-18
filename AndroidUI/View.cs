@@ -193,7 +193,7 @@ namespace AndroidUI
              *
              * @hide internal use only for compatibility with system widgets and older apps
              */
-            public static int makeSafeMeasureSpec(int size, int mode)
+            internal static int makeSafeMeasureSpec(int size, int mode)
             {
                 if (sUseZeroUnspecifiedMeasureSpec && mode == UNSPECIFIED)
                 {
@@ -304,9 +304,13 @@ namespace AndroidUI
             }
         }
 
+        public Context Context => mAttachInfo?.context;
+
         internal class AttachInfo
         {
-            public AttachInfo()
+            internal Context context;
+
+            public AttachInfo(Context context)
             {
                 mDebugLayout = true; // draw layout bounds
 
@@ -316,6 +320,7 @@ namespace AndroidUI
                 mScalingRequired = false;
                 mHardwareAccelerated = true;
                 mTmpInvalRect = new();
+                this.context = context;
             }
 
             /**
@@ -468,7 +473,7 @@ namespace AndroidUI
          *
          * @hide
          */
-        protected void setDetached(bool detached)
+        internal void setDetached(bool detached)
         {
             if (detached)
             {
@@ -626,7 +631,7 @@ namespace AndroidUI
          * @param newVisibility The new visibility value (GONE, INVISIBLE, or VISIBLE).
          * @hide
          */
-        protected void onChildVisibilityChanged(View child, int oldVisibility, int newVisibility)
+        internal void onChildVisibilityChanged(View child, int oldVisibility, int newVisibility)
         {
             //if (mTransition != null)
             //{
@@ -968,6 +973,7 @@ namespace AndroidUI
             //{
             //notifyFocusChangeToImeFocusController(true /* hasFocus */);
             //}
+            clearCachedLayoutMode();
         }
 
         /**
@@ -1046,7 +1052,7 @@ namespace AndroidUI
         /**
          * @hide
          */
-        protected void internalSetPadding(int left, int top, int right, int bottom)
+        internal void internalSetPadding(int left, int top, int right, int bottom)
         {
             mUserPaddingLeft = left;
             mUserPaddingRight = right;
@@ -1122,7 +1128,7 @@ namespace AndroidUI
          *
          * @hide
          */
-        public bool isLayoutDirectionInherited()
+        internal bool isLayoutDirectionInherited()
         {
             return (getRawLayoutDirection() == LAYOUT_DIRECTION_INHERIT);
         }
@@ -1140,7 +1146,7 @@ namespace AndroidUI
          *
          * @hide
          */
-        bool isPaddingResolved()
+        internal bool isPaddingResolved()
         {
             return (mPrivateFlags2 & PFLAG2_PADDING_RESOLVED) == PFLAG2_PADDING_RESOLVED;
         }
@@ -1183,7 +1189,7 @@ namespace AndroidUI
          *
          * @hide
          */
-        public int getRawLayoutDirection()
+        internal int getRawLayoutDirection()
         {
             return (int)((mPrivateFlags2 & PFLAG2_LAYOUT_DIRECTION_MASK) >> (int)PFLAG2_LAYOUT_DIRECTION_MASK_SHIFT);
         }
@@ -1196,7 +1202,7 @@ namespace AndroidUI
          *
          * @hide
          */
-        public bool resolveLayoutDirection()
+        internal bool resolveLayoutDirection()
         {
             // Clear any previous layout direction resolution
             mPrivateFlags2 &= ~PFLAG2_LAYOUT_DIRECTION_RESOLVED_MASK;
@@ -1269,7 +1275,7 @@ namespace AndroidUI
          *
          * @hide
          */
-        public bool resolveRtlPropertiesIfNeeded()
+        internal bool resolveRtlPropertiesIfNeeded()
         {
             if (!needRtlPropertiesResolution()) return false;
 
@@ -1326,7 +1332,7 @@ namespace AndroidUI
          *
          * @hide
          */
-        public void resetResolvedLayoutDirection()
+        internal void resetResolvedLayoutDirection()
         {
             // Reset the current resolved bits
             mPrivateFlags2 &= ~PFLAG2_LAYOUT_DIRECTION_RESOLVED_MASK;
@@ -1337,13 +1343,13 @@ namespace AndroidUI
          *
          * @hide
          */
-        public void resetRtlProperties()
+        internal void resetRtlProperties()
         {
             resetResolvedLayoutDirection();
             //resetResolvedTextDirection();
             //resetResolvedTextAlignment();
             resetResolvedPadding();
-            //resetResolvedDrawables();
+            resetResolvedDrawables();
         }
 
         /**
@@ -1403,7 +1409,17 @@ namespace AndroidUI
          * be extended in the future to hold our own class with more than just
          * a Rect. :)
          */
-        static readonly ThreadLocal<Rect> sThreadLocal = new(() => { return new Rect(); });
+        ValueHolder<Rect> sThreadLocal
+        {
+            get
+            {
+                if (Context == null)
+                {
+                    return null;
+                }
+                return Context.storage.GetOrCreate<Rect>(StorageKeys.ViewTempRect, new());
+            }
+        }
 
         /**
          * Resolves padding depending on layout direction, if applicable, and
@@ -1411,7 +1427,7 @@ namespace AndroidUI
          *
          * @hide
          */
-        public void resolvePadding()
+        internal void resolvePadding()
         {
             int resolvedLayoutDirection = getLayoutDirection();
 
@@ -1423,13 +1439,14 @@ namespace AndroidUI
                 // If start / end padding are not defined, use the left / right ones.
                 if (mBackground != null && (!mLeftPaddingDefined || !mRightPaddingDefined))
                 {
-                    Rect padding = sThreadLocal.Value;
+                    var v = sThreadLocal;
+                    Rect padding = v.Value;
                     if (padding == null)
                     {
                         padding = new Rect();
-                        sThreadLocal.Value = padding;
+                        v.Value = padding;
                     }
-                    //mBackground.getPadding(padding);
+                    mBackground.getPadding(padding);
                     if (!mLeftPaddingDefined)
                     {
                         mUserPaddingLeftInitial = padding.left;
@@ -1494,7 +1511,7 @@ namespace AndroidUI
          *
          * @hide
          */
-        public void resetResolvedPadding()
+        internal void resetResolvedPadding()
         {
             resetResolvedPaddingInternal();
         }
@@ -1516,6 +1533,7 @@ namespace AndroidUI
          */
         virtual protected void onDetachedFromWindow()
         {
+            clearCachedLayoutMode();
         }
 
         /**
@@ -1528,7 +1546,7 @@ namespace AndroidUI
          *
          * @hide
          */
-        protected void onDetachedFromWindowInternal()
+        internal void onDetachedFromWindowInternal()
         {
             mPrivateFlags &= ~PFLAG_CANCEL_NEXT_UP_EVENT;
             mPrivateFlags3 &= ~PFLAG3_IS_LAID_OUT;
@@ -1830,7 +1848,7 @@ namespace AndroidUI
         internal const int PFLAG2_DRAG_HOVERED = 0x00000002;
 
         /** @hide */
-        public enum ContentCaptureImportance {
+        internal enum ContentCaptureImportance {
             /**
              * Automatically determine whether a view is important for content capture.
              *
@@ -1874,7 +1892,7 @@ namespace AndroidUI
         };
 
         /** @hide */
-        public enum ScrollCaptureHint
+        internal enum ScrollCaptureHint
         {
             /**
              * The content of this view will be considered for scroll capture if scrolling is possible.
@@ -1916,7 +1934,7 @@ namespace AndroidUI
         };
 
         /** @hide */
-        public enum LayoutDir
+        internal enum LayoutDir
         {
             LAYOUT_DIRECTION_LTR,
             LAYOUT_DIRECTION_RTL,
@@ -1925,7 +1943,7 @@ namespace AndroidUI
         }
 
         /** @hide */
-        public enum ResolvedLayoutDir
+        internal enum ResolvedLayoutDir
         {
             LAYOUT_DIRECTION_LTR,
             LAYOUT_DIRECTION_RTL
@@ -1935,7 +1953,7 @@ namespace AndroidUI
          * A flag to indicate that the layout direction of this view has not been defined yet.
          * @hide
          */
-        public const int LAYOUT_DIRECTION_UNDEFINED = LayoutDirection.UNDEFINED;
+        internal const int LAYOUT_DIRECTION_UNDEFINED = LayoutDirection.UNDEFINED;
 
         /**
          * Horizontal layout direction of this view is from Left to Right.
@@ -2005,7 +2023,7 @@ namespace AndroidUI
          * flag value.
          * @hide
          */
-        private readonly int[] LAYOUT_DIRECTION_FLAGS = {
+        internal readonly int[] LAYOUT_DIRECTION_FLAGS = {
                 LAYOUT_DIRECTION_LTR,
                 LAYOUT_DIRECTION_RTL,
                 LAYOUT_DIRECTION_INHERIT
@@ -2483,21 +2501,21 @@ namespace AndroidUI
          *
          * @hide
          */
-        protected int mUserPaddingRight;
+        internal int mUserPaddingRight;
 
         /**
          * The resolved bottom padding before taking account of scroll bars.
          *
          * @hide
          */
-        protected int mUserPaddingBottom;
+        internal int mUserPaddingBottom;
 
         /**
          * The left padding after RTL resolution, but before taking account of scroll bars.
          *
          * @hide
          */
-        protected int mUserPaddingLeft;
+        internal int mUserPaddingLeft;
 
         /**
          * Cache the paddingStart set by the user to append to the scrollbar's size.
@@ -2517,7 +2535,7 @@ namespace AndroidUI
          *
          * @hide
          */
-        int mUserPaddingLeftInitial;
+        internal int mUserPaddingLeftInitial;
 
         /**
          * The right padding as set by a setter method, a background's padding, or via XML property
@@ -2525,7 +2543,7 @@ namespace AndroidUI
          *
          * @hide
          */
-        int mUserPaddingRightInitial;
+        internal int mUserPaddingRightInitial;
 
         /**
          * Default undefined padding
@@ -2816,8 +2834,7 @@ namespace AndroidUI
          */
         protected int getSuggestedMinimumHeight()
         {
-            return mMinHeight;
-            //return (mBackground == null) ? mMinHeight : max(mMinHeight, mBackground.getMinimumHeight());
+            return (mBackground == null) ? mMinHeight : Math.Max(mMinHeight, mBackground.getMinimumHeight());
 
         }
 
@@ -2834,8 +2851,7 @@ namespace AndroidUI
          */
         protected int getSuggestedMinimumWidth()
         {
-            return mMinWidth;
-            //return (mBackground == null) ? mMinWidth : max(mMinWidth, mBackground.getMinimumWidth());
+            return (mBackground == null) ? mMinWidth : Math.Max(mMinWidth, mBackground.getMinimumWidth());
         }
 
         /**
@@ -3157,7 +3173,7 @@ namespace AndroidUI
          *
          * @hide pending API council approval
          */
-        protected void onFocusLost()
+        internal void onFocusLost()
         {
             resetPressedState();
         }
@@ -3654,19 +3670,19 @@ namespace AndroidUI
          * Mask to check if the scrollbar style is overlay or inset.
          * {@hide}
          */
-        const int SCROLLBARS_INSET_MASK = 0x01000000;
+        internal const int SCROLLBARS_INSET_MASK = 0x01000000;
 
         /**
          * Mask to check if the scrollbar style is inside or outside.
          * {@hide}
          */
-        const int SCROLLBARS_OUTSIDE_MASK = 0x02000000;
+        internal const int SCROLLBARS_OUTSIDE_MASK = 0x02000000;
 
         /**
          * Mask for scrollbar style.
          * {@hide}
          */
-        const int SCROLLBARS_STYLE_MASK = 0x03000000;
+        internal const int SCROLLBARS_STYLE_MASK = 0x03000000;
 
         internal int mViewFlags;
 
@@ -4660,16 +4676,16 @@ namespace AndroidUI
             {
                 if ((mViewFlags & WILL_NOT_DRAW) != 0)
                 {
-                    //if (mBackground != null
-                    //|| mDefaultFocusHighlight != null
-                    //|| (mForegroundInfo != null && mForegroundInfo.mDrawable != null))
-                    //{
-                    //mPrivateFlags &= ~PFLAG_SKIP_DRAW;
-                    //}
-                    //else
-                    //{
-                    mPrivateFlags |= PFLAG_SKIP_DRAW;
-                    //}
+                    if (mBackground != null
+                    || mDefaultFocusHighlight != null
+                    || (mForegroundInfo != null && mForegroundInfo.mDrawable != null))
+                    {
+                        mPrivateFlags &= ~PFLAG_SKIP_DRAW;
+                    }
+                    else
+                    {
+                        mPrivateFlags |= PFLAG_SKIP_DRAW;
+                    }
                 }
                 else
                 {
@@ -4736,26 +4752,26 @@ namespace AndroidUI
          * <p>This view doesn't show scrollbars.</p>
          * {@hide}
          */
-        const int SCROLLBARS_NONE = 0x00000000;
+        internal const int SCROLLBARS_NONE = 0x00000000;
 
         /**
          * <p>This view shows horizontal scrollbars.</p>
          * {@hide}
          */
-        const int SCROLLBARS_HORIZONTAL = 0x00000100;
+        internal const int SCROLLBARS_HORIZONTAL = 0x00000100;
 
         /**
          * <p>This view shows vertical scrollbars.</p>
          * {@hide}
          */
-        const int SCROLLBARS_VERTICAL = 0x00000200;
+        internal const int SCROLLBARS_VERTICAL = 0x00000200;
 
         /**
          * <p>Mask for use with setFlags indicating bits used for indicating which
          * scrollbars are enabled.</p>
          * {@hide}
          */
-        const int SCROLLBARS_MASK = 0x00000300;
+        internal const int SCROLLBARS_MASK = 0x00000300;
 
         /**
          * Returns true if this view is focusable or if it contains a reachable View
@@ -4841,7 +4857,7 @@ namespace AndroidUI
          * @see #setId(int)
          * @see #getId()
          */
-        int mID = NO_ID;
+        internal int mID = NO_ID;
 
         class MatchIdPredicate
         {
@@ -4882,7 +4898,7 @@ namespace AndroidUI
          * @return The first view that matches the predicate or null.
          * @hide
          */
-        protected T findViewByPredicateTraversal<T>(Predicate<View> predicate,
+        internal T findViewByPredicateTraversal<T>(Predicate<View> predicate,
                 View childToSkip) where T : View
         {
             if (predicate(this))
@@ -4900,7 +4916,7 @@ namespace AndroidUI
          * @return The first view that matches the predicate or null.
          * @hide
          */
-        public T findViewByPredicate<T>(Predicate<View> predicate) where T : View
+        internal T findViewByPredicate<T>(Predicate<View> predicate) where T : View
         {
             return findViewByPredicateTraversal<T>(predicate, null);
         }
@@ -4921,7 +4937,7 @@ namespace AndroidUI
          * @return The first view that matches the predicate or null.
          * @hide
          */
-        public T findViewByPredicateInsideOut<T>(
+        internal T findViewByPredicateInsideOut<T>(
                View start, Predicate<View> predicate) where T : View
         {
             View childToSkip = null;
@@ -4983,7 +4999,7 @@ namespace AndroidUI
          *
          * @hide
          */
-        public bool restoreFocusInCluster(int direction)
+        internal bool restoreFocusInCluster(int direction)
         {
             // Prioritize focusableByDefault over algorithmic focus selection.
             if (restoreDefaultFocus())
@@ -5000,7 +5016,7 @@ namespace AndroidUI
          *
          * @hide
          */
-        public bool restoreFocusNotInCluster()
+        internal bool restoreFocusNotInCluster()
         {
             return requestFocus(FOCUS_DOWN);
         }
@@ -5282,7 +5298,7 @@ namespace AndroidUI
          * accessing these directly.
          * {@hide}
          */
-        protected int mScrollX;
+        internal int mScrollX;
 
         /**
         * The offset, in pixels, by which the content of this view is scrolled
@@ -5291,7 +5307,7 @@ namespace AndroidUI
         * accessing these directly.
         * {@hide}
         */
-        protected int mScrollY;
+        internal int mScrollY;
 
         /**
          * Return the scrolled left position of this view. This is the left edge of
@@ -5357,7 +5373,7 @@ namespace AndroidUI
          * @param isRoot true if the view belongs to the root namespace, false
          *        otherwise
          */
-        public void setIsRootNamespace(bool isRoot)
+        internal void setIsRootNamespace(bool isRoot)
         {
             if (isRoot)
             {
@@ -5374,7 +5390,7 @@ namespace AndroidUI
          *
          * @return true if the view belongs to the root namespace, false otherwise
          */
-        public bool isRootNamespace()
+        internal bool isRootNamespace()
         {
             return (mPrivateFlags & PFLAG_IS_ROOT_NAMESPACE) != 0;
         }
@@ -5477,7 +5493,7 @@ namespace AndroidUI
          *
          * @hide
          */
-        public void setFocusedInCluster()
+        internal void setFocusedInCluster()
         {
             setFocusedInCluster(findKeyboardNavigationCluster());
         }
@@ -5901,7 +5917,7 @@ namespace AndroidUI
          *
          * @hide
          */
-        protected void invalidateParentCaches()
+        internal void invalidateParentCaches()
         {
             if (mParent is View)
             {
@@ -5925,7 +5941,7 @@ namespace AndroidUI
          *         previous ones
          * {@hide}
          */
-        virtual protected bool setFrame(int left, int top, int right, int bottom)
+        virtual internal bool setFrame(int left, int top, int right, int bottom)
         {
             bool changed = false;
 
@@ -6133,7 +6149,7 @@ namespace AndroidUI
          *
          * @hide
          */
-        protected void damageInParent()
+        internal void damageInParent()
         {
             if (mParent != null && mAttachInfo != null)
             {
@@ -6459,7 +6475,7 @@ namespace AndroidUI
         }
 
         /** @hide */
-        protected void onSetLayoutParams(View child, LayoutParams layoutParams)
+        virtual internal void onSetLayoutParams(View child, LayoutParams layoutParams)
         {
             requestLayout();
         }
@@ -6469,7 +6485,7 @@ namespace AndroidUI
          *
          * @hide
          */
-        public void resolveLayoutParams()
+        internal void resolveLayoutParams()
         {
             if (mLayoutParams != null)
             {
@@ -6545,28 +6561,28 @@ namespace AndroidUI
          * pixels between the left edge of this view and the left edge of its content.
          * {@hide}
          */
-        protected int mPaddingLeft = 0;
+        internal int mPaddingLeft = 0;
 
         /**
          * The computed right padding in pixels that is used for drawing. This is the distance in
          * pixels between the right edge of this view and the right edge of its content.
          * {@hide}
          */
-        protected int mPaddingRight = 0;
+        internal int mPaddingRight = 0;
 
         /**
          * The computed top padding in pixels that is used for drawing. This is the distance in
          * pixels between the top edge of this view and the top edge of its content.
          * {@hide}
          */
-        protected int mPaddingTop;
+        internal int mPaddingTop;
 
         /**
          * The computed bottom padding in pixels that is used for drawing. This is the distance in
          * pixels between the bottom edge of this view and the bottom edge of its content.
          * {@hide}
          */
-        protected int mPaddingBottom;
+        internal int mPaddingBottom;
 
         /**
          * If the View draws content inside its padding and enables fading edges,
@@ -6655,7 +6671,7 @@ namespace AndroidUI
          * @hide
          * @param offsetRequired
          */
-        protected int getFadeTop(bool offsetRequired)
+        internal int getFadeTop(bool offsetRequired)
         {
             int top = mPaddingTop;
             if (offsetRequired) top += getTopPaddingOffset();
@@ -6666,7 +6682,7 @@ namespace AndroidUI
          * @hide
          * @param offsetRequired
          */
-        protected int getFadeHeight(bool offsetRequired)
+        internal int getFadeHeight(bool offsetRequired)
         {
             int padding = mPaddingTop;
             if (offsetRequired) padding += getTopPaddingOffset();
@@ -7182,7 +7198,7 @@ namespace AndroidUI
          *
          * @hide
          */
-        protected void dispatchGetDisplayList()
+        internal void dispatchGetDisplayList()
         {
             int count = mChildrenCount;
             View[] children = mChildren;
@@ -7234,7 +7250,7 @@ namespace AndroidUI
          * Gets the RenderNode for the view, and updates its DisplayList (if needed and supported)
          * @hide
          */
-        public SKPicture updateDisplayListIfDirty()
+        internal SKPicture updateDisplayListIfDirty()
         {
             //if (!canHaveDisplayList())
             //{
@@ -8367,7 +8383,7 @@ namespace AndroidUI
          * Child must not be null.
          * @hide
          */
-        protected bool isTransformedTouchPointInView(float x, float y, View child,
+        internal bool isTransformedTouchPointInView(float x, float y, View child,
             NullableClass<PointF> outLocalPoint)
         {
             float[] point = getTempLocationF();
@@ -8399,7 +8415,7 @@ namespace AndroidUI
          *
          * @hide
          */
-        public bool pointInView(float localX, float localY, float slop)
+        internal bool pointInView(float localX, float localY, float slop)
         {
             return localX >= -slop && localY >= -slop && localX < ((mRight - mLeft) + slop) &&
                     localY < ((mBottom - mTop) + slop);
@@ -8408,20 +8424,21 @@ namespace AndroidUI
         /**
          * @hide
          */
-        public void transformPointToViewLocal(float[] point, View child)
+        internal void transformPointToViewLocal(float[] point, View child)
         {
             point[0] += mScrollX - child.mLeft;
             point[1] += mScrollY - child.mTop;
 
-            //if (!child.hasIdentityMatrix())
-            //{
-            //    SKPoint[] points = new SKPoint[1];
-            //    points[0].X = point[0];
-            //    points[0].Y = point[1];
-            //    child.getInverseMatrix().MapPoints(points);
-            //    point[0] = points[0].X;
-            //    point[1] = points[0].Y;
-            //}
+            // TODO: comment out?
+            if (!child.hasIdentityMatrix())
+            {
+                SKPoint[] points = new SKPoint[1];
+                points[0].X = point[0];
+                points[0].Y = point[1];
+                child.getInverseMatrix().MapPoints(points);
+                point[0] = points[0].X;
+                point[1] = points[0].Y;
+            }
         }
 
         readonly List<(View View, Touch Touch)> trackedViews = new();
@@ -9127,7 +9144,7 @@ namespace AndroidUI
          * after the dispatch is finished.
          * @hide
          */
-        public List<View> buildTouchDispatchChildList()
+        internal List<View> buildTouchDispatchChildList()
         {
             return buildOrderedChildList();
         }
@@ -9588,7 +9605,7 @@ namespace AndroidUI
              *
              * @hide
              */
-            public virtual string debug(string output)
+            internal virtual string debug(string output)
             {
                 return output + "View.LayoutParams={ width="
                         + sizeToString(width) + ", height=" + sizeToString(height) + " }";
@@ -9602,7 +9619,7 @@ namespace AndroidUI
              *
              * @hide
              */
-            public virtual void onDebugDraw(View view, SKCanvas canvas, SKPaint paint)
+            internal virtual void onDebugDraw(View view, SKCanvas canvas, SKPaint paint)
             {
             }
 
@@ -9614,7 +9631,7 @@ namespace AndroidUI
              *
              * @hide
              */
-            protected static string sizeToString(int size)
+            internal static string sizeToString(int size)
             {
                 if (size == WRAP_CONTENT)
                 {
@@ -9694,7 +9711,7 @@ namespace AndroidUI
              * The default start and end margin.
              * @hide
              */
-            public const int DEFAULT_MARGIN_RELATIVE = int.MinValue;
+            internal const int DEFAULT_MARGIN_RELATIVE = int.MinValue;
 
             /**
              * Bit  0: layout direction
@@ -9708,7 +9725,7 @@ namespace AndroidUI
              *
              * @hide
              */
-            int mMarginFlags;
+            internal int mMarginFlags;
 
             internal const int LAYOUT_DIRECTION_MASK = 0x00000003;
             internal const int LEFT_MARGIN_UNDEFINED_MASK = 0x00000004;
@@ -9758,7 +9775,7 @@ namespace AndroidUI
             /**
              * @hide Used internally.
              */
-            public void copyMarginsFrom(MarginLayoutParams source)
+            internal void copyMarginsFrom(MarginLayoutParams source)
             {
                 this.leftMargin = source.leftMargin;
                 this.topMargin = source.topMargin;
@@ -9822,7 +9839,7 @@ namespace AndroidUI
              *
              * @hide
              */
-            public void setMarginsRelative(int start, int top, int end, int bottom)
+            internal void setMarginsRelative(int start, int top, int end, int bottom)
             {
                 startMargin = start;
                 topMargin = top;
@@ -10016,18 +10033,17 @@ namespace AndroidUI
             /**
              * @hide
              */
-            public bool isLayoutRtl()
+            internal bool isLayoutRtl()
             {
-                //return ((mMarginFlags & LAYOUT_DIRECTION_MASK) == View.LAYOUT_DIRECTION_RTL);
-                return false;
+                return ((mMarginFlags & LAYOUT_DIRECTION_MASK) == View.LAYOUT_DIRECTION_RTL);
             }
 
             /**
              * @hide
              */
-            public override void onDebugDraw(View view, SKCanvas canvas, SKPaint paint)
+            internal override void onDebugDraw(View view, SKCanvas canvas, SKPaint paint)
             {
-                Insets oi = Insets.NONE; //isLayoutModeOptical(view.mParent) ? view.getOpticalInsets() : Insets.NONE;
+                Insets oi = isLayoutModeOptical(view.mParent) ? view.getOpticalInsets() : Insets.NONE;
 
                 fillDifference(canvas,
                         view.getLeft() + oi.left,
@@ -10043,6 +10059,148 @@ namespace AndroidUI
         }
 
         /**
+         * Return true if o is a ViewGroup that is laying out using optical bounds.
+         * @hide
+         */
+        internal static bool isLayoutModeOptical(Object o)
+        {
+            return o is View && ((View)o).isLayoutModeOptical();
+        }
+
+        private bool setOpticalFrame(int left, int top, int right, int bottom)
+        {
+            Insets parentInsets = mParent is View ?
+                ((View)mParent).getOpticalInsets() : Insets.NONE;
+            Insets childInsets = getOpticalInsets();
+            return setFrame(
+                    left + parentInsets.left - childInsets.left,
+                    top + parentInsets.top - childInsets.top,
+                    right + parentInsets.left + childInsets.right,
+                    bottom + parentInsets.top + childInsets.bottom);
+        }
+
+        /** Return true if this ViewGroup is laying out using optical bounds. */
+        bool isLayoutModeOptical()
+        {
+            return mLayoutMode == LAYOUT_MODE_OPTICAL_BOUNDS;
+        }
+
+        // Layout Modes
+
+        internal const int LAYOUT_MODE_UNDEFINED = -1;
+
+        /**
+         * This constant is a {@link #setLayoutMode(int) layoutMode}.
+         * Clip bounds are the raw values of {@link #getLeft() left}, {@link #getTop() top},
+         * {@link #getRight() right} and {@link #getBottom() bottom}.
+         */
+        public const int LAYOUT_MODE_CLIP_BOUNDS = 0;
+
+        /**
+         * This constant is a {@link #setLayoutMode(int) layoutMode}.
+         * Optical bounds describe where a widget appears to be. They sit inside the clip
+         * bounds which need to cover a larger area to allow other effects,
+         * such as shadows and glows, to be drawn.
+         */
+        public const int LAYOUT_MODE_OPTICAL_BOUNDS = 1;
+
+        /** @hide */
+        internal static int LAYOUT_MODE_DEFAULT = LAYOUT_MODE_CLIP_BOUNDS;
+
+        /**
+         * Either {@link #LAYOUT_MODE_CLIP_BOUNDS} or {@link #LAYOUT_MODE_OPTICAL_BOUNDS}.
+         */
+        internal int mLayoutMode = LAYOUT_MODE_UNDEFINED;
+
+        internal const int FLAG_LAYOUT_MODE_WAS_EXPLICITLY_SET = 0x800000;
+
+        private void clearCachedLayoutMode()
+        {
+            if (!hasBoolFlag(FLAG_LAYOUT_MODE_WAS_EXPLICITLY_SET))
+            {
+                mLayoutMode = LAYOUT_MODE_UNDEFINED;
+            }
+        }
+
+        private void setLayoutMode(int layoutMode, bool explicitly)
+        {
+            mLayoutMode = layoutMode;
+            setBoolFlag(FLAG_LAYOUT_MODE_WAS_EXPLICITLY_SET, explicitly);
+        }
+
+        /**
+         * Recursively traverse the view hierarchy, resetting the layoutMode of any
+         * descendants that had inherited a different layoutMode from a previous parent.
+         * Recursion terminates when a descendant's mode is:
+         * <ul>
+         *     <li>Undefined</li>
+         *     <li>The same as the root node's</li>
+         *     <li>A mode that had been explicitly set</li>
+         * <ul/>
+         * The first two clauses are optimizations.
+         * @param layoutModeOfRoot
+         */
+        virtual internal void invalidateInheritedLayoutMode(int layoutModeOfRoot)
+        {
+            if (mLayoutMode == LAYOUT_MODE_UNDEFINED ||
+                mLayoutMode == layoutModeOfRoot ||
+                hasBoolFlag(FLAG_LAYOUT_MODE_WAS_EXPLICITLY_SET))
+            {
+                return;
+            }
+            setLayoutMode(LAYOUT_MODE_UNDEFINED, false);
+
+            // apply recursively
+            for (int i = 0, N = getChildCount(); i < N; i++)
+            {
+                getChildAt(i).invalidateInheritedLayoutMode(layoutModeOfRoot);
+            }
+        }
+
+        /**
+         * Returns the basis of alignment during layout operations on this ViewGroup:
+         * either {@link #LAYOUT_MODE_CLIP_BOUNDS} or {@link #LAYOUT_MODE_OPTICAL_BOUNDS}.
+         * <p>
+         * If no layoutMode was explicitly set, either programmatically or in an XML resource,
+         * the method returns the layoutMode of the view's parent ViewGroup if such a parent exists,
+         * otherwise the method returns a default value of {@link #LAYOUT_MODE_CLIP_BOUNDS}.
+         *
+         * @return the layout mode to use during layout operations
+         *
+         * @see #setLayoutMode(int)
+         */
+        public int getLayoutMode()
+        {
+            if (mLayoutMode == LAYOUT_MODE_UNDEFINED)
+            {
+                int inheritedLayoutMode = (mParent is View) ?
+                    ((View)mParent).getLayoutMode() : LAYOUT_MODE_DEFAULT;
+                setLayoutMode(inheritedLayoutMode, false);
+            }
+            return mLayoutMode;
+        }
+
+        /**
+         * Sets the basis of alignment during the layout of this ViewGroup.
+         * Valid values are either {@link #LAYOUT_MODE_CLIP_BOUNDS} or
+         * {@link #LAYOUT_MODE_OPTICAL_BOUNDS}.
+         *
+         * @param layoutMode the layout mode to use during layout operations
+         *
+         * @see #getLayoutMode()
+         * @attr ref android.R.styleable#ViewGroup_layoutMode
+         */
+        public void setLayoutMode(int layoutMode)
+        {
+            if (mLayoutMode != layoutMode)
+            {
+                invalidateInheritedLayoutMode(layoutMode);
+                setLayoutMode(layoutMode, layoutMode != LAYOUT_MODE_UNDEFINED);
+                requestLayout();
+            }
+        }
+
+        /**
          * Indicates whether or not this view's layout is right-to-left. This is resolved from
          * layout attribute and/or the inherited value from the parent
          *
@@ -10050,9 +10208,9 @@ namespace AndroidUI
          *
          * @hide
          */
-        public bool isLayoutRtl()
+        internal bool isLayoutRtl()
         {
-            return false; // (getLayoutDirection() == LAYOUT_DIRECTION_RTL);
+            return (getLayoutDirection() == LAYOUT_DIRECTION_RTL);
         }
 
 
@@ -10073,7 +10231,7 @@ namespace AndroidUI
          * @return True if the transform matrix is the identity matrix, false otherwise.
          * @hide
          */
-        public bool hasIdentityMatrix()
+        internal bool hasIdentityMatrix()
         {
             //return mRenderNode.hasIdentityMatrix();
             return mTransformationInfo == null ? false : mTransformationInfo.mMatrix.IsIdentity;
@@ -10151,7 +10309,7 @@ namespace AndroidUI
          * @return The inverse of the current matrix of this view.
          * @hide
          */
-        public SKMatrix getInverseMatrix()
+        internal SKMatrix getInverseMatrix()
         {
             ensureTransformationInfo();
             if (mTransformationInfo.mInverseMatrix == null)
@@ -10232,10 +10390,10 @@ namespace AndroidUI
          *
          * @hide
          */
-        protected void invalidateParentIfNeeded()
+        internal void invalidateParentIfNeeded()
         {
             if (
-                //isHardwareAccelerated() &&
+                isHardwareAccelerated() &&
                 mParent is View
             )
             {
@@ -10449,7 +10607,7 @@ namespace AndroidUI
          *
          * {@hide}
          */
-        protected const bool sPreserveMarginParamsInLayoutParamConversion = true; // always true
+        internal const bool sPreserveMarginParamsInLayoutParamConversion = true; // always true
 
 
 
@@ -10733,7 +10891,7 @@ namespace AndroidUI
          * This field should be made private, so it is hidden from the SDK.
          * {@hide}
          */
-        protected int mPersistentDrawingCache;
+        internal int mPersistentDrawingCache;
 
         /**
          * Used to indicate that no drawing cache should be kept in memory.
@@ -11700,13 +11858,43 @@ namespace AndroidUI
 
         Insets computeOpticalInsets()
         {
-            return Insets.NONE; // (mBackground == null) ? Insets.NONE : mBackground.getOpticalInsets();
+            if (mChildrenCount != 0)
+            {
+                if (isLayoutModeOptical())
+                {
+                    int left = 0;
+                    int top = 0;
+                    int right = 0;
+                    int bottom = 0;
+                    for (int i = 0; i < mChildrenCount; i++)
+                    {
+                        View child = getChildAt(i);
+                        if (child.getVisibility() == VISIBLE)
+                        {
+                            Insets insets = child.getOpticalInsets();
+                            left = Math.Max(left, insets.left);
+                            top = Math.Max(top, insets.top);
+                            right = Math.Max(right, insets.right);
+                            bottom = Math.Max(bottom, insets.bottom);
+                        }
+                    }
+                    return Insets.of(left, top, right, bottom);
+                }
+                else
+                {
+                    return Insets.NONE;
+                }
+            }
+            else
+            {
+                return (mBackground == null) ? Insets.NONE : mBackground.getOpticalInsets();
+            }
         }
 
         /**
          * @hide
          */
-        public Insets getOpticalInsets()
+        internal Insets getOpticalInsets()
         {
             if (mLayoutInsets == null)
             {
@@ -11725,7 +11913,7 @@ namespace AndroidUI
          * </p>
          * @hide
          */
-        public void setOpticalInsets(Insets insets)
+        internal void setOpticalInsets(Insets insets)
         {
             mLayoutInsets = insets;
         }
@@ -11786,7 +11974,7 @@ namespace AndroidUI
         /**
          * @hide
          */
-        protected void onDebugDrawMargins(SKCanvas canvas, SKPaint paint)
+        internal void onDebugDrawMargins(SKCanvas canvas, SKPaint paint)
         {
             for (int i = 0; i < getChildCount(); i++)
             {
@@ -11829,7 +12017,7 @@ namespace AndroidUI
         /**
          * @hide
          */
-        protected void onDebugDraw(SKCanvas canvas)
+        internal void onDebugDraw(SKCanvas canvas)
         {
             SKPaint paint = getDebugPaint();
 
@@ -12186,15 +12374,15 @@ namespace AndroidUI
          */
         protected void setChildrenDrawingOrderEnabled(bool enabled)
         {
-            setboolFlag(FLAG_USE_CHILD_DRAWING_ORDER, enabled);
+            setBoolFlag(FLAG_USE_CHILD_DRAWING_ORDER, enabled);
         }
 
-        private bool hasboolFlag(int flag)
+        private bool hasBoolFlag(int flag)
         {
             return (mGroupFlags & flag) == flag;
         }
 
-        private void setboolFlag(int flag, bool value)
+        private void setBoolFlag(int flag, bool value)
         {
             if (value)
             {
@@ -12324,7 +12512,7 @@ namespace AndroidUI
          */
         protected void setStaticTransformationsEnabled(bool enabled)
         {
-            setboolFlag(FLAG_SUPPORT_STATIC_TRANSFORMATIONS, enabled);
+            setBoolFlag(FLAG_SUPPORT_STATIC_TRANSFORMATIONS, enabled);
         }
 
         /**
@@ -12983,7 +13171,7 @@ namespace AndroidUI
          * @see #setTag(Object)
          * @see #getTag()
          */
-        protected object mTag = null;
+        internal object mTag = null;
 
         /**
          * Returns this view's tag.
@@ -13138,7 +13326,7 @@ namespace AndroidUI
          *
          * @hide
          */
-        public void debug()
+        internal void debug()
         {
             debug(0);
         }
@@ -13152,7 +13340,7 @@ namespace AndroidUI
          *
          * @hide
          */
-        protected void debug(int depth)
+        internal void debug(int depth)
         {
             string output = debugIndent(depth - 1);
 
@@ -13253,7 +13441,7 @@ namespace AndroidUI
          *
          * @hide
          */
-        protected static string debugIndent(int depth)
+        internal static string debugIndent(int depth)
         {
             System.Text.StringBuilder spaces = new((depth * 2 + 3) * 2);
             for (int i = 0; i < (depth * 2) + 3; i++)
@@ -13471,7 +13659,7 @@ namespace AndroidUI
                 if (mAttachInfo != null)
                 {
                     // no cheographer
-                    mAttachInfo.mHandler.postDelayed(what, CALLBACK_ANIMATION, delay);
+                    mAttachInfo.mHandler.postDelayed(what, CALLBACK_ANIMATION, AnimationUtils.subtractFrameDelay(delay));
 
                     //mAttachInfo.mViewRootImpl.mChoreographer.postCallbackDelayed(
                     //        Choreographer.CALLBACK_ANIMATION, what, who,
@@ -13561,7 +13749,7 @@ namespace AndroidUI
          *
          * @hide
          */
-        protected void resolveDrawables()
+        internal void resolveDrawables()
         {
             // Drawables resolution may need to happen before resolving the layout direction (which is
             // done only during the measure() call).
@@ -13697,11 +13885,12 @@ namespace AndroidUI
 
             if (background != null)
             {
-                Rect padding = sThreadLocal.Value;
+                var v = sThreadLocal;
+                Rect padding = v.Value;
                 if (padding == null)
                 {
                     padding = new Rect();
-                    sThreadLocal.Value = padding;
+                    v.Value = padding;
                 }
                 resetResolvedDrawablesInternal();
                 background.setLayoutDirection(getLayoutDirection());
@@ -14586,7 +14775,7 @@ namespace AndroidUI
         /**
          * @hide
          */
-        protected void computeOpaqueFlags()
+        internal void computeOpaqueFlags()
         {
             // Opaque if:
             //   - Has a background
@@ -14887,7 +15076,7 @@ namespace AndroidUI
          * The animation currently associated with this view.
          * @hide
          */
-        protected Animation mCurrentAnimation = null;
+        internal Animation mCurrentAnimation = null;
 
         /**
          * Get the animation currently associated with this view.
@@ -14947,17 +15136,14 @@ namespace AndroidUI
 
             if (animation != null)
             {
-                setLayoutAnimation(new(animation));
-            }
+                setLayoutAnimation(new(animation.context, animation));
 
-            if (animation != null)
-            {
                 // If the screen is off assume the animation start time is now instead of
                 // the next frame we draw. Keeping the START_ON_FIRST_FRAME start time
                 // would cause the animation to start when the screen turns back on
                 if (mAttachInfo != null && animation.getStartTime() == Animation.START_ON_FIRST_FRAME)
                 {
-                    animation.setStartTime(NanoTime.currentTimeMillis());
+                    animation.setStartTime(AnimationUtils.currentAnimationTimeMillis(animation.context));
                 }
                 animation.reset();
             }

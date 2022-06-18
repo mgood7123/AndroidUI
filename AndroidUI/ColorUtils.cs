@@ -23,7 +23,7 @@ namespace AndroidUI
      *
      * A set of color-related utility methods, building upon those available in {@code Color}.
      */
-    public sealed class ColorUtils
+    public static class ColorUtils
     {
 
         private const double XYZ_WHITE_REFERENCE_X = 95.047;
@@ -35,9 +35,14 @@ namespace AndroidUI
         private const int MIN_ALPHA_SEARCH_MAX_ITERATIONS = 10;
         private const int MIN_ALPHA_SEARCH_PRECISION = 1;
 
-        private static readonly ThreadLocal<double[]> TEMP_ARRAY = new ThreadLocal<double[]>();
-
-        private ColorUtils() { }
+        static ValueHolder<double[]> TEMP_ARRAY(Context context)
+        {
+            if (context == null)
+            {
+                return null;
+            }
+            return context.storage.GetOrCreate<double[]>(StorageKeys.ColorUtilsTempArray, null);
+        }
 
         /**
          * Composite two potentially translucent colors over each other and returns the result.
@@ -73,9 +78,9 @@ namespace AndroidUI
          * Returns the luminance of a color as a float between {@code 0.0} and {@code 1.0}.
          * <p>Defined as the Y component in the XYZ representation of {@code color}.</p>
          */
-        public static double calculateLuminance(int color)
+        public static double calculateLuminance(Context context, int color)
         {
-            double[] result = getTempDouble3Array();
+            double[] result = getTempDouble3Array(context);
             colorToXYZ(color, result);
             // Luminance is the Y component
             return result[1] / 100;
@@ -88,7 +93,7 @@ namespace AndroidUI
          * Formula defined
          * <a href="http://www.w3.org/TR/2008/REC-WCAG20-20081211/#contrast-ratiodef">here</a>.
          */
-        public static double calculateContrast(int foreground, int background)
+        public static double calculateContrast(Context context, int foreground, int background)
         {
             if (Color.alpha(background) != 255)
             {
@@ -101,8 +106,8 @@ namespace AndroidUI
                 foreground = compositeColors(foreground, background);
             }
 
-            double luminance1 = calculateLuminance(foreground) + 0.05;
-            double luminance2 = calculateLuminance(background) + 0.05;
+            double luminance1 = calculateLuminance(context, foreground) + 0.05;
+            double luminance2 = calculateLuminance(context, background) + 0.05;
 
             // Now return the lighter luminance divided by the darker luminance
             return Math.Max(luminance1, luminance2) / Math.Min(luminance1, luminance2);
@@ -118,7 +123,7 @@ namespace AndroidUI
          * @param minContrastRatio the minimum contrast ratio
          * @return the alpha value in the range 0-255, or -1 if no value could be calculated
          */
-        public static int calculateMinimumBackgroundAlpha(int foreground,
+        public static int calculateMinimumBackgroundAlpha(Context context, int foreground,
                 int background, float minContrastRatio)
         {
             // Ignore initial alpha that the background might have since this is
@@ -131,7 +136,7 @@ namespace AndroidUI
                 // Float rounding might set this alpha to something other that 255,
                 // raising an exception in calculateContrast.
                 testBackground = setAlphaComponent(testBackground, 255);
-                return calculateContrast(fg, testBackground);
+                return calculateContrast(context, fg, testBackground);
             }));
         }
 
@@ -145,7 +150,7 @@ namespace AndroidUI
          * @param minContrastRatio the minimum contrast ratio
          * @return the alpha value in the range 0-255, or -1 if no value could be calculated
          */
-        public static int calculateMinimumAlpha(int foreground, int background,
+        public static int calculateMinimumAlpha(Context context, int foreground, int background,
                 float minContrastRatio)
         {
             if (Color.alpha(background) != 255)
@@ -157,7 +162,7 @@ namespace AndroidUI
             ContrastCalculator contrastCalculator = new ContrastCalculator((fg, bg, alpha) =>
             {
                 int testForeground = setAlphaComponent(fg, alpha);
-                return calculateContrast(testForeground, bg);
+                return calculateContrast(context, testForeground, bg);
             });
 
             // First lets check that a fully opaque foreground has sufficient contrast
@@ -589,9 +594,9 @@ namespace AndroidUI
          * @param b B component value [-128...127]
          * @return int containing the RGB representation
          */
-        public static int LABToColor(double l, double a, double b)
+        public static int LABToColor(Context context, double l, double a, double b)
         {
-            double[] result = getTempDouble3Array();
+            double[] result = getTempDouble3Array(context);
             LABToXYZ(l, a, b, result);
             return XYZToColor(result[0], result[1], result[2]);
         }
@@ -707,13 +712,14 @@ namespace AndroidUI
             return (a + ((b - a) * f)) % 360;
         }
 
-        private static double[] getTempDouble3Array()
+        private static double[] getTempDouble3Array(Context context)
         {
-            double[] result = TEMP_ARRAY.Value;
+            var m = TEMP_ARRAY(context);
+            double[] result = m.Value;
             if (result == null)
             {
                 result = new double[3];
-                TEMP_ARRAY.Value = result;
+                m.Value = result;
             }
             return result;
         }

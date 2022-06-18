@@ -36,8 +36,14 @@ namespace AndroidUI.AnimationFramework
             internal long lastReportedTimeMillis;
         };
 
-        private static ThreadLocal<AnimationState> sAnimationState
-                = new ThreadLocal<AnimationState>(() => new AnimationState());
+        static ValueHolder<AnimationState> sAnimationState(Context context)
+        {
+            if (context == null)
+            {
+                return null;
+            }
+            return context.storage.GetOrCreate<AnimationState>(StorageKeys.AnimationFrameworkAnimationState, new());
+        }
 
         /**
          * Locks AnimationUtils{@link #currentAnimationTimeMillis()} to a fixed value for the current
@@ -62,9 +68,9 @@ namespace AndroidUI.AnimationFramework
          *
          * @hide
          * */
-        internal static void lockAnimationClock(long vsyncMillis)
+        internal static void lockAnimationClock(Context context, long vsyncMillis)
         {
-            AnimationState state = sAnimationState.Value;
+            AnimationState state = sAnimationState(context).Value;
             state.animationClockLocked = true;
             state.currentVsyncTimeMillis = vsyncMillis;
         }
@@ -75,10 +81,95 @@ namespace AndroidUI.AnimationFramework
          *
          * @hide
          */
-        internal static void unlockAnimationClock()
+        internal static void unlockAnimationClock(Context context)
         {
-            sAnimationState.Value.animationClockLocked = false;
+            sAnimationState(context).Value.animationClockLocked = false;
         }
+
+        // Choreographer start
+
+        // The default amount of time in ms between animation frames.
+        // When vsync is not enabled, we want to have some idea of how long we should
+        // wait before posting the next animation message.  It is important that the
+        // default value be less than the true inter-frame delay on all devices to avoid
+        // situations where we might skip frames by waiting too long (we must compensate
+        // for jitter and hardware variations).  Regardless of this value, the animation
+        // and display loop is ultimately rate-limited by how fast new graphics buffers can
+        // be dequeued.
+        private const uint DEFAULT_FRAME_DELAY = 10;
+
+        // The number of milliseconds between animation frames.
+        private static volatile uint sFrameDelay = DEFAULT_FRAME_DELAY;
+
+        /**
+         * The amount of time, in milliseconds, between each frame of the animation.
+         * <p>
+         * This is a requested time that the animation will attempt to honor, but the actual delay
+         * between frames may be different, depending on system load and capabilities. This is a static
+         * function because the same delay will be applied to all animations, since they are all
+         * run off of a single timing loop.
+         * </p><p>
+         * The frame delay may be ignored when the animation system uses an external timing
+         * source, such as the display refresh rate (vsync), to govern animations.
+         * </p>
+         *
+         * @return the requested time between frames, in milliseconds
+         * @hide
+         */
+        internal static uint getFrameDelay()
+        {
+            return sFrameDelay;
+        }
+
+        /**
+         * The amount of time, in milliseconds, between each frame of the animation.
+         * <p>
+         * This is a requested time that the animation will attempt to honor, but the actual delay
+         * between frames may be different, depending on system load and capabilities. This is a static
+         * function because the same delay will be applied to all animations, since they are all
+         * run off of a single timing loop.
+         * </p><p>
+         * The frame delay may be ignored when the animation system uses an external timing
+         * source, such as the display refresh rate (vsync), to govern animations.
+         * </p>
+         *
+         * @param frameDelay the requested time between frames, in milliseconds
+         * @hide
+         */
+        internal static void setFrameDelay(uint frameDelay)
+        {
+            sFrameDelay = frameDelay;
+        }
+
+        /**
+          * Subtracts typical frame delay time from a delay interval in milliseconds.
+          * <p>
+          * This method can be used to compensate for animation delay times that have baked
+          * in assumptions about the frame delay.  For example, it's quite common for code to
+          * assume a 60Hz frame time and bake in a 16ms delay.  When we call
+          * {@link #postAnimationCallbackDelayed} we want to know how long to wait before
+          * posting the animation callback but let the animation timer take care of the remaining
+          * frame delay time.
+          * </p><p>
+          * This method is somewhat conservative about how much of the frame delay it
+          * subtracts.  It uses the same value returned by {@link #getFrameDelay} which by
+          * default is 10ms even though many parts of the system assume 16ms.  Consequently,
+          * we might still wait 6ms before posting an animation callback that we want to run
+          * on the next frame, but this is much better than waiting a whole 16ms and likely
+          * missing the deadline.
+          * </p>
+          *
+          * @param delayMillis The original delay time including an assumed frame delay.
+          * @return The adjusted delay time with the assumed frame delay subtracted out.
+          * @hide
+          */
+        public static long subtractFrameDelay(long delayMillis)
+        {
+            long frameDelay = sFrameDelay;
+            return delayMillis <= frameDelay ? 0 : delayMillis - frameDelay;
+        }
+
+        // Choreographer end
 
         /**
          * Returns the current animation time in milliseconds. This time should be used when invoking
@@ -90,9 +181,9 @@ namespace AndroidUI.AnimationFramework
          *
          * @see android.os.SystemClock
          */
-        public static long currentAnimationTimeMillis()
+        public static long currentAnimationTimeMillis(Context context)
         {
-            AnimationState state = sAnimationState.Value;
+            AnimationState state = sAnimationState(context).Value;
             if (state.animationClockLocked)
             {
                 // It's important that time never rewinds

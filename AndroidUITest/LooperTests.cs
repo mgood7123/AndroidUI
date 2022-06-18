@@ -9,10 +9,11 @@ namespace AndroidUITest
         {
             public override void Run(TestGroup nullableInstance)
             {
+                AndroidUI.Context c = new();
                 Thread t = new Thread(() =>
                 {
-                    Looper.prepare();
-                    Looper m = Looper.myLooper();
+                    Looper.prepare(c);
+                    Looper m = Looper.myLooper(c);
                     Tools.AssertInstanceNotEqual(m, null);
                 });
                 t.Start();
@@ -34,19 +35,20 @@ namespace AndroidUITest
             public override void Run(TestGroup nullableInstance)
             {
                 Tools.SKIP();
+                AndroidUI.Context c = new();
                 Looper m = null;
                 Handler h = null;
                 Thread t = new Thread(() =>
                 {
                     Console.WriteLine("preparing looper...");
-                    Looper.prepare();
+                    Looper.prepare(c);
                     Console.WriteLine("prepared looper");
-                    m = Looper.myLooper();
+                    m = Looper.myLooper(c);
                     m.setMessageLogging(Console.Out);
                     h = new Handler(m, new HC());
                     Console.WriteLine("obtained handle");
                     Console.WriteLine("looping...");
-                    Looper.loop();
+                    Looper.loop(c);
                     Console.WriteLine("finished looping");
                     Thread.Sleep(5000);
                 });
@@ -85,20 +87,21 @@ namespace AndroidUITest
 
             public override void Run(TestGroup nullableInstance)
             {
+                AndroidUI.Context c = new();
                 Thread t = new Thread(() =>
                 {
                     Looper m = null;
                     Handler h = null;
                     Console.WriteLine("preparing looper...");
-                    Looper.prepare();
+                    Looper.prepare(c);
                     Console.WriteLine("prepared looper");
-                    m = Looper.myLooper();
+                    m = Looper.myLooper(c);
                     m.setMessageLogging(Console.Out);
                     h = new Handler(m, new HC());
                     Console.WriteLine("obtained handle");
 
                     Console.WriteLine("looping UI");
-                    Looper.loopUI();
+                    Looper.loopUI(c);
                     Console.WriteLine("finished looping");
 
                     Console.WriteLine("posting a runnable...");
@@ -106,7 +109,7 @@ namespace AndroidUITest
                     Console.WriteLine("posted a runnable");
 
                     Console.WriteLine("looping UI");
-                    Looper.loopUI();
+                    Looper.loopUI(c);
                     Console.WriteLine("finished looping");
 
                     Console.WriteLine("posting runnables...");
@@ -116,13 +119,13 @@ namespace AndroidUITest
                     Console.WriteLine("posted runnables");
 
                     Console.WriteLine("looping UI");
-                    Looper.loopUI();
+                    Looper.loopUI(c);
                     Console.WriteLine("finished looping");
 
                     m.quitSafely();
 
                     Console.WriteLine("looping UI");
-                    Looper.loopUI();
+                    Looper.loopUI(c);
                     Console.WriteLine("finished looping");
                 });
                 t.Start();
