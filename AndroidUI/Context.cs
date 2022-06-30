@@ -36,7 +36,7 @@ namespace AndroidUI
                 public object NullObj => null_object;
                 private readonly object LOCK = new();
 
-                internal void SetValue(string key, ref object value, Thread thread)
+                internal void SetValue<T>(string key, ref object value, Func<T> default_value_creator, Thread thread)
                 {
                     Item item_;
                     lock (LOCK)
@@ -61,7 +61,16 @@ namespace AndroidUI
                         Map[Map.Length - 1] = item_;
                     }
                     item_.key = key;
-                    item_.value = value;
+
+                    if (default_value_creator == null)
+                    {
+                        item_.value = null;
+                    }
+                    else
+                    {
+                        item_.value = new ValueHolder<T>(default_value_creator.Invoke());
+                    }
+
                     if (thread != null)
                     {
                         item_.associatedThread = new(thread);
@@ -88,7 +97,7 @@ namespace AndroidUI
                     return ref null_object;
                 }
 
-                internal ref object GetOrSetValue(string key, ref object defaultValue, Thread thread)
+                internal ref object GetOrSetValue<T>(string key, Func<T> default_value_creator, Thread thread)
                 {
                     Item item_;
                     lock (LOCK)
@@ -112,12 +121,20 @@ namespace AndroidUI
                         Map[Map.Length - 1] = item_;
                     }
                     item_.key = key;
-                    item_.value = defaultValue;
+                    if (default_value_creator == null)
+                    {
+                        item_.value = null;
+                    }
+                    else
+                    {
+                        item_.value = new ValueHolder<T>(default_value_creator.Invoke());
+                    }
+
                     if (thread != null)
                     {
                         item_.associatedThread = new(thread);
                     }
-                    return ref defaultValue;
+                    return ref item_.value;
                 }
             }
 
@@ -138,9 +155,8 @@ namespace AndroidUI
             /// and then stored if it's key does not exist.
             /// <br></br> all further retrievals return a reference to the value type, avoiding a copy
             /// </summary>
-            public ValueHolder<T> GetOrCreate<T>(string key, T default_value, Thread thread = null) {
-                object holder = new ValueHolder<T>(ref default_value);
-                return (ValueHolder<T>) map.GetOrSetValue(key, ref holder, thread);
+            public ValueHolder<T> GetOrCreate<T>(string key, Func<T> default_value_creator, Thread thread = null) {
+                return (ValueHolder<T>) map.GetOrSetValue<T>(key, default_value_creator, thread);
             }
 
             /// <summary>
@@ -153,10 +169,10 @@ namespace AndroidUI
             /// and then stored if it's key does not exist.
             /// <br></br> all further retrievals return a reference to the value type, avoiding a copy
             /// </summary>
-            public void SetOrCreate<T>(string key, T default_value, Thread thread = null)
+            public void SetOrCreate<T>(string key, ValueHolder<T> value, Func<T> default_value_creator, Thread thread = null)
             {
-                object holder = new ValueHolder<T>(ref default_value);
-                map.SetValue(key, ref holder, thread);
+                object holder = value;
+                map.SetValue<T>(key, ref holder, default_value_creator, thread);
             }
 
             /// <returns>null if the key does not exist</returns>

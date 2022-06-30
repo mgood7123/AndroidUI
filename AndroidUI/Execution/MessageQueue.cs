@@ -29,7 +29,7 @@ namespace AndroidUI.Execution
     public sealed class MessageQueue
     {
         private readonly object LOCK = new();
-        private const String TAG = "MessageQueue";
+        private const string TAG = "MessageQueue";
         private const bool DEBUG = false;
 
         // True if the message queue can be quit.
@@ -38,7 +38,7 @@ namespace AndroidUI.Execution
         private IntPtr mPtr; // used by native code
 
         Message mMessages;
-        private List<IdleHandler> mIdleHandlers = new List<IdleHandler>();
+        private List<IdleHandler> mIdleHandlers = new();
         private SparseArray<FileDescriptorRecord> mFileDescriptorRecords;
         private IdleHandler[] mPendingIdleHandlers;
         private bool mQuitting;
@@ -782,7 +782,7 @@ namespace AndroidUI.Execution
 
                 if (mQuitting)
                 {
-                    IllegalStateException e = new IllegalStateException(
+                    IllegalStateException e = new(
                             msg.target + " sending message to a Handler on a dead thread");
                     Log.w(TAG, e.ToString());
                     msg.recycle();
@@ -833,7 +833,7 @@ namespace AndroidUI.Execution
             return true;
         }
 
-        internal bool hasMessages(Handler h, int what, Object obj)
+        internal bool hasMessages(Handler h, int what, object obj)
         {
             if (h == null)
             {
@@ -854,7 +854,7 @@ namespace AndroidUI.Execution
             }
         }
 
-        internal bool hasEqualMessages(Handler h, int what, Object obj)
+        internal bool hasEqualMessages(Handler h, int what, object obj)
         {
             if (h == null)
             {
@@ -875,7 +875,7 @@ namespace AndroidUI.Execution
             }
         }
 
-        internal bool hasMessages(Handler h, Runnable r, Object obj)
+        internal bool hasMessages(Handler h, Runnable r, object obj)
         {
             if (h == null)
             {
@@ -917,7 +917,7 @@ namespace AndroidUI.Execution
             }
         }
 
-        internal void removeMessages(Handler h, int what, Object obj)
+        internal void removeMessages(Handler h, int what, object obj)
         {
             if (h == null)
             {
@@ -957,7 +957,7 @@ namespace AndroidUI.Execution
             }
         }
 
-        internal void removeEqualMessages(Handler h, int what, Object obj)
+        internal void removeEqualMessages(Handler h, int what, object obj)
         {
             if (h == null)
             {
@@ -997,7 +997,7 @@ namespace AndroidUI.Execution
             }
         }
 
-        internal void removeMessages(Handler h, Runnable r, Object obj)
+        internal void removeMessages(Handler h, Runnable r, object obj)
         {
             if (h == null || r == null)
             {
@@ -1078,7 +1078,7 @@ namespace AndroidUI.Execution
             }
         }
 
-        internal void removeEqualMessages(Handler h, Runnable r, Object obj)
+        internal void removeEqualMessages(Handler h, Runnable r, object obj)
         {
             if (h == null || r == null)
             {
@@ -1119,7 +1119,7 @@ namespace AndroidUI.Execution
         }
 
 
-        internal void removeCallbacksAndMessages(Handler h, Object obj)
+        internal void removeCallbacksAndMessages(Handler h, object obj)
         {
             if (h == null)
             {
@@ -1158,7 +1158,7 @@ namespace AndroidUI.Execution
             }
         }
 
-        internal void removeCallbacksAndEqualMessages(Handler h, Object obj)
+        internal void removeCallbacksAndEqualMessages(Handler h, object obj)
         {
             if (h == null)
             {

@@ -35,7 +35,7 @@ namespace AndroidUI.Execution
 
         public void postDelayed(Runnable action, long delayMillis)
         {
-            HandlerAction handlerAction = new HandlerAction(action, delayMillis);
+            HandlerAction handlerAction = new(action, delayMillis);
 
             lock (LOCK)
             {

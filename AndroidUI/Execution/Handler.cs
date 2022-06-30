@@ -321,17 +321,7 @@ namespace AndroidUI.Execution
         /** @hide */
         internal static Handler getMain(Context context)
         {
-            var s = context.storage.Get<Handler>(StorageKeys.MAIN_THREAD_HANDLER);
-            if (s == null)
-            {
-                var handler = new Handler(Looper.getMainLooper(context));
-                context.storage.SetOrCreate(StorageKeys.MAIN_THREAD_HANDLER, handler);
-                return handler;
-            }
-            else
-            {
-                return s.Value;
-            }
+            return context.storage.GetOrCreate<Handler>(StorageKeys.MAIN_THREAD_HANDLER, () => new Handler(Looper.getMainLooper(context))).Value;
         }
 
         /** @hide */
@@ -343,7 +333,7 @@ namespace AndroidUI.Execution
         /** {@hide} */
         internal string getTraceName(Message message)
         {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
             sb.Append(GetType().Name).Append(": ");
             if (message.callback != null)
             {
@@ -403,7 +393,7 @@ namespace AndroidUI.Execution
          * @param obj Value to assign to the returned Message.obj field.
          * @return A Message from the global message pool.
          */
-        public Message obtainMessage(int what, Object obj)
+        public Message obtainMessage(int what, object obj)
         {
             return Message.obtain(this, what, obj);
         }
@@ -432,7 +422,7 @@ namespace AndroidUI.Execution
          * @param obj Value to assign to the returned Message.obj field.
          * @return A Message from the global message pool.
          */
-        public Message obtainMessage(int what, int arg1, int arg2, Object obj)
+        public Message obtainMessage(int what, int arg1, int arg2, object obj)
         {
             return Message.obtain(this, what, arg1, arg2, obj);
         }
@@ -504,7 +494,7 @@ namespace AndroidUI.Execution
          * @see android.os.SystemClock#uptimeMillis
          */
         public bool postAtTime(
-                Runnable r, Object token, long uptimeMillis)
+                Runnable r, object token, long uptimeMillis)
         {
             return sendMessageAtTime(getPostMessage(r, token), uptimeMillis);
         }
@@ -561,7 +551,7 @@ namespace AndroidUI.Execution
          *         occurs then the message will be dropped.
          */
         public bool postDelayed(
-                Runnable r, Object token, long delayMillis)
+                Runnable r, object token, long delayMillis)
         {
             return sendMessageDelayed(getPostMessage(r, token), delayMillis);
         }
@@ -643,7 +633,7 @@ namespace AndroidUI.Execution
                 return true;
             }
 
-            BlockingRunnable br = new BlockingRunnable(r);
+            BlockingRunnable br = new(r);
             return br.postAndWait(this, timeout);
         }
 
@@ -660,7 +650,7 @@ namespace AndroidUI.Execution
          * <var>token</var> that are in the message queue.  If <var>token</var> is null,
          * all callbacks will be removed.
          */
-        public void removeCallbacks(Runnable r, Object token)
+        public void removeCallbacks(Runnable r, object token)
         {
             mQueue.removeMessages(this, r, token);
         }
@@ -779,7 +769,7 @@ namespace AndroidUI.Execution
             MessageQueue queue = mQueue;
             if (queue == null)
             {
-                Exception e = new Exception(this + " sendMessageAtTime() called with no mQueue");
+                Exception e = new(this + " sendMessageAtTime() called with no mQueue");
                 Log.w("Looper", e.ToString());
                 return false;
             }
@@ -803,7 +793,7 @@ namespace AndroidUI.Execution
             MessageQueue queue = mQueue;
             if (queue == null)
             {
-                Exception e = new Exception(this + " sendMessageAtTime() called with no mQueue");
+                Exception e = new(this + " sendMessageAtTime() called with no mQueue");
                 Log.w("Looper", e.ToString());
                 return false;
             }
@@ -833,7 +823,7 @@ namespace AndroidUI.Execution
                 long uptimeMillis)
         {
             msg.target = this;
-            msg.workSourceUid = mLooper.context.storage.GetOrCreate<ThreadLocalWorkSource>(StorageKeys.TLW, new()).Value.getUid();
+            msg.workSourceUid = mLooper.context.storage.GetOrCreate<ThreadLocalWorkSource>(StorageKeys.TLW, () => new()).Value.getUid();
 
             if (mAsynchronous)
             {
@@ -856,7 +846,7 @@ namespace AndroidUI.Execution
          * 'object' that are in the message queue.  If <var>object</var> is null,
          * all messages will be removed.
          */
-        public void removeMessages(int what, Object obj)
+        public void removeMessages(int what, object obj)
         {
             mQueue.removeMessages(this, what, obj);
         }
@@ -868,7 +858,7 @@ namespace AndroidUI.Execution
          *
          *@hide
          */
-        internal void removeEqualMessages(int what, Object obj)
+        internal void removeEqualMessages(int what, object obj)
         {
             mQueue.removeEqualMessages(this, what, obj);
         }
@@ -878,7 +868,7 @@ namespace AndroidUI.Execution
          * <var>obj</var> is <var>token</var>.  If <var>token</var> is null,
          * all callbacks and messages will be removed.
          */
-        public void removeCallbacksAndMessages(Object token)
+        public void removeCallbacksAndMessages(object token)
         {
             mQueue.removeCallbacksAndMessages(this, token);
         }
@@ -890,7 +880,7 @@ namespace AndroidUI.Execution
          *
          *@hide
          */
-        internal void removeCallbacksAndEqualMessages(Object token)
+        internal void removeCallbacksAndEqualMessages(object token)
         {
             mQueue.removeCallbacksAndEqualMessages(this, token);
         }
@@ -916,7 +906,7 @@ namespace AndroidUI.Execution
          * Check if there are any pending posts of messages with code 'what' and
          * whose obj is 'object' in the message queue.
          */
-        public bool hasMessages(int what, Object obj)
+        public bool hasMessages(int what, object obj)
         {
             return mQueue.hasMessages(this, what, obj);
         }
@@ -927,7 +917,7 @@ namespace AndroidUI.Execution
          *
          *@hide
          */
-        internal bool hasEqualMessages(int what, Object obj)
+        internal bool hasEqualMessages(int what, object obj)
         {
             return mQueue.hasEqualMessages(this, what, obj);
         }

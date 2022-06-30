@@ -65,7 +65,7 @@ namespace AndroidUI.Execution
          * <p>Note that Parcelable objects here are not supported prior to
          * the {@link android.os.Build.VERSION_CODES#FROYO} release.
          */
-        public Object obj;
+        public object obj;
 
         /**
          * Optional Messenger where replies to this message can be sent.  The
@@ -137,7 +137,7 @@ namespace AndroidUI.Execution
 
 
         /** @hide */
-        internal static readonly object sPoolSync = new Object();
+        internal static readonly object sPoolSync = new();
         private static Message sPool;
         private static int sPoolSize = 0;
 
@@ -248,7 +248,7 @@ namespace AndroidUI.Execution
          * @param obj  The <em>object</em> method to set.
          * @return  A Message object from the global pool.
          */
-        public static Message obtain(Handler h, int what, Object obj)
+        public static Message obtain(Handler h, int what, object obj)
         {
             Message m = obtain();
             m.target = h;
@@ -291,7 +291,7 @@ namespace AndroidUI.Execution
          * @return  A Message object from the global pool.
          */
         public static Message obtain(Handler h, int what,
-                int arg1, int arg2, Object obj)
+                int arg1, int arg2, object obj)
         {
             Message m = obtain();
             m.target = h;
@@ -549,7 +549,7 @@ namespace AndroidUI.Execution
         /*package*/
         internal bool isInUse()
         {
-            return ((flags & FLAG_IN_USE) == FLAG_IN_USE);
+            return (flags & FLAG_IN_USE) == FLAG_IN_USE;
         }
 
         /*package*/
@@ -571,7 +571,7 @@ namespace AndroidUI.Execution
 
         string toString(long now)
         {
-            StringBuilder b = new StringBuilder();
+            StringBuilder b = new();
             b.Append("{ when=");
             TimeUtils.formatDuration(when - now, b);
 

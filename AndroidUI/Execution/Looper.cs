@@ -62,7 +62,7 @@ namespace AndroidUI.Execution
          * thread, looping, and quitting are defined on the looper.
          */
 
-        private const String TAG = "Looper";
+        private const string TAG = "Looper";
 
         internal MessageQueue mQueue;
         internal Thread mThread;
@@ -105,7 +105,8 @@ namespace AndroidUI.Execution
             {
                 throw new Exception("Only one Looper may be created per thread");
             }
-            context.storage.SetOrCreate<Looper>(StorageKeys.LOOPER, new(context, quitAllowed), thread);
+            Looper l = new(context, quitAllowed);
+            context.storage.SetOrCreate<Looper>(StorageKeys.LOOPER, l, () => l, thread);
         }
 
         /**
@@ -122,7 +123,7 @@ namespace AndroidUI.Execution
             {
                 throw new IllegalStateException("The main Looper has already been prepared.");
             }
-            prepare(context, false);
+            prepare(context, true);
         }
 
         /**
@@ -140,7 +141,7 @@ namespace AndroidUI.Execution
          */
         internal static void setObserver(Context context, Observer observer)
         {
-            context.storage.SetOrCreate<Observer>(StorageKeys.LOOPER_OBSERVER, observer);
+            context.storage.SetOrCreate<Observer>(StorageKeys.LOOPER_OBSERVER, (ValueHolder<Observer>)observer, () => observer);
         }
 
         static void LogEnter(TextWriter logging, string msg)
@@ -165,7 +166,7 @@ namespace AndroidUI.Execution
          */
         public static void loopUI(Context context)
         {
-            Looper me = myLooper(context);
+            Looper me = getMainLooper(context);
             if (me == null)
             {
                 throw new Exception("No Looper; Looper.prepare() wasn't called on this thread.");
@@ -237,7 +238,7 @@ namespace AndroidUI.Execution
                 slowDeliveryThresholdMs = thresholdOverride;
             }
             bool logSlowDelivery = (slowDeliveryThresholdMs > 0) && (msg.when > 0);
-            bool logSlowDispatch = (slowDispatchThresholdMs > 0);
+            bool logSlowDispatch = slowDispatchThresholdMs > 0;
 
             bool needStartTime = logSlowDelivery || logSlowDispatch;
             bool needEndTime = logSlowDispatch;
@@ -249,13 +250,13 @@ namespace AndroidUI.Execution
 
             long dispatchStart = needStartTime ? NanoTime.currentTimeMillis() : 0;
             long dispatchEnd;
-            Object token = null;
+            object token = null;
             if (observer != null)
             {
                 token = observer.messageDispatchStarting();
             }
 
-            ThreadLocalWorkSource ThreadLocalWorkSource = me.context.storage.GetOrCreate<ThreadLocalWorkSource>(StorageKeys.TLW, new()).Value;
+            ThreadLocalWorkSource ThreadLocalWorkSource = me.context.storage.GetOrCreate<ThreadLocalWorkSource>(StorageKeys.TLW, () => new()).Value;
 
             long origWorkSource = ThreadLocalWorkSource.setUid(msg.workSourceUid);
             try
@@ -402,7 +403,7 @@ namespace AndroidUI.Execution
                 slowDeliveryThresholdMs = thresholdOverride;
             }
             bool logSlowDelivery = (slowDeliveryThresholdMs > 0) && (msg.when > 0);
-            bool logSlowDispatch = (slowDispatchThresholdMs > 0);
+            bool logSlowDispatch = slowDispatchThresholdMs > 0;
 
             bool needStartTime = logSlowDelivery || logSlowDispatch;
             bool needEndTime = logSlowDispatch;
@@ -414,12 +415,12 @@ namespace AndroidUI.Execution
 
             long dispatchStart = needStartTime ? NanoTime.currentTimeMillis() : 0;
             long dispatchEnd;
-            Object token = null;
+            object token = null;
             if (observer != null)
             {
                 token = observer.messageDispatchStarting();
             }
-            ThreadLocalWorkSource ThreadLocalWorkSource = me.context.storage.GetOrCreate<ThreadLocalWorkSource>(StorageKeys.TLW, new()).Value;
+            ThreadLocalWorkSource ThreadLocalWorkSource = me.context.storage.GetOrCreate<ThreadLocalWorkSource>(StorageKeys.TLW, () => new()).Value;
 
             long origWorkSource = ThreadLocalWorkSource.setUid(msg.workSourceUid);
             try
@@ -492,7 +493,7 @@ namespace AndroidUI.Execution
         }
 
         private static bool showSlowLog(long threshold, long measureStart, long measureEnd,
-                String what, Message msg)
+                string what, Message msg)
         {
             long actualTime = measureEnd - measureStart;
             if (actualTime < threshold)
@@ -628,7 +629,7 @@ namespace AndroidUI.Execution
             return mQueue;
         }
 
-        override public String ToString()
+        override public string ToString()
         {
             return "Looper (" + mThread.Name + ", tid " + mThread.ManagedThreadId
                     + ") {" + Extensions.IntegerExtensions.toHexString(GetHashCode()) + "}";
@@ -648,7 +649,7 @@ namespace AndroidUI.Execution
              *         and must not be reused again.
              *
              */
-            Object messageDispatchStarting();
+            object messageDispatchStarting();
 
             /**
              * Called when a message was processed by a Handler.
@@ -657,7 +658,7 @@ namespace AndroidUI.Execution
              *              {@link Observer#messageDispatchStarting} on the same Observer instance.
              * @param msg The message that was dispatched.
              */
-            void messageDispatched(Object token, Message msg);
+            void messageDispatched(object token, Message msg);
 
             /**
              * Called when an exception was thrown while processing a message.
@@ -667,7 +668,7 @@ namespace AndroidUI.Execution
              * @param msg The message that was dispatched and caused an exception.
              * @param exception The exception that was thrown.
              */
-            void dispatchingThrewException(Object token, Message msg, Exception exception);
+            void dispatchingThrewException(object token, Message msg, Exception exception);
         }
     }
 }
