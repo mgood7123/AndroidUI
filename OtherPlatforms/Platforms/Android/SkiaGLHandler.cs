@@ -31,7 +31,7 @@ namespace OtherPlatforms.Platforms.Android
 
 		}
 
-        protected override SkiaGL CreatePlatformView() => new SkiaGL(Context);
+        protected override SkiaGL CreatePlatformView() => new(Context);
     }
 }
 #endif

@@ -10,7 +10,7 @@ namespace OtherPlatforms
 {
     public class SkiaGL : SKGLSurfaceView
     {
-        readonly AndroidUI_Application_Host host = new AndroidUI_Application_Host();
+        readonly AndroidUI_Application_Host host = new();
 
         public SkiaGL(Context context) : base(context) => main();
 
@@ -19,7 +19,7 @@ namespace OtherPlatforms
         void main()
         {
             host.SetInvalidateCallback(Invalidate);
-            DisplayMetrics m = new DisplayMetrics();
+            DisplayMetrics m = new();
             Context.Display.GetRealMetrics(m);
             host.setDensity(m.Density, (int)m.DensityDpi);
             host.OnCreate();

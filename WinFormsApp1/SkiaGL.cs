@@ -10,7 +10,6 @@ namespace WinFormsApp1
 
         public SkiaGL()
         {
-
             host.SetInvalidateCallback(Invalidate);
             DpiChangedAfterParent += SkiaGL_DpiChangedAfterParent;
             handleDpiChange();
@@ -140,7 +139,7 @@ namespace WinFormsApp1
                 || (m.Msg >= WM_TOUCH && m.Msg <= WM_POINTERWHEEL)
             )
             {
-                INPUT_MESSAGE_SOURCE ims = new INPUT_MESSAGE_SOURCE();
+                INPUT_MESSAGE_SOURCE ims = new();
                 GetCurrentInputMessageSource(out ims);
                 if (ims.deviceType == INPUT_MESSAGE_DEVICE_TYPE.IMDT_MOUSE)
                 {

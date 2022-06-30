@@ -75,7 +75,7 @@ namespace WinFormsApp1
                 }
 
                 // Create an EventLog instance and assign its source.
-                EventLog myLog = new EventLog();
+                EventLog myLog = new();
                 myLog.Source = "ThreadException";
                 myLog.WriteEntry(errorMsg + ex.Message + "\n\nStack Trace:\n" + ex.StackTrace);
             }
