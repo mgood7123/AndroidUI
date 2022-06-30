@@ -37,7 +37,7 @@ namespace AndroidUI.AnimationFramework.Interpolators
 
         public override float getInterpolation(float input)
         {
-            return (float)(Math.Sin(2 * mCycles * Math.PI * input));
+            return (float)Math.Sin(2 * mCycles * Math.PI * input);
         }
 
         private float mCycles;

@@ -55,7 +55,7 @@ namespace AndroidUI.AnimationFramework.Interpolators
             }
             else
             {
-                result = (float)(1.0f - Math.Pow((1.0f - input), 2 * mFactor));
+                result = (float)(1.0f - Math.Pow(1.0f - input, 2 * mFactor));
             }
             return result;
         }
