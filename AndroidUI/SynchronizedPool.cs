@@ -67,9 +67,11 @@ namespace AndroidUI
             this.globalPool = new GlobalPool(maxCount);
         }
 
+        private readonly object l = new();
+
         object ThisLock
         {
-            get { return this; }
+            get { return l; }
         }
 
         public void Clear()
