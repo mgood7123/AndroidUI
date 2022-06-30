@@ -120,7 +120,7 @@ namespace AndroidUI
                 return root;
             }
             View effective = null;
-            Parent nextParent = focused.mParent;
+            ViewParent nextParent = focused.mParent;
             do
             {
                 if (nextParent == root)

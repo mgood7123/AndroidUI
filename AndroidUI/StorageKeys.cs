@@ -29,5 +29,6 @@ namespace AndroidUI
         internal static string ColorUtilsTempArray = "ANDROID_UI_ColorUtilsTempArray";
         internal static string AnimationFrameworkAnimationState = "ANDROID_UI_AnimationFrameworkAnimationState";
         internal static string MAIN_THREAD_HANDLER = "ANDROID_UI_MAIN_THREAD_HANDLER";
+        internal static string AnimationHandler = "ANDROID_UI_AnimationHandler";
     }
 }

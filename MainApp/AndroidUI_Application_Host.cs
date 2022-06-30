@@ -1,4 +1,4 @@
-﻿using AndroidUI.AnimationFramework;
+﻿using AndroidUI.AnimationFramework.Animation;
 using AndroidUI.Extensions;
 using SkiaSharp;
 using System;
@@ -36,7 +36,7 @@ namespace MainApp
          */
         public const int GONE = AndroidUI.View.GONE;
 
-        AndroidUI.ApplicationDelegate application = new AndroidUI.ApplicationDelegate();
+        AndroidUI.ApplicationDelegate application = new();
 
         class TouchInfoView : AndroidUI.Topten_RichTextKit_TextView
         {
@@ -140,13 +140,15 @@ namespace MainApp
                     {
 
                         var image = new AndroidUI.ImageView();
-                        var bm = AndroidUI.BitmapFactory.decodeFile("C:/Users/small/Pictures/Screenshot 2022-05-19 034147.jpeg");
-                        image.setImageBitmap(bm);
+                        //var bm = AndroidUI.BitmapFactory.decodeFile("C:/Users/small/Pictures/Screenshot 2022-05-19 034147.jpeg");
+                        //image.setImageBitmap(bm);
+                        //image.setBackgroundColor(AndroidUI.Color.MAGENTA);
+                        image.setImageDrawable(new AndroidUI.ColorDrawable(AndroidUI.Color.MAGENTA));
                         image.setScaleType(AndroidUI.ImageView.ScaleType.CENTER_INSIDE);
                         
                         //AlphaAnimation anim = new(Context, 0.15f, 1.0f);
-                        RotateAnimation anim = new(Context, 0, 180);
-                        //TranslateAnimation anim = new(Context, 0, 100, 0, 100);
+                        //RotateAnimation anim = new(Context, 0, 180);
+                        TranslateAnimation anim = new(Context, 0, 200, 0, 100);
 
                         anim.setDuration(2200);
                         anim.setRepeatCount(Animation.INFINITE);

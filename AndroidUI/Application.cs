@@ -19,7 +19,7 @@ using SkiaSharp;
 
 namespace AndroidUI
 {
-    public class Application : Parent
+    public class Application : ViewParent
     {
         internal Context context;
 
@@ -98,11 +98,11 @@ namespace AndroidUI
             {
                 if (looper == null)
                 {
-                    looper = Looper.myLooper(context);
+                    looper = Looper.getMainLooper(context);
                     if (looper == null)
                     {
-                        Looper.prepare(context);
-                        looper = Looper.myLooper(context);
+                        Looper.prepareMainLooper(context);
+                        looper = Looper.getMainLooper(context);
                     }
                     handler = new Handler(looper);
                 }
@@ -142,44 +142,44 @@ namespace AndroidUI
             return context.mAttachInfo.mViewRootImpl.mAppVisible;
         }
 
-        public Parent getParent()
+        public ViewParent getParent()
         {
-            return ((Parent)context.mAttachInfo.mViewRootImpl).getParent();
+            return ((ViewParent)context.mAttachInfo.mViewRootImpl).getParent();
         }
 
         public void requestChildFocus(View view1, View view2)
         {
-            ((Parent)context.mAttachInfo.mViewRootImpl).requestChildFocus(view1, view2);
+            ((ViewParent)context.mAttachInfo.mViewRootImpl).requestChildFocus(view1, view2);
         }
 
         public View focusSearch(View view, int direction)
         {
-            return ((Parent)context.mAttachInfo.mViewRootImpl).focusSearch(view, direction);
+            return ((ViewParent)context.mAttachInfo.mViewRootImpl).focusSearch(view, direction);
         }
 
         public void focusableViewAvailable(View view)
         {
-            ((Parent)context.mAttachInfo.mViewRootImpl).focusableViewAvailable(view);
+            ((ViewParent)context.mAttachInfo.mViewRootImpl).focusableViewAvailable(view);
         }
 
         public bool isLayoutRequested()
         {
-            return ((Parent)context.mAttachInfo.mViewRootImpl).isLayoutRequested();
+            return ((ViewParent)context.mAttachInfo.mViewRootImpl).isLayoutRequested();
         }
 
         public void requestLayout()
         {
-            ((Parent)context.mAttachInfo.mViewRootImpl).requestLayout();
+            ((ViewParent)context.mAttachInfo.mViewRootImpl).requestLayout();
         }
 
         public bool isLayoutDirectionResolved()
         {
-            return ((Parent)context.mAttachInfo.mViewRootImpl).isLayoutDirectionResolved();
+            return ((ViewParent)context.mAttachInfo.mViewRootImpl).isLayoutDirectionResolved();
         }
 
         public int getLayoutDirection()
         {
-            return ((Parent)context.mAttachInfo.mViewRootImpl).getLayoutDirection();
+            return ((ViewParent)context.mAttachInfo.mViewRootImpl).getLayoutDirection();
         }
 
         public void onTouch(Touch ev)
@@ -217,7 +217,7 @@ namespace AndroidUI
         {
         }
 
-        public Parent invalidateChildInParent(int[] location, Rect r)
+        public ViewParent invalidateChildInParent(int[] location, Rect r)
         {
             return null;
         }
@@ -229,6 +229,64 @@ namespace AndroidUI
 
         public void childDrawableStateChanged(View child)
         {
+        }
+
+        public void childHasTransientStateChanged(View child, bool hasTransientState)
+        {
+        }
+
+        /**
+         * Implement this interface to receive a callback when a new display frame is
+         * being rendered.  The callback is invoked on the {@link Looper} thread to
+         * which the {@link Choreographer} is attached.
+         */
+        public interface FrameCallback
+        {
+            /**
+             * Called when a new display frame is being rendered.
+             * <p>
+             * This method provides the time in nanoseconds when the frame started being rendered.
+             * The frame time provides a stable time base for synchronizing animations
+             * and drawing.  It should be used instead of {@link SystemClock#uptimeMillis()}
+             * or {@link System#nanoTime()} for animations and drawing in the UI.  Using the frame
+             * time helps to reduce inter-frame jitter because the frame time is fixed at the time
+             * the frame was scheduled to start, regardless of when the animations or drawing
+             * callback actually runs.  All callbacks that run as part of rendering a frame will
+             * observe the same frame time so using the frame time also helps to synchronize effects
+             * that are performed by different callbacks.
+             * </p><p>
+             * Please note that the framework already takes care to process animations and
+             * drawing using the frame time as a stable time base.  Most applications should
+             * not need to use the frame time information directly.
+             * </p>
+             *
+             * @param frameTimeNanos The time in nanoseconds when the frame started being rendered,
+             * in the {@link System#nanoTime()} timebase.  Divide this value by {@code 1000000}
+             * to convert it to the {@link SystemClock#uptimeMillis()} time base.
+             */
+            public abstract void doFrame(long frameTimeNanos);
+
+            public class ActionFrameCallback : FrameCallback
+            {
+                Action<FrameCallback, object, long> action;
+                object data;
+
+                public ActionFrameCallback(object data, Action<FrameCallback, object, long> action)
+                {
+                    this.action = action;
+                    this.data = data;
+                }
+
+                public void doFrame(long frameTimeNanos)
+                {
+                    action?.Invoke(this, data, frameTimeNanos);
+                }
+            }
+
+            public static FrameCallback Create(object data, Action<FrameCallback, object, long> value)
+            {
+                return new ActionFrameCallback(data, value);
+            }
         }
     }
 }

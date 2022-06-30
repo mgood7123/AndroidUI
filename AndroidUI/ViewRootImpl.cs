@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
+using AndroidUI.AnimationFramework.Animator;
 using AndroidUI.Execution;
 using SkiaSharp;
 
 namespace AndroidUI
 {
-    public class ViewRootImpl : Parent
+    public class ViewRootImpl : ViewParent
     {
         public void clearChildFocus(View child)
         {
@@ -54,7 +55,7 @@ namespace AndroidUI
         }
 
 
-        public Parent invalidateChildInParent(int[] location, Rect dirty)
+        public ViewParent invalidateChildInParent(int[] location, Rect dirty)
         {
             //checkThread();
             if (DEBUG_DRAW) Log.v(mTag, "Invalidate child: " + dirty);
@@ -123,7 +124,7 @@ namespace AndroidUI
         private const bool DEBUG_ORIENTATION = false;
         private const bool DEBUG_INPUT_RESIZE = false;
         private const bool DEBUG_DRAW = false;
-        private const bool DEBUG_FPS = false;
+        private const bool DEBUG_FPS = true;
         private const bool DEBUG_BLAST = false;
 
         private const string TAG = "ViewRootImpl";
@@ -161,7 +162,7 @@ namespace AndroidUI
             return mContentParent?.getChildAt(0);
         }
 
-        public Parent getParent()
+        public ViewParent getParent()
         {
             // should we return application?
             return null;
@@ -252,9 +253,9 @@ namespace AndroidUI
             else
             {
                 ++mFpsNumFrames;
-                long frameTime = nowTime - mFpsPrevTime;
+                //long frameTime = nowTime - mFpsPrevTime;
                 long totalTime = nowTime - mFpsStartTime;
-                Log.v(mTag, "Frame time:\t" + frameTime);
+                //Log.v(mTag, "Frame time:\t" + frameTime);
                 mFpsPrevTime = nowTime;
                 if (totalTime > 1000)
                 {
@@ -285,9 +286,9 @@ namespace AndroidUI
             if (context.mAttachInfo.mInTouchMode == inTouchMode) return false;
 
             context.mAttachInfo.mInTouchMode = inTouchMode;
-            //context.mAttachInfo.mTreeObserver.dispatchOnTouchModeChanged(inTouchMode);
+            context.mAttachInfo.mTreeObserver.dispatchOnTouchModeChanged(inTouchMode);
 
-            return (inTouchMode) ? enterTouchMode() : leaveTouchMode();
+            return inTouchMode ? enterTouchMode() : leaveTouchMode();
         }
 
         private bool enterTouchMode()
@@ -328,7 +329,7 @@ namespace AndroidUI
          */
         private static View findAncestorToTakeFocusInTouchMode(View focused)
         {
-            Parent parent = focused.mParent;
+            ViewParent parent = focused.mParent;
             while (parent is View)
             {
                 View vgParent = (View)parent;
@@ -420,13 +421,20 @@ namespace AndroidUI
             {
                 return;
             }
-            try
+            if (System.Diagnostics.Debugger.IsAttached)
             {
                 mView.measure(childWidthMeasureSpec, childHeightMeasureSpec);
             }
-            catch (Exception e)
+            else
             {
-                Log.v(mTag, "Caught exception while measuring view: " + e);
+                try
+                {
+                    mView.measure(childWidthMeasureSpec, childHeightMeasureSpec);
+                }
+                catch (Exception e)
+                {
+                    Log.v(mTag, "Caught exception while measuring view: " + e);
+                }
             }
         }
 
@@ -506,7 +514,7 @@ namespace AndroidUI
                     || mAppVisibilityChanged);
             mAppVisibilityChanged = false;
             bool viewUserVisibilityChanged = !mFirst &&
-                    ((mViewVisibility == View.VISIBLE) != (viewVisibility == View.VISIBLE));
+                    (mViewVisibility == View.VISIBLE != (viewVisibility == View.VISIBLE));
 
 
             if (mFirst)
@@ -704,7 +712,7 @@ namespace AndroidUI
                 // other windows to resize/move based on the raw frame of the window, waiting until we
                 // can finish laying out this window and get back to the window manager with the
                 // ultimately computed insets.
-                //insetsPending = computesInternalInsets;
+                insetsPending = computesInternalInsets;
 
                 //if (mSurfaceHolder != null)
                 //{
@@ -887,8 +895,8 @@ namespace AndroidUI
                         //    context.mAttachInfo.mThreadedRenderer.destroy();
                         //}
                     }
-                    else if ((surfaceReplaced
-                          || surfaceSizeChanged || windowRelayoutWasForced)
+                    else if (surfaceReplaced
+                          || surfaceSizeChanged || windowRelayoutWasForced
                     //&& mSurfaceHolder == null
                     //&& context.mAttachInfo.mThreadedRenderer != null
                     //&& mSurface.isValid()
@@ -992,9 +1000,9 @@ namespace AndroidUI
                         //    }
                     }
 
-                    if ((surfaceCreated || surfaceReplaced || surfaceSizeChanged
+                    if (surfaceCreated || surfaceReplaced || surfaceSizeChanged
                             //|| windowAttributesChanged
-                            )
+                            
                     //&& mSurface.isValid()
                     )
                     {
@@ -1201,7 +1209,7 @@ namespace AndroidUI
             if (triggerGlobalLayoutListener)
             {
                 context.mAttachInfo.mRecomputeGlobalAttributes = false;
-                //context.mAttachInfo.mTreeObserver.dispatchOnGlobalLayout();
+                context.mAttachInfo.mTreeObserver.dispatchOnGlobalLayout();
             }
 
             if (computesInternalInsets)
@@ -1335,21 +1343,18 @@ namespace AndroidUI
                 reportNextDraw();
             }
 
-            bool cancelDraw =
-                //context.mAttachInfo.mTreeObserver.dispatchOnPreDraw() ||
-                !isViewVisible
-            ;
+            bool cancelDraw = context.mAttachInfo.mTreeObserver.dispatchOnPreDraw() || !isViewVisible;
 
             if (!cancelDraw)
             {
-                //if (mPendingTransitions != null && mPendingTransitions.size() > 0)
-                //{
-                //    for (int i = 0; i < mPendingTransitions.size(); ++i)
-                //    {
-                //        mPendingTransitions.get(i).startChangingAnimations();
-                //    }
-                //    mPendingTransitions.clear();
-                //}
+                if (mPendingTransitions != null && mPendingTransitions.Count > 0)
+                {
+                    for (int i = 0; i < mPendingTransitions.Count; ++i)
+                    {
+                        mPendingTransitions.ElementAt(i).startChangingAnimations();
+                    }
+                    mPendingTransitions.Clear();
+                }
                 performDraw(canvas);
             }
             else
@@ -1361,14 +1366,14 @@ namespace AndroidUI
                 }
                 else
                 {
-                    //if (mPendingTransitions != null && mPendingTransitions.size() > 0)
-                    //{
-                    //    for (int i = 0; i < mPendingTransitions.size(); ++i)
-                    //    {
-                    //        mPendingTransitions.get(i).endChangingAnimations();
-                    //    }
-                    //    mPendingTransitions.clear();
-                    //}
+                    if (mPendingTransitions != null && mPendingTransitions.Count > 0)
+                    {
+                        for (int i = 0; i < mPendingTransitions.Count; ++i)
+                        {
+                            mPendingTransitions.ElementAt(i).endChangingAnimations();
+                        }
+                        mPendingTransitions.Clear();
+                    }
 
                     // We may never draw since it's not visible. Report back that we're finished
                     // drawing.
@@ -1401,15 +1406,16 @@ namespace AndroidUI
         internal bool mIsAnimating;
         internal bool mInvalidateRootRequested;
         internal bool mAppVisible = false;
+        List<LayoutTransition> mPendingTransitions;
 
         internal sealed class InvalidateOnAnimationRunnable : Runnable
         {
 
             private bool mPosted;
             readonly object LOCK = new();
-            private List<View> mViews = new List<View>();
+            private List<View> mViews = new();
             private readonly List<View.AttachInfo.InvalidateInfo> mViewRects =
-                    new List<View.AttachInfo.InvalidateInfo>();
+                    new();
             private View[] mTempViews;
             private View.AttachInfo.InvalidateInfo[] mTempViewRects;
             ViewRootImpl impl;
@@ -1544,7 +1550,7 @@ namespace AndroidUI
             }
 
             override
-            public String getMessageName(Message message) {
+            public string getMessageName(Message message) {
                 switch (message.what) {
                     case MSG_INVALIDATE:
                         return "MSG_INVALIDATE";
@@ -1627,6 +1633,7 @@ namespace AndroidUI
                 mLayoutParams = View.MATCH_PARENT__MATCH_PARENT
             };
             mView.assignParent(this);
+            context.mAttachInfo.mRootView = mView;
             mThread = Thread.CurrentThread;
             mViewVisibility = View.GONE;
             mInvalidateOnAnimationRunnable = new InvalidateOnAnimationRunnable(this);
@@ -1713,29 +1720,38 @@ namespace AndroidUI
 
         private void performDraw(SKCanvas canvas)
         {
-            try
+            if (!mReportNextDraw || mView == null)
             {
-                if (!mReportNextDraw || mView == null)
-                {
-                    return;
-                }
+                return;
+            }
 
-                if (DEBUG_DRAW)
-                {
-                    Log.v(mTag, "STARTED DRAWING: " + mView);
-                }
+            if (DEBUG_DRAW)
+            {
+                Log.v(mTag, "STARTED DRAWING: " + mView);
+            }
 
-                bool fullRedrawNeeded =
-                        mFullRedrawNeeded || mReportNextDraw //|| mNextDrawUseBlastSync
-                        ;
-                mFullRedrawNeeded = false;
+            bool fullRedrawNeeded =
+                    mFullRedrawNeeded || mReportNextDraw //|| mNextDrawUseBlastSync
+                    ;
+            mFullRedrawNeeded = false;
 
-                mIsDrawing = true;
-                //Trace.traceBegin(Trace.TRACE_TAG_VIEW, "draw");
+            mIsDrawing = true;
+            //Trace.traceBegin(Trace.TRACE_TAG_VIEW, "draw");
 
-                //bool usingAsyncReport = addFrameCompleteCallbackIfNeeded();
-                //addFrameCallbackIfNeeded();
+            //bool usingAsyncReport = addFrameCompleteCallbackIfNeeded();
+            //addFrameCallbackIfNeeded();
 
+            if (System.Diagnostics.Debugger.IsAttached)
+            {
+                bool canUseAsync = draw(canvas, fullRedrawNeeded);
+                //if (usingAsyncReport && !canUseAsync)
+                //{
+                //    context.mAttachInfo.mThreadedRenderer.setFrameCompleteCallback(null);
+                //    usingAsyncReport = false;
+                //}
+            }
+            else
+            {
                 try
                 {
                     bool canUseAsync = draw(canvas, fullRedrawNeeded);
@@ -1749,77 +1765,70 @@ namespace AndroidUI
                 {
                     Log.v(mTag, "Caught exception while drawing view: " + e);
                 }
-                finally
+            }
+            mIsDrawing = false;
+            //Trace.traceEnd(Trace.TRACE_TAG_VIEW);
+
+            // For whatever reason we didn't create a HardwareRenderer, end any
+            // hardware animations that are now dangling
+            if (context.mAttachInfo.mPendingAnimatingRenderNodes != null)
+            {
+                int count = context.mAttachInfo.mPendingAnimatingRenderNodes.Count;
+                for (int i = 0; i < count; i++)
                 {
-                    mIsDrawing = false;
-                    //Trace.traceEnd(Trace.TRACE_TAG_VIEW);
+                    //context.mAttachInfo.mPendingAnimatingRenderNodes.ElementAt(i).endAllAnimators();
                 }
+                context.mAttachInfo.mPendingAnimatingRenderNodes.Clear();
+            }
 
-                // For whatever reason we didn't create a HardwareRenderer, end any
-                // hardware animations that are now dangling
-                if (context.mAttachInfo.mPendingAnimatingRenderNodes != null)
-                {
-                    int count = context.mAttachInfo.mPendingAnimatingRenderNodes.Count;
-                    for (int i = 0; i < count; i++)
-                    {
-                        //context.mAttachInfo.mPendingAnimatingRenderNodes.ElementAt(i).endAllAnimators();
-                    }
-                    context.mAttachInfo.mPendingAnimatingRenderNodes.Clear();
-                }
+            if (mReportNextDraw)
+            {
+                mReportNextDraw = false;
 
-                if (mReportNextDraw)
-                {
-                    mReportNextDraw = false;
-
-                    // if we're using multi-thread renderer, wait for the window frame draws
-                    //if (mWindowDrawCountDown != null)
-                    //{
-                    //    try
-                    //    {
-                    //        mWindowDrawCountDown.await();
-                    //    }
-                    //    catch (InterruptedException e)
-                    //    {
-                    //        Log.e(mTag, "Window redraw count down interrupted!");
-                    //    }
-                    //    mWindowDrawCountDown = null;
-                    //}
-
-                    //if (context.mAttachInfo.mThreadedRenderer != null)
-                    //{
-                    //    context.mAttachInfo.mThreadedRenderer.setStopped(mStopped);
-                    //}
-
-                    if (DEBUG_DRAW)
-                    {
-                        Log.v(mTag, "FINISHED DRAWING: " + mView);
-                    }
-
-                    //if (mSurfaceHolder != null && mSurface.isValid())
-                    //{
-                    //    SurfaceCallbackHelper sch = new SurfaceCallbackHelper(this::postDrawFinished);
-                    //    SurfaceHolder.Callback callbacks[] = mSurfaceHolder.getCallbacks();
-
-                    //    sch.dispatchSurfaceRedrawNeededAsync(mSurfaceHolder, callbacks);
-                    //}
-                    //else if (!usingAsyncReport)
-                    //{
-                    //    if (context.mAttachInfo.mThreadedRenderer != null)
-                    //    {
-                    //        context.mAttachInfo.mThreadedRenderer.fence();
-                    //    }
-                    //    pendingDrawFinished();
-                    //}
-                }
-                //if (mPerformContentCapture)
+                // if we're using multi-thread renderer, wait for the window frame draws
+                //if (mWindowDrawCountDown != null)
                 //{
-                //    performContentCaptureInitialReport();
+                //    try
+                //    {
+                //        mWindowDrawCountDown.await();
+                //    }
+                //    catch (InterruptedException e)
+                //    {
+                //        Log.e(mTag, "Window redraw count down interrupted!");
+                //    }
+                //    mWindowDrawCountDown = null;
+                //}
+
+                //if (context.mAttachInfo.mThreadedRenderer != null)
+                //{
+                //    context.mAttachInfo.mThreadedRenderer.setStopped(mStopped);
+                //}
+
+                if (DEBUG_DRAW)
+                {
+                    Log.v(mTag, "FINISHED DRAWING: " + mView);
+                }
+
+                //if (mSurfaceHolder != null && mSurface.isValid())
+                //{
+                //    SurfaceCallbackHelper sch = new SurfaceCallbackHelper(this::postDrawFinished);
+                //    SurfaceHolder.Callback callbacks[] = mSurfaceHolder.getCallbacks();
+
+                //    sch.dispatchSurfaceRedrawNeededAsync(mSurfaceHolder, callbacks);
+                //}
+                //else if (!usingAsyncReport)
+                //{
+                //    if (context.mAttachInfo.mThreadedRenderer != null)
+                //    {
+                //        context.mAttachInfo.mThreadedRenderer.fence();
+                //    }
+                //    pendingDrawFinished();
                 //}
             }
-            catch (Exception e)
-            {
-                Log.v(mTag, "Caught exception while drawing view: " + e);
-            }
+            //if (mPerformContentCapture)
+            //{
+            //    performContentCaptureInitialReport();
+            //}
         }
 
         /**
@@ -1873,23 +1882,82 @@ namespace AndroidUI
             object lp_unused //WindowManager.LayoutParams lp
             , int desiredWindowWidth, int desiredWindowHeight)
         {
-            try
+            mScrollMayChange = true;
+            mInLayout = true;
+
+            View host = mView;
+            if (host == null)
             {
-                mScrollMayChange = true;
-                mInLayout = true;
+                return;
+            }
+            if (DEBUG_ORIENTATION || DEBUG_LAYOUT)
+            {
+                Log.v(mTag, "Laying out " + host + " to (" +
+                        host.getMeasuredWidth() + ", " + host.getMeasuredHeight() + ")");
+            }
 
-                View host = mView;
-                if (host == null)
-                {
-                    return;
-                }
-                if (DEBUG_ORIENTATION || DEBUG_LAYOUT)
-                {
-                    Log.v(mTag, "Laying out " + host + " to (" +
-                            host.getMeasuredWidth() + ", " + host.getMeasuredHeight() + ")");
-                }
+            //Trace.traceBegin(Trace.TRACE_TAG_VIEW, "layout");
+            if (System.Diagnostics.Debugger.IsAttached)
+            {
+                host.layout(0, 0, host.getMeasuredWidth(), host.getMeasuredHeight());
 
-                //Trace.traceBegin(Trace.TRACE_TAG_VIEW, "layout");
+                mInLayout = false;
+                int numViewsRequestingLayout = mLayoutRequesters.Count;
+                if (numViewsRequestingLayout > 0)
+                {
+                    // requestLayout() was called during layout.
+                    // If no layout-request flags are set on the requesting views, there is no problem.
+                    // If some requests are still pending, then we need to clear those flags and do
+                    // a full request/measure/layout pass to handle this situation.
+                    List<View> validLayoutRequesters = getValidLayoutRequesters(mLayoutRequesters,
+                            false);
+                    if (validLayoutRequesters != null)
+                    {
+                        // Set this flag to indicate that any further requests are happening during
+                        // the second pass, which may result in posting those requests to the next
+                        // frame instead
+                        mHandlingLayoutInLayoutRequest = true;
+
+                        // Process fresh layout requests, then measure and layout
+                        int numValidRequests = validLayoutRequesters.Count;
+                        for (int i = 0; i < numValidRequests; ++i)
+                        {
+                            View view = validLayoutRequesters.ElementAt(i);
+                            Console.WriteLine(mTag, "requestLayout() improperly called by " + view +
+                                    " during layout: running second layout pass");
+                            view.requestLayout();
+                        }
+                        measureHierarchy(host, null, null,
+                                desiredWindowWidth, desiredWindowHeight);
+                        mInLayout = true;
+                        host.layout(0, 0, host.getMeasuredWidth(), host.getMeasuredHeight());
+
+                        mHandlingLayoutInLayoutRequest = false;
+
+                        // Check the valid requests again, this time without checking/clearing the
+                        // layout flags, since requests happening during the second pass get noop'd
+                        validLayoutRequesters = getValidLayoutRequesters(mLayoutRequesters, true);
+                        if (validLayoutRequesters != null)
+                        {
+                            List<View> finalRequesters = validLayoutRequesters;
+                            // Post second-pass requests to the next frame
+                            getRunQueue().post(new Runnable.ActionRunnable(() =>
+                            {
+                                int numValidRequests = finalRequesters.Count;
+                                for (int i = 0; i < numValidRequests; ++i)
+                                {
+                                    View view = finalRequesters.ElementAt(i);
+                                    Log.w("View", "requestLayout() improperly called by " + view +
+                                            " during second layout pass: posting in next frame");
+                                    view.requestLayout();
+                                }
+                            }));
+                        }
+                    }
+                }
+            }
+            else
+            {
                 try
                 {
                     host.layout(0, 0, host.getMeasuredWidth(), host.getMeasuredHeight());
@@ -1934,15 +2002,16 @@ namespace AndroidUI
                             {
                                 List<View> finalRequesters = validLayoutRequesters;
                                 // Post second-pass requests to the next frame
-                                getRunQueue().post(new Runnable.ActionRunnable(() => {
-                                        int numValidRequests = finalRequesters.Count;
-                                        for (int i = 0; i < numValidRequests; ++i)
-                                        {
-                                            View view = finalRequesters.ElementAt(i);
-                                            Log.w("View", "requestLayout() improperly called by " + view +
-                                                    " during second layout pass: posting in next frame");
-                                            view.requestLayout();
-                                        }
+                                getRunQueue().post(new Runnable.ActionRunnable(() =>
+                                {
+                                    int numValidRequests = finalRequesters.Count;
+                                    for (int i = 0; i < numValidRequests; ++i)
+                                    {
+                                        View view = finalRequesters.ElementAt(i);
+                                        Log.w("View", "requestLayout() improperly called by " + view +
+                                                " during second layout pass: posting in next frame");
+                                        view.requestLayout();
+                                    }
                                 }));
                             }
                         }
@@ -1952,16 +2021,9 @@ namespace AndroidUI
                 {
                     Log.v(mTag, "Caught exception while laying out view: " + e);
                 }
-                finally
-                {
-                    //Trace.traceEnd(Trace.TRACE_TAG_VIEW);
-                }
-                mInLayout = false;
             }
-            catch (Exception e)
-            {
-                Log.v(mTag, "Caught exception while laying out view: " + e);
-            }
+            //Trace.traceEnd(Trace.TRACE_TAG_VIEW);
+            mInLayout = false;
         }
 
         /**
@@ -2219,7 +2281,7 @@ namespace AndroidUI
             if (context.mAttachInfo.mViewScrollChanged)
             {
                 context.mAttachInfo.mViewScrollChanged = false;
-                //context.mAttachInfo.mTreeObserver.dispatchOnScrollChanged();
+                context.mAttachInfo.mTreeObserver.dispatchOnScrollChanged();
             }
 
             bool animating = false; // mScroller != null && mScroller.computeScrollOffset();
@@ -2242,7 +2304,7 @@ namespace AndroidUI
             }
 
             float appScale = context.mAttachInfo.mApplicationScale;
-            //bool scalingRequired = context.mAttachInfo.mScalingRequired;
+            bool scalingRequired = context.mAttachInfo.mScalingRequired;
 
             Rect dirty = mDirty;
             //if (mSurfaceHolder != null)
@@ -2269,7 +2331,7 @@ namespace AndroidUI
                         appScale + ", width=" + mWidth + ", height=" + mHeight);
             }
 
-            //context.mAttachInfo.mTreeObserver.dispatchOnDraw();
+            context.mAttachInfo.mTreeObserver.dispatchOnDraw();
 
             int xOffset = -mCanvasOffsetX;
             int yOffset = -mCanvasOffsetY + curScrollY;
@@ -2300,7 +2362,7 @@ namespace AndroidUI
                 //}
             }
 
-            context.mAttachInfo.mDrawingTime = (int)(NanoTime.currentTimeNanos() / NanoTime.NANOS_PER_MS); // mChoreographer.getFrameTimeNanos() / TimeUtils.NANOS_PER_MS;
+            context.mAttachInfo.mDrawingTime = NanoTime.currentTimeMillis(); // currentTimeNanos() / NanoTime.NANOS_PER_MS; // mChoreographer.getFrameTimeNanos() / TimeUtils.NANOS_PER_MS;
 
             bool useAsyncReport = false;
             if (!dirty.isEmpty() || mIsAnimating || accessibilityFocusDirty
@@ -2600,6 +2662,31 @@ namespace AndroidUI
             //context.application.invalidate();
         }
 
+        /**
+         * Add LayoutTransition to the list of transitions to be started in the next traversal.
+         * This list will be cleared after the transitions on the list are start()'ed. These
+         * transitionsa re added by LayoutTransition itself when it sets up animations. The setup
+         * happens during the layout phase of traversal, which we want to complete before any of the
+         * animations are started (because those animations may side-effect properties that layout
+         * depends upon, like the bounding rectangles of the affected views). So we add the transition
+         * to the list and it is started just prior to starting the drawing phase of traversal.
+         *
+         * @param transition The LayoutTransition to be started on the next traversal.
+         *
+         * @hide
+         */
+        internal void requestTransitionStart(LayoutTransition transition)
+        {
+            if (mPendingTransitions == null || !mPendingTransitions.Contains(transition))
+            {
+                if (mPendingTransitions == null)
+                {
+                    mPendingTransitions = new List<LayoutTransition>();
+                }
+                mPendingTransitions.Add(transition);
+            }
+        }
+
         public bool isLayoutDirectionResolved()
         {
             return true;
@@ -2625,7 +2712,7 @@ namespace AndroidUI
                 return true;
             }
 
-            Parent theParent = child.getParent();
+            ViewParent theParent = child.getParent();
             return (theParent is View) && isViewDescendantOf((View)theParent, parent);
         }
 
@@ -2643,6 +2730,11 @@ namespace AndroidUI
             // no op
         }
 
+        public void childHasTransientStateChanged(View child, bool hasTransientState)
+        {
+            // Do nothing.
+        }
+
         ValueHolder<HandlerActionQueue> sRunQueues
         {
             get
@@ -2651,7 +2743,7 @@ namespace AndroidUI
                 {
                     return null;
                 }
-                return context.storage.GetOrCreate<HandlerActionQueue>(StorageKeys.ViewRootImplHandlerActionQueue, new());
+                return context.storage.GetOrCreate<HandlerActionQueue>(StorageKeys.ViewRootImplHandlerActionQueue, () => new());
             }
         }
         ValueHolder<List<Runnable>> sFirstDrawHandlers
@@ -2662,7 +2754,7 @@ namespace AndroidUI
                 {
                     return null;
                 }
-                return context.storage.GetOrCreate<List<Runnable>>(StorageKeys.ViewRootImplFirstDrawHandlers, new());
+                return context.storage.GetOrCreate<List<Runnable>>(StorageKeys.ViewRootImplFirstDrawHandlers, () => new());
             }
         }
         ValueHolder<bool> sFirstDrawComplete
@@ -2673,7 +2765,7 @@ namespace AndroidUI
                 {
                     return null;
                 }
-                return context.storage.GetOrCreate<bool>(StorageKeys.ViewRootImplFirstDrawComplete, false);
+                return context.storage.GetOrCreate<bool>(StorageKeys.ViewRootImplFirstDrawComplete, () => false);
             }
         }
 

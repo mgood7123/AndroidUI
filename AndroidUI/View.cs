@@ -16,6 +16,9 @@
 
 using System.Drawing;
 using AndroidUI.AnimationFramework;
+using AndroidUI.AnimationFramework.Animation;
+using AndroidUI.AnimationFramework.Animation.Controller;
+using AndroidUI.AnimationFramework.Animator;
 using AndroidUI.Exceptions;
 using AndroidUI.Extensions;
 using SkiaSharp;
@@ -25,7 +28,7 @@ namespace AndroidUI
     using static View.LayoutParams;
 
 
-    public class View : Parent, Drawable.Callback
+    public class View : ViewParent, Drawable.Callback
     {
 
         public void onDescendantUnbufferedRequested()
@@ -92,9 +95,9 @@ namespace AndroidUI
 
 
 
-        internal Parent mParent { get; set; }
+        internal ViewParent mParent { get; set; }
 
-        public Parent getParent()
+        public ViewParent getParent()
         {
             return mParent;
         }
@@ -244,7 +247,7 @@ namespace AndroidUI
             public static int getMode(int measureSpec)
             {
                 //noinspection ResourceType
-                return (measureSpec & MODE_MASK);
+                return measureSpec & MODE_MASK;
             }
 
             /**
@@ -255,7 +258,7 @@ namespace AndroidUI
              */
             public static int getSize(int measureSpec)
             {
-                return (measureSpec & ~MODE_MASK);
+                return measureSpec & ~MODE_MASK;
             }
 
             static int adjust(int measureSpec, int delta)
@@ -306,6 +309,44 @@ namespace AndroidUI
 
         public Context Context => mAttachInfo?.context;
 
+        /**
+         * Special tree observer used when mAttachInfo is null.
+         */
+        private ViewTreeObserver mFloatingTreeObserver;
+
+        /**
+         * Returns the ViewTreeObserver for this view's hierarchy. The view tree
+         * observer can be used to get notifications when global events, like
+         * layout, happen.
+         *
+         * The returned ViewTreeObserver observer is not guaranteed to remain
+         * valid for the lifetime of this View. If the caller of this method keeps
+         * a long-lived reference to ViewTreeObserver, it should always check for
+         * the return value of {@link ViewTreeObserver#isAlive()}.
+         *
+         * @return The ViewTreeObserver for this view's hierarchy.
+         */
+        public ViewTreeObserver getViewTreeObserver()
+        {
+            if (mAttachInfo != null)
+            {
+                return mAttachInfo.mTreeObserver;
+            }
+            if (mFloatingTreeObserver == null)
+            {
+                mFloatingTreeObserver = new ViewTreeObserver();
+            }
+            return mFloatingTreeObserver;
+        }
+
+        void notifyGlobalFocusCleared(View oldFocus)
+        {
+            if (oldFocus != null && mAttachInfo != null)
+            {
+                mAttachInfo.mTreeObserver.dispatchOnGlobalFocusChange(oldFocus, null);
+            }
+        }
+
         internal class AttachInfo
         {
             internal Context context;
@@ -323,6 +364,8 @@ namespace AndroidUI
                 mTmpTransformRect = new();
                 mTmpTransformation = new();
                 mInvalidateChildLocation = new int[2];
+                mTreeObserver = new ViewTreeObserver();
+
                 this.context = context;
             }
 
@@ -345,7 +388,7 @@ namespace AndroidUI
                 private const int POOL_LIMIT = 10;
 
                 private static readonly SynchronizedPool<InvalidateInfo> sPool =
-                        new SynchronizedPool<InvalidateInfo>(POOL_LIMIT);
+                        new(POOL_LIMIT);
 
                 internal View target;
 
@@ -388,16 +431,22 @@ namespace AndroidUI
             internal bool mViewScrollChanged;
             internal float mApplicationScale;
             internal bool mScalingRequired;
-            internal int mDrawingTime;
+            internal long mDrawingTime;
             internal bool mHardwareAccelerated;
             internal RectF mTmpTransformRect;
             internal Transformation mTmpTransformation;
+            internal View mRootView;
             /**
              * Global to the view hierarchy used as a temporary for dealing with
              * x/y points in the ViewGroup.invalidateChild implementation.
              */
             internal int[] mInvalidateChildLocation;
 
+            /**
+             * The view tree observer used to dispatch global events like
+             * layout, pre-draw, touch mode change, etc.
+             */
+            internal ViewTreeObserver mTreeObserver;
 
 
             /**
@@ -463,7 +512,7 @@ namespace AndroidUI
                 {
                     return false;
                 }
-                Parent parent = current.mParent;
+                ViewParent parent = current.mParent;
                 if (parent == null)
                 {
                     return false; // We are not attached to the view root
@@ -507,7 +556,7 @@ namespace AndroidUI
                 {
                     return true;
                 }
-                Parent parent = current.mParent;
+                ViewParent parent = current.mParent;
                 if (parent == null)
                 {
                     return false;
@@ -645,28 +694,28 @@ namespace AndroidUI
          */
         internal void onChildVisibilityChanged(View child, int oldVisibility, int newVisibility)
         {
-            //if (mTransition != null)
-            //{
-            //    if (newVisibility == VISIBLE)
-            //    {
-            //        mTransition.showChild(this, child, oldVisibility);
-            //    }
-            //    else
-            //    {
-            //        mTransition.hideChild(this, child, newVisibility);
-            //        if (mTransitioningViews != null && mTransitioningViews.contains(child))
-            //        {
-            //            // Only track this on disappearing views - appearing views are already visible
-            //            // and don't need special handling during drawChild()
-            //            if (mVisibilityChangingChildren == null)
-            //            {
-            //                mVisibilityChangingChildren = new ArrayList<View>();
-            //            }
-            //            mVisibilityChangingChildren.add(child);
-            //            addDisappearingView(child);
-            //        }
-            //    }
-            //}
+            if (mTransition != null)
+            {
+                if (newVisibility == VISIBLE)
+                {
+                    mTransition.showChild(this, child, oldVisibility);
+                }
+                else
+                {
+                    mTransition.hideChild(this, child, newVisibility);
+                    if (mTransitioningViews != null && mTransitioningViews.Contains(child))
+                    {
+                        // Only track this on disappearing views - appearing views are already visible
+                        // and don't need special handling during drawChild()
+                        if (mVisibilityChangingChildren == null)
+                        {
+                            mVisibilityChangingChildren = new List<View>();
+                        }
+                        mVisibilityChangingChildren.Add(child);
+                        addDisappearingView(child);
+                    }
+                }
+            }
 
             // in all cases, for drags
             //if (newVisibility == VISIBLE && mCurrentDragStartEvent != null)
@@ -758,11 +807,11 @@ namespace AndroidUI
             mWindowAttachCount++;
             // We will need to evaluate the drawable state at least once.
             mPrivateFlags |= PFLAG_DRAWABLE_STATE_DIRTY;
-            //if (mFloatingTreeObserver != null)
-            //{
-            //    info.mTreeObserver.merge(mFloatingTreeObserver);
-            //    mFloatingTreeObserver = null;
-            //}
+            if (mFloatingTreeObserver != null)
+            {
+                info.mTreeObserver.merge(mFloatingTreeObserver);
+                mFloatingTreeObserver = null;
+            }
 
             //registerPendingFrameMetricsObservers();
 
@@ -780,20 +829,19 @@ namespace AndroidUI
             //performCollectViewAttributes(mAttachInfo, visibility);
             onAttachedToWindow();
 
-            //ListenerInfo li = mListenerInfo;
-            //CopyOnWriteArrayList<OnAttachStateChangeListener> listeners =
-            //        li != null ? li.mOnAttachStateChangeListeners : null;
-            //if (listeners != null && listeners.size() > 0)
-            //{
-            //    // NOTE: because of the use of CopyOnWriteArrayList, we *must* use an iterator to
-            //    // perform the dispatching. The iterator is a safe guard against listeners that
-            //    // could mutate the list by calling the various add/remove methods. This prevents
-            //    // the array from being modified while we iterate it.
-            //    for (OnAttachStateChangeListener listener : listeners)
-            //    {
-            //        listener.onViewAttachedToWindow(this);
-            //    }
-            //}
+            ListenerInfo li = mListenerInfo;
+            CopyOnWriteList<OnAttachStateChangeListener> listeners = li != null ? li.mOnAttachStateChangeListeners : null;
+            if (listeners != null && listeners.Count > 0)
+            {
+                // NOTE: because of the use of CopyOnWriteList, we *must* use an iterator to
+                // perform the dispatching. The iterator is a safe guard against listeners that
+                // could mutate the list by calling the various add/remove methods. This prevents
+                // the array from being modified while we iterate it.
+                foreach (OnAttachStateChangeListener listener in listeners)
+                {
+                    listener.onViewAttachedToWindow(this);
+                }
+            }
 
             int vis = info.mWindowVisibility;
             if (vis != GONE)
@@ -832,13 +880,12 @@ namespace AndroidUI
                 child.dispatchAttachedToWindow(info,
                         combineVisibility(visibility, child.getVisibility()));
             }
-            //int transientCount = mTransientIndices == null ? 0 : mTransientIndices.size();
-            //for (int i = 0; i < transientCount; ++i)
-            //{
-            //    View view = mTransientViews.get(i);
-            //    view.dispatchAttachedToWindow(info,
-            //            combineVisibility(visibility, view.getVisibility()));
-            //}
+            int transientCount = mTransientIndices == null ? 0 : mTransientIndices.size();
+            for (int i = 0; i < transientCount; ++i)
+            {
+                View view = mTransientViews.ElementAt(i);
+                view.dispatchAttachedToWindow(info, combineVisibility(visibility, view.getVisibility()));
+            }
         }
 
         // Whether any layout calls have actually been suppressed while mSuppressLayout
@@ -846,14 +893,14 @@ namespace AndroidUI
         // layout is later re-enabled.
         private bool mLayoutCalledWhileSuppressed = false;
 
-        void dispatchDetachedFromWindow()
+        internal void dispatchDetachedFromWindow()
         {
             // If we still have a touch target, we are still in the process of
             // dispatching motion events to a child; we need to get rid of that
             // child to avoid dispatching events to it after the window is torn
             // down. To make sure we keep the child in a consistent state, we
             // first send it an ACTION_CANCEL motion event.
-            //cancelAndClearTouchTargets(null);
+            cancelAndClearTouchTargets(null);
 
             // Similarly, set ACTION_EXIT to all hover targets and clear them.
             //exitHoverTargets();
@@ -877,13 +924,13 @@ namespace AndroidUI
             {
                 children[i].dispatchDetachedFromWindow();
             }
-            //clearDisappearingChildren();
-            //int transientCount = mTransientViews == null ? 0 : mTransientIndices.size();
-            //for (int i = 0; i < transientCount; ++i)
-            //{
-            //    View view = mTransientViews.get(i);
-            //    view.dispatchDetachedFromWindow();
-            //}
+            clearDisappearingChildren();
+            int transientCount = mTransientViews == null ? 0 : mTransientIndices.size();
+            for (int i = 0; i < transientCount; ++i)
+            {
+                View view = mTransientViews.ElementAt(i);
+                view.dispatchDetachedFromWindow();
+            }
 
             AttachInfo info = mAttachInfo;
             if (info != null)
@@ -909,20 +956,19 @@ namespace AndroidUI
                 //info.mViewRootImpl.getImeFocusController().onViewDetachedFromWindow(this);
             }
 
-            //ListenerInfo li = mListenerInfo;
-            //CopyOnWriteArrayList<OnAttachStateChangeListener> listeners =
-            //        li != null ? li.mOnAttachStateChangeListeners : null;
-            //if (listeners != null && listeners.size() > 0)
-            //{
-            //    // NOTE: because of the use of CopyOnWriteArrayList, we *must* use an iterator to
-            //    // perform the dispatching. The iterator is a safe guard against listeners that
-            //    // could mutate the list by calling the various add/remove methods. This prevents
-            //    // the array from being modified while we iterate it.
-            //    for (OnAttachStateChangeListener listener : listeners)
-            //    {
-            //        listener.onViewDetachedFromWindow(this);
-            //    }
-            //}
+            ListenerInfo li = mListenerInfo;
+            CopyOnWriteList<OnAttachStateChangeListener> listeners = li != null ? li.mOnAttachStateChangeListeners : null;
+            if (listeners != null && listeners.Count > 0)
+            {
+                // NOTE: because of the use of CopyOnWriteList, we *must* use an iterator to
+                // perform the dispatching. The iterator is a safe guard against listeners that
+                // could mutate the list by calling the various add/remove methods. This prevents
+                // the array from being modified while we iterate it.
+                foreach (OnAttachStateChangeListener listener in listeners)
+                {
+                    listener.onViewDetachedFromWindow(this);
+                }
+            }
 
             if ((mPrivateFlags & PFLAG_SCROLL_CONTAINER_ADDED) != 0)
             {
@@ -1142,7 +1188,7 @@ namespace AndroidUI
          */
         internal bool isLayoutDirectionInherited()
         {
-            return (getRawLayoutDirection() == LAYOUT_DIRECTION_INHERIT);
+            return getRawLayoutDirection() == LAYOUT_DIRECTION_INHERIT;
         }
 
         /**
@@ -1308,10 +1354,10 @@ namespace AndroidUI
             //}
             // Should resolve Drawables before Padding because we need the layout direction of the
             // Drawable to correctly resolve Padding.
-            //if (!areDrawablesResolved())
-            //{
-            //    resolveDrawables();
-            //}
+            if (!areDrawablesResolved())
+            {
+                resolveDrawables();
+            }
             if (!isPaddingResolved())
             {
                 resolvePadding();
@@ -1390,7 +1436,7 @@ namespace AndroidUI
                 resetRtlProperties();
                 // Set the new layout direction (filtered)
                 mPrivateFlags2 |=
-                        ((layoutDirection << PFLAG2_LAYOUT_DIRECTION_MASK_SHIFT) & PFLAG2_LAYOUT_DIRECTION_MASK);
+                        (layoutDirection << PFLAG2_LAYOUT_DIRECTION_MASK_SHIFT) & PFLAG2_LAYOUT_DIRECTION_MASK;
                 // We need to resolve all RTL properties as they all depend on layout direction
                 resolveRtlPropertiesIfNeeded();
                 requestLayout();
@@ -1416,6 +1462,7 @@ namespace AndroidUI
         }
 
         Drawable mBackground;
+
         /**
          * Temporary Rect currently for use in setBackground().  This will probably
          * be extended in the future to hold our own class with more than just
@@ -1429,7 +1476,7 @@ namespace AndroidUI
                 {
                     return null;
                 }
-                return Context.storage.GetOrCreate<Rect>(StorageKeys.ViewTempRect, new());
+                return Context.storage.GetOrCreate<Rect>(StorageKeys.ViewTempRect, () => new());
             }
         }
 
@@ -1587,9 +1634,20 @@ namespace AndroidUI
             //AccessibilityNodeIdManager.getInstance().unregisterViewWithId(getAccessibilityViewId());
         }
 
+        private void resetDisplayList()
+        {
+            mRenderNode.Dispose();
+            mRenderNode = null;
+            //mRenderNode.discardDisplayList();
+            //if (mBackgroundRenderNode != null)
+            //{
+            //    mBackgroundRenderNode.discardDisplayList();
+            //}
+        }
+
         private void cleanupDraw()
         {
-            //resetDisplayList();
+            resetDisplayList();
             if (mAttachInfo != null)
             {
                 // not implemented
@@ -1860,7 +1918,8 @@ namespace AndroidUI
         internal const int PFLAG2_DRAG_HOVERED = 0x00000002;
 
         /** @hide */
-        internal enum ContentCaptureImportance {
+        internal enum ContentCaptureImportance
+        {
             /**
              * Automatically determine whether a view is important for content capture.
              *
@@ -3150,10 +3209,10 @@ namespace AndroidUI
             layout(l.toPixel(), t.toPixel(), r.toPixel(), b.toPixel());
         }
 
-        protected int mLeft;
-        protected int mTop;
-        protected int mBottom;
-        protected int mRight;
+        internal int mLeft;
+        internal int mTop;
+        internal int mBottom;
+        internal int mRight;
 
         /**
          * Returns true if this view has been through at least one layout since it
@@ -3948,7 +4007,7 @@ namespace AndroidUI
 
         private bool hasParentWantsFocus()
         {
-            Parent parent = mParent;
+            ViewParent parent = mParent;
             while (parent is View)
             {
                 View pv = (View)parent;
@@ -4203,13 +4262,13 @@ namespace AndroidUI
         }
 
         /**
-         * View flag indicating whether {@link #addFocusables(ArrayList, int, int)}
+         * View flag indicating whether {@link #addFocusables(List, int, int)}
          * should add all focusable Views regardless if they are focusable in touch mode.
          */
         public const int FOCUSABLES_ALL = 0x00000000;
 
         /**
-         * View flag indicating whether {@link #addFocusables(ArrayList, int, int)}
+         * View flag indicating whether {@link #addFocusables(List, int, int)}
          * should add only Views focusable in touch mode.
          */
         public const int FOCUSABLES_TOUCH_MODE = 0x00000001;
@@ -4412,11 +4471,11 @@ namespace AndroidUI
         {
             if (mAttachInfo != null)
             {
-                //View v = mAttachInfo.mRootView;
-                //if (v != null)
-                //{
-                //return v;
-                //}
+                View v = mAttachInfo.mRootView;
+                if (v != null)
+                {
+                    return v;
+                }
             }
 
             View parent = this;
@@ -4561,7 +4620,7 @@ namespace AndroidUI
                 //needGlobalAttributesUpdate(false);
                 requestLayout();
 
-                if (((mViewFlags & VISIBILITY_MASK) == GONE))
+                if ((mViewFlags & VISIBILITY_MASK) == GONE)
                 {
                     if (hasFocus())
                     {
@@ -4598,7 +4657,7 @@ namespace AndroidUI
                  */
                 mPrivateFlags |= PFLAG_DRAWN;
 
-                if (((mViewFlags & VISIBILITY_MASK) == INVISIBLE))
+                if ((mViewFlags & VISIBILITY_MASK) == INVISIBLE)
                 {
                     // root view becoming invisible shouldn't clear focus and accessibility focus
                     if (getRootView() != this)
@@ -4631,7 +4690,7 @@ namespace AndroidUI
                 if (mParent is View)
                 {
                     View parent = (View)mParent;
-                    parent.onChildVisibilityChanged(this, (changed & VISIBILITY_MASK), newVisibility);
+                    parent.onChildVisibilityChanged(this, changed & VISIBILITY_MASK, newVisibility);
                     parent.invalidate(true);
                 }
                 else if (mParent != null)
@@ -4815,7 +4874,7 @@ namespace AndroidUI
         {
             if (!isFocusableInTouchMode())
             {
-                for (Parent p = mParent; p is View; p = p.getParent())
+                for (ViewParent p = mParent; p is View; p = p.getParent())
                 {
                     View g = (View)p;
                     if (g.shouldBlockFocusForTouchscreen())
@@ -4961,7 +5020,7 @@ namespace AndroidUI
                     return view;
                 }
 
-                Parent parent = start.mParent;
+                ViewParent parent = start.mParent;
                 if (parent == null || !(parent is View))
                 {
                     return null;
@@ -5204,7 +5263,7 @@ namespace AndroidUI
 
                 if (mAttachInfo != null)
                 {
-                    //mAttachInfo.mTreeObserver.dispatchOnGlobalFocusChange(oldFocus, this);
+                    mAttachInfo.mTreeObserver.dispatchOnGlobalFocusChange(oldFocus, this);
                 }
 
                 onFocusChanged(true, direction, previouslyFocusedRect);
@@ -5520,7 +5579,7 @@ namespace AndroidUI
             {
                 return;
             }
-            Parent parent = mParent;
+            ViewParent parent = mParent;
             View child = this;
             while (parent is View)
             {
@@ -5590,7 +5649,7 @@ namespace AndroidUI
         void clearFocusedInCluster()
         {
             View top = findKeyboardNavigationCluster();
-            Parent parent = this;
+            ViewParent parent = this;
             do
             {
                 ((View)parent).mFocusedInCluster = null;
@@ -5696,7 +5755,7 @@ namespace AndroidUI
         private bool hasAncestorThatBlocksDescendantFocus()
         {
             bool focusableInTouchMode = true;
-            Parent ancestor = mParent;
+            ViewParent ancestor = mParent;
             while (ancestor is View)
             {
                 View vgAncestor = (View)ancestor;
@@ -5748,108 +5807,119 @@ namespace AndroidUI
 
                 if (propagate && (!refocus || !rootViewRequestFocus()))
                 {
-                    //notifyGlobalFocusCleared(this);
+                    notifyGlobalFocusCleared(this);
                 }
             }
         }
 
         public void layout(int l, int t, int r, int b)
         {
-            if ((mPrivateFlags3 & PFLAG3_MEASURE_NEEDED_BEFORE_LAYOUT) != 0)
+            if (!mSuppressLayout && (mTransition == null || !mTransition.isChangingLayout()))
             {
-                onMeasure(mOldWidthMeasureSpec, mOldHeightMeasureSpec);
-                mPrivateFlags3 &= ~PFLAG3_MEASURE_NEEDED_BEFORE_LAYOUT;
-            }
-
-            int oldL = mLeft;
-            int oldT = mTop;
-            int oldB = mBottom;
-            int oldR = mRight;
-
-            bool changed = setFrame(l, t, r, b);
-
-            if (changed || (mPrivateFlags & PFLAG_LAYOUT_REQUIRED) == PFLAG_LAYOUT_REQUIRED)
-            {
-                onLayout(changed, l, t, r, b);
-
-                //if (shouldDrawRoundScrollbar())
-                //{
-                //    if (mRoundScrollbarRenderer == null)
-                //    {
-                //        mRoundScrollbarRenderer = new RoundScrollbarRenderer(this);
-                //    }
-                //}
-                //else
-                //{
-                //    mRoundScrollbarRenderer = null;
-                //}
-
-                mPrivateFlags &= ~PFLAG_LAYOUT_REQUIRED;
-
-                //ListenerInfo li = mListenerInfo;
-                //if (li != null && li.mOnLayoutChangeListeners != null)
-                //{
-                //    ArrayList<OnLayoutChangeListener> listenersCopy =
-                //            (ArrayList<OnLayoutChangeListener>)li.mOnLayoutChangeListeners.clone();
-                //    int numListeners = listenersCopy.size();
-                //    for (int i = 0; i < numListeners; ++i)
-                //    {
-                //        listenersCopy.get(i).onLayoutChange(this, l, t, r, b, oldL, oldT, oldR, oldB);
-                //    }
-                //}
-            }
-
-            bool wasLayoutValid = isLayoutValid();
-
-            mPrivateFlags &= ~PFLAG_FORCE_LAYOUT;
-            mPrivateFlags3 |= PFLAG3_IS_LAID_OUT;
-
-            if (!wasLayoutValid && isFocused())
-            {
-                mPrivateFlags &= ~PFLAG_WANTS_FOCUS;
-                if (canTakeFocus())
+                if (mTransition != null)
                 {
-                    // We have a robust focus, so parents should no longer be wanting focus.
-                    clearParentsWantFocus();
+                    mTransition.layoutChange(this);
                 }
-                else if (getViewRootImpl() == null || !getViewRootImpl().isInLayout())
+                if ((mPrivateFlags3 & PFLAG3_MEASURE_NEEDED_BEFORE_LAYOUT) != 0)
                 {
-                    // This is a weird case. Most-likely the user, rather than ViewRootImpl, called
-                    // layout. In this case, there's no guarantee that parent layouts will be evaluated
-                    // and thus the safest action is to clear focus here.
-                    clearFocusInternal(null, /* propagate */ true, /* refocus */ false);
-                    clearParentsWantFocus();
+                    onMeasure(mOldWidthMeasureSpec, mOldHeightMeasureSpec);
+                    mPrivateFlags3 &= ~PFLAG3_MEASURE_NEEDED_BEFORE_LAYOUT;
                 }
-                else if (!hasParentWantsFocus())
+
+                int oldL = mLeft;
+                int oldT = mTop;
+                int oldB = mBottom;
+                int oldR = mRight;
+
+                bool changed = setFrame(l, t, r, b);
+
+                if (changed || (mPrivateFlags & PFLAG_LAYOUT_REQUIRED) == PFLAG_LAYOUT_REQUIRED)
                 {
-                    // original requestFocus was likely on this view directly, so just clear focus
-                    clearFocusInternal(null, /* propagate */ true, /* refocus */ false);
-                }
-                // otherwise, we let parents handle re-assigning focus during their layout passes.
-            }
-            else if ((mPrivateFlags & PFLAG_WANTS_FOCUS) != 0)
-            {
-                mPrivateFlags &= ~PFLAG_WANTS_FOCUS;
-                View focused = findFocus();
-                if (focused != null)
-                {
-                    // Try to restore focus as close as possible to our starting focus.
-                    if (!restoreDefaultFocus() && !hasParentWantsFocus())
+                    onLayout(changed, l, t, r, b);
+
+                    //if (shouldDrawRoundScrollbar())
+                    //{
+                    //    if (mRoundScrollbarRenderer == null)
+                    //    {
+                    //        mRoundScrollbarRenderer = new RoundScrollbarRenderer(this);
+                    //    }
+                    //}
+                    //else
+                    //{
+                    //    mRoundScrollbarRenderer = null;
+                    //}
+
+                    mPrivateFlags &= ~PFLAG_LAYOUT_REQUIRED;
+
+                    ListenerInfo li = mListenerInfo;
+                    if (li != null && li.mOnLayoutChangeListeners != null)
                     {
-                        // Give up and clear focus once we've reached the top-most parent which wants
-                        // focus.
-                        focused.clearFocusInternal(null, /* propagate */ true, /* refocus */ false);
+                        List<OnLayoutChangeListener> listenersCopy = new(li.mOnLayoutChangeListeners);
+                        int numListeners = listenersCopy.Count;
+                        for (int i = 0; i < numListeners; ++i)
+                        {
+                            listenersCopy.ElementAt(i).onLayoutChange(this, l, t, r, b, oldL, oldT, oldR, oldB);
+                        }
                     }
                 }
+
+                bool wasLayoutValid = isLayoutValid();
+
+                mPrivateFlags &= ~PFLAG_FORCE_LAYOUT;
+                mPrivateFlags3 |= PFLAG3_IS_LAID_OUT;
+
+                if (!wasLayoutValid && isFocused())
+                {
+                    mPrivateFlags &= ~PFLAG_WANTS_FOCUS;
+                    if (canTakeFocus())
+                    {
+                        // We have a robust focus, so parents should no longer be wanting focus.
+                        clearParentsWantFocus();
+                    }
+                    else if (getViewRootImpl() == null || !getViewRootImpl().isInLayout())
+                    {
+                        // This is a weird case. Most-likely the user, rather than ViewRootImpl, called
+                        // layout. In this case, there's no guarantee that parent layouts will be evaluated
+                        // and thus the safest action is to clear focus here.
+                        clearFocusInternal(null, /* propagate */ true, /* refocus */ false);
+                        clearParentsWantFocus();
+                    }
+                    else if (!hasParentWantsFocus())
+                    {
+                        // original requestFocus was likely on this view directly, so just clear focus
+                        clearFocusInternal(null, /* propagate */ true, /* refocus */ false);
+                    }
+                    // otherwise, we let parents handle re-assigning focus during their layout passes.
+                }
+                else if ((mPrivateFlags & PFLAG_WANTS_FOCUS) != 0)
+                {
+                    mPrivateFlags &= ~PFLAG_WANTS_FOCUS;
+                    View focused = findFocus();
+                    if (focused != null)
+                    {
+                        // Try to restore focus as close as possible to our starting focus.
+                        if (!restoreDefaultFocus() && !hasParentWantsFocus())
+                        {
+                            // Give up and clear focus once we've reached the top-most parent which wants
+                            // focus.
+                            focused.clearFocusInternal(null, /* propagate */ true, /* refocus */ false);
+                        }
+                    }
+                }
+
+                //if ((mPrivateFlags3 & PFLAG3_NOTIFY_AUTOFILL_ENTER_ON_LAYOUT) != 0)
+                //{
+                //    mPrivateFlags3 &= ~PFLAG3_NOTIFY_AUTOFILL_ENTER_ON_LAYOUT;
+                //    notifyEnterOrExitForAutoFillIfNeeded(true);
+                //}
+
+                //notifyAppearedOrDisappearedForContentCaptureIfNeeded(true);
             }
-
-            //if ((mPrivateFlags3 & PFLAG3_NOTIFY_AUTOFILL_ENTER_ON_LAYOUT) != 0)
-            //{
-            //    mPrivateFlags3 &= ~PFLAG3_NOTIFY_AUTOFILL_ENTER_ON_LAYOUT;
-            //    notifyEnterOrExitForAutoFillIfNeeded(true);
-            //}
-
-            //notifyAppearedOrDisappearedForContentCaptureIfNeeded(true);
+            else
+            {
+                // record the fact that we noop'd it; request layout when transition finishes
+                mLayoutCalledWhileSuppressed = true;
+            }
         }
 
         /**
@@ -6081,7 +6151,7 @@ namespace AndroidUI
             return (mViewFlags & VISIBILITY_MASK) != VISIBLE && mCurrentAnimation == null
                 && (
                     !(mParent is View)
-                //|| !((View)Parent).isViewTransitioning(this)
+                    || !((View)mParent).isViewTransitioning(this)
                 );
         }
 
@@ -6136,7 +6206,7 @@ namespace AndroidUI
 
                 // Propagate the damage rectangle to the parent view.
                 AttachInfo ai = mAttachInfo;
-                Parent p = mParent;
+                ViewParent p = mParent;
                 if (p != null && ai != null && l < r && t < b)
                 {
                     Rect damage = ai.mTmpInvalRect;
@@ -6174,8 +6244,9 @@ namespace AndroidUI
          */
         private View getProjectionReceiver()
         {
-            Parent p = getParent();
-            while (p != null && p is View) {
+            ViewParent p = getParent();
+            while (p != null && p is View)
+            {
                 View v = (View)p;
                 if (v.isProjectionReceiver())
                 {
@@ -6205,7 +6276,7 @@ namespace AndroidUI
              */
 
             // if set, combine the animation flag into the parent
-            mPrivateFlags |= (target.mPrivateFlags & PFLAG_DRAW_ANIMATION);
+            mPrivateFlags |= target.mPrivateFlags & PFLAG_DRAW_ANIMATION;
 
             if ((target.mPrivateFlags & ~PFLAG_DIRTY_MASK) != 0)
             {
@@ -6245,6 +6316,7 @@ namespace AndroidUI
         public void invalidateChild(View child, Rect dirty)
         {
             AttachInfo attachInfo = mAttachInfo;
+            // TODO: investigate disabled
             if (attachInfo != null && attachInfo.mHardwareAccelerated)
             {
                 // HW accelerated fast path
@@ -6262,7 +6334,7 @@ namespace AndroidUI
                 throw new Exception("attempting to invalidate a non hardware accelerated window");
             }
 
-            Parent parent = this;
+            ViewParent parent = this;
             if (attachInfo != null)
             {
                 // If the child is drawing an animation, we want to copy this flag onto
@@ -6381,7 +6453,7 @@ namespace AndroidUI
          * @deprecated Use {@link #onDescendantInvalidated(View, View)} instead to observe updates to
          * draw state in descendants.
          */
-        public Parent invalidateChildInParent(int[] location, Rect dirty)
+        public ViewParent invalidateChildInParent(int[] location, Rect dirty)
         {
             if ((mPrivateFlags & (PFLAG_DRAWN | PFLAG_DRAWING_CACHE_VALID)) != 0)
             {
@@ -6430,9 +6502,9 @@ namespace AndroidUI
                 mPrivateFlags &= ~PFLAG_DRAWING_CACHE_VALID;
                 //if (mLayerType != LAYER_TYPE_NONE)
                 //{
-                    uint f = (uint)mPrivateFlags;
-                    f |= PFLAG_INVALIDATED;
-                    mPrivateFlags = (int)f;
+                uint f = (uint)mPrivateFlags;
+                f |= PFLAG_INVALIDATED;
+                mPrivateFlags = (int)f;
                 //}
 
                 return mParent;
@@ -6888,7 +6960,7 @@ namespace AndroidUI
 
             public override void run()
             {
-                long now = NanoTime.currentTimeMillis(); //AnimationUtils.currentAnimationTimeMillis();
+                long now = NanoTime.currentTimeMillis(); //AnimationUtils.currentAnimationTimeMillis(context);
                 if (now >= fadeStartTime)
                 {
 
@@ -7218,37 +7290,37 @@ namespace AndroidUI
             for (int i = 0; i < count; i++)
             {
                 View child = children[i];
-                if (((child.mViewFlags & VISIBILITY_MASK) == VISIBLE
+                if ((child.mViewFlags & VISIBILITY_MASK) == VISIBLE
                     || child.getAnimation() != null
-                    ))
+                    )
                 {
                     recreateChildDisplayList(child);
                 }
             }
-            //int transientCount = mTransientViews == null ? 0 : mTransientIndices.size();
-            //for (int i = 0; i < transientCount; ++i)
-            //{
-            //    View child = mTransientViews.get(i);
-            //    if (((child.mViewFlags & VISIBILITY_MASK) == VISIBLE || child.getAnimation() != null))
-            //    {
-            //        recreateChildDisplayList(child);
-            //    }
-            //}
+            int transientCount = mTransientViews == null ? 0 : mTransientIndices.size();
+            for (int i = 0; i < transientCount; ++i)
+            {
+                View child = mTransientViews.ElementAt(i);
+                if ((child.mViewFlags & VISIBILITY_MASK) == VISIBLE || child.getAnimation() != null)
+                {
+                    recreateChildDisplayList(child);
+                }
+            }
             //if (mOverlay != null)
             //{
             //    View overlayView = mOverlay.getOverlayView();
             //    recreateChildDisplayList(overlayView);
             //}
-            //if (mDisappearingChildren != null)
-            //{
-            //    ArrayList<View> disappearingChildren = mDisappearingChildren;
-            //    int disappearingCount = disappearingChildren.size();
-            //    for (int i = 0; i < disappearingCount; ++i)
-            //    {
-            //        View child = disappearingChildren.get(i);
-            //        recreateChildDisplayList(child);
-            //    }
-            //}
+            if (mDisappearingChildren != null)
+            {
+                List<View> disappearingChildren = mDisappearingChildren;
+                int disappearingCount = disappearingChildren.Count;
+                for (int i = 0; i < disappearingCount; ++i)
+                {
+                    View child = disappearingChildren.ElementAt(i);
+                    recreateChildDisplayList(child);
+                }
+            }
         }
 
         private void recreateChildDisplayList(View child)
@@ -8218,6 +8290,7 @@ namespace AndroidUI
                 transformedEvent.offsetLocation(offsetX, offsetY);
                 if (!child.hasIdentityMatrix())
                 {
+                    // TODO: RESTORE ME
                     //transformedEvent.transform(child.getInverseMatrix());
                 }
 
@@ -8371,7 +8444,7 @@ namespace AndroidUI
          */
         internal bool canReceivePointerEvents()
         {
-            return (mViewFlags & VISIBILITY_MASK) == VISIBLE; // || getAnimation() != null;
+            return (mViewFlags & VISIBILITY_MASK) == VISIBLE || getAnimation() != null;
         }
 
         float[] mTempPosition;
@@ -8430,8 +8503,8 @@ namespace AndroidUI
          */
         internal bool pointInView(float localX, float localY, float slop)
         {
-            return localX >= -slop && localY >= -slop && localX < ((mRight - mLeft) + slop) &&
-                    localY < ((mBottom - mTop) + slop);
+            return localX >= -slop && localY >= -slop && localX < (mRight - mLeft + slop) &&
+                    localY < (mBottom - mTop + slop);
         }
 
         /**
@@ -8902,7 +8975,7 @@ namespace AndroidUI
                 Console.WriteLine(this + ", identity begin: " + currentData.identity);
 
                 // Handle an initial down.
-                if ((currentState == Touch.State.TOUCH_DOWN && currentTouchCount == 1))
+                if (currentState == Touch.State.TOUCH_DOWN && currentTouchCount == 1)
                 {
                     // Throw away all previous state when starting a new touch gesture.
                     // The framework may have dropped the up or cancel event for the previous gesture
@@ -9146,7 +9219,7 @@ namespace AndroidUI
             //{
             //    mInputEventConsistencyVerifier.onUnhandledEvent(ev, 1);
             //}
-            return handled; // handled;
+            return handled;
         }
 
         /**
@@ -9263,7 +9336,7 @@ namespace AndroidUI
                 return;
             }
 
-            Parent theParent = descendant.mParent;
+            ViewParent theParent = descendant.mParent;
 
             // search and offset up to the parent
             while ((theParent != null) && (theParent is View) && (theParent != this))
@@ -9329,7 +9402,7 @@ namespace AndroidUI
          * Caller is responsible for calling requestLayout if necessary.
          * (This allows addViewInLayout to not request a new layout.)
          */
-        public void assignParent(Parent parent)
+        public void assignParent(ViewParent parent)
         {
             if (mParent == null)
             {
@@ -9890,9 +9963,9 @@ namespace AndroidUI
                 }
                 switch (mMarginFlags & LAYOUT_DIRECTION_MASK)
                 {
-                    //case View.LAYOUT_DIRECTION_RTL:
-                    //return rightMargin;
-                    //case View.LAYOUT_DIRECTION_LTR:
+                    case View.LAYOUT_DIRECTION_RTL:
+                        return rightMargin;
+                    case View.LAYOUT_DIRECTION_LTR:
                     default:
                         return leftMargin;
                 }
@@ -9927,9 +10000,9 @@ namespace AndroidUI
                 }
                 switch (mMarginFlags & LAYOUT_DIRECTION_MASK)
                 {
-                    //case View.LAYOUT_DIRECTION_RTL:
-                    //return leftMargin;
-                    //case View.LAYOUT_DIRECTION_LTR:
+                    case View.LAYOUT_DIRECTION_RTL:
+                        return leftMargin;
+                    case View.LAYOUT_DIRECTION_LTR:
                     default:
                         return rightMargin;
                 }
@@ -9945,7 +10018,7 @@ namespace AndroidUI
              */
             public bool isMarginRelative()
             {
-                return (startMargin != DEFAULT_MARGIN_RELATIVE || endMargin != DEFAULT_MARGIN_RELATIVE);
+                return startMargin != DEFAULT_MARGIN_RELATIVE || endMargin != DEFAULT_MARGIN_RELATIVE;
             }
 
             /**
@@ -9956,12 +10029,12 @@ namespace AndroidUI
              */
             public void setLayoutDirection(int layoutDirection)
             {
-                //if (layoutDirection != View.LAYOUT_DIRECTION_LTR &&
-                //layoutDirection != View.LAYOUT_DIRECTION_RTL) return;
+                if (layoutDirection != View.LAYOUT_DIRECTION_LTR &&
+                    layoutDirection != View.LAYOUT_DIRECTION_RTL) return;
                 if (layoutDirection != (mMarginFlags & LAYOUT_DIRECTION_MASK))
                 {
                     mMarginFlags &= ~LAYOUT_DIRECTION_MASK;
-                    mMarginFlags |= (layoutDirection & LAYOUT_DIRECTION_MASK);
+                    mMarginFlags |= layoutDirection & LAYOUT_DIRECTION_MASK;
                     if (isMarginRelative())
                     {
                         mMarginFlags |= NEED_RESOLUTION_MASK;
@@ -9981,7 +10054,7 @@ namespace AndroidUI
              */
             public int getLayoutDirection()
             {
-                return (mMarginFlags & LAYOUT_DIRECTION_MASK);
+                return mMarginFlags & LAYOUT_DIRECTION_MASK;
             }
 
             /**
@@ -10048,7 +10121,7 @@ namespace AndroidUI
              */
             internal bool isLayoutRtl()
             {
-                return ((mMarginFlags & LAYOUT_DIRECTION_MASK) == View.LAYOUT_DIRECTION_RTL);
+                return (mMarginFlags & LAYOUT_DIRECTION_MASK) == View.LAYOUT_DIRECTION_RTL;
             }
 
             /**
@@ -10075,7 +10148,7 @@ namespace AndroidUI
          * Return true if o is a ViewGroup that is laying out using optical bounds.
          * @hide
          */
-        internal static bool isLayoutModeOptical(Object o)
+        internal static bool isLayoutModeOptical(object o)
         {
             return o is View && ((View)o).isLayoutModeOptical();
         }
@@ -10223,7 +10296,7 @@ namespace AndroidUI
          */
         internal bool isLayoutRtl()
         {
-            return (getLayoutDirection() == LAYOUT_DIRECTION_RTL);
+            return getLayoutDirection() == LAYOUT_DIRECTION_RTL;
         }
 
 
@@ -10306,7 +10379,7 @@ namespace AndroidUI
             return matrix;
         }
 
-        void ensureTransformationInfo()
+        internal void ensureTransformationInfo()
         {
             if (mTransformationInfo == null)
             {
@@ -10998,6 +11071,7 @@ namespace AndroidUI
             mChildrenCount = 0;
 
             mPersistentDrawingCache = PERSISTENT_SCROLLING_CACHE;
+            mLayoutTransitionListener = new LayoutTransitionListener1(this);
         }
 
         /**
@@ -11102,10 +11176,10 @@ namespace AndroidUI
         private void removeFromArray(int index)
         {
             View[] children = mChildren;
-            //if (!(mTransitioningViews != null && mTransitioningViews.contains(children[index])))
-            //{
-            //children[index].Parent = null;
-            //}
+            if (!(mTransitioningViews != null && mTransitioningViews.Contains(children[index])))
+            {
+                children[index].mParent = null;
+            }
             int count = mChildrenCount;
             if (index == count - 1)
             {
@@ -11170,7 +11244,7 @@ namespace AndroidUI
                 }
             }
 
-            mChildrenCount -= (end - start);
+            mChildrenCount -= end - start;
         }
 
         /**
@@ -11266,10 +11340,10 @@ namespace AndroidUI
 
         private void removeViewInternal(int index, View view)
         {
-            //if (mTransition != null)
-            //{
-            //    mTransition.removeChild(this, view);
-            //}
+            if (mTransition != null)
+            {
+                mTransition.removeChild(this, view);
+            }
 
             bool clearChildFocus = false;
             if (view == mFocused)
@@ -11287,21 +11361,19 @@ namespace AndroidUI
             cancelTouchTarget(view);
             //cancelHoverTarget(view);
 
-            //if (view.getAnimation() != null ||
-            //        (mTransitioningViews != null && mTransitioningViews.contains(view)))
-            //{
-            //    addDisappearingView(view);
-            //}
-            //else
-            if (view.mAttachInfo != null)
+            if (view.getAnimation() != null || (mTransitioningViews != null && mTransitioningViews.Contains(view)))
+            {
+                addDisappearingView(view);
+            }
+            else if (view.mAttachInfo != null)
             {
                 view.dispatchDetachedFromWindow();
             }
 
-            //if (view.hasTransientState())
-            //{
-            //    childHasTransientStateChanged(view, false);
-            //}
+            if (view.hasTransientState())
+            {
+                childHasTransientStateChanged(view, false);
+            }
 
             //needGlobalAttributesUpdate(false);
 
@@ -11319,10 +11391,10 @@ namespace AndroidUI
             if (clearChildFocus)
             {
                 this.clearChildFocus(view);
-                //if (!rootViewRequestFocus())
-                //{
-                //    notifyGlobalFocusCleared(this);
-                //}
+                if (!rootViewRequestFocus())
+                {
+                    notifyGlobalFocusCleared(this);
+                }
             }
 
             dispatchViewRemoved(view);
@@ -11332,15 +11404,15 @@ namespace AndroidUI
             //    notifySubtreeAccessibilityStateChangedIfNeeded();
             //}
 
-            //int transientCount = mTransientIndices == null ? 0 : mTransientIndices.size();
-            //for (int i = 0; i < transientCount; ++i)
-            //{
-            //    int oldIndex = mTransientIndices.get(i);
-            //    if (index < oldIndex)
-            //    {
-            //        mTransientIndices.set(i, oldIndex - 1);
-            //    }
-            //}
+            int transientCount = mTransientIndices == null ? 0 : mTransientIndices.size();
+            for (int i = 0; i < transientCount; ++i)
+            {
+                int oldIndex = mTransientIndices.get(i);
+                if (index < oldIndex)
+                {
+                    mTransientIndices.set(i, oldIndex - 1);
+                }
+            }
 
             //if (mCurrentDragStartEvent != null)
             //{
@@ -11377,10 +11449,10 @@ namespace AndroidUI
             {
                 View view = children[i];
 
-                //if (mTransition != null)
-                //{
-                //    mTransition.removeChild(this, view);
-                //}
+                if (mTransition != null)
+                {
+                    mTransition.removeChild(this, view);
+                }
 
                 if (view == focused)
                 {
@@ -11398,23 +11470,23 @@ namespace AndroidUI
 
                 //view.clearAccessibilityFocus();
 
-                //cancelTouchTarget(view);
+                cancelTouchTarget(view);
                 //cancelHoverTarget(view);
 
-                //if (view.getAnimation() != null ||
-                //    (mTransitioningViews != null && mTransitioningViews.contains(view)))
-                //{
-                //    addDisappearingView(view);
-                //}
-                //else if (detach)
-                //{
-                //    view.dispatchDetachedFromWindow();
-                //}
+                if (view.getAnimation() != null ||
+                    (mTransitioningViews != null && mTransitioningViews.Contains(view)))
+                {
+                    addDisappearingView(view);
+                }
+                else if (detach)
+                {
+                    view.dispatchDetachedFromWindow();
+                }
 
-                //if (view.hasTransientState())
-                //{
-                //    childHasTransientStateChanged(view, false);
-                //}
+                if (view.hasTransientState())
+                {
+                    childHasTransientStateChanged(view, false);
+                }
 
                 //needGlobalAttributesUpdate(false);
 
@@ -11430,10 +11502,10 @@ namespace AndroidUI
             if (clearChildFocus)
             {
                 this.clearChildFocus(focused);
-                //if (!rootViewRequestFocus())
-                //{
-                //notifyGlobalFocusCleared(focused);
-                //}
+                if (!rootViewRequestFocus())
+                {
+                    notifyGlobalFocusCleared(focused);
+                }
             }
         }
 
@@ -11486,10 +11558,10 @@ namespace AndroidUI
             {
                 View view = children[i];
 
-                //if (mTransition != null)
-                //{
-                //    mTransition.removeChild(this, view);
-                //}
+                if (mTransition != null)
+                {
+                    mTransition.removeChild(this, view);
+                }
 
                 if (view == focused)
                 {
@@ -11502,24 +11574,20 @@ namespace AndroidUI
                 cancelTouchTarget(view);
                 //cancelHoverTarget(view);
 
-                if (false)
+                if (view.getAnimation() != null ||
+                        (mTransitioningViews != null && mTransitioningViews.Contains(view)))
                 {
-                    // no animation support yet
+                    addDisappearingView(view);
                 }
-                //if (view.getAnimation() != null ||
-                //        (mTransitioningViews != null && mTransitioningViews.contains(view)))
-                //{
-                //    addDisappearingView(view);
-                //}
                 else if (detach)
                 {
                     view.dispatchDetachedFromWindow();
                 }
 
-                //if (view.hasTransientState())
-                //{
-                //    childHasTransientStateChanged(view, false);
-                //}
+                if (view.hasTransientState())
+                {
+                    childHasTransientStateChanged(view, false);
+                }
 
                 dispatchViewRemoved(view);
 
@@ -11538,10 +11606,10 @@ namespace AndroidUI
             if (clearChildFocus)
             {
                 this.clearChildFocus(focused);
-                //if (!rootViewRequestFocus())
-                //{
-                //    notifyGlobalFocusCleared(focused);
-                //}
+                if (!rootViewRequestFocus())
+                {
+                    notifyGlobalFocusCleared(focused);
+                }
             }
         }
 
@@ -11609,12 +11677,12 @@ namespace AndroidUI
             bool preventRequestLayout)
         {
 
-            //if (mTransition != null)
-            //{
-            //    // Don't prevent other add transitions from completing, but cancel remove
-            //    // transitions to let them complete the process before we add to the container
-            //    mTransition.cancel(LayoutTransition.DISAPPEARING);
-            //}
+            if (mTransition != null)
+            {
+                // Don't prevent other add transitions from completing, but cancel remove
+                // transitions to let them complete the process before we add to the container
+                mTransition.cancel(LayoutTransition.DISAPPEARING);
+            }
 
             if (child.mParent != null)
             {
@@ -11622,10 +11690,10 @@ namespace AndroidUI
                         "You must call removeView() on the child's parent first.");
             }
 
-            //if (mTransition != null)
-            //{
-            //    mTransition.addChild(this, child);
-            //}
+            if (mTransition != null)
+            {
+                mTransition.addChild(this, child);
+            }
 
             if (!checkLayoutParams(layout_params))
             {
@@ -11673,7 +11741,7 @@ namespace AndroidUI
             {
                 //bool lastKeepOn = ai.mKeepScreenOn;
                 //ai.mKeepScreenOn = false;
-                child.dispatchAttachedToWindow(mAttachInfo, (mViewFlags & VISIBILITY_MASK));
+                child.dispatchAttachedToWindow(mAttachInfo, mViewFlags & VISIBILITY_MASK);
                 //if (ai.mKeepScreenOn)
                 //{
                 //needGlobalAttributesUpdate(true);
@@ -11693,28 +11761,28 @@ namespace AndroidUI
                 mGroupFlags |= FLAG_NOTIFY_CHILDREN_ON_DRAWABLE_STATE_CHANGE;
             }
 
-            //if (child.hasTransientState())
-            //{
-            //childHasTransientStateChanged(child, true);
-            //}
+            if (child.hasTransientState())
+            {
+                childHasTransientStateChanged(child, true);
+            }
 
             //if (child.getVisibility() != View.GONE)
             //{
             //    notifySubtreeAccessibilityStateChangedIfNeeded();
             //}
 
-            //if (mTransientIndices != null)
-            //{
-            //    int transientCount = mTransientIndices.size();
-            //    for (int i = 0; i < transientCount; ++i)
-            //    {
-            //        int oldIndex = mTransientIndices.get(i);
-            //        if (index <= oldIndex)
-            //        {
-            //            mTransientIndices.set(i, oldIndex + 1);
-            //        }
-            //    }
-            //}
+            if (mTransientIndices != null)
+            {
+                int transientCount = mTransientIndices.size();
+                for (int i = 0; i < transientCount; ++i)
+                {
+                    int oldIndex = mTransientIndices.get(i);
+                    if (index <= oldIndex)
+                    {
+                        mTransientIndices.set(i, oldIndex + 1);
+                    }
+                }
+            }
 
             //if (mCurrentDragStartEvent != null && child.getVisibility() == VISIBLE)
             //{
@@ -12049,8 +12117,8 @@ namespace AndroidUI
                         drawRect(canvas, paint,
                                 c.getLeft() + insets.left,
                                 c.getTop() + insets.top,
-                                (c.getRight() - insets.right - 1),
-                                (c.getBottom() - insets.bottom - 1));
+                                c.getRight() - insets.right - 1,
+                                c.getBottom() - insets.bottom - 1);
                     }
                 }
             }
@@ -12232,10 +12300,10 @@ namespace AndroidUI
         {
             if (translationX != getTranslationX())
             {
+                invalidateViewProperty(true, false);
                 tx = translationX;
-                //invalidateViewProperty(true, false);
                 //mRenderNode.setTranslationX(translationX);
-                //invalidateViewProperty(false, true);
+                invalidateViewProperty(false, true);
 
                 //invalidateParentIfNeededAndWasQuickRejected();
                 //notifySubtreeAccessibilityStateChangedIfNeeded();
@@ -12269,10 +12337,10 @@ namespace AndroidUI
         {
             if (translationY != getTranslationY())
             {
+                invalidateViewProperty(true, false);
                 ty = translationY;
-                //invalidateViewProperty(true, false);
                 //mRenderNode.setTranslationY(translationY);
-                //invalidateViewProperty(false, true);
+                invalidateViewProperty(false, true);
 
                 //invalidateParentIfNeededAndWasQuickRejected();
                 //notifySubtreeAccessibilityStateChangedIfNeeded();
@@ -12298,11 +12366,11 @@ namespace AndroidUI
         {
             if (translationZ != getTranslationZ())
             {
+                invalidateViewProperty(true, false);
                 tz = translationZ;
                 //translationZ = sanitizeFloatPropertyValue(translationZ, "translationZ");
-                //invalidateViewProperty(true, false);
                 //mRenderNode.setTranslationZ(translationZ);
-                //invalidateViewProperty(false, true);
+                invalidateViewProperty(false, true);
 
                 //invalidateParentIfNeededAndWasQuickRejected();
             }
@@ -12705,7 +12773,7 @@ namespace AndroidUI
                 }
             }
 
-            float alpha = 1.0f; // drawingWithRenderNode ? 1 : (getAlpha() * getTransitionAlpha());
+            float alpha = drawingWithRenderNode ? 1 : (getAlpha() * getTransitionAlpha());
             if (transformToApply != null
                     || alpha < 1
                     || !hasIdentityMatrix()
@@ -12733,11 +12801,11 @@ namespace AndroidUI
                             //}
                             //else
                             //{
-                                // Undo the scroll translation, apply the transformation matrix,
-                                // then redo the scroll translate to get the correct result.
-                                canvas.Translate(-transX, -transY);
-                                canvas.Concat(ref transformToApply.getMatrix().Value);
-                                canvas.Translate(transX, transY);
+                            // Undo the scroll translation, apply the transformation matrix,
+                            // then redo the scroll translate to get the correct result.
+                            canvas.Translate(-transX, -transY);
+                            canvas.Concat(ref transformToApply.getMatrix().Value);
+                            canvas.Translate(transX, transY);
                             //}
                             parent.mGroupFlags |= FLAG_CLEAR_TRANSFORMATION;
                         }
@@ -12751,7 +12819,7 @@ namespace AndroidUI
                     }
 
                     if (!childHasIdentityMatrix
-                        // && !drawingWithRenderNode
+                    // && !drawingWithRenderNode
                     )
                     {
                         canvas.Translate(-transX, -transY);
@@ -12947,22 +13015,22 @@ namespace AndroidUI
          */
         void finishAnimatingView(View view, Animation animation)
         {
-            //final ArrayList<View> disappearingChildren = mDisappearingChildren;
-            //if (disappearingChildren != null)
-            //{
-            //    if (disappearingChildren.contains(view))
-            //    {
-            //        disappearingChildren.remove(view);
+            List<View> disappearingChildren = mDisappearingChildren;
+            if (disappearingChildren != null)
+            {
+                if (disappearingChildren.Contains(view))
+                {
+                    disappearingChildren.Remove(view);
 
-            //        if (view.mAttachInfo != null)
-            //        {
-            //            view.dispatchDetachedFromWindow();
-            //        }
+                    if (view.mAttachInfo != null)
+                    {
+                        view.dispatchDetachedFromWindow();
+                    }
 
-            //        view.clearAnimation();
-            //        mGroupFlags |= FLAG_INVALIDATE_REQUIRED;
-            //    }
-            //}
+                    view.clearAnimation();
+                    mGroupFlags |= FLAG_INVALIDATE_REQUIRED;
+                }
+            }
 
             if (animation != null && !animation.getFillAfter())
             {
@@ -13059,7 +13127,7 @@ namespace AndroidUI
             // Z not supported
             //canvas.EnableZ();
 
-            int transientCount = 0; // mTransientIndices == null ? 0 : mTransientIndices.size();
+            int transientCount = mTransientIndices == null ? 0 : mTransientIndices.size();
             int transientIndex = transientCount != 0 ? 0 : -1;
             // Only use the preordered list if not HW accelerated, since the HW pipeline will do the
             // draw reordering internally
@@ -13069,20 +13137,20 @@ namespace AndroidUI
                     && isChildrenDrawingOrderEnabled();
             for (int i = 0; i < childrenCount; i++)
             {
-                //while (transientIndex >= 0 && mTransientIndices.get(transientIndex) == i)
-                //{
-                //    View transientChild = mTransientViews.get(transientIndex);
-                //    if ((transientChild.mViewFlags & VISIBILITY_MASK) == VISIBLE ||
-                //            transientChild.getAnimation() != null)
-                //    {
-                //        more |= drawChild(canvas, transientChild, drawingTime);
-                //    }
-                //    transientIndex++;
-                //    if (transientIndex >= transientCount)
-                //    {
-                //        transientIndex = -1;
-                //    }
-                //}
+                while (transientIndex >= 0 && mTransientIndices.get(transientIndex) == i)
+                {
+                    View transientChild = mTransientViews.ElementAt(transientIndex);
+                    if ((transientChild.mViewFlags & VISIBILITY_MASK) == VISIBLE ||
+                            transientChild.getAnimation() != null)
+                    {
+                        more |= drawChild(canvas, transientChild, drawingTime);
+                    }
+                    transientIndex++;
+                    if (transientIndex >= transientCount)
+                    {
+                        transientIndex = -1;
+                    }
+                }
 
                 int childIndex = getAndVerifyPreorderedIndex(childrenCount, i, customOrder);
                 View child = getAndVerifyPreorderedView(preorderedList, children, childIndex);
@@ -13093,35 +13161,35 @@ namespace AndroidUI
                     more |= drawChild(canvas, child, drawingTime);
                 }
             }
-            //while (transientIndex >= 0)
-            //{
-            //    // there may be additional transient views after the normal views
-            //    View transientChild = mTransientViews.get(transientIndex);
-            //    if ((transientChild.mViewFlags & VISIBILITY_MASK) == VISIBLE ||
-            //            transientChild.getAnimation() != null)
-            //    {
-            //        more |= drawChild(canvas, transientChild, drawingTime);
-            //    }
-            //    transientIndex++;
-            //    if (transientIndex >= transientCount)
-            //    {
-            //        break;
-            //    }
-            //}
+            while (transientIndex >= 0)
+            {
+                // there may be additional transient views after the normal views
+                View transientChild = mTransientViews.ElementAt(transientIndex);
+                if ((transientChild.mViewFlags & VISIBILITY_MASK) == VISIBLE ||
+                        transientChild.getAnimation() != null)
+                {
+                    more |= drawChild(canvas, transientChild, drawingTime);
+                }
+                transientIndex++;
+                if (transientIndex >= transientCount)
+                {
+                    break;
+                }
+            }
             if (preorderedList != null) preorderedList.Clear();
 
             // Draw any disappearing views that have animations
-            //if (mDisappearingChildren != null)
-            //{
-            //    ArrayList<View> disappearingChildren = mDisappearingChildren;
-            //    int disappearingCount = disappearingChildren.size() - 1;
-            //    // Go backwards -- we may delete as animations finish
-            //    for (int i = disappearingCount; i >= 0; i--)
-            //    {
-            //        View child = disappearingChildren.get(i);
-            //        more |= drawChild(canvas, child, drawingTime);
-            //    }
-            //}
+            if (mDisappearingChildren != null)
+            {
+                List<View> disappearingChildren = mDisappearingChildren;
+                int disappearingCount = disappearingChildren.Count - 1;
+                // Go backwards -- we may delete as animations finish
+                for (int i = disappearingCount; i >= 0; i--)
+                {
+                    View child = disappearingChildren.ElementAt(i);
+                    more |= drawChild(canvas, child, drawingTime);
+                }
+            }
 
             // no Z support
             //canvas.disableZ();
@@ -13485,7 +13553,7 @@ namespace AndroidUI
         public bool isInLayout()
         {
             ViewRootImpl viewRoot = getViewRootImpl();
-            return (viewRoot != null && viewRoot.isInLayout());
+            return viewRoot != null && viewRoot.isInLayout();
         }
 
         /**
@@ -13748,8 +13816,8 @@ namespace AndroidUI
             internal int mGravity = Gravity.FILL;
             internal bool mInsidePadding = true;
             internal bool mBoundsChanged = true;
-            internal readonly Rect mSelfBounds = new Rect();
-            internal readonly Rect mOverlayBounds = new Rect();
+            internal readonly Rect mSelfBounds = new();
+            internal readonly Rect mOverlayBounds = new();
         }
 
         /**
@@ -14178,7 +14246,8 @@ namespace AndroidUI
         /**
          * Returns true if this view is currently attached to a window.
          */
-        public bool isAttachedToWindow() {
+        public bool isAttachedToWindow()
+        {
             return mAttachInfo != null;
         }
 
@@ -14490,10 +14559,14 @@ namespace AndroidUI
          * @see #drawableStateChanged()
          * @see #onCreateDrawableState(int)
          */
-        public int[] getDrawableState() {
-            if ((mDrawableState != null) && ((mPrivateFlags & PFLAG_DRAWABLE_STATE_DIRTY) == 0)) {
+        public int[] getDrawableState()
+        {
+            if ((mDrawableState != null) && ((mPrivateFlags & PFLAG_DRAWABLE_STATE_DIRTY) == 0))
+            {
                 return mDrawableState;
-            } else {
+            }
+            else
+            {
                 mDrawableState = onCreateDrawableState(0);
                 mPrivateFlags &= ~PFLAG_DRAWABLE_STATE_DIRTY;
                 return mDrawableState;
@@ -14698,10 +14771,12 @@ namespace AndroidUI
          *
          * @see #onCreateDrawableState(int)
          */
-        protected static int[] mergeDrawableStates(int[] baseState, int[] additionalState) {
+        protected static int[] mergeDrawableStates(int[] baseState, int[] additionalState)
+        {
             int N = baseState.Length;
             int i = N - 1;
-            while (i >= 0 && baseState[i] == 0) {
+            while (i >= 0 && baseState[i] == 0)
+            {
                 i--;
             }
             Arrays.arraycopy(additionalState, 0, baseState, i + 1, additionalState.Length);
@@ -14715,17 +14790,21 @@ namespace AndroidUI
          * Also calls {@link StateListAnimator#jumpToCurrentState()} if there is a StateListAnimator
          * attached to this view.
          */
-        virtual public void jumpDrawablesToCurrentState() {
-            if (mBackground != null) {
+        virtual public void jumpDrawablesToCurrentState()
+        {
+            if (mBackground != null)
+            {
                 mBackground.jumpToCurrentState();
             }
             //if (mStateListAnimator != null) {
             //    mStateListAnimator.jumpToCurrentState();
             //}
-            if (mDefaultFocusHighlight != null) {
+            if (mDefaultFocusHighlight != null)
+            {
                 mDefaultFocusHighlight.jumpToCurrentState();
             }
-            if (mForegroundInfo != null && mForegroundInfo.mDrawable != null) {
+            if (mForegroundInfo != null && mForegroundInfo.mDrawable != null)
+            {
                 mForegroundInfo.mDrawable.jumpToCurrentState();
             }
 
@@ -14741,30 +14820,21 @@ namespace AndroidUI
          * Sets the background color for this view.
          * @param color the color of the background
          */
-        public void setBackgroundColor(int color) {
-            if (mBackground is ColorDrawable) {
-                ((ColorDrawable) mBackground.mutate()).setColor(color);
+        public void setBackgroundColor(int color)
+        {
+            if (mBackground is ColorDrawable)
+            {
+                ((ColorDrawable)mBackground.mutate()).setColor(color);
                 computeOpaqueFlags();
                 //mBackgroundResource = 0;
-            } else {
+            }
+            else
+            {
                 setBackground(new ColorDrawable(color));
             }
         }
 
         private bool mLastIsOpaque;
-
-        /**
-         * Calculates the visual alpha of this view, which is a combination of the actual
-         * alpha value and the transitionAlpha value (if set).
-         */
-        private float getFinalAlpha()
-        {
-            if (mTransformationInfo != null)
-            {
-                return mTransformationInfo.mAlpha * mTransformationInfo.mTransitionAlpha;
-            }
-            return 1;
-        }
 
         /**
          * Indicates whether this View is opaque. An opaque View guarantees that it will
@@ -14777,7 +14847,8 @@ namespace AndroidUI
          *
          * @return True if this View is guaranteed to be fully opaque, false otherwise.
          */
-        virtual public bool isOpaque() {
+        virtual public bool isOpaque()
+        {
             return (mPrivateFlags & PFLAG_OPAQUE_MASK) == PFLAG_OPAQUE_MASK &&
                     getFinalAlpha() >= 1.0f;
         }
@@ -14974,7 +15045,7 @@ namespace AndroidUI
             mPrivateFlags |= PFLAG_DRAWABLE_STATE_DIRTY;
             drawableStateChanged();
 
-            Parent parent = mParent;
+            ViewParent parent = mParent;
             if (parent != null)
             {
                 parent.childDrawableStateChanged(this);
@@ -14992,7 +15063,7 @@ namespace AndroidUI
         virtual public void setSelected(bool selected)
         {
             //noinspection DoubleNegation
-            if (((mPrivateFlags & PFLAG_SELECTED) != 0) != selected)
+            if ((mPrivateFlags & PFLAG_SELECTED) != 0 != selected)
             {
                 mPrivateFlags = (mPrivateFlags & ~PFLAG_SELECTED) | (selected ? PFLAG_SELECTED : 0);
                 if (!selected) resetPressedState();
@@ -15045,7 +15116,7 @@ namespace AndroidUI
         virtual public void setActivated(bool activated)
         {
             //noinspection DoubleNegation
-            if (((mPrivateFlags & PFLAG_ACTIVATED) != 0) != activated)
+            if ((mPrivateFlags & PFLAG_ACTIVATED) != 0 != activated)
             {
                 mPrivateFlags = (mPrivateFlags & ~PFLAG_ACTIVATED) | (activated ? PFLAG_ACTIVATED : 0);
                 invalidate(true);
@@ -15088,6 +15159,26 @@ namespace AndroidUI
          * @hide
          */
         internal Animation mCurrentAnimation = null;
+
+        /**
+         * Object that handles automatic animation of view properties.
+         */
+        internal ViewPropertyAnimator mAnimator = null;
+
+        /**
+         * This method returns a ViewPropertyAnimator object, which can be used to animate
+         * specific properties on this View.
+         *
+         * @return ViewPropertyAnimator The ViewPropertyAnimator associated with this View.
+         */
+        public ViewPropertyAnimator animate()
+        {
+            if (mAnimator == null)
+            {
+                mAnimator = new ViewPropertyAnimator(this);
+            }
+            return mAnimator;
+        }
 
         /**
          * Get the animation currently associated with this view.
@@ -15327,7 +15418,7 @@ namespace AndroidUI
             if (animationParams == null)
             {
                 animationParams = new LayoutAnimationController.AnimationParameters();
-            params_.layoutAnimationParameters = animationParams;
+                params_.layoutAnimationParameters = animationParams;
             }
 
             animationParams.count = count;
@@ -15383,5 +15474,754 @@ namespace AndroidUI
         {
             return mLayoutAnimationController;
         }
-    }
+
+        /**
+         * Sets the opacity of the view to a value from 0 to 1, where 0 means the view is
+         * completely transparent and 1 means the view is completely opaque.
+         *
+         * <p class="note"><strong>Note:</strong> setting alpha to a translucent value (0 < alpha < 1)
+         * can have significant performance implications, especially for large views. It is best to use
+         * the alpha property sparingly and transiently, as in the case of fading animations.</p>
+         *
+         * <p>For a view with a frequently changing alpha, such as during a fading animation, it is
+         * strongly recommended for performance reasons to either override
+         * {@link #hasOverlappingRendering()} to return <code>false</code> if appropriate, or setting a
+         * {@link #setLayerType(int, android.graphics.Paint) layer type} on the view for the duration
+         * of the animation. On versions {@link android.os.Build.VERSION_CODES#M} and below,
+         * the default path for rendering an unlayered View with alpha could add multiple milliseconds
+         * of rendering cost, even for simple or small views. Starting with
+         * {@link android.os.Build.VERSION_CODES#M}, {@link #LAYER_TYPE_HARDWARE} is automatically
+         * applied to the view at the rendering level.</p>
+         *
+         * <p>If this view overrides {@link #onSetAlpha(int)} to return true, then this view is
+         * responsible for applying the opacity itself.</p>
+         *
+         * <p>On versions {@link android.os.Build.VERSION_CODES#LOLLIPOP_MR1} and below, note that if
+         * the view is backed by a {@link #setLayerType(int, android.graphics.Paint) layer} and is
+         * associated with a {@link #setLayerPaint(android.graphics.Paint) layer paint}, setting an
+         * alpha value less than 1.0 will supersede the alpha of the layer paint.</p>
+         *
+         * <p>Starting with {@link android.os.Build.VERSION_CODES#M}, setting a translucent alpha
+         * value will clip a View to its bounds, unless the View returns <code>false</code> from
+         * {@link #hasOverlappingRendering}.</p>
+         *
+         * @param alpha The opacity of the view.
+         *
+         * @see #hasOverlappingRendering()
+         * @see #setLayerType(int, android.graphics.Paint)
+         *
+         * @attr ref android.R.styleable#View_alpha
+         */
+        public void setAlpha(float alpha)
+        {
+            alpha = Math.Clamp(alpha, 0.0f, 1.0f);
+            ensureTransformationInfo();
+            if (mTransformationInfo.mAlpha != alpha)
+            {
+                setAlphaInternal(alpha);
+                if (onSetAlpha((int)(alpha * 255)))
+                {
+                    mPrivateFlags |= PFLAG_ALPHA_SET;
+                    // subclass is handling alpha - don't optimize rendering cache invalidation
+                    invalidateParentCaches();
+                    invalidate(true);
+                }
+                else
+                {
+                    mPrivateFlags &= ~PFLAG_ALPHA_SET;
+                    invalidateViewProperty(true, false);
+                    //mRenderNode.setAlpha(getFinalAlpha());
+                }
+            }
+        }
+
+        /**
+         * Faster version of setAlpha() which performs the same steps except there are
+         * no calls to invalidate(). The caller of this function should perform proper invalidation
+         * on the parent and this object. The return value indicates whether the subclass handles
+         * alpha (the return value for onSetAlpha()).
+         *
+         * @param alpha The new value for the alpha property
+         * @return true if the View subclass handles alpha (the return value for onSetAlpha()) and
+         *         the new value for the alpha property is different from the old value
+         */
+        internal bool setAlphaNoInvalidation(float alpha)
+        {
+            alpha = Math.Clamp(alpha, 0.0f, 1.0f);
+            ensureTransformationInfo();
+            if (mTransformationInfo.mAlpha != alpha)
+            {
+                setAlphaInternal(alpha);
+                bool subclassHandlesAlpha = onSetAlpha((int)(alpha * 255));
+                if (subclassHandlesAlpha)
+                {
+                    mPrivateFlags |= PFLAG_ALPHA_SET;
+                    return true;
+                }
+                else
+                {
+                    mPrivateFlags &= ~PFLAG_ALPHA_SET;
+                    //mRenderNode.setAlpha(getFinalAlpha());
+                }
+            }
+            return false;
+        }
+
+        internal void setAlphaInternal(float alpha)
+        {
+            float oldAlpha = mTransformationInfo.mAlpha;
+            mTransformationInfo.mAlpha = alpha;
+            // Report visibility changes, which can affect children, to accessibility
+            if ((alpha == 0) ^ (oldAlpha == 0))
+            {
+                Console.WriteLine("TODO: visibility might change: alpha = " + alpha + ", oldAlpha = " + oldAlpha);
+                //notifySubtreeAccessibilityStateChangedIfNeeded();
+            }
+        }
+
+        /**
+         * This property is intended only for use by the Fade transition, which animates it
+         * to produce a visual translucency that does not side-effect (or get affected by)
+         * the real alpha property. This value is composited with the other alpha value
+         * (and the AlphaAnimation value, when that is present) to produce a final visual
+         * translucency result, which is what is passed into the DisplayList.
+         */
+        public void setTransitionAlpha(float alpha)
+        {
+            alpha = Math.Clamp(alpha, 0.0f, 1.0f);
+            ensureTransformationInfo();
+            if (mTransformationInfo.mTransitionAlpha != alpha)
+            {
+                mTransformationInfo.mTransitionAlpha = alpha;
+                mPrivateFlags &= ~PFLAG_ALPHA_SET;
+                invalidateViewProperty(true, false);
+                //mRenderNode.setAlpha(getFinalAlpha());
+            }
+        }
+
+        /**
+         * Calculates the visual alpha of this view, which is a combination of the actual
+         * alpha value and the transitionAlpha value (if set).
+         */
+        private float getFinalAlpha()
+        {
+            if (mTransformationInfo != null)
+            {
+                return mTransformationInfo.mAlpha * mTransformationInfo.mTransitionAlpha;
+            }
+            return 1;
+        }
+
+        /**
+         * This property is intended only for use by the Fade transition, which animates
+         * it to produce a visual translucency that does not side-effect (or get affected
+         * by) the real alpha property. This value is composited with the other alpha
+         * value (and the AlphaAnimation value, when that is present) to produce a final
+         * visual translucency result, which is what is passed into the DisplayList.
+         */
+        public float getTransitionAlpha()
+        {
+            return mTransformationInfo != null ? mTransformationInfo.mTransitionAlpha : 1;
+        }
+
+        /**
+         * Quick invalidation for View property changes (alpha, translationXY, etc.). We don't want to
+         * set any flags or handle all of the cases handled by the default invalidation methods.
+         * Instead, we just want to schedule a traversal in ViewRootImpl with the appropriate
+         * dirty rect. This method calls into fast invalidation methods in ViewGroup that
+         * walk up the hierarchy, transforming the dirty rect as necessary.
+         *
+         * The method also handles normal invalidation logic if display list properties are not
+         * being used in this view. The invalidateParent and forceRedraw flags are used by that
+         * backup approach, to handle these cases used in the various property-setting methods.
+         *
+         * @param invalidateParent Force a call to invalidateParentCaches() if display list properties
+         * are not being used in this view
+         * @param forceRedraw Mark the view as DRAWN to force the invalidation to propagate, if display
+         * list properties are not being used in this view
+         */
+        internal void invalidateViewProperty(bool invalidateParent, bool forceRedraw)
+        {
+            if (!isHardwareAccelerated()
+                    //|| !mRenderNode.hasDisplayList()
+                    || (mPrivateFlags & PFLAG_DRAW_ANIMATION) != 0)
+            {
+                if (invalidateParent)
+                {
+                    invalidateParentCaches();
+                }
+                if (forceRedraw)
+                {
+                    mPrivateFlags |= PFLAG_DRAWN; // force another invalidation with the new orientation
+                }
+                invalidate(false);
+            }
+            else
+            {
+                damageInParent();
+            }
+        }
+
+        /**
+         * The opacity of the view. This is a value from 0 to 1, where 0 means the view is
+         * completely transparent and 1 means the view is completely opaque.
+         *
+         * <p>By default this is 1.0f.
+         * @return The opacity of the view.
+         */
+        public float getAlpha()
+        {
+            return mTransformationInfo != null ? mTransformationInfo.mAlpha : 1;
+        }
+
+        /**
+         * Reference count for transient state.
+         * @see #setHasTransientState(bool)
+         */
+        int mTransientStateCount = 0;
+
+        /**
+         * Indicates whether the view is currently tracking transient state that the
+         * app should not need to concern itself with saving and restoring, but that
+         * the framework should take special note to preserve when possible.
+         *
+         * <p>A view with transient state cannot be trivially rebound from an external
+         * data source, such as an adapter binding item views in a list. This may be
+         * because the view is performing an animation, tracking user selection
+         * of content, or similar.</p>
+         *
+         * @return true if the view has transient state
+         */
+        public bool hasTransientState()
+        {
+            return mChildCountWithTransientState > 0 || (mPrivateFlags2 & PFLAG2_HAS_TRANSIENT_STATE) == PFLAG2_HAS_TRANSIENT_STATE;
+        }
+
+        /**
+         * Set whether this view is currently tracking transient state that the
+         * framework should attempt to preserve when possible. This flag is reference counted,
+         * so every call to setHasTransientState(true) should be paired with a later call
+         * to setHasTransientState(false).
+         *
+         * <p>A view with transient state cannot be trivially rebound from an external
+         * data source, such as an adapter binding item views in a list. This may be
+         * because the view is performing an animation, tracking user selection
+         * of content, or similar.</p>
+         *
+         * @param hasTransientState true if this view has transient state
+         */
+        public void setHasTransientState(bool hasTransientState)
+        {
+            bool oldHasTransientState = this.hasTransientState();
+            mTransientStateCount = hasTransientState ? mTransientStateCount + 1 :
+                    mTransientStateCount - 1;
+            if (mTransientStateCount < 0)
+            {
+                mTransientStateCount = 0;
+                Log.e(VIEW_LOG_TAG, "hasTransientState decremented below 0: " +
+                        "unmatched pair of setHasTransientState calls");
+            }
+            else if ((hasTransientState && mTransientStateCount == 1) ||
+                    (!hasTransientState && mTransientStateCount == 0))
+            {
+                // update flag if we've just incremented up from 0 or decremented down to 0
+                uint f = (uint)mPrivateFlags2;
+                f = (f & ~PFLAG2_HAS_TRANSIENT_STATE) | (hasTransientState ? PFLAG2_HAS_TRANSIENT_STATE : 0);
+                mPrivateFlags = (int)f;
+
+                bool newHasTransientState = this.hasTransientState();
+                if (mParent != null && newHasTransientState != oldHasTransientState)
+                {
+                    mParent.childHasTransientStateChanged(this, newHasTransientState);
+                }
+            }
+        }
+
+        /**
+         * Set the view is tracking translation transient state. This flag is used to check if the view
+         * need to call setHasTransientState(false) to reset transient state that set when starting
+         * translation.
+         *
+         * @param hasTranslationTransientState true if this view has translation transient state
+         * @hide
+         */
+        public void setHasTranslationTransientState(bool hasTranslationTransientState)
+        {
+            if (hasTranslationTransientState)
+            {
+                mPrivateFlags4 |= PFLAG4_HAS_TRANSLATION_TRANSIENT_STATE;
+            }
+            else
+            {
+                mPrivateFlags4 &= ~PFLAG4_HAS_TRANSLATION_TRANSIENT_STATE;
+            }
+        }
+
+        /**
+         * @hide
+         */
+        public bool hasTranslationTransientState()
+        {
+            return (mPrivateFlags4 & PFLAG4_HAS_TRANSLATION_TRANSIENT_STATE)
+                    == PFLAG4_HAS_TRANSLATION_TRANSIENT_STATE;
+        }
+
+        // Indicates how many of this container's child subtrees contain transient state
+        private int mChildCountWithTransientState = 0;
+
+        // Used to manage the list of transient views, added by addTransientView()
+        private IntArray mTransientIndices = null;
+        private List<View> mTransientViews = null;
+
+        // Used to animate add/remove changes in layout
+        private LayoutTransition mTransition;
+
+        // The set of views that are currently being transitioned. This list is used to track views
+        // being removed that should not actually be removed from the parent yet because they are
+        // being animated.
+        private List<View> mTransitioningViews;
+
+        /**
+         * Views which have been hidden or removed which need to be animated on
+         * their way out.
+         * This field should be made private, so it is hidden from the SDK.
+         * {@hide}
+         */
+        internal List<View> mDisappearingChildren;
+
+        // List of children changing visibility. This is used to potentially keep rendering
+        // views during a transition when they otherwise would have become gone/invisible
+        private List<View> mVisibilityChangingChildren;
+
+
+
+        /**
+         * Called when a child view has changed whether or not it is tracking transient state.
+         */
+        public void childHasTransientStateChanged(View child, bool childHasTransientState)
+        {
+            bool oldHasTransientState = hasTransientState();
+            if (childHasTransientState)
+            {
+                mChildCountWithTransientState++;
+            }
+            else
+            {
+                mChildCountWithTransientState--;
+            }
+
+            bool newHasTransientState = hasTransientState();
+            if (mParent != null && oldHasTransientState != newHasTransientState)
+            {
+                mParent.childHasTransientStateChanged(this, newHasTransientState);
+            }
+        }
+
+        /**
+         * Utility function called by View during invalidation to determine whether a view that
+         * is invisible or gone should still be invalidated because it is being transitioned (and
+         * therefore still needs to be drawn).
+         */
+        bool isViewTransitioning(View view)
+        {
+            return mTransitioningViews != null && mTransitioningViews.Contains(view);
+        }
+
+        /**
+         * This method tells the ViewGroup that the given View object, which should have this
+         * ViewGroup as its parent,
+         * should be kept around  (re-displayed when the ViewGroup draws its children) even if it
+         * is removed from its parent. This allows animations, such as those used by
+         * {@link android.app.Fragment} and {@link android.animation.LayoutTransition} to animate
+         * the removal of views. A call to this method should always be accompanied by a later call
+         * to {@link #endViewTransition(View)}, such as after an animation on the View has finished,
+         * so that the View finally gets removed.
+         *
+         * @param view The View object to be kept visible even if it gets removed from its parent.
+         */
+        public void startViewTransition(View view)
+        {
+            if (view.mParent == this)
+            {
+                if (mTransitioningViews == null)
+                {
+                    mTransitioningViews = new List<View>();
+                }
+                mTransitioningViews.Add(view);
+            }
+        }
+
+        /**
+         * This method should always be called following an earlier call to
+         * {@link #startViewTransition(View)}. The given View is finally removed from its parent
+         * and will no longer be displayed. Note that this method does not perform the functionality
+         * of removing a view from its parent; it just discontinues the display of a View that
+         * has previously been removed.
+         *
+         * @return view The View object that has been removed but is being kept around in the visible
+         * hierarchy by an earlier call to {@link #startViewTransition(View)}.
+         */
+        public void endViewTransition(View view)
+        {
+            if (mTransitioningViews != null)
+            {
+                mTransitioningViews.Remove(view);
+                List<View> disappearingChildren = mDisappearingChildren;
+                if (disappearingChildren != null && disappearingChildren.Contains(view))
+                {
+                    disappearingChildren.Remove(view);
+                    if (mVisibilityChangingChildren != null &&
+                            mVisibilityChangingChildren.Contains(view))
+                    {
+                        mVisibilityChangingChildren.Remove(view);
+                    }
+                    else
+                    {
+                        if (view.mAttachInfo != null)
+                        {
+                            view.dispatchDetachedFromWindow();
+                        }
+                        if (view.mParent != null)
+                        {
+                            view.mParent = null;
+                        }
+                    }
+                    invalidate();
+                }
+            }
+        }
+
+        class LayoutTransitionListener1 : LayoutTransition.TransitionListener
+        {
+            View outer;
+
+            public LayoutTransitionListener1(View outer)
+            {
+                this.outer = outer;
+            }
+
+            public void startTransition(LayoutTransition transition, View container,
+                        View view, int transitionType)
+            {
+                // We only care about disappearing items, since we need special logic to keep
+                // those items visible after they've been 'removed'
+                if (transitionType == LayoutTransition.DISAPPEARING)
+                {
+                    outer.startViewTransition(view);
+                }
+            }
+
+            public void endTransition(LayoutTransition transition, View container,
+                    View view, int transitionType)
+            {
+                if (outer.mLayoutCalledWhileSuppressed && !transition.isChangingLayout())
+                {
+                    outer.requestLayout();
+                    outer.mLayoutCalledWhileSuppressed = false;
+                }
+                if (transitionType == LayoutTransition.DISAPPEARING && outer.mTransitioningViews != null)
+                {
+                    outer.endViewTransition(view);
+                }
+            }
+        }
+
+        private LayoutTransition.TransitionListener mLayoutTransitionListener;
+
+        /**
+         * Tells this ViewGroup to suppress all layout() calls until layout
+         * suppression is disabled with a later call to suppressLayout(false).
+         * When layout suppression is disabled, a requestLayout() call is sent
+         * if layout() was attempted while layout was being suppressed.
+         */
+        public void suppressLayout(bool suppress)
+        {
+            mSuppressLayout = suppress;
+            if (!suppress)
+            {
+                if (mLayoutCalledWhileSuppressed)
+                {
+                    requestLayout();
+                    mLayoutCalledWhileSuppressed = false;
+                }
+            }
+        }
+
+        /**
+         * Interface definition for a callback to be invoked when the layout bounds of a view
+         * changes due to layout processing.
+         */
+        public interface OnLayoutChangeListener
+        {
+            /**
+             * Called when the layout bounds of a view changes due to layout processing.
+             *
+             * @param v The view whose bounds have changed.
+             * @param left The new value of the view's left property.
+             * @param top The new value of the view's top property.
+             * @param right The new value of the view's right property.
+             * @param bottom The new value of the view's bottom property.
+             * @param oldLeft The previous value of the view's left property.
+             * @param oldTop The previous value of the view's top property.
+             * @param oldRight The previous value of the view's right property.
+             * @param oldBottom The previous value of the view's bottom property.
+             */
+            public void onLayoutChange(View v, int left, int top, int right, int bottom,
+                int oldLeft, int oldTop, int oldRight, int oldBottom);
+        }
+
+        /**
+         * Interface definition for a callback to be invoked when this view is attached
+         * or detached from its window.
+         */
+        public interface OnAttachStateChangeListener
+        {
+            /**
+             * Called when the view is attached to a window.
+             * @param v The view that was attached
+             */
+            public void onViewAttachedToWindow(View v);
+            /**
+             * Called when the view is detached from a window.
+             * @param v The view that was detached
+             */
+            public void onViewDetachedFromWindow(View v);
+        }
+
+
+
+        internal class ListenerInfo
+        {
+            /**
+             * Listener used to dispatch focus change events.
+             * This field should be made private, so it is hidden from the SDK.
+             * {@hide}
+             */
+            //internal OnFocusChangeListener mOnFocusChangeListener;
+
+            /**
+             * Listeners for layout change events.
+             */
+            internal List<OnLayoutChangeListener> mOnLayoutChangeListeners;
+
+            //internal OnScrollChangeListener mOnScrollChangeListener;
+
+            /**
+             * Listeners for attach events.
+             */
+            internal CopyOnWriteList<OnAttachStateChangeListener> mOnAttachStateChangeListeners;
+
+            /**
+             * Listener used to dispatch click events.
+             * This field should be made private, so it is hidden from the SDK.
+             * {@hide}
+             */
+            //internal OnClickListener mOnClickListener;
+
+            /**
+             * Listener used to dispatch long click events.
+             * This field should be made private, so it is hidden from the SDK.
+             * {@hide}
+             */
+            //internal OnLongClickListener mOnLongClickListener;
+
+            /**
+             * Listener used to dispatch context click events. This field should be made private, so it
+             * is hidden from the SDK.
+             * {@hide}
+             */
+            //internal OnContextClickListener mOnContextClickListener;
+
+            /**
+             * Listener used to build the context menu.
+             * This field should be made private, so it is hidden from the SDK.
+             * {@hide}
+             */
+            //internal OnCreateContextMenuListener mOnCreateContextMenuListener;
+
+            //internal OnKeyListener mOnKeyListener;
+
+            //internal OnTouchListener mOnTouchListener;
+
+            //internal OnHoverListener mOnHoverListener;
+
+            //internal OnGenericMotionListener mOnGenericMotionListener;
+
+            //internal OnDragListener mOnDragListener;
+
+            //internal OnSystemUiVisibilityChangeListener mOnSystemUiVisibilityChangeListener;
+
+            //internal OnApplyWindowInsetsListener mOnApplyWindowInsetsListener;
+
+            //internal OnCapturedPointerListener mOnCapturedPointerListener;
+
+            //internal List<OnUnhandledKeyEventListener> mUnhandledKeyListeners;
+
+            //internal WindowInsetsAnimation.Callback mWindowInsetsAnimationCallback;
+
+            /**
+             * This lives here since it's only valid for interactive views. This list is null until the
+             * first use.
+             */
+            //internal List<Rect> mSystemGestureExclusionRects = null;
+
+            /**
+             * Used to track {@link #mSystemGestureExclusionRects}
+             */
+            //internal RenderNode.PositionUpdateListener mPositionUpdateListener;
+
+            /**
+             * Allows the application to implement custom scroll capture support.
+             */
+            //internal ScrollCaptureCallback mScrollCaptureCallback;
+
+            //internal OnReceiveContentListener mOnReceiveContentListener;
+        }
+
+        ListenerInfo mListenerInfo;
+
+        ListenerInfo getListenerInfo()
+        {
+            if (mListenerInfo != null)
+            {
+                return mListenerInfo;
+            }
+            mListenerInfo = new ListenerInfo();
+            return mListenerInfo;
+        }
+
+        /**
+         * Add a listener that will be called when the bounds of the view change due to
+         * layout processing.
+         *
+         * @param listener The listener that will be called when layout bounds change.
+         */
+        public void addOnLayoutChangeListener(OnLayoutChangeListener listener)
+        {
+            ListenerInfo li = getListenerInfo();
+            if (li.mOnLayoutChangeListeners == null)
+            {
+                li.mOnLayoutChangeListeners = new List<OnLayoutChangeListener>();
+            }
+            if (!li.mOnLayoutChangeListeners.Contains(listener))
+            {
+                li.mOnLayoutChangeListeners.Add(listener);
+            }
+        }
+
+        /**
+         * Remove a listener for layout changes.
+         *
+         * @param listener The listener for layout bounds change.
+         */
+        public void removeOnLayoutChangeListener(OnLayoutChangeListener listener)
+        {
+            ListenerInfo li = mListenerInfo;
+            if (li == null || li.mOnLayoutChangeListeners == null)
+            {
+                return;
+            }
+            li.mOnLayoutChangeListeners.Remove(listener);
+        }
+
+        /**
+         * Add a listener for attach state changes.
+         *
+         * This listener will be called whenever this view is attached or detached
+         * from a window. Remove the listener using
+         * {@link #removeOnAttachStateChangeListener(OnAttachStateChangeListener)}.
+         *
+         * @param listener Listener to attach
+         * @see #removeOnAttachStateChangeListener(OnAttachStateChangeListener)
+         */
+        public void addOnAttachStateChangeListener(OnAttachStateChangeListener listener)
+        {
+            ListenerInfo li = getListenerInfo();
+            if (li.mOnAttachStateChangeListeners == null)
+            {
+                li.mOnAttachStateChangeListeners = new CopyOnWriteList<OnAttachStateChangeListener>(new ReaderWriterLockSlimInfo());
+            }
+            li.mOnAttachStateChangeListeners.Add(listener);
+        }
+
+        /**
+         * Remove a listener for attach state changes. The listener will receive no further
+         * notification of window attach/detach events.
+         *
+         * @param listener Listener to remove
+         * @see #addOnAttachStateChangeListener(OnAttachStateChangeListener)
+         */
+        public void removeOnAttachStateChangeListener(OnAttachStateChangeListener listener)
+        {
+            ListenerInfo li = mListenerInfo;
+            if (li == null || li.mOnAttachStateChangeListeners == null)
+            {
+                return;
+            }
+            li.mOnAttachStateChangeListeners.Remove(listener);
+        }
+
+
+        /**
+         * This method is called by LayoutTransition when there are 'changing' animations that need
+         * to start after the layout/setup phase. The request is forwarded to the ViewAncestor, who
+         * starts all pending transitions prior to the drawing phase in the current traversal.
+         *
+         * @param transition The LayoutTransition to be started on the next traversal.
+         *
+         * @hide
+         */
+        internal void requestTransitionStart(LayoutTransition transition)
+        {
+            ViewRootImpl viewAncestor = getViewRootImpl();
+            if (viewAncestor != null)
+            {
+                viewAncestor.requestTransitionStart(transition);
+            }
+        }
+
+        /**
+         * Removes any pending animations for views that have been removed. Call
+         * this if you don't want animations for exiting views to stack up.
+         */
+        public void clearDisappearingChildren()
+        {
+            List<View> disappearingChildren = mDisappearingChildren;
+            if (disappearingChildren != null)
+            {
+                int count = disappearingChildren.Count;
+                for (int i = 0; i < count; i++)
+                {
+                    View view = disappearingChildren.ElementAt(i);
+                    if (view.mAttachInfo != null)
+                    {
+                        view.dispatchDetachedFromWindow();
+                    }
+                    view.clearAnimation();
+                }
+                disappearingChildren.Clear();
+                invalidate();
+            }
+        }
+
+        /**
+         * Add a view which is removed from mChildren but still needs animation
+         *
+         * @param v View to add
+         */
+        private void addDisappearingView(View v)
+        {
+            List<View> disappearingChildren = mDisappearingChildren;
+
+            if (disappearingChildren == null)
+            {
+                disappearingChildren = mDisappearingChildren = new List<View>();
+            }
+
+            disappearingChildren.Add(v);
+        }
+
+
+
+    } // class View
 }
