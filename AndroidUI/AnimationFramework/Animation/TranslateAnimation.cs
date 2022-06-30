@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-namespace AndroidUI.AnimationFramework
+namespace AndroidUI.AnimationFramework.Animation
 {
     /**
      * An animation that controls the position of an object. See the
@@ -152,11 +152,11 @@ namespace AndroidUI.AnimationFramework
             float dy = mFromYDelta;
             if (mFromXDelta != mToXDelta)
             {
-                dx = mFromXDelta + ((mToXDelta - mFromXDelta) * interpolatedTime);
+                dx = mFromXDelta + (mToXDelta - mFromXDelta) * interpolatedTime;
             }
             if (mFromYDelta != mToYDelta)
             {
-                dy = mFromYDelta + ((mToYDelta - mFromYDelta) * interpolatedTime);
+                dy = mFromYDelta + (mToYDelta - mFromYDelta) * interpolatedTime;
             }
             t.getMatrix().Value.SetTranslate(dx, dy);
         }

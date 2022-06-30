@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-namespace AndroidUI.AnimationFramework
+namespace AndroidUI.AnimationFramework.Animation.Controller
 {
     /**
      * A layout animation controller is used to animated a grid layout's children.

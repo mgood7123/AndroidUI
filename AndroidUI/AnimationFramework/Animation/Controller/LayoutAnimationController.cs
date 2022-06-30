@@ -16,7 +16,7 @@
 
 using AndroidUI.AnimationFramework.Interpolators;
 
-namespace AndroidUI.AnimationFramework
+namespace AndroidUI.AnimationFramework.Animation.Controller
 {
 
     /**
@@ -327,7 +327,7 @@ namespace AndroidUI.AnimationFramework
 
             if (mInterpolator == null)
             {
-                mInterpolator = new Interpolators.LinearInterpolator();
+                mInterpolator = new LinearInterpolator();
             }
 
             float normalizedDelay = viewDelay / totalDelay;

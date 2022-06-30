@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-namespace AndroidUI.AnimationFramework
+namespace AndroidUI.AnimationFramework.Animation
 {
     /**
      * Represents a group of Animations that should be played together.
@@ -55,9 +55,9 @@ namespace AndroidUI.AnimationFramework
         private bool mDirty;
         private bool mHasAlpha;
 
-        private List<Animation> mAnimations = new List<Animation>();
+        private List<Animation> mAnimations = new();
 
-        private Transformation mTempTransformation = new Transformation();
+        private Transformation mTempTransformation = new();
 
         private long mLastEnd;
 

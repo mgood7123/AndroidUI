@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-namespace AndroidUI.AnimationFramework
+namespace AndroidUI.AnimationFramework.Animation
 {
     /**
      * An animation that controls the scale of an object. You can specify the point
@@ -192,11 +192,11 @@ namespace AndroidUI.AnimationFramework
 
             if (mFromX != 1.0f || mToX != 1.0f)
             {
-                sx = mFromX + ((mToX - mFromX) * interpolatedTime);
+                sx = mFromX + (mToX - mFromX) * interpolatedTime;
             }
             if (mFromY != 1.0f || mToY != 1.0f)
             {
-                sy = mFromY + ((mToY - mFromY) * interpolatedTime);
+                sy = mFromY + (mToY - mFromY) * interpolatedTime;
             }
 
             if (mPivotX == 0 && mPivotY == 0)
@@ -230,7 +230,7 @@ namespace AndroidUI.AnimationFramework
                 return 1;
             }
 
-            return targetSize / (float)size;
+            return targetSize / size;
         }
 
         override

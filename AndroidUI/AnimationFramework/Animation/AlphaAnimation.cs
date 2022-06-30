@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-namespace AndroidUI.AnimationFramework
+namespace AndroidUI.AnimationFramework.Animation
 {
     /**
      * An animation that controls the alpha level of an object.
@@ -55,7 +55,7 @@ namespace AndroidUI.AnimationFramework
             public void applyTransformation(float interpolatedTime, Transformation t)
         {
             float alpha = mFromAlpha;
-            t.setAlpha(alpha + ((mToAlpha - alpha) * interpolatedTime));
+            t.setAlpha(alpha + (mToAlpha - alpha) * interpolatedTime);
         }
 
         override

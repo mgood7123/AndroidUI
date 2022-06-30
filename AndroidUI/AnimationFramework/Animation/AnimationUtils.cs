@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-namespace AndroidUI.AnimationFramework
+namespace AndroidUI.AnimationFramework.Animation
 {
     /**
      * Defines common utilities for working with animations.
@@ -42,7 +42,7 @@ namespace AndroidUI.AnimationFramework
             {
                 return null;
             }
-            return context.storage.GetOrCreate<AnimationState>(StorageKeys.AnimationFrameworkAnimationState, new());
+            return context.storage.GetOrCreate<AnimationState>(StorageKeys.AnimationFrameworkAnimationState, () => new());
         }
 
         /**

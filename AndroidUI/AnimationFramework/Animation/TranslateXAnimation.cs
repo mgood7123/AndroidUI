@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-namespace AndroidUI.AnimationFramework
+namespace AndroidUI.AnimationFramework.Animation
 {
     /**
      * Special case of TranslateAnimation that translates only horizontally, picking up the
@@ -57,7 +57,7 @@ namespace AndroidUI.AnimationFramework
         {
             SkiaSharp.SKMatrix m = t.getMatrix();
             m.GetValues(mTmpValues);
-            float dx = mFromXDelta + ((mToXDelta - mFromXDelta) * interpolatedTime);
+            float dx = mFromXDelta + (mToXDelta - mFromXDelta) * interpolatedTime;
             t.getMatrix().Value.SetTranslate(dx, mTmpValues[(int)SkiaSharp.SKMatrixRowMajorMask.TransY]);
         }
     }

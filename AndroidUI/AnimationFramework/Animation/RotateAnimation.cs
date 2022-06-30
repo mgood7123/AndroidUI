@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-namespace AndroidUI.AnimationFramework
+namespace AndroidUI.AnimationFramework.Animation
 {
     /**
      * An animation that controls the rotation of an object. This rotation takes
@@ -154,7 +154,7 @@ namespace AndroidUI.AnimationFramework
         override
             public void applyTransformation(float interpolatedTime, Transformation t)
         {
-            float degrees = mFromDegrees + ((mToDegrees - mFromDegrees) * interpolatedTime);
+            float degrees = mFromDegrees + (mToDegrees - mFromDegrees) * interpolatedTime;
             float scale = getScaleFactor();
 
             if (mPivotX == 0.0f && mPivotY == 0.0f)

@@ -18,7 +18,7 @@ using AndroidUI.AnimationFramework.Interpolators;
 using AndroidUI.Exceptions;
 using AndroidUI.Execution;
 
-namespace AndroidUI.AnimationFramework
+namespace AndroidUI.AnimationFramework.Animation
 {
     /**
      * Abstraction for an Animation that can be applied to Views, Surfaces, or
@@ -234,13 +234,13 @@ namespace AndroidUI.AnimationFramework
         private bool mOneMoreTime = true;
 
 
-        protected RectF mPreviousRegion = new RectF();
+        protected RectF mPreviousRegion = new();
 
-        protected RectF mRegion = new RectF();
+        protected RectF mRegion = new();
 
-        protected Transformation mTransformation = new Transformation();
+        protected Transformation mTransformation = new();
 
-        protected Transformation mPreviousTransformation = new Transformation();
+        protected Transformation mPreviousTransformation = new();
 
         private Handler mListenerHandler;
         private Runnable mOnStart;
@@ -439,7 +439,7 @@ namespace AndroidUI.AnimationFramework
             // The comparison between mRepeatCount and duration is to catch
             // overflows after multiplying them.
             if (mRepeatCount < 0 || mRepeatCount > durationMillis
-                    || (dur * mRepeatCount) > durationMillis)
+                    || dur * mRepeatCount > durationMillis)
             {
                 // Figure out how many times to do the animation.  Subtract 1 since
                 // repeat count is the number of times to repeat so 0 runs once.
@@ -916,7 +916,7 @@ namespace AndroidUI.AnimationFramework
             float normalizedTime;
             if (duration != 0)
             {
-                normalizedTime = ((float)(currentTime - (mStartTime + startOffset))) /
+                normalizedTime = (currentTime - (mStartTime + startOffset)) /
                         (float)duration;
             }
             else
@@ -924,6 +924,7 @@ namespace AndroidUI.AnimationFramework
                 // time is a step-change with a zero duration
                 normalizedTime = currentTime < mStartTime ? 0.0f : 1.0f;
             }
+            Console.WriteLine("current time: " + currentTime + ", anim left: " + (currentTime - (mStartTime + startOffset)) + ", duration: " + duration + ", normalized time: " + normalizedTime);
 
             bool expired = normalizedTime >= 1.0f || isCanceled();
             mMore = !expired;
@@ -1108,8 +1109,10 @@ namespace AndroidUI.AnimationFramework
          * @param parentSize The size of the parent of the object being animated
          * @return The dimension to use for the animation
          */
-        virtual protected float resolveSize(int type, float value, int size, int parentSize) {
-            switch (type) {
+        virtual protected float resolveSize(int type, float value, int size, int parentSize)
+        {
+            switch (type)
+            {
                 case ABSOLUTE:
                     return value;
                 case RELATIVE_TO_SELF:

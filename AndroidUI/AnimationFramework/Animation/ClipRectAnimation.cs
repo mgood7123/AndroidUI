@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-namespace AndroidUI.AnimationFramework
+namespace AndroidUI.AnimationFramework.Animation
 {
     /**
      * An animation that controls the clip of an object. See the
@@ -25,8 +25,8 @@ namespace AndroidUI.AnimationFramework
      */
     public class ClipRectAnimation : Animation
     {
-        protected Rect mFromRect = new Rect();
-        protected Rect mToRect = new Rect();
+        protected Rect mFromRect = new();
+        protected Rect mToRect = new();
 
         private int mFromLeftType = ABSOLUTE;
         private int mFromTopType = ABSOLUTE;
@@ -110,7 +110,7 @@ namespace AndroidUI.AnimationFramework
             int fromL, int fromT, int fromR, int fromB,
             int toL, int toT, int toR, int toB
         ) : this(
-            context, 
+            context,
             new Rect(fromL, fromT, fromR, fromB),
             new Rect(toL, toT, toR, toB)
         )
