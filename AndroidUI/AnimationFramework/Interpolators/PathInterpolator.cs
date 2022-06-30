@@ -92,7 +92,7 @@ namespace AndroidUI.AnimationFramework.Interpolators
 
         private void initQuad(float controlX, float controlY)
         {
-            Path path = new Path();
+            Path path = new();
             path.moveTo(0, 0);
             path.quadTo(controlX, controlY, 1f, 1f);
             initPath(path);
@@ -100,7 +100,7 @@ namespace AndroidUI.AnimationFramework.Interpolators
 
         private void initCubic(float x1, float y1, float x2, float y2)
         {
-            Path path = new Path();
+            Path path = new();
             path.moveTo(0, 0);
             path.cubicTo(x1, y1, x2, y2, 1f, 1f);
             initPath(path);

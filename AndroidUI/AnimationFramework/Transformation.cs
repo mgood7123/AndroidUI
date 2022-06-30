@@ -48,7 +48,7 @@ namespace AndroidUI.AnimationFramework
         protected int mTransformationType;
 
         private bool mHasClipRect;
-        private Rect mClipRect = new Rect();
+        private Rect mClipRect = new();
 
         /**
          * Creates a new transformation with alpha = 1 and the identity matrix.
@@ -237,7 +237,7 @@ namespace AndroidUI.AnimationFramework
         override
         public string ToString()
         {
-            StringBuilder sb = new StringBuilder(64);
+            StringBuilder sb = new(64);
             sb.Append("Transformation");
             toShortString(sb);
             return sb.ToString();
@@ -248,7 +248,7 @@ namespace AndroidUI.AnimationFramework
          */
         public string toShortString()
         {
-            StringBuilder sb = new StringBuilder(64);
+            StringBuilder sb = new(64);
             toShortString(sb);
             return sb.ToString();
         }
