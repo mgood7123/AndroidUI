@@ -40,7 +40,7 @@ namespace AndroidUI.Extensions
         {
             byte r = (byte)((byte)(i >> 16) & 0xff);
             byte g = (byte)((byte)(i >> 8) & 0xff);
-            byte b = (byte)((byte)(i) & 0xff);
+            byte b = (byte)((byte)i & 0xff);
             byte a = (byte)((byte)(i >> 24) & 0xff);
             return new SKColor(r, g, b, a);
         }
@@ -143,7 +143,7 @@ namespace AndroidUI.Extensions
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static short UnsignedRightShift(this short i, int shift_by)
         {
-            return (short)((ushort)(i) >> shift_by);
+            return (short)((ushort)i >> shift_by);
         }
 
         /// <summary>
@@ -154,7 +154,7 @@ namespace AndroidUI.Extensions
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static int UnsignedRightShift(this int i, int shift_by)
         {
-            return (int)((uint)(i) >> shift_by);
+            return (int)((uint)i >> shift_by);
         }
 
         /// <summary>
@@ -165,7 +165,7 @@ namespace AndroidUI.Extensions
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static long UnsignedRightShift(this long i, int shift_by)
         {
-            return (int)((ulong)(i) >> shift_by);
+            return (int)((ulong)i >> shift_by);
         }
 
         /// <summary>
@@ -200,7 +200,7 @@ namespace AndroidUI.Extensions
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static short UnsignedLeftShift(this short i, int shift_by)
         {
-            return (short)((ushort)(i) << shift_by);
+            return (short)((ushort)i << shift_by);
         }
 
         /// <summary>
@@ -211,7 +211,7 @@ namespace AndroidUI.Extensions
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static int UnsignedLeftShift(this int i, int shift_by)
         {
-            return (int)((uint)(i) << shift_by);
+            return (int)((uint)i << shift_by);
         }
 
         /// <summary>
@@ -222,7 +222,7 @@ namespace AndroidUI.Extensions
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static long UnsignedLeftShift(this long i, int shift_by)
         {
-            return (int)((ulong)(i) << shift_by);
+            return (int)((ulong)i << shift_by);
         }
 
         /// <summary>
@@ -736,7 +736,7 @@ namespace AndroidUI.Extensions
             if (i >= 1 << 8) { n -= 8; i = i.UnsignedRightShift(8); }
             if (i >= 1 << 4) { n -= 4; i = i.UnsignedRightShift(4); }
             if (i >= 1 << 2) { n -= 2; i = i.UnsignedRightShift(2); }
-            return n - (i.UnsignedRightShift(1));
+            return n - i.UnsignedRightShift(1);
         }
 
         public const int SIZE = 32;
@@ -748,7 +748,7 @@ namespace AndroidUI.Extensions
         {
             // assert shift > 0 && shift <=5 : "Illegal shift value";
             int mag = SIZE - numberOfLeadingZeros(val);
-            int chars = Math.Max(((mag + (shift - 1)) / shift), 1);
+            int chars = Math.Max((mag + (shift - 1)) / shift, 1);
 
 
             // BEGIN Android-changed: Use single-byte chars.
@@ -1080,7 +1080,7 @@ namespace AndroidUI.Extensions
             int r;
             int charPos = index;
 
-            bool negative = (i < 0);
+            bool negative = i < 0;
             if (!negative)
             {
                 i = -i;

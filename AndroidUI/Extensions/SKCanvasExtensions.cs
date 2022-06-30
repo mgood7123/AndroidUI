@@ -215,7 +215,7 @@ namespace AndroidUI.Extensions
             // convert the floats into SkPoints
             count >>= 1;  // now it is the number of points
 
-            SKPoint[] pts = (new SKPoint[count]);
+            SKPoint[] pts = new SKPoint[count];
 
             int pi = offset;
             for (int i = 0; i < count; i++)

@@ -269,7 +269,7 @@ namespace AndroidUI.Extensions
                 Func<float, MemoryPointer<SKPoint>, SKPoint> bezierFunction, List<SKPoint> segmentPoints,
             List<float> lengths, float errorSquared, bool doubleCheckDivision)
         {
-            Dictionary<float, SKPoint> tToPoint = new Dictionary<float, SKPoint>();
+            Dictionary<float, SKPoint> tToPoint = new();
 
             tToPoint[0] = bezierFunction(0, points);
             tToPoint[1] = bezierFunction(1, points);
