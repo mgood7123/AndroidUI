@@ -13,11 +13,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="NinePatch.cs~RF5d9d269d.TMP" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="AndroidUI.Native.Nuget" Version="0.0.107" />
+    <PackageReference Include="AndroidUI.Native.Nuget" Version="0.0.109" />
     <PackageReference Include="HPSocket.Net" Version="5.8.8.2" />
     <PackageReference Include="SkiaSharp" Version="2.88.1-preview.3292" />
     <PackageReference Include="SkiaSharp.HarfBuzz" Version="2.88.1-preview.3223" />
