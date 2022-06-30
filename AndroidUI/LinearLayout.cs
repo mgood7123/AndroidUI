@@ -557,7 +557,7 @@ namespace AndroidUI
                             break;
 
                         case Gravity.CENTER_VERTICAL:
-                            childTop += ((mBottom - mTop - mPaddingTop - mPaddingBottom) -
+                            childTop += (mBottom - mTop - mPaddingTop - mPaddingBottom -
                                     mTotalLength) / 2;
                             break;
                     }
@@ -1062,7 +1062,7 @@ namespace AndroidUI
                 View child = getVirtualChildAt(i);
                 if (child != null && child.getVisibility() != GONE)
                 {
-                    LayoutParams lp = ((LayoutParams)child.getLayoutParams());
+                    LayoutParams lp = (LayoutParams)child.getLayoutParams();
 
                     if (lp.width == View.LayoutParams.MATCH_PARENT)
                     {
@@ -1527,7 +1527,7 @@ namespace AndroidUI
 
             setMeasuredDimension((int)((uint)widthSizeAndState | (childState & MEASURED_STATE_MASK)),
                     resolveSizeAndState(maxHeight, heightMeasureSpec,
-                            (childState << MEASURED_HEIGHT_STATE_SHIFT)));
+                            childState << MEASURED_HEIGHT_STATE_SHIFT));
 
             if (matchHeight)
             {
@@ -1887,7 +1887,7 @@ namespace AndroidUI
                             if (childBaseline != -1)
                             {
                                 int descent = child.getMeasuredHeight() - childBaseline;
-                                childTop -= (maxDescent[INDEX_BOTTOM] - descent);
+                                childTop -= maxDescent[INDEX_BOTTOM] - descent;
                             }
                             break;
                         default:

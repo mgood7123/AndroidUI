@@ -75,7 +75,7 @@ namespace AndroidUI
                     return new Rect(left, top, right, bottom);
                 }
 
-                Rect result = new Rect();
+                Rect result = new();
                 result.left = (int)Math.Ceiling(left * scale);
                 result.top = (int)Math.Ceiling(top * scale);
                 result.right = (int)Math.Ceiling(right * scale);

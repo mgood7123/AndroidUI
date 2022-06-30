@@ -31,7 +31,7 @@ namespace AndroidUI
         public const int SK_MaxS32FitsInFloat = 2147483520;
         public const int SK_MinS32FitsInFloat = -SK_MaxS32FitsInFloat;
 
-        public const long SK_MaxS64FitsInFloat = (SK_MaxS64 >> (63 - 24) << (63 - 24));   // 0x7fffff8000000000
+        public const long SK_MaxS64FitsInFloat = SK_MaxS64 >> (63 - 24) << (63 - 24);   // 0x7fffff8000000000
         public const long SK_MinS64FitsInFloat = -SK_MaxS64FitsInFloat;
 
         public const float SK_FloatSqrt2 = 1.41421356f;
@@ -87,7 +87,7 @@ namespace AndroidUI
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static SKPoint to_point(Sk2s x)
         {
-            SKPoint point = new SKPoint();
+            SKPoint point = new();
             float[] a = x.Store();
             point.Set(a[0], a[1]);
             return point;
@@ -300,7 +300,7 @@ namespace AndroidUI
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float sk_float_round(float x) => sk_float_floor((x) + 0.5f);
+        public static float sk_float_round(float x) => sk_float_floor(x + 0.5f);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float sk_float_log2(float x) => MathF.Log2(x);
@@ -418,27 +418,27 @@ namespace AndroidUI
         public static int sk_float_floor2int(float x) => sk_float_saturate2int(sk_float_floor(x));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int sk_float_round2int(float x) => sk_float_saturate2int(sk_float_floor((x) + 0.5f));
+        public static int sk_float_round2int(float x) => sk_float_saturate2int(sk_float_floor(x + 0.5f));
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int sk_float_ceil2int(float x) => sk_float_saturate2int(sk_float_ceil(x));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int sk_float_floor2int_no_saturate(float x) => (int)sk_float_floor(x);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int sk_float_round2int_no_saturate(float x) => (int)sk_float_floor((x) + 0.5f);
+        public static int sk_float_round2int_no_saturate(float x) => (int)sk_float_floor(x + 0.5f);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int sk_float_ceil2int_no_saturate(float x) => (int)sk_float_ceil(x);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double sk_double_floor(double x) => Math.Floor(x);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static double sk_double_round(double x) => Math.Floor((x) + 0.5);
+        public static double sk_double_round(double x) => Math.Floor(x + 0.5);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double sk_double_ceil(double x) => Math.Ceiling(x);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int sk_double_floor2int(double x) => (int)Math.Floor(x);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int sk_double_round2int(double x) => (int)Math.Floor((x) + 0.5);
+        public static int sk_double_round2int(double x) => (int)Math.Floor(x + 0.5);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int sk_double_ceil2int(double x) => (int)Math.Ceiling(x);
 

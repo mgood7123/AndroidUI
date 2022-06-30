@@ -47,7 +47,7 @@ namespace AndroidUI
      */
     public class SparseArray<E> : ICloneable
     {
-        private static readonly object DELETED = new object();
+        private static readonly object DELETED = new();
         private bool mGarbage = false;
 
         private int[] mKeys;
@@ -85,7 +85,7 @@ namespace AndroidUI
 
         public object Clone()
         {
-            SparseArray<E> clone = new SparseArray<E>(0);
+            SparseArray<E> clone = new(0);
             clone.mKeys = (int[])mKeys.Clone();
             clone.mValues = (object[])mValues.Clone();
             clone.mSize = mSize;
@@ -513,7 +513,7 @@ namespace AndroidUI
                 return "{}";
             }
 
-            System.Text.StringBuilder buffer = new System.Text.StringBuilder(mSize * 28);
+            System.Text.StringBuilder buffer = new(mSize * 28);
             buffer.Append('{');
             for (int i = 0; i < mSize; i++)
             {

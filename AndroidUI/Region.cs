@@ -22,7 +22,7 @@ namespace AndroidUI
         private const int MAX_POOL_SIZE = 10;
 
         private static readonly SynchronizedPool<Region> sPool =
-                new SynchronizedPool<Region>(MAX_POOL_SIZE);
+                new(MAX_POOL_SIZE);
 
         /**
          * @hide
@@ -176,7 +176,7 @@ namespace AndroidUI
          */
         public Path getBoundaryPath()
         {
-            Path path = new Path();
+            Path path = new();
             // TODO
             //nativeGetBoundaryPath(mNativeRegion, path.Mutate());
             return null;

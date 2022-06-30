@@ -144,10 +144,10 @@ namespace AndroidUI
             // Scale input surround, domain (0, 2), to CAM16 surround, domain (0.8, 1.0)
             float f = 0.8f + (surround / 10.0f);
             // "Exponential non-linearity"
-            float c = (f >= 0.9) ? MathUtils.lerp(0.59f, 0.69f, ((f - 0.9f) * 10.0f)) : MathUtils.lerp(
-                    0.525f, 0.59f, ((f - 0.8f) * 10.0f));
+            float c = (f >= 0.9) ? MathUtils.lerp(0.59f, 0.69f, (f - 0.9f) * 10.0f) : MathUtils.lerp(
+                    0.525f, 0.59f, (f - 0.8f) * 10.0f);
             // Calculate degree of adaptation to illuminant
-            float d = discountingIlluminant ? 1.0f : f * (1.0f - ((1.0f / 3.6f) * (float)Math.Exp(
+            float d = discountingIlluminant ? 1.0f : f * (1.0f - (1.0f / 3.6f * (float)Math.Exp(
                     (-adaptingLuminance - 42.0f) / 92.0f)));
             // Per Li et al, if D is greater than 1 or less than 0, set it to 1 or 0.
             d = (d > 1.0) ? 1.0f : (d < 0.0) ? 0.0f : d;
@@ -190,9 +190,9 @@ namespace AndroidUI
                 (float) Math.Pow(fl * rgbD[1] * gW / 100.0, 0.42), (float) Math.Pow(
                 fl * rgbD[2] * bW / 100.0, 0.42)};
 
-            float[] rgbA = new float[]{(400.0f * rgbAFactors[0]) / (rgbAFactors[0] + 27.13f),
-                (400.0f * rgbAFactors[1]) / (rgbAFactors[1] + 27.13f),
-                (400.0f * rgbAFactors[2]) / (rgbAFactors[2] + 27.13f), };
+            float[] rgbA = new float[]{400.0f * rgbAFactors[0] / (rgbAFactors[0] + 27.13f),
+                400.0f * rgbAFactors[1] / (rgbAFactors[1] + 27.13f),
+                400.0f * rgbAFactors[2] / (rgbAFactors[2] + 27.13f), };
 
             float aw = ((2.0f * rgbA[0]) + rgbA[1] + (0.05f * rgbA[2])) * nbb;
 

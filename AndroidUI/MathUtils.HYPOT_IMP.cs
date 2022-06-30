@@ -204,7 +204,7 @@
 
 			if (a < twoToThe52)
 			{ // E_min <= ilogb(a) <= 51
-				a = ((twoToThe52 + a) - twoToThe52);
+				a = twoToThe52 + a - twoToThe52;
 			}
 
 			return sign * a; // restore original sign

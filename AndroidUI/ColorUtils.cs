@@ -65,7 +65,7 @@ namespace AndroidUI
 
         private static int compositeAlpha(int foregroundAlpha, int backgroundAlpha)
         {
-            return 0xFF - (((0xFF - backgroundAlpha) * (0xFF - foregroundAlpha)) / 0xFF);
+            return 0xFF - ((0xFF - backgroundAlpha) * (0xFF - foregroundAlpha) / 0xFF);
         }
 
         private static int compositeComponent(int fgC, int fgA, int bgC, int bgA, int a)
@@ -159,7 +159,7 @@ namespace AndroidUI
                         + background.toHexString());
             }
 
-            ContrastCalculator contrastCalculator = new ContrastCalculator((fg, bg, alpha) =>
+            ContrastCalculator contrastCalculator = new((fg, bg, alpha) =>
             {
                 int testForeground = setAlphaComponent(fg, alpha);
                 return calculateContrast(context, testForeground, bg);
@@ -252,7 +252,7 @@ namespace AndroidUI
             {
                 if (max == rf)
                 {
-                    h = ((gf - bf) / deltaMaxMin) % 6f;
+                    h = (gf - bf) / deltaMaxMin % 6f;
                 }
                 else if (max == gf)
                 {
@@ -266,7 +266,7 @@ namespace AndroidUI
                 s = deltaMaxMin / (1f - Math.Abs(2f * l - 1f));
             }
 
-            h = (h * 60f) % 360f;
+            h = h * 60f % 360f;
             if (h < 0)
             {
                 h += 360f;

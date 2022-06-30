@@ -87,7 +87,7 @@ namespace AndroidUI
                 throw new IndexOutOfRangeException("negative indexes are not allowed");
             }
 
-            MemoryPointer<T> tmp = new MemoryPointer<T>(memoryPointer);
+            MemoryPointer<T> tmp = new(memoryPointer);
             tmp.offset += value;
             return tmp;
         }
@@ -116,7 +116,7 @@ namespace AndroidUI
                 throw new IndexOutOfRangeException("negative indexes are not allowed");
             }
 
-            MemoryPointer<T> tmp = new MemoryPointer<T>(memoryPointer);
+            MemoryPointer<T> tmp = new(memoryPointer);
             tmp.offset -= value;
             return tmp;
         }

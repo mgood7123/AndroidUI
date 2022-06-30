@@ -28,7 +28,7 @@ namespace AndroidUI
          */
         internal SKPath mPath;
 
-        internal readonly Rect mRect = new Rect();
+        internal readonly Rect mRect = new();
         internal float mRadius = RADIUS_UNDEFINED;
         internal float mAlpha;
 

@@ -456,7 +456,7 @@ namespace AndroidUI
              * No color information is stored.
              * With this configuration, each pixel requires 1 byte of memory.
              */
-            public static readonly Config ALPHA_8 = new Config(1);
+            public static readonly Config ALPHA_8 = new(1);
 
             /**
              * Each pixel is stored on 2 bytes and only the RGB channels are
@@ -477,7 +477,7 @@ namespace AndroidUI
              * short color = (R & 0x1f) << 11 | (G & 0x3f) << 5 | (B & 0x1f);
              * </pre>
              */
-            public static readonly Config RGB_565 = new Config(2);
+            public static readonly Config RGB_565 = new(2);
 
             /**
              * Each pixel is stored on 2 bytes. The three RGB color channels
@@ -498,7 +498,7 @@ namespace AndroidUI
              * @deprecated Because of the poor quality of this configuration,
              *             it is advised to use {@link #ARGB_8888} instead.
              */
-            public static readonly Config ARGB_4444 = new Config(3);
+            public static readonly Config ARGB_4444 = new(3);
 
             /**
              * Each pixel is stored on 4 bytes. Each channel (RGB and alpha
@@ -513,7 +513,7 @@ namespace AndroidUI
              * int color = (A & 0xff) << 24 | (B & 0xff) << 16 | (G & 0xff) << 8 | (R & 0xff);
              * </pre>
              */
-            public static readonly Config ARGB_8888 = new Config(4);
+            public static readonly Config ARGB_8888 = new(4);
 
             /**
              * Each pixels is stored on 8 bytes. Each channel (RGB and alpha
@@ -528,7 +528,7 @@ namespace AndroidUI
              * long color = (A & 0xffff) << 48 | (B & 0xffff) << 32 | (G & 0xffff) << 16 | (R & 0xffff);
              * </pre>
              */
-            public static readonly Config RGBA_F16 = new Config(5);
+            public static readonly Config RGBA_F16 = new(5);
 
             /**
              * Special configuration, when bitmap is stored only in graphic memory.
@@ -537,7 +537,7 @@ namespace AndroidUI
              * It is optimal for cases, when the only operation with the bitmap is to draw it on a
              * screen.
              */
-            public static readonly Config HARDWARE = new Config(6);
+            public static readonly Config HARDWARE = new(6);
 
             internal int nativeInt;
 
@@ -864,7 +864,7 @@ namespace AndroidUI
         public static Bitmap createScaledBitmap(Bitmap src, int dstWidth, int dstHeight,
                 bool filter)
         {
-            SKMatrix m = new SKMatrix();
+            SKMatrix m = new();
 
             int width = src.getWidth();
             int height = src.getHeight();
@@ -977,9 +977,9 @@ namespace AndroidUI
             int newh = height;
             Paint paint = new();
 
-            Rect srcR = new Rect(x, y, x + width, y + height);
-            RectF dstR = new RectF(0, 0, width, height);
-            RectF deviceR = new RectF();
+            Rect srcR = new(x, y, x + width, y + height);
+            RectF dstR = new(0, 0, width, height);
+            RectF deviceR = new();
 
             Config newConfig = Config.ARGB_8888;
             Config config = source.getConfig();
@@ -1052,7 +1052,7 @@ namespace AndroidUI
             bitmap.setHasAlpha(source.hasAlpha());
             bitmap.setPremultiplied(source.mRequestPremultiplied);
 
-            SKCanvas canvas = new SKCanvas(bitmap.getNativeInstance());
+            SKCanvas canvas = new(bitmap.getNativeInstance());
             canvas.Translate(-deviceR.left, -deviceR.top);
             canvas.Concat(ref m.Value);
             canvas.DrawBitmap(source.mNativePtr, srcR.ToSKRect(), dstR.ToSKRect(), paint.getNativeInstance());
@@ -1075,7 +1075,7 @@ namespace AndroidUI
                 return null;
             }
 
-            SKBitmap bitmap = new SKBitmap();
+            SKBitmap bitmap = new();
             if (!bitmap.InstallPixels(src.Info, src.PixelRef.Pixels))
             {
                 Console.WriteLine("Could not install pixels");
@@ -1428,8 +1428,8 @@ namespace AndroidUI
                 //node.setClipToBounds(false);
                 //node.setForceDarkAllowed(false);
 
-                SKBitmap bm = new SKBitmap(width, height);
-                SKCanvas canvas = new SKCanvas(bm);
+                SKBitmap bm = new(width, height);
+                SKCanvas canvas = new(bm);
                 if (source.RecordingCanvas.getWidth() != width || source.RecordingCanvas.getHeight() != height)
                 {
                     canvas.Scale(width / (float)source.RecordingCanvas.getWidth(),
@@ -1437,7 +1437,7 @@ namespace AndroidUI
                 }
                 canvas.DrawPicture(picture);
                 canvas.Dispose();
-                Bitmap bitmap = new Bitmap(bm, width, height);
+                Bitmap bitmap = new(bm, width, height);
                 if (config != Config.HARDWARE)
                 {
                     bitmap = bitmap.copy(config, false);
@@ -1447,7 +1447,7 @@ namespace AndroidUI
             else
             {
                 Bitmap bitmap = createBitmap(width, height, config);
-                SKCanvas canvas = new SKCanvas(bitmap.mNativePtr);
+                SKCanvas canvas = new(bitmap.mNativePtr);
                 if (source.RecordingCanvas.getWidth() != width || source.RecordingCanvas.getHeight() != height)
                 {
                     canvas.Scale(width / (float)source.RecordingCanvas.getWidth(),
@@ -2029,7 +2029,7 @@ namespace AndroidUI
                             throw new Exception("We can only handle numerical transfer functions at the moment");
                         }
 
-                        ColorSpace.Rgb.TransferParameters transfer = new ColorSpace.Rgb.TransferParameters(
+                        ColorSpace.Rgb.TransferParameters transfer = new(
                             transferParams.A, transferParams.B, transferParams.C, transferParams.D,
                             transferParams.E, transferParams.F, transferParams.G);
 
@@ -2445,7 +2445,7 @@ namespace AndroidUI
 
                 SKColorSpace sRGB = ColorSpace.get(ColorSpace.Named.SRGB).getNativeInstance();
 
-                SKImageInfo srcInfo = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Unpremul, sRGB);
+                SKImageInfo srcInfo = new(width, height, SKColorType.Bgra8888, SKAlphaType.Unpremul, sRGB);
 
                 SKPixmap srcPM = new(srcInfo, (IntPtr)src, stride * 4);
                 mNativePtr.WritePixels(srcPM, x, y);
@@ -2483,7 +2483,7 @@ namespace AndroidUI
 
                 SKColorSpace sRGB = ColorSpace.get(ColorSpace.Named.SRGB).getNativeInstance();
 
-                SKImageInfo srcInfo = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Unpremul, sRGB);
+                SKImageInfo srcInfo = new(width, height, SKColorType.Bgra8888, SKAlphaType.Unpremul, sRGB);
 
                 SKPixmap srcPM = new(srcInfo, (IntPtr)src, stride * 4);
                 srcPM.ReadPixels(srcInfo, mNativePtr.GetPixels(), srcInfo.RowBytes);
@@ -2608,7 +2608,7 @@ namespace AndroidUI
             // Paying the price for making Hardware Bitmap as Config:
             // later check for colorType will pass successfully,
             // because Hardware Config internally may be RGBA8888 or smth like that.
-            if ((getConfig() == Config.HARDWARE) != (other.getConfig() == Config.HARDWARE))
+            if (getConfig() == Config.HARDWARE != (other.getConfig() == Config.HARDWARE))
             {
                 return false;
             }

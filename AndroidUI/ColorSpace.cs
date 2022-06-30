@@ -192,7 +192,7 @@ namespace AndroidUI
         private static readonly float[] ILLUMINANT_D50_XYZ = { 0.964212f, 1.0f, 0.825188f };
 
         private static readonly Rgb.TransferParameters SRGB_TRANSFER_PARAMETERS =
-                new Rgb.TransferParameters(1 / 1.055, 0.055 / 1.055, 1 / 12.92, 0.04045, 2.4);
+                new(1 / 1.055, 0.055 / 1.055, 1 / 12.92, 0.04045, 2.4);
 
         // See static initialization block next to #get(Named)
         private static readonly ColorSpace[] sNamedColorSpaces = new ColorSpace[Enum.GetValues(typeof(Named)).Length];
@@ -1867,9 +1867,9 @@ namespace AndroidUI
                 float fy = (v[0] + 16.0f) / 116.0f;
                 float fx = fy + (v[1] * 0.002f);
                 float fz = fy - (v[2] * 0.005f);
-                float X = fx > D ? fx * fx * fx : (1.0f / B) * (fx - C);
-                float Y = fy > D ? fy * fy * fy : (1.0f / B) * (fy - C);
-                float Z = fz > D ? fz * fz * fz : (1.0f / B) * (fz - C);
+                float X = fx > D ? fx * fx * fx : 1.0f / B * (fx - C);
+                float Y = fy > D ? fy * fy * fy : 1.0f / B * (fy - C);
+                float Z = fz > D ? fz * fz * fz : 1.0f / B * (fz - C);
 
                 v[0] = X * ILLUMINANT_D50_XYZ[0];
                 v[1] = Y * ILLUMINANT_D50_XYZ[1];
@@ -2235,7 +2235,7 @@ namespace AndroidUI
                 p.E = e;
                 p.F = f;
                 p.G = g;
-                SkiaSharp.SKColorSpaceXyz xyzMatrix = new SkiaSharp.SKColorSpaceXyz(xyzD50);
+                SkiaSharp.SKColorSpaceXyz xyzMatrix = new(xyzD50);
                 return SkiaSharp.SKColorSpace.CreateRgb(p, xyzMatrix);
             }
 

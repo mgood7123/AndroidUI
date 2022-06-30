@@ -28,7 +28,7 @@ namespace AndroidUI
      */
     public class ColorDrawable : Drawable
     {
-        private readonly Paint mPaint = new Paint();
+        private readonly Paint mPaint = new();
 
         private ColorState mColorState;
         private BlendModeColorFilter mBlendModeColorFilter;
@@ -88,7 +88,7 @@ namespace AndroidUI
         override public void draw(SkiaSharp.SKCanvas canvas)
         {
             ColorFilter colorFilter = mPaint.getColorFilter();
-            if ((mColorState.mUseColor.UnsignedRightShift(24)) != 0 || colorFilter != null
+            if (mColorState.mUseColor.UnsignedRightShift(24) != 0 || colorFilter != null
                     || mBlendModeColorFilter != null)
             {
                 if (colorFilter == null)

@@ -131,7 +131,7 @@ namespace AndroidUI
 
         public override int GetHashCode()
         {
-            int result = (left != +0.0f ? left.ToIntBits() : 0);
+            int result = left != +0.0f ? left.ToIntBits() : 0;
             result = 31 * result + (top != +0.0f ? top.ToIntBits() : 0);
             result = 31 * result + (right != +0.0f ? right.ToIntBits() : 0);
             result = 31 * result + (bottom != +0.0f ? bottom.ToIntBits() : 0);

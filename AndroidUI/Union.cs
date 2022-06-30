@@ -26,7 +26,7 @@
             if (iMax == -1)
                 return "[]";
 
-            System.Text.StringBuilder b = new System.Text.StringBuilder();
+            System.Text.StringBuilder b = new();
             b.Append('[');
             for (int i = 0; ; i++)
             {

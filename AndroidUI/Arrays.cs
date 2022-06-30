@@ -5,6 +5,8 @@ namespace AndroidUI
 {
     public static class Arrays
     {
+        public static readonly object[] EMPTY_OBJECT_ARRAY = Array.Empty<object>();
+
         // This is Arrays.binarySearch(), but doesn't do any argument validation.
         public static int binarySearch(int[] array, int size, int value)
         {
@@ -91,6 +93,14 @@ namespace AndroidUI
                 }
             }
             return true;
+        }
+
+        public static unsafe void fill(int[] mValues, int fromIndex, int toIndex, int v)
+        {
+            if (fromIndex == toIndex) return;
+            fixed (int* p = mValues) {
+                Os.memset(p + fromIndex, v, (nuint)(toIndex - fromIndex));
+            }
         }
 
         /**
@@ -185,6 +195,7 @@ namespace AndroidUI
          * @exception  NullReferenceException if either <code>src</code> or
          *               <code>dest</code> is <code>null</code>.
          */
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static void arraycopy(Array src, int srcPos,
                                             Array dest, int destPos,
                                             int length)
@@ -209,11 +220,36 @@ namespace AndroidUI
          * @throws NullReferenceException if {@code original} is null
          * @since 1.6
          */
+        public static int[] copyOf(int[] original, int newLength)
+        {
+            if (newLength == original.Length) return (int[])original.Clone();
+            int[] copy = new int[newLength];
+            arraycopy(original, 0, copy, 0, Math.Min(original.Length, newLength));
+            return copy;
+        }
+
+        /**
+         * Copies the specified array, truncating or padding with zeros (if necessary)
+         * so the copy has the specified length.  For all indices that are
+         * valid in both the original array and the copy, the two arrays will
+         * contain identical values.  For any indices that are valid in the
+         * copy but not the original, the copy will contain {@code 0f}.
+         * Such indices will exist if and only if the specified length
+         * is greater than that of the original array.
+         *
+         * @param original the array to be copied
+         * @param newLength the length of the copy to be returned
+         * @return a copy of the original array, truncated or padded with zeros
+         *     to obtain the specified length
+         * @throws NegativeArraySizeException if {@code newLength} is negative
+         * @throws NullReferenceException if {@code original} is null
+         * @since 1.6
+         */
         public static float[] copyOf(float[] original, int newLength)
         {
+            if (newLength == original.Length) return (float[])original.Clone();
             float[] copy = new float[newLength];
-            arraycopy(original, 0, copy, 0,
-                             Math.Min(original.Length, newLength));
+            arraycopy(original, 0, copy, 0, Math.Min(original.Length, newLength));
             return copy;
         }
 
@@ -658,7 +694,7 @@ namespace AndroidUI
             if (iMax == -1)
                 return "[]";
 
-            StringBuilder b = new StringBuilder();
+            StringBuilder b = new();
             b.Append('[');
             for (int i = 0; ; i++) {
                 b.Append(a[i]);
@@ -688,7 +724,7 @@ namespace AndroidUI
             if (iMax == -1)
                 return "[]";
 
-            StringBuilder b = new StringBuilder();
+            StringBuilder b = new();
             b.Append('[');
             for (int i = 0; ; i++) {
                 b.Append(a[i]);
@@ -718,7 +754,7 @@ namespace AndroidUI
             if (iMax == -1)
                 return "[]";
 
-            StringBuilder b = new StringBuilder();
+            StringBuilder b = new();
             b.Append('[');
             for (int i = 0; ; i++) {
                 b.Append(a[i]);
@@ -748,7 +784,7 @@ namespace AndroidUI
             if (iMax == -1)
                 return "[]";
 
-            StringBuilder b = new StringBuilder();
+            StringBuilder b = new();
             b.Append('[');
             for (int i = 0; ; i++) {
                 b.Append(a[i]);
@@ -778,7 +814,7 @@ namespace AndroidUI
             if (iMax == -1)
                 return "[]";
 
-            StringBuilder b = new StringBuilder();
+            StringBuilder b = new();
             b.Append('[');
             for (int i = 0; ; i++) {
                 b.Append(a[i]);
@@ -808,7 +844,7 @@ namespace AndroidUI
             if (iMax == -1)
                 return "[]";
 
-            StringBuilder b = new StringBuilder();
+            StringBuilder b = new();
             b.Append('[');
             for (int i = 0; ; i++) {
                 b.Append(a[i]);
@@ -839,7 +875,7 @@ namespace AndroidUI
             if (iMax == -1)
                 return "[]";
 
-            StringBuilder b = new StringBuilder();
+            StringBuilder b = new();
             b.Append('[');
             for (int i = 0; ; i++) {
                 b.Append(a[i]);
@@ -869,7 +905,7 @@ namespace AndroidUI
             if (iMax == -1)
                 return "[]";
 
-            StringBuilder b = new StringBuilder();
+            StringBuilder b = new();
             b.Append('[');
             for (int i = 0; ; i++) {
                 b.Append(a[i]);
@@ -903,7 +939,7 @@ namespace AndroidUI
             if (iMax == -1)
                 return "[]";
 
-            StringBuilder b = new StringBuilder();
+            StringBuilder b = new();
             b.Append('[');
             for (int i = 0; ; i++) {
                 object c = a[i];
@@ -954,7 +990,7 @@ namespace AndroidUI
             int bufLen = 20 * a.Length;
             if (a.Length != 0 && bufLen <= 0)
                 bufLen = int.MaxValue;
-            StringBuilder buf = new StringBuilder(bufLen);
+            StringBuilder buf = new(bufLen);
             deepToString(a, buf, new HashSet<object[]>());
             return buf.ToString();
         }

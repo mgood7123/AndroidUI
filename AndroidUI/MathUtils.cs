@@ -986,14 +986,14 @@
 
             public static implicit operator FLOAT_UINT(float v)
             {
-                FLOAT_UINT tmp = new FLOAT_UINT();
+                FLOAT_UINT tmp = new();
                 tmp.f = v;
                 return tmp;
             }
 
             public static implicit operator FLOAT_UINT(uint v)
             {
-                FLOAT_UINT tmp = new FLOAT_UINT();
+                FLOAT_UINT tmp = new();
                 tmp.i = v;
                 return tmp;
             }
@@ -1007,14 +1007,14 @@
 
             public static implicit operator DOUBLE_ULONG(double v)
             {
-                DOUBLE_ULONG tmp = new DOUBLE_ULONG();
+                DOUBLE_ULONG tmp = new();
                 tmp.f = v;
                 return tmp;
             }
 
             public static implicit operator DOUBLE_ULONG(ulong v)
             {
-                DOUBLE_ULONG tmp = new DOUBLE_ULONG();
+                DOUBLE_ULONG tmp = new();
                 tmp.i = v;
                 return tmp;
             }
@@ -1098,8 +1098,8 @@
                  *
                  * Try to optimize for parallel evaluation as in __tanf.c.
                  */
-                r = (t * t) * (t / x);
-                t = t * ((P0 + r * (P1 + r * P2)) + ((r * r) * r) * (P3 + r * P4));
+                r = t * t * (t / x);
+                t = t * (P0 + r * (P1 + r * P2) + r * r * r * (P3 + r * P4));
 
                 /*
                  * Round t away from zero to 23 bits (sloppily except for ensuring that
@@ -1258,16 +1258,16 @@
 
         public static float dist(float x1, float y1, float x2, float y2)
         {
-            float x = (x2 - x1);
-            float y = (y2 - y1);
+            float x = x2 - x1;
+            float y = y2 - y1;
             return (float)hypot(x, y);
         }
 
         public static float dist(float x1, float y1, float z1, float x2, float y2, float z2)
         {
-            float x = (x2 - x1);
-            float y = (y2 - y1);
-            float z = (z2 - z1);
+            float x = x2 - x1;
+            float y = y2 - y1;
+            float z = z2 - z1;
             return (float)Math.Sqrt(x * x + y * y + z * z);
         }
 
@@ -1357,7 +1357,7 @@
          */
         public static float lerpDeg(float start, float end, float amount)
         {
-            float minAngle = (((end - start) + 180) % 360) - 180;
+            float minAngle = ((end - start + 180) % 360) - 180;
             return minAngle * amount + start;
         }
 

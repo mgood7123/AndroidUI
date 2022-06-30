@@ -344,7 +344,7 @@ namespace AndroidUI
          */
         public bool isRect(RectF rect)
         {
-            SKRect r = new SKRect();
+            SKRect r = new();
             bool isClosed;
             SKPathDirection direction;
             r = mNativePath.GetRect(out isClosed, out direction);
@@ -567,7 +567,7 @@ namespace AndroidUI
                 float sweepAngle, bool forceMoveTo)
         {
             isSimplePath = false;
-            SKRect oval = new SKRect(left, top, right, bottom);
+            SKRect oval = new(left, top, right, bottom);
             mNativePath.ArcTo(oval, startAngle, sweepAngle, forceMoveTo);
         }
 
@@ -639,7 +639,7 @@ namespace AndroidUI
         public void addRect(float left, float top, float right, float bottom, Direction dir)
         {
             detectSimplePath(left, top, right, bottom, dir);
-            SKRect rect = new SKRect(left, top, right, bottom);
+            SKRect rect = new(left, top, right, bottom);
             mNativePath.AddRect(rect, (SKPathDirection)dir.nativeInt);
         }
 
@@ -662,7 +662,7 @@ namespace AndroidUI
         public void addOval(float left, float top, float right, float bottom, Direction dir)
         {
             isSimplePath = false;
-            SKRect oval = new SKRect(left, top, right, bottom);
+            SKRect oval = new(left, top, right, bottom);
             mNativePath.AddOval(oval, (SKPathDirection)dir.nativeInt);
         }
 
@@ -702,7 +702,7 @@ namespace AndroidUI
                 float sweepAngle)
         {
             isSimplePath = false;
-            SKRect oval = new SKRect(left, top, right, bottom);
+            SKRect oval = new(left, top, right, bottom);
             mNativePath.AddArc(oval, startAngle, sweepAngle);
         }
 
@@ -730,7 +730,7 @@ namespace AndroidUI
                 Direction dir)
         {
             isSimplePath = false;
-            SKRect rect = new SKRect(left, top, right, bottom);
+            SKRect rect = new(left, top, right, bottom);
             mNativePath.AddRoundRect(rect, rx, ry, (SKPathDirection)dir.nativeInt);
         }
 
@@ -774,7 +774,7 @@ namespace AndroidUI
                 radiis[i].X = radii[ii++];
                 radiis[i].Y = radii[ii++];
             }
-            SKRoundRect rect = new SKRoundRect();
+            SKRoundRect rect = new();
             rect.SetRectRadii(new SKRect(left, top, right, bottom), radiis);
             mNativePath.AddRoundRect(rect, (SKPathDirection)dir.nativeInt);
             rect.Dispose();

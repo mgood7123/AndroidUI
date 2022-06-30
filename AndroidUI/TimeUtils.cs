@@ -30,7 +30,7 @@ namespace AndroidUI
         /** @hide */
         internal const long NANOS_PER_MS = 1000000;
 
-        private static readonly Object sFormatSync = new Object();
+        private static readonly object sFormatSync = new();
         private static char[] sFormatStr = new char[HUNDRED_DAY_FIELD_LEN + 10];
         private static char[] sTmpFormatStr = new char[HUNDRED_DAY_FIELD_LEN + 10];
 
@@ -95,14 +95,14 @@ namespace AndroidUI
                         int dig = amt / 100;
                         formatStr[pos] = (char)(dig + '0');
                         pos++;
-                        amt -= (dig * 100);
+                        amt -= dig * 100;
                     }
                     if ((always && zeropad >= 2) || amt > 9 || startPos != pos)
                     {
                         int dig = amt / 10;
                         formatStr[pos] = (char)(dig + '0');
                         pos++;
-                        amt -= (dig * 10);
+                        amt -= dig * 10;
                     }
                     formatStr[pos] = (char)(amt + '0');
                     pos++;
@@ -219,16 +219,16 @@ namespace AndroidUI
         {
             lock(sFormatSync) {
                 int len = formatDurationLocked(duration, fieldLen);
-                pw.Write(new String(sFormatStr, 0, len));
+                pw.Write(new string(sFormatStr, 0, len));
             }
         }
 
         /** @hide Just for debugging; not internationalized. */
-    internal static String formatDuration(long duration)
+    internal static string formatDuration(long duration)
         {
             lock(sFormatSync) {
                 int len = formatDurationLocked(duration, 0);
-                return new String(sFormatStr, 0, len);
+                return new string(sFormatStr, 0, len);
             }
         }
 
@@ -250,19 +250,19 @@ namespace AndroidUI
         }
 
         /** @hide Just for debugging; not internationalized. */
-        internal static String formatUptime(long time)
+        internal static string formatUptime(long time)
         {
             return formatTime(time, NanoTime.currentTimeMillis());
         }
 
         /** @hide Just for debugging; not internationalized. */
-        internal static String formatRealtime(long time)
+        internal static string formatRealtime(long time)
         {
             return formatTime(time, NanoTime.currentTimeMillis());
         }
 
         /** @hide Just for debugging; not internationalized. */
-        internal static String formatTime(long time, long referenceTime)
+        internal static string formatTime(long time, long referenceTime)
         {
             long diff = time - referenceTime;
             if (diff > 0)

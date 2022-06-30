@@ -168,7 +168,7 @@ namespace AndroidUI
         {
             if (stateSet == null)
             {
-                return (stateSpec == null || isWildCard(stateSpec));
+                return stateSpec == null || isWildCard(stateSpec);
             }
             int stateSpecSize = stateSpec.Length;
             int stateSetSize = stateSet.Length;
@@ -314,7 +314,7 @@ namespace AndroidUI
 
         public static string dump(int[] states)
         {
-            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            System.Text.StringBuilder sb = new();
 
             int count = states.Length;
             for (int i = 0; i < count; i++)

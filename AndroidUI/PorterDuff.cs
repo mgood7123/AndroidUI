@@ -348,7 +348,7 @@
                 this.nativeInt = nativeInt;
             }
 
-            public static implicit operator Mode(int value) => new Mode(value);
+            public static implicit operator Mode(int value) => new(value);
 
             /**
              * @hide

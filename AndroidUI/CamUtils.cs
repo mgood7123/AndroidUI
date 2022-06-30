@@ -97,7 +97,7 @@ namespace AndroidUI
 
             float kappa = 24389f / 27f;
             float epsilon = 216f / 24389f;
-            bool lExceedsEpsilonKappa = (lstar > 8.0f);
+            bool lExceedsEpsilonKappa = lstar > 8.0f;
             float yT = lExceedsEpsilonKappa ? fy * fy * fy : lstar / kappa;
             bool cubeExceedEpsilon = (fy * fy * fy) > epsilon;
             float xT = cubeExceedEpsilon ? fx * fx * fx : (116f * fx - 16f) / kappa;
@@ -120,7 +120,7 @@ namespace AndroidUI
             float yIntermediate;
             if (y <= e)
             {
-                return ((24389.0f / 27.0f) * y);
+                return 24389.0f / 27.0f * y;
             }
             else
             {
@@ -157,7 +157,7 @@ namespace AndroidUI
             float ke = 8.0f;
             if (lstar > ke)
             {
-                return (float)Math.Pow(((lstar + 16.0) / 116.0), 3) * 100f;
+                return (float)Math.Pow((lstar + 16.0) / 116.0, 3) * 100f;
             }
             else
             {
@@ -171,11 +171,11 @@ namespace AndroidUI
 
             if (normalized <= 0.04045f)
             {
-                return (normalized / 12.92f) * 100.0f;
+                return normalized / 12.92f * 100.0f;
             }
             else
             {
-                return (float)Math.Pow(((normalized + 0.055f) / 1.055f), 2.4f) * 100.0f;
+                return (float)Math.Pow((normalized + 0.055f) / 1.055f, 2.4f) * 100.0f;
             }
         }
     }

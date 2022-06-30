@@ -272,7 +272,7 @@ public sealed class FP16
             short xBits = isNaN(x) ? NaN : x;
             short yBits = isNaN(y) ? NaN : y;
 
-            return (xBits == yBits ? 0 : (xBits < yBits ? -1 : 1));
+            return xBits == yBits ? 0 : (xBits < yBits ? -1 : 1);
         }
 
         /**
@@ -312,7 +312,7 @@ public sealed class FP16
             {
                 int exp = 25 - (abs >> 10);
                 int mask = (1 << exp) - 1;
-                result += ((1 << (exp - 1)) - (~(abs >> exp) & 1));
+                result += (1 << (exp - 1)) - (~(abs >> exp) & 1);
                 result &= ~mask;
             }
             if (isNaN((short)result))
@@ -858,7 +858,7 @@ public sealed class FP16
         
         public static string toHexString(short h)
         {
-            System.Text.StringBuilder o = new System.Text.StringBuilder();
+            System.Text.StringBuilder o = new();
 
             int bits = h & 0xffff;
             int s = bits.UnsignedRightShift(SIGN_SHIFT);

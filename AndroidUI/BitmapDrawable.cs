@@ -52,7 +52,7 @@ namespace AndroidUI
         private const int TILE_MODE_REPEAT = 1;
         private const int TILE_MODE_MIRROR = 2;
 
-        private static readonly Rect mDstRect = new Rect();   // #updateDstRectAndInsetsIfDirty() sets this
+        private static readonly Rect mDstRect = new();   // #updateDstRectAndInsetsIfDirty() sets this
 
         
         private BitmapState mBitmapState;

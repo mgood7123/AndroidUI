@@ -844,7 +844,7 @@ namespace AndroidUI
 
             try
             {
-                FileStream fis = new FileStream(fd, FileAccess.Read);
+                FileStream fis = new(fd, FileAccess.Read);
                 try
                 {
                     bm = decodeStreamInternal(fis, out outPadding, opts);
@@ -897,7 +897,7 @@ namespace AndroidUI
 
             try
             {
-                FileStream fis = new FileStream(fd, FileAccess.Read);
+                FileStream fis = new(fd, FileAccess.Read);
                 try
                 {
                     bm = decodeStreamInternal(fis, opts);
@@ -1142,7 +1142,7 @@ namespace AndroidUI
 
         static internal void Bitmap_reconfigure(SKBitmap bitmapHandle, SKImageInfo info, IntPtr pixels, IntPtr rowBytes)
         {
-            SKPixelRef n = new SKPixelRef(info.Width, info.Height, pixels, rowBytes);
+            SKPixelRef n = new(info.Width, info.Height, pixels, rowBytes);
             bitmapHandle.SetPixelRef(n, 0, 0);
         }
 
@@ -1746,7 +1746,7 @@ namespace AndroidUI
             }
             */
 
-            SKBitmap tmp = new SKBitmap(info, SKBitmapAllocFlags.ZeroPixels);
+            SKBitmap tmp = new(info, SKBitmapAllocFlags.ZeroPixels);
             bitmap.SetInfo(info, tmp.RowBytes);
             bitmap.SetPixelRef(tmp.PixelRef, 0, 0);
             return tmp;
@@ -2086,7 +2086,7 @@ namespace AndroidUI
                 // offset is not zero, we need to copy
                 _ => (byteArray + offset).ToArray(),
             };
-            MemoryStream m = new MemoryStream(bytes, 0, length);
+            MemoryStream m = new(bytes, 0, length);
             using SKFrontBufferedManagedStream a = new(m, length, false);
             return doDecode(a, options, inBitmapHandle, colorSpaceHandle);
         }

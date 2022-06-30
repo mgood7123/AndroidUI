@@ -93,8 +93,8 @@ namespace AndroidUI
         private ValueHolder<SKMatrix> mDrawMatrix = null;
 
         // Avoid allocations...
-        private readonly RectF mTempSrc = new RectF();
-        private readonly RectF mTempDst = new RectF();
+        private readonly RectF mTempSrc = new();
+        private readonly RectF mTempDst = new();
 
         private bool mCropToPadding;
 
@@ -212,7 +212,7 @@ namespace AndroidUI
         override
             public bool hasOverlappingRendering()
         {
-            return (getBackground() != null && getBackground().getCurrent() != null);
+            return getBackground() != null && getBackground().getCurrent() != null;
         }
 
         /**

@@ -181,7 +181,7 @@ namespace AndroidUI
                     }
                 }
 
-                ColorStateList csl = new ColorStateList(EMPTY, new int[] { color });
+                ColorStateList csl = new(EMPTY, new int[] { color });
                 sCache.put(color, new(csl));
                 return csl;
             }
@@ -355,7 +355,7 @@ namespace AndroidUI
                 return this;
             }
 
-            ColorStateList clone = new ColorStateList(this);
+            ColorStateList clone = new(this);
             clone.applyTheme(t);
             return clone;
         }
@@ -534,7 +534,7 @@ namespace AndroidUI
          */
         private void onColorsChanged()
         {
-            int defaultColor = (int)((uint)DEFAULT_COLOR);
+            int defaultColor = (int)(uint)DEFAULT_COLOR;
             bool isOpaque = true;
 
             int[][] states = mStateSpecs;

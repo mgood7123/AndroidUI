@@ -542,12 +542,12 @@ namespace AndroidUI
             }
 
             // otherwise, do fudge-tastic comparison of the major and minor axis
-            return (getWeightedDistanceFor(
+            return getWeightedDistanceFor(
                             majorAxisDistance(direction, source, rect1),
                             minorAxisDistance(direction, source, rect1))
                     < getWeightedDistanceFor(
                             majorAxisDistance(direction, source, rect2),
-                            minorAxisDistance(direction, source, rect2)));
+                            minorAxisDistance(direction, source, rect2));
         }
 
         /**
@@ -579,7 +579,7 @@ namespace AndroidUI
             }
 
             // for horizontal directions, being exclusively in beam always wins
-            if ((direction == View.FOCUS_LEFT || direction == View.FOCUS_RIGHT))
+            if (direction == View.FOCUS_LEFT || direction == View.FOCUS_RIGHT)
             {
                 return true;
             }
@@ -588,8 +588,8 @@ namespace AndroidUI
             // now, as long as rect2 isn't completely closer, rect1 wins
             // e.g for direction down, completely closer means for rect2's top
             // edge to be closer to the source's top edge than rect1's bottom edge.
-            return (majorAxisDistance(direction, source, rect1)
-                    < majorAxisDistanceToFarEdge(direction, source, rect2));
+            return majorAxisDistance(direction, source, rect1)
+                    < majorAxisDistanceToFarEdge(direction, source, rect2);
         }
 
         /**
@@ -746,14 +746,14 @@ namespace AndroidUI
                 case View.FOCUS_RIGHT:
                     // the distance between the center verticals
                     return Math.Abs(
-                            ((source.top + source.height() / 2) -
-                            ((dest.top + dest.height() / 2))));
+                            source.top + source.height() / 2 -
+                            (dest.top + dest.height() / 2));
                 case View.FOCUS_UP:
                 case View.FOCUS_DOWN:
                     // the distance between the center horizontals
                     return Math.Abs(
-                            ((source.left + source.width() / 2) -
-                            ((dest.left + dest.width() / 2))));
+                            source.left + source.width() / 2 -
+                            (dest.left + dest.width() / 2));
             }
             throw new Exception("direction must be one of "
                     + "{FOCUS_UP, FOCUS_DOWN, FOCUS_LEFT, FOCUS_RIGHT}.");

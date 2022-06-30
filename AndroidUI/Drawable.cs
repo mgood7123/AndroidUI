@@ -119,7 +119,7 @@ namespace AndroidUI
     */
     public abstract class Drawable
     {
-        private static readonly Rect ZERO_BOUNDS_RECT = new Rect();
+        private static readonly Rect ZERO_BOUNDS_RECT = new();
 
         protected const int DEFAULT_TINT_MODE = PorterDuff.Mode.SRC_IN;
         protected const int DEFAULT_BLEND_MODE = BlendMode.SRC_IN;

@@ -586,7 +586,7 @@ namespace AndroidUI
             mXfermode.porterDuffMode = mode;
         }
 
-        public static implicit operator BlendMode(int mode) => new BlendMode(mode);
+        public static implicit operator BlendMode(int mode) => new(mode);
 
 
         public static implicit operator SkiaSharp.SKBlendMode(BlendMode mode) => mode.mXfermode;

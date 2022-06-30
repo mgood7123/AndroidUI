@@ -675,7 +675,7 @@ namespace AndroidUI
          */
         override public string ToString()
         {
-            System.Text.StringBuilder b = new System.Text.StringBuilder("Color(");
+            System.Text.StringBuilder b = new("Color(");
             foreach (float c in mComponents)
             {
                 b.Append(c).Append(", ");

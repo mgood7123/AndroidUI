@@ -111,7 +111,7 @@
                     case string:
                         return type_value_equals<string>(ref identity, ref other.identity);
                     default:
-                        bool sameInstance = (a.IsClass && b.IsClass && identity == other.identity);
+                        bool sameInstance = a.IsClass && b.IsClass && identity == other.identity;
                         return sameInstance || identity.Equals(other.identity);
                 }
             }

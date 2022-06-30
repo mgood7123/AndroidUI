@@ -178,7 +178,7 @@ namespace AndroidUI
             return null;
         }
 
-        static readonly object LOCK = new object();
+        static readonly object LOCK = new();
 
         /**
          *  @hide Only to be used by subclasses in the graphics package.

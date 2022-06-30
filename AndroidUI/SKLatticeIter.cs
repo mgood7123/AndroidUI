@@ -178,7 +178,7 @@ namespace AndroidUI
             // patches will be "fixed" or "scalable" in the y-direction.
             int xCount = origXCount;
             int yCount = origYCount;
-            bool xIsScalable = (xCount > 0 && src.Left == xDivs[0]);
+            bool xIsScalable = xCount > 0 && src.Left == xDivs[0];
             if (xIsScalable)
             {
                 // Once we've decided that the first patch is "scalable", we don't need the
@@ -186,7 +186,7 @@ namespace AndroidUI
                 xDivs++;
                 xCount--;
             }
-            bool yIsScalable = (yCount > 0 && src.Top == yDivs[0]);
+            bool yIsScalable = yCount > 0 && src.Top == yDivs[0];
             if (yIsScalable)
             {
                 // Once we've decided that the first patch is "scalable", we don't need the
@@ -222,8 +222,8 @@ namespace AndroidUI
                 MemoryPointer<SKLatticeRectType> flags = lattice.RectTypes;
                 MemoryPointer<SKColor> colors = lattice.Colors;
 
-                bool hasPadRow = (yCount != origYCount);
-                bool hasPadCol = (xCount != origXCount);
+                bool hasPadRow = yCount != origYCount;
+                bool hasPadCol = xCount != origXCount;
                 if (hasPadRow)
                 {
                     // The first row of rects are all empty, skip the first row of flags.

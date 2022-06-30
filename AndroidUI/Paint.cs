@@ -384,7 +384,7 @@ namespace AndroidUI
             }
         }
 
-        static readonly object LOCK = new object();
+        static readonly object LOCK = new();
 
         /**
          * Return the pointer to the native object while ensuring that any

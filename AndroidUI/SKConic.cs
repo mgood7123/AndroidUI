@@ -465,7 +465,7 @@ namespace AndroidUI
             // the derivative with the standard quotient rule. This leaves us with a simpler quadratic
             // function that we use to find a tangent.
             SKPoint A = (fPts[2] - fPts[0]).Multiply(fW - 1);
-            SKPoint B = ((fPts[2] - fPts[0]) - (fPts[1] - fPts[0])).Multiply(fW * 2);
+            SKPoint B = (fPts[2] - fPts[0] - (fPts[1] - fPts[0])).Multiply(fW * 2);
             SKPoint C = (fPts[1] - fPts[0]).Multiply(fW);
 
             // Now solve for "bisector dot midtangent = 0":

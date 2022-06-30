@@ -82,7 +82,7 @@ namespace AndroidUI
                 return false;
             }
             PorterDuffColorFilter other = (PorterDuffColorFilter)obj;
-            return (mColor == other.mColor && mMode.nativeInt == other.mMode.nativeInt);
+            return mColor == other.mColor && mMode.nativeInt == other.mMode.nativeInt;
         }
 
         public override int GetHashCode()

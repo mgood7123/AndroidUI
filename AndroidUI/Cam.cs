@@ -219,7 +219,7 @@ namespace AndroidUI
             // CAM16 chroma, colorfulness, saturation
             float c = alpha * (float)Math.Sqrt(j / 100.0);
             float m = c * frame.getFlRoot();
-            float s = 50.0f * (float)Math.Sqrt((alpha * frame.getC()) / (frame.getAw() + 4.0f));
+            float s = 50.0f * (float)Math.Sqrt(alpha * frame.getC() / (frame.getAw() + 4.0f));
 
             // CAM16-UCS components
             float jstar = (1.0f + 100.0f * 0.007f) * j / (1.0f + 0.007f * j);
@@ -253,7 +253,7 @@ namespace AndroidUI
                             * frame.getFlRoot();
             float m = c * frame.getFlRoot();
             float alpha = c / (float)Math.Sqrt(j / 100.0);
-            float s = 50.0f * (float)Math.Sqrt((alpha * frame.getC()) / (frame.getAw() + 4.0f));
+            float s = 50.0f * (float)Math.Sqrt(alpha * frame.getC() / (frame.getAw() + 4.0f));
 
             float hueRadians = h * (float)Math.PI / 180.0f;
             float jstar = (1.0f + 100.0f * 0.007f) * j / (1.0f + 0.007f * j);
@@ -302,7 +302,7 @@ namespace AndroidUI
             float ac = frame.getAw() * (float)Math.Pow(getJ() / 100.0,
                     1.0 / frame.getC() / frame.getZ());
             float p1 = eHue * (50000.0f / 13.0f) * frame.getNc() * frame.getNcb();
-            float p2 = (ac / frame.getNbb());
+            float p2 = ac / frame.getNbb();
 
             float hSin = (float)Math.Sin(hRad);
             float hCos = (float)Math.Cos(hRad);
@@ -315,13 +315,13 @@ namespace AndroidUI
             float gA = (460.0f * p2 - 891.0f * a - 261.0f * b) / 1403.0f;
             float bA = (460.0f * p2 - 220.0f * a - 6300.0f * b) / 1403.0f;
 
-            float rCBase = (float)Math.Max(0, (27.13 * Math.Abs(rA)) / (400.0 - Math.Abs(rA)));
+            float rCBase = (float)Math.Max(0, 27.13 * Math.Abs(rA) / (400.0 - Math.Abs(rA)));
             float rC = MathUtils.signum(rA) * (100.0f / frame.getFl()) * (float)Math.Pow(rCBase,
                     1.0 / 0.42);
-            float gCBase = (float)Math.Max(0, (27.13 * Math.Abs(gA)) / (400.0 - Math.Abs(gA)));
+            float gCBase = (float)Math.Max(0, 27.13 * Math.Abs(gA) / (400.0 - Math.Abs(gA)));
             float gC = MathUtils.signum(gA) * (100.0f / frame.getFl()) * (float)Math.Pow(gCBase,
                     1.0 / 0.42);
-            float bCBase = (float)Math.Max(0, (27.13 * Math.Abs(bA)) / (400.0 - Math.Abs(bA)));
+            float bCBase = (float)Math.Max(0, 27.13 * Math.Abs(bA) / (400.0 - Math.Abs(bA)));
             float bC = MathUtils.signum(bA) * (100.0f / frame.getFl()) * (float)Math.Pow(bCBase,
                     1.0 / 0.42);
             float rF = rC / frame.getRgbD()[0];
