@@ -53,7 +53,7 @@ namespace AndroidUITest
                 };
                 public override void Run(TestGroup nullableInstance)
                 {
-                    SKPixelRef pixelRef = new SKPixelRef(0, 0, IntPtr.Zero, (IntPtr)0);
+                    SKPixelRef pixelRef = new(0, 0, IntPtr.Zero, (IntPtr)0);
 
                     // Register a listener.
                     I count = new();
@@ -654,7 +654,7 @@ namespace AndroidUITest
                     // CountDownLatch does not appear to be used
 
                     AndroidUI.Bitmap[] decodedResult = new AndroidUI.Bitmap[1];
-                    Thread writeThread = new Thread(() =>
+                    Thread writeThread = new(() =>
                     {
                         try
                         {
@@ -680,7 +680,7 @@ namespace AndroidUITest
                         {
                         }
                     });
-                    Thread readThread = new Thread(() =>
+                    Thread readThread = new(() =>
                     {
                         decodedResult[0] = AndroidUI.BitmapFactory.decodeStream(readFd.ToFileInputStream());
                     });
@@ -739,7 +739,7 @@ namespace AndroidUITest
                     bm2.recycle();
                     
                     SKBitmap bm3 = SKBitmap.Decode(Filename);
-                    AndroidUI.Bitmap bm3_ = new AndroidUI.Bitmap(bm3, bm3.Width, bm3.Height);
+                    AndroidUI.Bitmap bm3_ = new(bm3, bm3.Width, bm3.Height);
                     bm3_.recycle();
                 }
             }
@@ -748,7 +748,7 @@ namespace AndroidUITest
             {
                 public override void Run(TestGroup nullableInstance)
                 {
-                    FileStream stream = new FileStream("C:/Users/small/Pictures/Screenshot 2022-05-19 034147.jpeg", FileMode.Open);
+                    FileStream stream = new("C:/Users/small/Pictures/Screenshot 2022-05-19 034147.jpeg", FileMode.Open);
                     SKCodecResult result_;
                     SKCodec c = SKCodec.Create(stream, out result_);
                     var codec = SKAndroidCodec.Create(c);
@@ -761,7 +761,7 @@ namespace AndroidUITest
             {
                 public override void Run(TestGroup nullableInstance)
                 {
-                    FileStream stream = new FileStream("C:/Users/small/Pictures/Screenshot 2022-05-19 034147.jpeg", FileMode.Open);
+                    FileStream stream = new("C:/Users/small/Pictures/Screenshot 2022-05-19 034147.jpeg", FileMode.Open);
                     SKCodecResult result_;
                     SKCodec c = SKCodec.Create(stream, out result_);
                     var codec = SKAndroidCodec.Create(c);

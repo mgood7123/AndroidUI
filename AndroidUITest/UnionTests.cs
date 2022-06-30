@@ -8,7 +8,7 @@ namespace AndroidUITest
         {
             public override void Run(TestGroup nullableInstance)
             {
-                AndroidUI.Union u = new AndroidUI.Union(typeof(System.Collections.Hashtable), typeof(Action<object>));
+                AndroidUI.Union u = new(typeof(System.Collections.Hashtable), typeof(Action<object>));
 
                 System.Collections.Hashtable a;
                 Action<object> action;
@@ -44,7 +44,7 @@ namespace AndroidUITest
         {
             public override void Run(TestGroup nullableInstance)
             {
-                AndroidUI.Union a = new AndroidUI.Union(typeof(byte[]), typeof(int[]), typeof(int));
+                AndroidUI.Union a = new(typeof(byte[]), typeof(int[]), typeof(int));
                 a.set(5000);
                 byte[] bytes = a.get<byte[]>();
                 var i = a.getBindable<int>();
@@ -73,7 +73,7 @@ namespace AndroidUITest
         {
             public override void Run(TestGroup nullableInstance)
             {
-                AndroidUI.Union a = new AndroidUI.Union(typeof(int[]), typeof(int));
+                AndroidUI.Union a = new(typeof(int[]), typeof(int));
                 a.set(5000);
 
                 var bindable_i = a.getBindable<int>();
@@ -104,7 +104,7 @@ namespace AndroidUITest
         {
             public override void Run(TestGroup nullableInstance)
             {
-                AndroidUI.Union a = new AndroidUI.Union(typeof(int[]), typeof(int));
+                AndroidUI.Union a = new(typeof(int[]), typeof(int));
                 a.set(0);
                 Tools.ExpectException<InvalidCastException>(() => a.get<object>());
             }
@@ -113,7 +113,7 @@ namespace AndroidUITest
         {
             public override void Run(TestGroup nullableInstance)
             {
-                AndroidUI.Union a = new AndroidUI.Union(typeof(int[]), typeof(int));
+                AndroidUI.Union a = new(typeof(int[]), typeof(int));
                 a.set(0);
                 Tools.ExpectException<InvalidCastException>(() => a.get<short>());
             }
@@ -122,7 +122,7 @@ namespace AndroidUITest
         {
             public override void Run(TestGroup nullableInstance)
             {
-                AndroidUI.Union a = new AndroidUI.Union(typeof(int[]), typeof(int));
+                AndroidUI.Union a = new(typeof(int[]), typeof(int));
                 a.set(0);
                 Tools.ExpectException<InvalidCastException>(() => a.getBindable<int>().GetValue<object>());
             }
@@ -131,7 +131,7 @@ namespace AndroidUITest
         {
             public override void Run(TestGroup nullableInstance)
             {
-                AndroidUI.Union a = new AndroidUI.Union(typeof(int[]), typeof(int));
+                AndroidUI.Union a = new(typeof(int[]), typeof(int));
                 a.set(0);
                 Tools.ExpectException<InvalidCastException>(() => a.getBindable<int>().GetValue<short>());
             }

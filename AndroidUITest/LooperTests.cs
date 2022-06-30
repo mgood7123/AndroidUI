@@ -10,7 +10,7 @@ namespace AndroidUITest
             public override void Run(TestGroup nullableInstance)
             {
                 AndroidUI.Context c = new();
-                Thread t = new Thread(() =>
+                Thread t = new(() =>
                 {
                     Looper.prepare(c);
                     Looper m = Looper.myLooper(c);
@@ -38,7 +38,7 @@ namespace AndroidUITest
                 AndroidUI.Context c = new();
                 Looper m = null;
                 Handler h = null;
-                Thread t = new Thread(() =>
+                Thread t = new(() =>
                 {
                     Console.WriteLine("preparing looper...");
                     Looper.prepare(c);
@@ -88,7 +88,7 @@ namespace AndroidUITest
             public override void Run(TestGroup nullableInstance)
             {
                 AndroidUI.Context c = new();
-                Thread t = new Thread(() =>
+                Thread t = new(() =>
                 {
                     Looper m = null;
                     Handler h = null;

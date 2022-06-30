@@ -201,8 +201,8 @@ namespace AndroidUITest
             {
                 public override void Run(TestGroup nullableInstance)
                 {
-                    X x1 = new X(5);
-                    X x2 = new X(5);
+                    X x1 = new(5);
+                    X x2 = new(5);
                     Tools.ExpectEqual(x1.x, 5, "x1 5");
                     Tools.ExpectEqual(x2.x, 5, "x2 5");
                     AndroidUI.ContiguousArray<int> a = new AndroidUI.Mapper<X, int>[2] {
