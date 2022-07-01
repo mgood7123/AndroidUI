@@ -169,7 +169,7 @@ namespace AndroidUI.Execution
             Looper me = getMainLooper(context);
             if (me == null)
             {
-                throw new Exception("No Looper; Looper.prepare() wasn't called on this thread.");
+                throw new Exception("No Looper; Looper.prepareMainLooper() wasn't called on this thread.");
             }
             if (!me.mInLoop)
             {
