@@ -1,1 +1,1 @@
-﻿AndroidUITestFramework.Main.Run(typeof(AndroidUITest.LooperTests));
+﻿AndroidUITestFramework.Main.Run(typeof(AndroidUITest.Skia));

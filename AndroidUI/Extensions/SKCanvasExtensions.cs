@@ -502,7 +502,7 @@ namespace AndroidUI.Extensions
         {
             // Note: If hasAlpha is false, kRGB_565_SkColorType will be used, which will
             // correct the alphaType to kOpaque_SkAlphaType.
-            SKImageInfo info = SKImageInfo.Create(width, height,
+            SKImageInfo info = new SKImageInfo(width, height,
                                    hasAlpha ? SKImageInfo.PlatformColorType: SKColorType.Rgb565,
                                    SKAlphaType.Premul);
             SKBitmap bitmap = new();

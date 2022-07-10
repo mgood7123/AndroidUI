@@ -366,7 +366,7 @@ namespace AndroidUITest
                 public override void Run(TestGroup nullableInstance)
                 {
                     string[] alphas = { "Unknown", "Opaque", "Premul", "Unpremul" };
-                    SKPixmap pixmap = new(SKImageInfo.CreateN32Premul(16, 32), IntPtr.Zero, 64);
+                    SKPixmap pixmap = new(new SKImageInfo(16, 32, SKAlphaType.Premul), IntPtr.Zero, 64);
                     Console.WriteLine("alpha type: k" + alphas[(int)pixmap.AlphaType] + "_SkAlphaType");
                     Tools.AssertEqual(alphas[(int)pixmap.AlphaType], "Premul");
                 }
@@ -380,7 +380,7 @@ namespace AndroidUITest
                     uint old = bitmap.GenerationId;
                     Console.WriteLine("empty id " + old);
                     Tools.ExpectEqual(old, 0);
-                    bitmap.TryAllocPixels(SKImageInfo.CreateN32(64, 64, SKAlphaType.Opaque));
+                    bitmap.TryAllocPixels(new SKImageInfo(64, 64, SKAlphaType.Opaque));
                     Console.WriteLine("alloc id " + bitmap.GenerationId);
                     Tools.ExpectTrue(bitmap.GenerationId > old);
                     old = bitmap.GenerationId;
@@ -394,7 +394,7 @@ namespace AndroidUITest
                 public override void Run(TestGroup nullableInstance)
                 {
                     SKBitmap bitmap = new();
-                    bitmap.SetInfo(SKImageInfo.CreateN32Premul(2, 2));
+                    bitmap.SetInfo(new SKImageInfo(2, 2, SKAlphaType.Premul));
                     for (int index = 0; index < 2; ++index)
                     {
                         Tools.AssertNoException(() => bitmap.AllocPixels(), "failed to allocate pixels");
@@ -427,7 +427,7 @@ namespace AndroidUITest
                 {
                     MyAlloc m = new();
                     SKBitmap bitmap = new();
-                    bitmap.SetInfo(SKImageInfo.CreateN32Premul(2, 2));
+                    bitmap.SetInfo(new SKImageInfo(2, 2, SKAlphaType.Premul));
                     bitmap.AllocPixels(m);
                 }
             }
@@ -447,7 +447,7 @@ namespace AndroidUITest
                 {
                     MyAlloc m = new();
                     SKBitmap bitmap = new();
-                    bitmap.SetInfo(SKImageInfo.CreateN32Premul(2, 2));
+                    bitmap.SetInfo(new SKImageInfo(2, 2, SKAlphaType.Premul));
                     bitmap.AllocPixels(m);
                     bitmap.Erase(SKColors.AliceBlue);
                 }
@@ -467,7 +467,7 @@ namespace AndroidUITest
                     Tools.ExpectEqual(AndroidUI.Color.CYAN.ToSKColorF().ToSKColor().ToSKColorF().ToString(), "#ff00ffff");
                     Tools.ExpectEqual(AndroidUI.Color.CYAN.ToSKColor().ToSKColorF().ToSKColor().ToString(), "#ff00ffff");
                     Tools.ExpectEqual(AndroidUI.Color.CYAN.toUnsignedLong().ToSKColor().ToString(), "#ff00ffff");
-                    Tools.ExpectEqual(AndroidUI.Color.CYAN.toUnsignedLong().ToSKColorF().ToString(), "#ff00ffff");
+                    Tools.ExpectEqual(AndroidUI.Color.CYAN.toUnsignedLong().ToSKColor().ToSKColorF().ToString(), "#ff00ffff");
                     Tools.ExpectEqual(AndroidUI.Color.alpha(AndroidUI.Color.CYAN).toHexString(), "ff");
                     Tools.ExpectEqual(AndroidUI.Color.red(AndroidUI.Color.CYAN).toHexString(), "0");
                     Tools.ExpectEqual(AndroidUI.Color.green(AndroidUI.Color.CYAN).toHexString(), "ff");

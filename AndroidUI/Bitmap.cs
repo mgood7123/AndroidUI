@@ -2429,7 +2429,7 @@ namespace AndroidUI
         unsafe void nativeSetPixel(int x, int y, int color)
         {
             SKColorSpace sRGB = ColorSpace.get(ColorSpace.Named.SRGB).getNativeInstance();
-            SKImageInfo srcInfo = SKImageInfo.Create(1, 1, SKColorType.Bgra8888, SKAlphaType.Unpremul, sRGB);
+            SKImageInfo srcInfo = new SKImageInfo(1, 1, SKColorType.Bgra8888, SKAlphaType.Unpremul, sRGB);
 
             SKPixmap srcPM = new(srcInfo, (IntPtr)(&color), srcInfo.RowBytes);
             mNativePtr.WritePixels(srcPM, x, y);
@@ -2447,7 +2447,7 @@ namespace AndroidUI
 
                 SKImageInfo srcInfo = new(width, height, SKColorType.Bgra8888, SKAlphaType.Unpremul, sRGB);
 
-                SKPixmap srcPM = new(srcInfo, (IntPtr)src, stride * 4);
+                using SKPixmap srcPM = new(srcInfo, (IntPtr)src, stride * 4);
                 mNativePtr.WritePixels(srcPM, x, y);
             }
         }
@@ -2455,22 +2455,21 @@ namespace AndroidUI
         unsafe long nativeGetColor(int x, int y)
         {
             SKColorSpace sRGB = ColorSpace.get(ColorSpace.Named.SRGB).getNativeInstance();
-            SKImageInfo dstInfo = SKImageInfo.Create(
-                    1, 1, SKColorType.RgbaF16, SKAlphaType.Unpremul, sRGB);
+            SKImageInfo dstInfo = new SKImageInfo(1, 1, SKColorType.RgbaF16, SKAlphaType.Unpremul, sRGB);
 
-            IntPtr dst;
-            mNativePtr.ReadPixels(dstInfo, out dst, dstInfo.RowBytes, x, y);
-            return dst.ToInt64();
+            long pixel;
+            mNativePtr.ReadPixels(dstInfo, (IntPtr)(&pixel), dstInfo.RowBytes, x, y);
+            return pixel;
         }
 
         unsafe int nativeGetPixel(int x, int y)
         {
             SKColorSpace sRGB = ColorSpace.get(ColorSpace.Named.SRGB).getNativeInstance();
-            SKImageInfo dstInfo = SKImageInfo.Create(1, 1, SKColorType.Bgra8888, SKAlphaType.Unpremul, sRGB);
+            SKImageInfo dstInfo = new SKImageInfo(1, 1, SKColorType.Bgra8888, SKAlphaType.Unpremul, sRGB);
 
-            IntPtr dst;
-            mNativePtr.ReadPixels(dstInfo, out dst, dstInfo.RowBytes, x, y);
-            return (int)dst.ToInt64();
+            long pixel;
+            mNativePtr.ReadPixels(dstInfo, (IntPtr)(&pixel), dstInfo.RowBytes, x, y);
+            return (int)pixel;
         }
 
         unsafe void nativeGetPixels(int[] pixels,
@@ -2485,7 +2484,7 @@ namespace AndroidUI
 
                 SKImageInfo srcInfo = new(width, height, SKColorType.Bgra8888, SKAlphaType.Unpremul, sRGB);
 
-                SKPixmap srcPM = new(srcInfo, (IntPtr)src, stride * 4);
+                using SKPixmap srcPM = new(srcInfo, (IntPtr)src, stride * 4);
                 srcPM.ReadPixels(srcInfo, mNativePtr.GetPixels(), srcInfo.RowBytes);
             }
         }

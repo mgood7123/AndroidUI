@@ -38,6 +38,7 @@ namespace AndroidUI.Extensions
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static SKColor ToSKColor(this ulong i)
         {
+            // TODO: int color CANNOT be converted to long, this requires a colorspace re-encode
             byte r = (byte)((byte)(i >> 16) & 0xff);
             byte g = (byte)((byte)(i >> 8) & 0xff);
             byte b = (byte)((byte)i & 0xff);

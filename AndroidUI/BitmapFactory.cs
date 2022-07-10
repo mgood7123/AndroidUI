@@ -1126,7 +1126,7 @@ namespace AndroidUI
                 alphaType = requestPremul ? SKAlphaType.Premul : SKAlphaType.Unpremul;
             }
 
-            SKImageInfo info = SKImageInfo.Create(width, height, colorType, alphaType, bitmapHandle.Info.ColorSpace);
+            SKImageInfo info = new SKImageInfo(width, height, colorType, alphaType, bitmapHandle.Info.ColorSpace);
             Bitmap_reconfigure(bitmapHandle, info);
         }
 
@@ -1463,7 +1463,7 @@ namespace AndroidUI
 
             SKAlphaType alphaType = codec.ComputeOutputAlphaType(requireUnpremultiplied);
 
-            SKImageInfo decodeInfo = SKImageInfo.Create(size.Width, size.Height,
+            SKImageInfo decodeInfo = new SKImageInfo(size.Width, size.Height,
                     decodeColorType, alphaType, decodeColorSpace);
 
             SKImageInfo bitmapInfo = decodeInfo;
@@ -1793,7 +1793,7 @@ namespace AndroidUI
             }
 
             SKColorSpace sRGB = SKColorSpace.CreateSrgb();
-            SKImageInfo srcInfo = SKImageInfo.Create(width, height, SKColorType.Bgra8888, SKAlphaType.Unpremul, sRGB);
+            SKImageInfo srcInfo = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Unpremul, sRGB);
             uint[] tmp = Array.ConvertAll(src, new Converter<SKColor, uint>(v => (uint)v));
             unsafe
             {
@@ -1820,7 +1820,7 @@ namespace AndroidUI
             }
 
             SKColorSpace sRGB = SKColorSpace.CreateSrgb();
-            SKImageInfo srcInfo = SKImageInfo.Create(width, height, SKColorType.Bgra8888, SKAlphaType.Unpremul, sRGB);
+            SKImageInfo srcInfo = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Unpremul, sRGB);
             unsafe
             {
                 fixed (uint* array = src)
@@ -1846,7 +1846,7 @@ namespace AndroidUI
             }
 
             SKColorSpace sRGB = SKColorSpace.CreateSrgb();
-            SKImageInfo srcInfo = SKImageInfo.Create(width, height, SKColorType.Bgra8888, SKAlphaType.Unpremul, sRGB);
+            SKImageInfo srcInfo = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Unpremul, sRGB);
             unsafe
             {
                 fixed (int* array = src)
@@ -1891,7 +1891,7 @@ namespace AndroidUI
             }
 
             SKBitmap bitmap = new();
-            bitmap.SetInfo(SKImageInfo.Create(width, height, colorType, SKAlphaType.Premul,
+            bitmap.SetInfo(new SKImageInfo(width, height, colorType, SKAlphaType.Premul,
                         colorSpace));
 
             SKBitmap nativeBitmap = allocateHeapBitmap(bitmap);
@@ -1937,7 +1937,7 @@ namespace AndroidUI
             }
 
             SKBitmap bitmap = new();
-            bitmap.SetInfo(SKImageInfo.Create(width, height, colorType, SKAlphaType.Premul,
+            bitmap.SetInfo(new SKImageInfo(width, height, colorType, SKAlphaType.Premul,
                         colorSpace));
 
             SKBitmap nativeBitmap = allocateHeapBitmap(bitmap);
@@ -1988,7 +1988,7 @@ namespace AndroidUI
             }
 
             SKBitmap bitmap = new();
-            bitmap.SetInfo(SKImageInfo.Create(width, height, colorType, SKAlphaType.Premul,
+            bitmap.SetInfo(new SKImageInfo(width, height, colorType, SKAlphaType.Premul,
                         colorSpace));
 
             SKBitmap nativeBitmap = allocateHeapBitmap(bitmap);
@@ -2039,7 +2039,7 @@ namespace AndroidUI
             }
 
             SKBitmap bitmap = new();
-            bitmap.SetInfo(SKImageInfo.Create(width, height, colorType, SKAlphaType.Premul,
+            bitmap.SetInfo(new SKImageInfo(width, height, colorType, SKAlphaType.Premul,
                         colorSpace));
 
             SKBitmap nativeBitmap = allocateHeapBitmap(bitmap);

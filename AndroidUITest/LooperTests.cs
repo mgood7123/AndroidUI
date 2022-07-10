@@ -5,7 +5,7 @@ namespace AndroidUITest
 {
     class LooperTests : TestGroup
     {
-        class TrySetLooper : Test
+        class _1_TrySetLooper : Test
         {
             public override void Run(TestGroup nullableInstance)
             {
@@ -21,7 +21,7 @@ namespace AndroidUITest
             }
         }
 
-        class TrySendToLooper : Test
+        class _2_TrySendToLooper : Test
         {
             class HC : Handler.Callback
             {
@@ -74,7 +74,7 @@ namespace AndroidUITest
             }
         }
 
-        class TryMain : Test
+        class _3_TryMain : Test
         {
             class HC : Handler.Callback
             {
@@ -93,9 +93,9 @@ namespace AndroidUITest
                     Looper m = null;
                     Handler h = null;
                     Console.WriteLine("preparing looper...");
-                    Looper.prepare(c);
+                    Looper.prepareMainLooper(c);
                     Console.WriteLine("prepared looper");
-                    m = Looper.myLooper(c);
+                    m = Looper.getMainLooper(c);
                     m.setMessageLogging(Console.Out);
                     h = new Handler(m, new HC());
                     Console.WriteLine("obtained handle");
