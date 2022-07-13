@@ -135,6 +135,10 @@ namespace AndroidUI
             tmp2.ResetPointerOffset();
 
             dst = new SKConic[2];
+            for (int i = 0; i < 2; i++)
+            {
+                dst[i] = new();
+            }
             dst[0].fPts[0] = fPts[0];
             dst[0].fPts[1] = project_down(tmp2.ToSKPoint3());
             dst[0].fPts[2] = project_down((tmp2 + 3).ToSKPoint3()); dst[1].fPts[0] = dst[0].fPts[2];
@@ -216,6 +220,10 @@ namespace AndroidUI
                 mPt.Y = (float)((fPts[0].Y + w_2 * fPts[1].Y + fPts[2].Y) * scale_half);
             }
             dst = new SKConic[2];
+            for (int i = 0; i < 2; i++)
+            {
+                dst[i] = new();
+            }
             dst[0].fPts[0] = fPts[0];
             dst[0].fPts[1] = to_point((p0 + wp1) * scale);
             dst[0].fPts[2] = dst[1].fPts[0] = mPt;
@@ -338,7 +346,7 @@ namespace AndroidUI
             if (0 == level)
             {
                 MemoryPointer<SKPoint> tmp = src.fPts;
-                pts.Copy(tmp + 3, 1);
+                pts.Copy(tmp + 1, 2);
                 return (pts + 2).ToArray();
             }
             else
@@ -797,6 +805,10 @@ namespace AndroidUI
         public static int BuildUnitArc(ref SKPoint uStart, ref SKPoint uStop,
             SKPathDirection dir, ref SKMatrix userMatrix, out SKConic[] dst) {
             dst = new SKConic[kMaxConicsForArc];
+            for (int i = 0; i < kMaxConicsForArc; i++)
+            {
+                dst[i] = new();
+            }
             // rotate by x,y so that uStart is (1.0)
             float x = uStart.DotProduct(uStop);
             float y = uStart.CrossProduct(uStop);

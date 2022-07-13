@@ -50,9 +50,9 @@ namespace AndroidUI
 
         public void Copy(MemoryPointer<T> dest, int length)
         {
-            if (this.length < length)
+            if (this.Length < length)
             {
-                throw new ArgumentOutOfRangeException("given length (" + length + ") is greater than this.length (" + this.length + ")");
+                throw new ArgumentOutOfRangeException("given length (" + length + ") is greater than this.length (" + this.Length + ")");
             }
 
             if (dest.Length < length)
@@ -162,7 +162,7 @@ namespace AndroidUI
             public bool MoveNext()
             {
                 //Avoids going beyond the end of the collection.
-                if (++current_index >= memoryPointer.length)
+                if (++current_index >= memoryPointer.Length)
                 {
                     return false;
                 }

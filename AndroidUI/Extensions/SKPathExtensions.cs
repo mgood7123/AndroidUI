@@ -278,7 +278,7 @@ namespace AndroidUI.Extensions
             Dictionary<float, SKPoint>.Enumerator next = iter;
             next.MoveNext();
             KeyValuePair<float, SKPoint> keyValuePair = tToPoint.Last();
-            while (true)
+            while (next.Current.Key != keyValuePair.Key && next.Current.Value != keyValuePair.Value)
             {
                 KeyValuePair<float, SKPoint> current = next.Current;
                 if (current.Key != keyValuePair.Key && current.Value != keyValuePair.Value) break;

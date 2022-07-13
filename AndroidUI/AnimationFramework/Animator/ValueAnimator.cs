@@ -866,7 +866,7 @@ namespace AndroidUI.AnimationFramework.Animator
          *
          * @return the requested time between frames, in milliseconds
          */
-        public static long getFrameDelay(Context context)
+        public static uint getFrameDelay(Context context)
         {
             return AnimationHandler.getFrameDelay(context);
         }
@@ -887,7 +887,7 @@ namespace AndroidUI.AnimationFramework.Animator
          *
          * @param frameDelay the requested time between frames, in milliseconds
          */
-        public static void setFrameDelay(Context context, long frameDelay)
+        public static void setFrameDelay(Context context, uint frameDelay)
         {
             AnimationHandler.setFrameDelay(context, frameDelay);
         }

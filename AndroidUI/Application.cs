@@ -33,7 +33,29 @@ namespace AndroidUI
         public Application()
         {
             context = new(this);
-            context.mAttachInfo.mViewRootImpl = new(context);
+            if (looper == null)
+            {
+                looper = Looper.getMainLooper(context);
+                if (looper == null)
+                {
+                    Looper.prepareMainLooper(context);
+                    looper = Looper.getMainLooper(context);
+                }
+                handler = new Handler(looper);
+            }
+            context.mAttachInfo.mViewRootImpl = new(context, looper);
+        }
+
+        ~Application()
+        {
+            context.mAttachInfo.mViewRootImpl.DestroyHandler();
+            if (looper != null)
+            {
+                looper.quitSafely();
+                Looper.loopUI(context);
+                looper = null;
+                handler = null;
+            }
         }
 
         public void OnScreenDensityChanged()
@@ -94,29 +116,6 @@ namespace AndroidUI
 
         internal void handleAppVisibility(bool isVisible)
         {
-            if (isVisible)
-            {
-                if (looper == null)
-                {
-                    looper = Looper.getMainLooper(context);
-                    if (looper == null)
-                    {
-                        Looper.prepareMainLooper(context);
-                        looper = Looper.getMainLooper(context);
-                    }
-                    handler = new Handler(looper);
-                }
-            }
-            else
-            {
-                if (looper != null)
-                {
-                    looper.quitSafely();
-                    Looper.loopUI(context);
-                    looper = null;
-                    handler = null;
-                }
-            }
             context.mAttachInfo.mViewRootImpl.handleAppVisibility(isVisible);
         }
 

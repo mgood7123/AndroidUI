@@ -1,4 +1,6 @@
 ﻿using AndroidUI.AnimationFramework.Animation;
+using AndroidUI.AnimationFramework.Animator;
+using AndroidUI.AnimationFramework.Interpolators;
 using AndroidUI.Extensions;
 using SkiaSharp;
 using System;
@@ -95,18 +97,6 @@ namespace MainApp
                 }
             }
 
-            class l : Animation.AnimationListener
-            {
-                public void onAnimationEnd(Animation animation)
-                    => Console.WriteLine("ANIMATION END: " + animation);
-
-                public void onAnimationRepeat(Animation animation)
-                    => Console.WriteLine("ANIMATION REPEAT: " + animation);
-
-                public void onAnimationStart(Animation animation)
-                    => Console.WriteLine("ANIMATION START: " + animation);
-            }
-
             public override void OnCreate()
             {
 
@@ -145,18 +135,56 @@ namespace MainApp
                         //image.setBackgroundColor(AndroidUI.Color.MAGENTA);
                         image.setImageDrawable(new AndroidUI.ColorDrawable(AndroidUI.Color.MAGENTA));
                         image.setScaleType(AndroidUI.ImageView.ScaleType.CENTER_INSIDE);
-                        
+
+                        //image.setX(200);
+                        //image.setTranslationX(200);
+                        //image.setY(200);
+                        //image.setTranslationY(200);
+
+                        //AndroidUI.Path path = new AndroidUI.Path();
+                        //path.arcTo(0f, 0f, 1000f, 1000f, 270f, -180f, true);
+                        //PathInterpolator pathInterpolator = new PathInterpolator(path);
+
+                        //ObjectAnimator animation = ObjectAnimator.ofFloat(Context, image, "x", 100f);
+                        //animation.setInterpolator(pathInterpolator);
+                        //animation.setDuration(2200);
+                        //animation.start();
+
+
+                        ObjectAnimator oa = ObjectAnimator.ofInt(Context, image, "x", new int[] { 0, 100 });
+                        //oa.setRepeatCount(ValueAnimator.INFINITE);
+                        oa.setRepeatMode(ValueAnimator.REVERSE);
+                        oa.setDuration(2200);
+
+                        ObjectAnimator ob = ObjectAnimator.ofInt(Context, image, "y", new int[] { 0, 100 });
+                        //ob.setRepeatCount(ValueAnimator.INFINITE);
+                        ob.setRepeatMode(ValueAnimator.REVERSE);
+                        ob.setDuration(1100);
+
+                        ObjectAnimator oc = ObjectAnimator.ofInt(Context, image, "y", new int[] { 100, 200 });
+                        //ob.setRepeatCount(ValueAnimator.INFINITE);
+                        oc.setRepeatMode(ValueAnimator.REVERSE);
+                        oc.setDuration(1100);
+
+                        AnimatorSet s = new(Context);
+                        s.play(oa).with(ob).before(oc);
+                        s.start();
+
+                        //oa.start();
+                        //ob.start();
+
                         //AlphaAnimation anim = new(Context, 0.15f, 1.0f);
                         //RotateAnimation anim = new(Context, 0, 180);
-                        TranslateAnimation anim = new(Context, 0, 200, 0, 100);
+                        //TranslateAnimation anim = new(Context, 0, 200, 0, 100);
 
-                        anim.setDuration(2200);
-                        anim.setRepeatCount(Animation.INFINITE);
-                        anim.setRepeatMode(Animation.REVERSE);
-                        anim.setAnimationListener(new l());
-                        image.startAnimation(anim);
+                        //anim.setDuration(2200);
+                        //anim.setRepeatCount(Animation.INFINITE);
+                        //anim.setRepeatMode(Animation.REVERSE);
+                        //anim.setAnimationListener(new l());
+                        //image.startAnimation(anim);
 
                         SetContentView(image);
+                        //animator.start();
                     }
                 }
             }

@@ -30,6 +30,22 @@ namespace AndroidUI.AnimationFramework.Animator
      */
     internal class AnimationHandler
     {
+        Context context;
+
+        internal AnimationHandler(Context context)
+        {
+            this.context = context;
+            mFrameCallback = Application.FrameCallback.Create(this, (this_callback, data, frameTimeNanos) =>
+            {
+                AnimationHandler a = (AnimationHandler)data;
+                a.doAnimationFrame(a.getProvider().getFrameTime());
+                if (a.mAnimationCallbacks.Count > 0)
+                {
+                    a.getProvider().postFrameCallback(this_callback);
+                }
+            });
+        }
+
         /**
          * Internal per-thread collections used to avoid set collisions as animations start and end
          * while being processed.
@@ -40,15 +56,7 @@ namespace AndroidUI.AnimationFramework.Animator
         private readonly List<AnimationFrameCallback> mCommitCallbacks = new();
         private AnimationFrameCallbackProvider mProvider;
 
-        private Application.FrameCallback mFrameCallback = Application.FrameCallback.Create(null, (this_callback, data, frameTimeNanos) =>
-        {
-            AnimationHandler a = (AnimationHandler)data;
-            a.doAnimationFrame(a.getProvider().getFrameTime());
-            if (a.mAnimationCallbacks.Count > 0)
-            {
-                a.getProvider().postFrameCallback(this_callback);
-            }
-        });
+        private Application.FrameCallback mFrameCallback;
 
         // should this be per-thread?
         static ValueHolder<AnimationHandler> sAnimatorHandler(Context context)
@@ -57,7 +65,7 @@ namespace AndroidUI.AnimationFramework.Animator
             {
                 return null;
             }
-            return context.storage.GetOrCreate<AnimationHandler>(StorageKeys.AnimationHandler, () => new());
+            return context.storage.GetOrCreate<AnimationHandler>(StorageKeys.AnimationHandler, () => new(context));
         }
 
         private bool mListDirty = false;
@@ -71,11 +79,11 @@ namespace AndroidUI.AnimationFramework.Animator
          * By default, the Choreographer is used to provide timing for frame callbacks. A custom
          * provider can be used here to provide different timing pulse.
          */
-        public void setProvider(AnimationFrameCallbackProvider provider)
+        internal void setProvider(AnimationFrameCallbackProvider provider)
         {
             if (provider == null)
             {
-                mProvider = new MyFrameCallbackProvider();
+                mProvider = new MyFrameCallbackProvider(context);
             }
             else
             {
@@ -87,7 +95,7 @@ namespace AndroidUI.AnimationFramework.Animator
         {
             if (mProvider == null)
             {
-                mProvider = new MyFrameCallbackProvider();
+                mProvider = new MyFrameCallbackProvider(context);
             }
             return mProvider;
         }
@@ -218,12 +226,12 @@ namespace AndroidUI.AnimationFramework.Animator
             return handler.getCallbackSize();
         }
 
-        public static void setFrameDelay(Context context, long delay)
+        public static void setFrameDelay(Context context, uint delay)
         {
             getInstance(context).getProvider().setFrameDelay(delay);
         }
 
-        public static long getFrameDelay(Context context)
+        public static uint getFrameDelay(Context context)
         {
             return getInstance(context).getProvider().getFrameDelay();
         }
@@ -278,36 +286,50 @@ namespace AndroidUI.AnimationFramework.Animator
          */
         private class MyFrameCallbackProvider : AnimationFrameCallbackProvider
         {
+            Context context;
+
+            public MyFrameCallbackProvider(Context context)
+            {
+                this.context = context;
+            }
 
             //Choreographer mChoreographer = Choreographer.getInstance();
 
             public void postFrameCallback(Application.FrameCallback callback)
             {
-                throw new NotSupportedException();
+                if (context.mAttachInfo.mViewRootImpl.mNextRtFrameCallbacks == null)
+                {
+                    context.mAttachInfo.mViewRootImpl.mNextRtFrameCallbacks = new();
+                }
+                context.mAttachInfo.mViewRootImpl.mNextRtFrameCallbacks.Add(callback);
                 //mChoreographer.postFrameCallback(callback);
             }
 
             public void postCommitCallback(Runnable runnable)
             {
-                throw new NotSupportedException();
+                Console.WriteLine("COMMIT");
+                context.mAttachInfo.mHandler.post(runnable);
                 //mChoreographer.postCallback(Choreographer.CALLBACK_COMMIT, runnable, null);
             }
 
             public long getFrameTime()
             {
-                throw new NotSupportedException();
-                return 0; //return mChoreographer.getFrameTime();
+                return Animation.AnimationUtils.currentAnimationTimeMillis(context);
+                //throw new NotSupportedException();
+                //return 0; //return mChoreographer.getFrameTime();
             }
 
-            public long getFrameDelay()
+            public uint getFrameDelay()
             {
-                throw new NotSupportedException();
+                return Animation.AnimationUtils.getFrameDelay();
+                //throw new NotSupportedException();
                 //return Choreographer.getFrameDelay();
             }
 
-            public void setFrameDelay(long delay)
+            public void setFrameDelay(uint delay)
             {
-                throw new NotSupportedException();
+                Animation.AnimationUtils.setFrameDelay(delay);
+                //throw new NotSupportedException();
                 //Choreographer.setFrameDelay(delay);
             }
         }
@@ -351,13 +373,13 @@ namespace AndroidUI.AnimationFramework.Animator
          *
          * @hide
          */
-        public interface AnimationFrameCallbackProvider
+        internal interface AnimationFrameCallbackProvider
         {
             void postFrameCallback(Application.FrameCallback callback);
             void postCommitCallback(Runnable runnable);
             long getFrameTime();
-            long getFrameDelay();
-            void setFrameDelay(long delay);
+            uint getFrameDelay();
+            void setFrameDelay(uint delay);
         }
     }
 }

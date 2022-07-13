@@ -12283,7 +12283,7 @@ namespace AndroidUI
          */
         public float getTranslationX()
         {
-            return tz; // mRenderNode.getTranslationX();
+            return tx; // mRenderNode.getTranslationX();
         }
 
         /**
@@ -15642,10 +15642,10 @@ namespace AndroidUI
          */
         internal void invalidateViewProperty(bool invalidateParent, bool forceRedraw)
         {
-            if (!isHardwareAccelerated()
-                    //|| !mRenderNode.hasDisplayList()
-                    || (mPrivateFlags & PFLAG_DRAW_ANIMATION) != 0)
-            {
+            //if (!isHardwareAccelerated()
+            //        //|| !mRenderNode.hasDisplayList()
+            //        || (mPrivateFlags & PFLAG_DRAW_ANIMATION) != 0)
+            //{
                 if (invalidateParent)
                 {
                     invalidateParentCaches();
@@ -15654,12 +15654,12 @@ namespace AndroidUI
                 {
                     mPrivateFlags |= PFLAG_DRAWN; // force another invalidation with the new orientation
                 }
-                invalidate(false);
-            }
-            else
-            {
-                damageInParent();
-            }
+                invalidate(true);
+            //}
+            //else
+            //{
+            //    damageInParent();
+            //}
         }
 
         /**

@@ -1622,9 +1622,7 @@ namespace AndroidUI
             mInvalidateOnAnimationRunnable.removeView(view);
         }
 
-        public ViewRootImpl() : this(null) { }
-
-        internal ViewRootImpl(Context context)
+        public ViewRootImpl(Context context, Looper looper)
         {
             this.context = context;
             mFirst = true;
@@ -1633,27 +1631,33 @@ namespace AndroidUI
                 mLayoutParams = View.MATCH_PARENT__MATCH_PARENT
             };
             mView.assignParent(this);
+            mView.mAttachInfo = context.mAttachInfo;
             context.mAttachInfo.mRootView = mView;
             mThread = Thread.CurrentThread;
             mViewVisibility = View.GONE;
             mInvalidateOnAnimationRunnable = new InvalidateOnAnimationRunnable(this);
+            mHandler = new(looper);
+            context.mAttachInfo.mHandler = mHandler;
+        }
+
+        public void DestroyHandler()
+        {
+            if (mHandler != null)
+            {
+                context.mAttachInfo.mHandler = null;
+                mHandler = null;
+            }
+        }
+
+        ~ViewRootImpl()
+        {
+            DestroyHandler();
         }
 
         internal void handleAppVisibility(bool visible)
         {
             if (mAppVisible != visible)
             {
-                // we have a main looper set up for us
-                if (visible)
-                {
-                    mHandler = new ViewRootHandler(context.application.Looper);
-                    context.mAttachInfo.mHandler = mHandler;
-                }
-                else
-                {
-                    context.mAttachInfo.mHandler = null;
-                    mHandler = null;
-                }
                 mAppVisible = visible;
                 mAppVisibilityChanged = true;
                 scheduleTraversals();
@@ -2522,6 +2526,8 @@ namespace AndroidUI
             view.mRecreateDisplayList = false;
         }
 
+        internal List<Application.FrameCallback> mNextRtFrameCallbacks;
+
         private void updateRootDisplayList(SKCanvas canvas, View view,
             object //DrawCallbacks
             callbacks)
@@ -2532,17 +2538,17 @@ namespace AndroidUI
             // Consume and set the frame callback after we dispatch draw to the view above, but before
             // onPostDraw below which may reset the callback for the next frame.  This ensures that
             // updates to the frame callback during scroll handling will also apply in this frame.
-            //if (mNextRtFrameCallbacks != null)
-            //{
-            //    final ArrayList<FrameDrawingCallback> frameCallbacks = mNextRtFrameCallbacks;
-            //    mNextRtFrameCallbacks = null;
-            //    setFrameCallback(frame-> {
-            //        for (int i = 0; i < frameCallbacks.size(); ++i)
-            //        {
-            //            frameCallbacks.get(i).onFrameDraw(frame);
-            //        }
-            //    });
-            //}
+            if (mNextRtFrameCallbacks != null)
+            {
+                List<Application.FrameCallback> frameCallbacks = mNextRtFrameCallbacks;
+                mNextRtFrameCallbacks = null;
+                //setFrameCallback(frame-> {
+                    for (int i = 0; i < frameCallbacks.Count; ++i)
+                    {
+                        frameCallbacks.ElementAt(i).doFrame(context.mAttachInfo.mDrawingTime);//onFrameDraw(frame);
+                    }
+                //});
+            }
 
             //if (mRootNodeNeedsUpdate || !mRootNode.hasDisplayList())
             //{

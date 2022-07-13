@@ -373,7 +373,7 @@ namespace AndroidUI.AnimationFramework.Animator
          * @see android.content.pm.ActivityInfo
          * @hide
          */
-        internal int getChangingConfigurations()
+        virtual internal int getChangingConfigurations()
         {
             return mChangingConfigurations;
         }

@@ -864,6 +864,34 @@ namespace AndroidUITest
                     decodingBitmap.Dispose();
                 }
             }
+
+            class _8_pixmap0 : Test
+            {
+                public override void Run(TestGroup nullableInstance)
+                {
+                    SKBitmap decodingBitmap = new();
+
+                    // we have no pixels
+                    Tools.ExpectEqual(decodingBitmap.GetPixels(), IntPtr.Zero);
+
+                    // we always return pixmap even if we have no pixels
+                    Tools.ExpectInstanceNotEqual(decodingBitmap.Pixmap, null);
+
+                    // pixmap itself may have no pixels
+                    Tools.ExpectEqual(decodingBitmap.Pixmap.GetPixels(), IntPtr.Zero);
+
+                    // we have no pixel ref since we have no pixels
+                    Tools.ExpectInstanceEqual(decodingBitmap.PixelRef, null);
+
+                    // we return an empty SKColor array if we have no pixels, this wastes an allocation
+                    Tools.ExpectInstanceNotEqual(decodingBitmap.Pixels, null);
+
+                    // we have an empty array since we have no pixels
+                    Tools.ExpectEqual(decodingBitmap.Pixels.Length, 0);
+
+                    decodingBitmap.Dispose();
+                }
+            }
         }
     }
 }
