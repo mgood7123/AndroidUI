@@ -251,7 +251,7 @@ namespace AndroidUI.Utils
             return globalPool.Return(value);
         }
 
-        public T Aquire()
+        public T Acquire()
         {
             int thisThreadID = Thread.CurrentThread.ManagedThreadId;
 

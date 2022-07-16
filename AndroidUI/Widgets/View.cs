@@ -408,7 +408,7 @@ namespace AndroidUI.Widgets
 
                 public static InvalidateInfo obtain()
                 {
-                    InvalidateInfo instance = sPool.Aquire();
+                    InvalidateInfo instance = sPool.Acquire();
                     return instance != null ? instance : new InvalidateInfo();
                 }
 
@@ -1044,58 +1044,6 @@ namespace AndroidUI.Widgets
         }
 
         /**
-         * Returns the width of the vertical scrollbar.
-         *
-         * @return The width in pixels of the vertical scrollbar or 0 if there
-         *         is no vertical scrollbar.
-         */
-        public int getVerticalScrollbarWidth()
-        {
-            ScrollabilityCache cache = mScrollCache;
-            if (cache != null)
-            {
-                ScrollBarDrawable scrollBar = cache.scrollBar;
-                if (scrollBar != null)
-                {
-                    int size = scrollBar.getSize(true);
-                    if (size <= 0)
-                    {
-                        size = cache.scrollBarSize;
-                    }
-                    return size;
-                }
-                return 0;
-            }
-            return 0;
-        }
-
-        /**
-         * Returns the height of the horizontal scrollbar.
-         *
-         * @return The height in pixels of the horizontal scrollbar or 0 if
-         *         there is no horizontal scrollbar.
-         */
-        protected int getHorizontalScrollbarHeight()
-        {
-            ScrollabilityCache cache = mScrollCache;
-            if (cache != null)
-            {
-                ScrollBarDrawable scrollBar = cache.scrollBar;
-                if (scrollBar != null)
-                {
-                    int size = scrollBar.getSize(false);
-                    if (size <= 0)
-                    {
-                        size = cache.scrollBarSize;
-                    }
-                    return size;
-                }
-                return 0;
-            }
-            return 0;
-        }
-
-        /**
          * Position of the vertical scroll bar.
          */
         private int mVerticalScrollbarPosition = 0;
@@ -1468,6 +1416,97 @@ namespace AndroidUI.Widgets
         {
             return (mPrivateFlags2 & PFLAG2_LAYOUT_DIRECTION_RESOLVED_RTL) ==
                     PFLAG2_LAYOUT_DIRECTION_RESOLVED_RTL ? LAYOUT_DIRECTION_RTL : LAYOUT_DIRECTION_LTR;
+        }
+
+        /**
+         * Sets this view's preference for reveal behavior when it gains focus.
+         *
+         * <p>When set to true, this is a signal to ancestor views in the hierarchy that
+         * this view would prefer to be brought fully into view when it gains focus.
+         * For example, a text field that a user is meant to type into. Other views such
+         * as scrolling containers may prefer to opt-out of this behavior.</p>
+         *
+         * <p>The default value for views is true, though subclasses may change this
+         * based on their preferred behavior.</p>
+         *
+         * @param revealOnFocus true to request reveal on focus in ancestors, false otherwise
+         *
+         * @see #getRevealOnFocusHint()
+         */
+        public void setRevealOnFocusHint(bool revealOnFocus)
+        {
+            if (revealOnFocus)
+            {
+                mPrivateFlags3 &= ~PFLAG3_NO_REVEAL_ON_FOCUS;
+            }
+            else
+            {
+                mPrivateFlags3 |= PFLAG3_NO_REVEAL_ON_FOCUS;
+            }
+        }
+
+        /**
+         * Returns this view's preference for reveal behavior when it gains focus.
+         *
+         * <p>When this method returns true for a child view requesting focus, ancestor
+         * views responding to a focus change in {@link ViewParent#requestChildFocus(View, View)}
+         * should make a best effort to make the newly focused child fully visible to the user.
+         * When it returns false, ancestor views should preferably not disrupt scroll positioning or
+         * other properties affecting visibility to the user as part of the focus change.</p>
+         *
+         * @return true if this view would prefer to become fully visible when it gains focus,
+         *         false if it would prefer not to disrupt scroll positioning
+         *
+         * @see #setRevealOnFocusHint(bool)
+         */
+        public bool getRevealOnFocusHint()
+        {
+            return (mPrivateFlags3 & PFLAG3_NO_REVEAL_ON_FOCUS) == 0;
+        }
+
+        /**
+         * Look for a descendant to call {@link View#requestFocus} on.
+         * Called by {@link ViewGroup#requestFocus(int, android.graphics.Rect)}
+         * when it wants to request focus within its children.  Override this to
+         * customize how your {@link ViewGroup} requests focus within its children.
+         * @param direction One of FOCUS_UP, FOCUS_DOWN, FOCUS_LEFT, and FOCUS_RIGHT
+         * @param previouslyFocusedRect The rectangle (in this View's coordinate system)
+         *        to give a finer grained hint about where focus is coming from.  May be null
+         *        if there is no hint.
+         * @return Whether focus was taken.
+         */
+        virtual protected bool onRequestFocusInDescendants(int direction,
+            Rect previouslyFocusedRect)
+        {
+            int index;
+            int increment;
+            int end;
+            int count = mChildrenCount;
+            if ((direction & FOCUS_FORWARD) != 0)
+            {
+                index = 0;
+                increment = 1;
+                end = count;
+            }
+            else
+            {
+                index = count - 1;
+                increment = -1;
+                end = -1;
+            }
+            View[] children = mChildren;
+            for (int i = index; i != end; i += increment)
+            {
+                View child = children[i];
+                if ((child.mViewFlags & VISIBILITY_MASK) == VISIBLE)
+                {
+                    if (child.requestFocus(direction, previouslyFocusedRect))
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
 
         Drawable mBackground;
@@ -3005,7 +3044,7 @@ namespace AndroidUI.Widgets
          * @param widthMeasureSpec The width requirements for this view
          * @param heightMeasureSpec The height requirements for this view
          */
-        protected void measureChildren(int widthMeasureSpec, int heightMeasureSpec)
+        virtual protected void measureChildren(int widthMeasureSpec, int heightMeasureSpec)
         {
             int size = mChildrenCount;
             View[] children = mChildren;
@@ -3028,7 +3067,7 @@ namespace AndroidUI.Widgets
          * @param parentWidthMeasureSpec The width requirements for this view
          * @param parentHeightMeasureSpec The height requirements for this view
          */
-        protected void measureChild(View child, int parentWidthMeasureSpec,
+        virtual protected void measureChild(View child, int parentWidthMeasureSpec,
                 int parentHeightMeasureSpec)
         {
             LayoutParams lp = child.mLayoutParams;
@@ -3055,7 +3094,7 @@ namespace AndroidUI.Widgets
          * @param heightUsed Extra space that has been used up by the parent
          *        vertically (possibly by other children of the parent)
          */
-        protected void measureChildWithMargins(View child,
+        virtual protected void measureChildWithMargins(View child,
                 int parentWidthMeasureSpec, int widthUsed,
                 int parentHeightMeasureSpec, int heightUsed)
         {
@@ -5146,6 +5185,16 @@ namespace AndroidUI.Widgets
          * You may wish to override this method if your custom {@link View} has an internal
          * {@link View} that it wishes to forward the request to.
          *
+         * Looks for a view to give focus to respecting the setting specified by
+         * {@link #getDescendantFocusability()}.
+         *
+         * Uses {@link #onRequestFocusInDescendants(int, android.graphics.Rect)} to
+         * find focus within the children of this group when appropriate.
+         *
+         * @see #FOCUS_BEFORE_DESCENDANTS
+         * @see #FOCUS_AFTER_DESCENDANTS
+         * @see #FOCUS_BLOCK_DESCENDANTS
+         * @see #onRequestFocusInDescendants(int, android.graphics.Rect)
          * @param direction One of FOCUS_UP, FOCUS_DOWN, FOCUS_LEFT, and FOCUS_RIGHT
          * @param previouslyFocusedRect The rectangle (in this View's coordinate system)
          *        to give a finer grained hint about where focus is coming from.  May be null
@@ -5154,7 +5203,47 @@ namespace AndroidUI.Widgets
          */
         public bool requestFocus(int direction, Rect previouslyFocusedRect)
         {
-            return requestFocusNoSearch(direction, previouslyFocusedRect);
+            if (mChildrenCount == 0)
+            {
+                return requestFocusNoSearch(direction, previouslyFocusedRect);
+            }
+
+            if (DBG)
+            {
+                Log.WriteLine(this + " ViewGroup.requestFocus direction="
+                        + direction);
+            }
+            int descendantFocusability = getDescendantFocusability();
+
+            bool result;
+            switch (descendantFocusability)
+            {
+                case FOCUS_BLOCK_DESCENDANTS:
+                    result = requestFocusNoSearch(direction, previouslyFocusedRect);
+                    break;
+                case FOCUS_BEFORE_DESCENDANTS:
+                    {
+                        bool took = requestFocusNoSearch(direction, previouslyFocusedRect);
+                        result = took ? took : onRequestFocusInDescendants(direction,
+                                previouslyFocusedRect);
+                        break;
+                    }
+                case FOCUS_AFTER_DESCENDANTS:
+                    {
+                        bool took = onRequestFocusInDescendants(direction, previouslyFocusedRect);
+                        result = took ? took : requestFocusNoSearch(direction, previouslyFocusedRect);
+                        break;
+                    }
+                default:
+                    throw new IllegalStateException("descendant focusability must be "
+                + "one of FOCUS_BEFORE_DESCENDANTS, FOCUS_AFTER_DESCENDANTS, FOCUS_BLOCK_DESCENDANTS "
+                + "but is " + descendantFocusability);
+            }
+            if (result && !isLayoutValid() && ((mPrivateFlags & PFLAG_WANTS_FOCUS) == 0))
+            {
+                mPrivateFlags |= PFLAG_WANTS_FOCUS;
+            }
+            return result;
         }
 
         /**
@@ -5210,7 +5299,7 @@ namespace AndroidUI.Widgets
             return true;
         }
 
-        public void requestChildFocus(View child, View focused)
+        virtual public void requestChildFocus(View child, View focused)
         {
             if (getDescendantFocusability() == FOCUS_BLOCK_DESCENDANTS)
             {
@@ -5324,6 +5413,30 @@ namespace AndroidUI.Widgets
         public int getDescendantFocusability()
         {
             return mGroupFlags & FLAG_MASK_FOCUSABILITY;
+        }
+
+        /**
+         * Set the descendant focusability of this view group. This defines the relationship
+         * between this view group and its descendants when looking for a view to
+         * take focus in {@link #requestFocus(int, android.graphics.Rect)}.
+         *
+         * @param focusability one of {@link #FOCUS_BEFORE_DESCENDANTS}, {@link #FOCUS_AFTER_DESCENDANTS},
+         *   {@link #FOCUS_BLOCK_DESCENDANTS}.
+         */
+        public void setDescendantFocusability(int focusability)
+        {
+            switch (focusability)
+            {
+                case FOCUS_BEFORE_DESCENDANTS:
+                case FOCUS_AFTER_DESCENDANTS:
+                case FOCUS_BLOCK_DESCENDANTS:
+                    break;
+                default:
+                    throw new IllegalArgumentException("must be one of FOCUS_BEFORE_DESCENDANTS, "
+                            + "FOCUS_AFTER_DESCENDANTS, FOCUS_BLOCK_DESCENDANTS");
+            }
+            mGroupFlags &= ~FLAG_MASK_FOCUSABILITY;
+            mGroupFlags |= (focusability & FLAG_MASK_FOCUSABILITY);
         }
 
         /**
@@ -5941,7 +6054,7 @@ namespace AndroidUI.Widgets
          * @param oldw Old width of this view.
          * @param oldh Old height of this view.
          */
-        protected void onSizeChanged(int w, int h, int oldw, int oldh)
+        virtual protected void onSizeChanged(int w, int h, int oldw, int oldh)
         {
         }
 
@@ -6162,6 +6275,124 @@ namespace AndroidUI.Widgets
                     !(mParent is View)
                     || !((View)mParent).isViewTransitioning(this)
                 );
+        }
+
+        /**
+         * <p>Cause an invalidate to happen on a subsequent cycle through the event loop.
+         * Use this to invalidate the View from a non-UI thread.</p>
+         *
+         * <p>This method can be invoked from outside of the UI thread
+         * only when this View is attached to a window.</p>
+         *
+         * @see #invalidate()
+         * @see #postInvalidateDelayed(long)
+         */
+        public void postInvalidate()
+        {
+            postInvalidateDelayed(0);
+        }
+
+        /**
+         * <p>Cause an invalidate of the specified area to happen on a subsequent cycle
+         * through the event loop. Use this to invalidate the View from a non-UI thread.</p>
+         *
+         * <p>This method can be invoked from outside of the UI thread
+         * only when this View is attached to a window.</p>
+         *
+         * @param left The left coordinate of the rectangle to invalidate.
+         * @param top The top coordinate of the rectangle to invalidate.
+         * @param right The right coordinate of the rectangle to invalidate.
+         * @param bottom The bottom coordinate of the rectangle to invalidate.
+         *
+         * @see #invalidate(int, int, int, int)
+         * @see #invalidate(Rect)
+         * @see #postInvalidateDelayed(long, int, int, int, int)
+         */
+        public void postInvalidate(int left, int top, int right, int bottom)
+        {
+            postInvalidateDelayed(0, left, top, right, bottom);
+        }
+
+        /**
+         * <p>Cause an invalidate to happen on a subsequent cycle through the event
+         * loop. Waits for the specified amount of time.</p>
+         *
+         * <p>This method can be invoked from outside of the UI thread
+         * only when this View is attached to a window.</p>
+         *
+         * @param delayMilliseconds the duration in milliseconds to delay the
+         *         invalidation by
+         *
+         * @see #invalidate()
+         * @see #postInvalidate()
+         */
+        public void postInvalidateDelayed(long delayMilliseconds)
+        {
+            // We try only with the AttachInfo because there's no point in invalidating
+            // if we are not attached to our window
+            AttachInfo attachInfo = mAttachInfo;
+            if (attachInfo != null)
+            {
+                attachInfo.mViewRootImpl.dispatchInvalidateDelayed(this, delayMilliseconds);
+            }
+        }
+
+        /**
+         * <p>Cause an invalidate of the specified area to happen on a subsequent cycle
+         * through the event loop. Waits for the specified amount of time.</p>
+         *
+         * <p>This method can be invoked from outside of the UI thread
+         * only when this View is attached to a window.</p>
+         *
+         * @param delayMilliseconds the duration in milliseconds to delay the
+         *         invalidation by
+         * @param left The left coordinate of the rectangle to invalidate.
+         * @param top The top coordinate of the rectangle to invalidate.
+         * @param right The right coordinate of the rectangle to invalidate.
+         * @param bottom The bottom coordinate of the rectangle to invalidate.
+         *
+         * @see #invalidate(int, int, int, int)
+         * @see #invalidate(Rect)
+         * @see #postInvalidate(int, int, int, int)
+         */
+        public void postInvalidateDelayed(long delayMilliseconds, int left, int top,
+                int right, int bottom)
+        {
+
+            // We try only with the AttachInfo because there's no point in invalidating
+            // if we are not attached to our window
+            AttachInfo attachInfo = mAttachInfo;
+            if (attachInfo != null)
+            {
+                AttachInfo.InvalidateInfo info = AttachInfo.InvalidateInfo.obtain();
+                info.target = this;
+                info.left = left;
+                info.top = top;
+                info.right = right;
+                info.bottom = bottom;
+
+                attachInfo.mViewRootImpl.dispatchInvalidateRectDelayed(info, delayMilliseconds);
+            }
+        }
+
+        /**
+         * <p>Cause an invalidate to happen on the next animation time step, typically the
+         * next display frame.</p>
+         *
+         * <p>This method can be invoked from outside of the UI thread
+         * only when this View is attached to a window.</p>
+         *
+         * @see #invalidate()
+         */
+        public void postInvalidateOnAnimation()
+        {
+            // We try only with the AttachInfo because there's no point in invalidating
+            // if we are not attached to our window
+            AttachInfo attachInfo = mAttachInfo;
+            if (attachInfo != null)
+            {
+                attachInfo.mViewRootImpl.dispatchInvalidateOnAnimation(this);
+            }
         }
 
         /**
@@ -7008,7 +7239,7 @@ namespace AndroidUI.Widgets
          *
          * @return the intensity of the top fade as a float between 0.0f and 1.0f
          */
-        protected float getTopFadingEdgeStrength()
+        virtual protected float getTopFadingEdgeStrength()
         {
             return computeVerticalScrollOffset() > 0 ? 1.0f : 0.0f;
         }
@@ -7023,7 +7254,7 @@ namespace AndroidUI.Widgets
          *
          * @return the intensity of the bottom fade as a float between 0.0f and 1.0f
          */
-        protected float getBottomFadingEdgeStrength()
+        virtual protected float getBottomFadingEdgeStrength()
         {
             return computeVerticalScrollOffset() + computeVerticalScrollExtent() <
                     computeVerticalScrollRange() ? 1.0f : 0.0f;
@@ -7039,7 +7270,7 @@ namespace AndroidUI.Widgets
          *
          * @return the intensity of the left fade as a float between 0.0f and 1.0f
          */
-        protected float getLeftFadingEdgeStrength()
+        virtual protected float getLeftFadingEdgeStrength()
         {
             return computeHorizontalScrollOffset() > 0 ? 1.0f : 0.0f;
         }
@@ -7054,7 +7285,7 @@ namespace AndroidUI.Widgets
          *
          * @return the intensity of the right fade as a float between 0.0f and 1.0f
          */
-        protected float getRightFadingEdgeStrength()
+        virtual protected float getRightFadingEdgeStrength()
         {
             return computeHorizontalScrollOffset() + computeHorizontalScrollExtent() <
                     computeHorizontalScrollRange() ? 1.0f : 0.0f;
@@ -7076,7 +7307,7 @@ namespace AndroidUI.Widgets
          * @see #computeHorizontalScrollExtent()
          * @see #computeHorizontalScrollOffset()
          */
-        protected int computeHorizontalScrollRange()
+        virtual protected int computeHorizontalScrollRange()
         {
             return getWidth();
         }
@@ -7097,7 +7328,7 @@ namespace AndroidUI.Widgets
          * @see #computeHorizontalScrollRange()
          * @see #computeHorizontalScrollExtent()
          */
-        protected int computeHorizontalScrollOffset()
+        virtual protected int computeHorizontalScrollOffset()
         {
             return mScrollX;
         }
@@ -7118,7 +7349,7 @@ namespace AndroidUI.Widgets
          * @see #computeHorizontalScrollRange()
          * @see #computeHorizontalScrollOffset()
          */
-        protected int computeHorizontalScrollExtent()
+        virtual protected int computeHorizontalScrollExtent()
         {
             return getWidth();
         }
@@ -7137,7 +7368,7 @@ namespace AndroidUI.Widgets
          * @see #computeVerticalScrollExtent()
          * @see #computeVerticalScrollOffset()
          */
-        protected int computeVerticalScrollRange()
+        virtual protected int computeVerticalScrollRange()
         {
             return getHeight();
         }
@@ -7158,7 +7389,7 @@ namespace AndroidUI.Widgets
          * @see #computeVerticalScrollRange()
          * @see #computeVerticalScrollExtent()
          */
-        protected int computeVerticalScrollOffset()
+        virtual protected int computeVerticalScrollOffset()
         {
             return mScrollY;
         }
@@ -7179,7 +7410,7 @@ namespace AndroidUI.Widgets
          * @see #computeVerticalScrollRange()
          * @see #computeVerticalScrollOffset()
          */
-        protected int computeVerticalScrollExtent()
+        virtual protected int computeVerticalScrollExtent()
         {
             return getHeight();
         }
@@ -7190,7 +7421,7 @@ namespace AndroidUI.Widgets
          * @param direction Negative to check scrolling left, positive to check scrolling right.
          * @return true if this view can be scrolled in the specified direction, false otherwise.
          */
-        public bool canScrollHorizontally(int direction)
+        virtual public bool canScrollHorizontally(int direction)
         {
             int offset = computeHorizontalScrollOffset();
             int range = computeHorizontalScrollRange() - computeHorizontalScrollExtent();
@@ -7903,7 +8134,7 @@ namespace AndroidUI.Widgets
             return mRunQueue;
         }
 
-        public void requestDisallowInterceptTouchEvent(bool disallowIntercept)
+        virtual public void requestDisallowInterceptTouchEvent(bool disallowIntercept)
         {
 
             if (disallowIntercept == ((mGroupFlags & FLAG_DISALLOW_INTERCEPT) != 0))
@@ -7965,7 +8196,7 @@ namespace AndroidUI.Widgets
          * The current target will receive an ACTION_CANCEL event, and no further
          * messages will be delivered here.
          */
-        public bool onInterceptTouchEvent(Touch ev)
+        virtual public bool onInterceptTouchEvent(Touch ev)
         {
             return false;
         }
@@ -8793,7 +9024,6 @@ namespace AndroidUI.Widgets
                                     if (touchData2.state == Touch.State.TOUCH_UP)
                                     {
                                         pointer_ups.Add((Touch.Data)touchData2.Clone());
-                                        needs_move = true;
                                     }
                                 }
                             }
@@ -10750,7 +10980,7 @@ namespace AndroidUI.Widgets
          */
         virtual public bool shouldDelayChildPressedState()
         {
-            return true;
+            return mChildrenCount != 0;
         }
 
         /**
@@ -10827,7 +11057,7 @@ namespace AndroidUI.Widgets
          *
          * @see #generateDefaultLayoutParams()
          */
-        public void addView(View child)
+        virtual public void addView(View child)
         {
             addView(child, -1);
         }
@@ -10845,7 +11075,7 @@ namespace AndroidUI.Widgets
          *
          * @see #generateDefaultLayoutParams()
          */
-        public void addView(View child, int index)
+        virtual public void addView(View child, int index)
         {
             if (child == null)
             {
@@ -10874,7 +11104,7 @@ namespace AndroidUI.Widgets
          *
          * @param child the child view to add
          */
-        public void addView(View child, int width, int height)
+        virtual public void addView(View child, int width, int height)
         {
             LayoutParams layout_params = generateDefaultLayoutParams();
             layout_params.width = width;
@@ -10892,7 +11122,7 @@ namespace AndroidUI.Widgets
          * @param child the child view to add
          * @param params the layout parameters to set on the child
          */
-        public void addView(View child, LayoutParams layout_params)
+        virtual public void addView(View child, LayoutParams layout_params)
         {
             addView(child, -1, layout_params);
         }
@@ -10908,7 +11138,7 @@ namespace AndroidUI.Widgets
          * @param index the position at which to add the child or -1 to add last
          * @param params the layout parameters to set on the child
          */
-        public void addView(View child, int index, LayoutParams layout_params)
+        virtual public void addView(View child, int index, LayoutParams layout_params)
         {
             if (child == null)
             {
@@ -13608,7 +13838,7 @@ namespace AndroidUI.Widgets
          * <p>Subclasses which override this method should call the superclass method to
          * handle possible request-during-layout errors correctly.</p>
          */
-        public void requestLayout()
+        virtual public void requestLayout()
         {
             if (mMeasureCache != null) mMeasureCache.clear();
 
@@ -15624,7 +15854,7 @@ namespace AndroidUI.Widgets
          * This property is intended only for use by the Fade transition, which animates it
          * to produce a visual translucency that does not side-effect (or get affected by)
          * the real alpha property. This value is composited with the other alpha value
-         * (and the AlphaAnimation value, when that is present) to produce a final visual
+         * (and the AlphaAnimation value, when that is present) to produce a visual
          * translucency result, which is what is passed into the DisplayList.
          */
         public void setTransitionAlpha(float alpha)
@@ -15989,6 +16219,67 @@ namespace AndroidUI.Widgets
         }
 
         /**
+         * This is called in response to an internal scroll in this view (i.e., the
+         * view scrolled its own contents). This is typically as a result of
+         * {@link #scrollBy(int, int)} or {@link #scrollTo(int, int)} having been
+         * called.
+         *
+         * @param l Current horizontal scroll origin.
+         * @param t Current vertical scroll origin.
+         * @param oldl Previous horizontal scroll origin.
+         * @param oldt Previous vertical scroll origin.
+         */
+        protected void onScrollChanged(int l, int t, int oldl, int oldt)
+        {
+            //notifySubtreeAccessibilityStateChangedIfNeeded();
+            //postSendViewScrolledAccessibilityEventCallback(l - oldl, t - oldt);
+
+            mBackgroundSizeChanged = true;
+            //mDefaultFocusHighlightSizeChanged = true;
+            if (mForegroundInfo != null)
+            {
+                mForegroundInfo.mBoundsChanged = true;
+            }
+
+            AttachInfo ai = mAttachInfo;
+            if (ai != null)
+            {
+                ai.mViewScrollChanged = true;
+            }
+
+            if (mListenerInfo != null && mListenerInfo.mOnScrollChangeListener != null)
+            {
+                mListenerInfo.mOnScrollChangeListener.onScrollChange(this, l, t, oldl, oldt);
+            }
+        }
+
+        /**
+         * Interface definition for a callback to be invoked when the scroll
+         * X or Y positions of a view change.
+         * <p>
+         * <b>Note:</b> Some views handle scrolling independently from View and may
+         * have their own separate listeners for scroll-type events. For example,
+         * {@link android.widget.ListView ListView} allows clients to register an
+         * {@link android.widget.ListView#setOnScrollListener(android.widget.AbsListView.OnScrollListener) AbsListView.OnScrollListener}
+         * to listen for changes in list scroll position.
+         *
+         * @see #setOnScrollChangeListener(View.OnScrollChangeListener)
+         */
+        public interface OnScrollChangeListener
+        {
+            /**
+             * Called when the scroll position of a view changes.
+             *
+             * @param v The view whose scroll position has changed.
+             * @param scrollX Current horizontal scroll origin.
+             * @param scrollY Current vertical scroll origin.
+             * @param oldScrollX Previous horizontal scroll origin.
+             * @param oldScrollY Previous vertical scroll origin.
+             */
+            void onScrollChange(View v, int scrollX, int scrollY, int oldScrollX, int oldScrollY);
+        }
+
+        /**
          * Interface definition for a callback to be invoked when the layout bounds of a view
          * changes due to layout processing.
          */
@@ -16045,7 +16336,7 @@ namespace AndroidUI.Widgets
              */
             internal List<OnLayoutChangeListener> mOnLayoutChangeListeners;
 
-            //internal OnScrollChangeListener mOnScrollChangeListener;
+            internal OnScrollChangeListener mOnScrollChangeListener;
 
             /**
              * Listeners for attach events.
@@ -16263,6 +16554,1016 @@ namespace AndroidUI.Widgets
         }
 
 
+        // SCROLL
+
+        /**
+         * Indicates no axis of view scrolling.
+         */
+        public const int SCROLL_AXIS_NONE = 0;
+
+        /**
+         * Indicates scrolling along the horizontal axis.
+         */
+        public const int SCROLL_AXIS_HORIZONTAL = 1 << 0;
+
+        /**
+         * Indicates scrolling along the vertical axis.
+         */
+        public const int SCROLL_AXIS_VERTICAL = 1 << 1;
+
+        internal OVERSCROLL_MODE mOverScrollMode = OVERSCROLL_MODE.OVER_SCROLL_NEVER;
+
+        /**
+         * Scroll the view with standard behavior for scrolling beyond the normal
+         * content boundaries. Views that call this method should override
+         * {@link #onOverScrolled(int, int, bool, bool)} to respond to the
+         * results of an over-scroll operation.
+         *
+         * Views can use this method to handle any touch or fling-based scrolling.
+         *
+         * @param deltaX Change in X in pixels
+         * @param deltaY Change in Y in pixels
+         * @param scrollX Current X scroll value in pixels before applying deltaX
+         * @param scrollY Current Y scroll value in pixels before applying deltaY
+         * @param scrollRangeX Maximum content scroll range along the X axis
+         * @param scrollRangeY Maximum content scroll range along the Y axis
+         * @param maxOverScrollX Number of pixels to overscroll by in either direction
+         *          along the X axis.
+         * @param maxOverScrollY Number of pixels to overscroll by in either direction
+         *          along the Y axis.
+         * @param isTouchEvent true if this scroll operation is the result of a touch event.
+         * @return true if scrolling was clamped to an over-scroll boundary along either
+         *          axis, false otherwise.
+         */
+        virtual protected bool overScrollBy(int deltaX, int deltaY,
+                int scrollX, int scrollY,
+                int scrollRangeX, int scrollRangeY,
+                int maxOverScrollX, int maxOverScrollY,
+                bool isTouchEvent)
+        {
+            OVERSCROLL_MODE overScrollMode = mOverScrollMode;
+            bool canScrollHorizontal =
+                    computeHorizontalScrollRange() > computeHorizontalScrollExtent();
+            bool canScrollVertical =
+                    computeVerticalScrollRange() > computeVerticalScrollExtent();
+            bool overScrollHorizontal = overScrollMode == OVERSCROLL_MODE.OVER_SCROLL_ALWAYS ||
+                    (overScrollMode == OVERSCROLL_MODE.OVER_SCROLL_IF_CONTENT_SCROLLS && canScrollHorizontal);
+            bool overScrollVertical = overScrollMode == OVERSCROLL_MODE.OVER_SCROLL_ALWAYS ||
+                    (overScrollMode == OVERSCROLL_MODE.OVER_SCROLL_IF_CONTENT_SCROLLS && canScrollVertical);
+
+            int newScrollX = scrollX + deltaX;
+            if (!overScrollHorizontal)
+            {
+                maxOverScrollX = 0;
+            }
+
+            int newScrollY = scrollY + deltaY;
+            if (!overScrollVertical)
+            {
+                maxOverScrollY = 0;
+            }
+
+            // Clamp values if at the limits and record
+            int left = -maxOverScrollX;
+            int right = maxOverScrollX + scrollRangeX;
+            int top = -maxOverScrollY;
+            int bottom = maxOverScrollY + scrollRangeY;
+
+            bool clampedX = false;
+            if (newScrollX > right)
+            {
+                newScrollX = right;
+                clampedX = true;
+            }
+            else if (newScrollX < left)
+            {
+                newScrollX = left;
+                clampedX = true;
+            }
+
+            bool clampedY = false;
+            if (newScrollY > bottom)
+            {
+                newScrollY = bottom;
+                clampedY = true;
+            }
+            else if (newScrollY < top)
+            {
+                newScrollY = top;
+                clampedY = true;
+            }
+
+            onOverScrolled(newScrollX, newScrollY, clampedX, clampedY);
+
+            return clampedX || clampedY;
+        }
+
+        /**
+         * Called by {@link #overScrollBy(int, int, int, int, int, int, int, int, bool)} to
+         * respond to the results of an over-scroll operation.
+         *
+         * @param scrollX New X scroll value in pixels
+         * @param scrollY New Y scroll value in pixels
+         * @param clampedX True if scrollX was clamped to an over-scroll boundary
+         * @param clampedY True if scrollY was clamped to an over-scroll boundary
+         */
+        virtual protected void onOverScrolled(int scrollX, int scrollY,
+                bool clampedX, bool clampedY)
+        {
+            // Intentionally empty.
+        }
+
+        /**
+         * Returns the over-scroll mode for this view. The result will be
+         * one of {@link #OVER_SCROLL_ALWAYS}, {@link #OVER_SCROLL_IF_CONTENT_SCROLLS}
+         * (allow over-scrolling only if the view content is larger than the container),
+         * or {@link #OVER_SCROLL_NEVER}.
+         *
+         * @return This view's over-scroll mode.
+         */
+        public enum OVERSCROLL_MODE
+        {
+            OVER_SCROLL_ALWAYS,
+            OVER_SCROLL_IF_CONTENT_SCROLLS,
+            OVER_SCROLL_NEVER
+        };
+
+        public OVERSCROLL_MODE getOverScrollMode()
+        {
+            return mOverScrollMode;
+        }
+
+        /**
+         * Set the over-scroll mode for this view. Valid over-scroll modes are
+         * {@link #OVER_SCROLL_ALWAYS}, {@link #OVER_SCROLL_IF_CONTENT_SCROLLS}
+         * (allow over-scrolling only if the view content is larger than the container),
+         * or {@link #OVER_SCROLL_NEVER}.
+         *
+         * Setting the over-scroll mode of a view will have an effect only if the
+         * view is capable of scrolling.
+         *
+         * @param overScrollMode The new over-scroll mode for this view.
+         */
+        public void setOverScrollMode(OVERSCROLL_MODE overScrollMode)
+        {
+            if (overScrollMode != OVERSCROLL_MODE.OVER_SCROLL_ALWAYS &&
+                    overScrollMode != OVERSCROLL_MODE.OVER_SCROLL_IF_CONTENT_SCROLLS &&
+                    overScrollMode != OVERSCROLL_MODE.OVER_SCROLL_NEVER)
+            {
+                throw new IllegalArgumentException("Invalid overscroll mode " + overScrollMode);
+            }
+            mOverScrollMode = overScrollMode;
+        }
+
+        /**
+         * Enable or disable nested scrolling for this view.
+         *
+         * <p>If this property is set to true the view will be permitted to initiate nested
+         * scrolling operations with a compatible parent view in the current hierarchy. If this
+         * view does not implement nested scrolling this will have no effect. Disabling nested scrolling
+         * while a nested scroll is in progress has the effect of {@link #stopNestedScroll() stopping}
+         * the nested scroll.</p>
+         *
+         * @param enabled true to enable nested scrolling, false to disable
+         *
+         * @see #isNestedScrollingEnabled()
+         */
+        public void setNestedScrollingEnabled(bool enabled)
+        {
+            if (enabled)
+            {
+                mPrivateFlags3 |= PFLAG3_NESTED_SCROLLING_ENABLED;
+            }
+            else
+            {
+                stopNestedScroll();
+                mPrivateFlags3 &= ~PFLAG3_NESTED_SCROLLING_ENABLED;
+            }
+        }
+
+        /**
+         * Returns true if nested scrolling is enabled for this view.
+         *
+         * <p>If nested scrolling is enabled and this View class implementation supports it,
+         * this view will act as a nested scrolling child view when applicable, forwarding data
+         * about the scroll operation in progress to a compatible and cooperating nested scrolling
+         * parent.</p>
+         *
+         * @return true if nested scrolling is enabled
+         *
+         * @see #setNestedScrollingEnabled(bool)
+         */
+        public bool isNestedScrollingEnabled()
+        {
+            return (mPrivateFlags3 & PFLAG3_NESTED_SCROLLING_ENABLED) ==
+                    PFLAG3_NESTED_SCROLLING_ENABLED;
+        }
+
+        View mNestedScrollingParent;
+
+        /**
+         * Begin a nestable scroll operation along the given axes.
+         *
+         * <p>A view starting a nested scroll promises to abide by the following contract:</p>
+         *
+         * <p>The view will call startNestedScroll upon initiating a scroll operation. In the case
+         * of a touch scroll this corresponds to the initial {@link MotionEvent#ACTION_DOWN}.
+         * In the case of touch scrolling the nested scroll will be terminated automatically in
+         * the same manner as {@link ViewParent#requestDisallowInterceptTouchEvent(bool)}.
+         * In the event of programmatic scrolling the caller must explicitly call
+         * {@link #stopNestedScroll()} to indicate the end of the nested scroll.</p>
+         *
+         * <p>If <code>startNestedScroll</code> returns true, a cooperative parent was found.
+         * If it returns false the caller may ignore the rest of this contract until the next scroll.
+         * Calling startNestedScroll while a nested scroll is already in progress will return true.</p>
+         *
+         * <p>At each incremental step of the scroll the caller should invoke
+         * {@link #dispatchNestedPreScroll(int, int, int[], int[]) dispatchNestedPreScroll}
+         * once it has calculated the requested scrolling delta. If it returns true the nested scrolling
+         * parent at least partially consumed the scroll and the caller should adjust the amount it
+         * scrolls by.</p>
+         *
+         * <p>After applying the remainder of the scroll delta the caller should invoke
+         * {@link #dispatchNestedScroll(int, int, int, int, int[]) dispatchNestedScroll}, passing
+         * both the delta consumed and the delta unconsumed. A nested scrolling parent may treat
+         * these values differently. See {@link ViewParent#onNestedScroll(View, int, int, int, int)}.
+         * </p>
+         *
+         * @param axes Flags consisting of a combination of {@link #SCROLL_AXIS_HORIZONTAL} and/or
+         *             {@link #SCROLL_AXIS_VERTICAL}.
+         * @return true if a cooperative parent was found and nested scrolling has been enabled for
+         *         the current gesture.
+         *
+         * @see #stopNestedScroll()
+         * @see #dispatchNestedPreScroll(int, int, int[], int[])
+         * @see #dispatchNestedScroll(int, int, int, int, int[])
+         */
+        public bool startNestedScroll(int axes)
+        {
+            if (hasNestedScrollingParent())
+            {
+                // Already in progress
+                return true;
+            }
+            if (isNestedScrollingEnabled())
+            {
+                ViewParent p_ = getParent();
+                View child = this;
+                while (p_ != null && p_ is View)
+                {
+                    View p = (View)p_;
+                    if (p.onStartNestedScroll(child, this, axes))
+                    {
+                        mNestedScrollingParent = p;
+                        p.onNestedScrollAccepted(child, this, axes);
+                        return true;
+                    }
+                    child = (View)p;
+                    p_ = p.getParent();
+                }
+            }
+            return false;
+        }
+
+        /**
+         * Stop a nested scroll in progress.
+         *
+         * <p>Calling this method when a nested scroll is not currently in progress is harmless.</p>
+         *
+         * @see #startNestedScroll(int)
+         */
+        public void stopNestedScroll()
+        {
+            if (mNestedScrollingParent != null)
+            {
+                mNestedScrollingParent.onStopNestedScroll(this);
+                mNestedScrollingParent = null;
+            }
+        }
+
+        /**
+         * Returns true if this view has a nested scrolling parent.
+         *
+         * <p>The presence of a nested scrolling parent indicates that this view has initiated
+         * a nested scroll and it was accepted by an ancestor view further up the view hierarchy.</p>
+         *
+         * @return whether this view has a nested scrolling parent
+         */
+        public bool hasNestedScrollingParent()
+        {
+            return mNestedScrollingParent != null;
+        }
+
+        /**
+         * Dispatch one step of a nested scroll in progress.
+         *
+         * <p>Implementations of views that support nested scrolling should call this to report
+         * info about a scroll in progress to the current nested scrolling parent. If a nested scroll
+         * is not currently in progress or nested scrolling is not
+         * {@link #isNestedScrollingEnabled() enabled} for this view this method does nothing.</p>
+         *
+         * <p>Compatible View implementations should also call
+         * {@link #dispatchNestedPreScroll(int, int, int[], int[]) dispatchNestedPreScroll} before
+         * consuming a component of the scroll event themselves.</p>
+         *
+         * @param dxConsumed Horizontal distance in pixels consumed by this view during this scroll step
+         * @param dyConsumed Vertical distance in pixels consumed by this view during this scroll step
+         * @param dxUnconsumed Horizontal scroll distance in pixels not consumed by this view
+         * @param dyUnconsumed Horizontal scroll distance in pixels not consumed by this view
+         * @param offsetInWindow Optional. If not null, on return this will contain the offset
+         *                       in local view coordinates of this view from before this operation
+         *                       to after it completes. View implementations may use this to adjust
+         *                       expected input coordinate tracking.
+         * @return true if the event was dispatched, false if it could not be dispatched.
+         * @see #dispatchNestedPreScroll(int, int, int[], int[])
+         */
+        public bool dispatchNestedScroll(int dxConsumed, int dyConsumed,
+                int dxUnconsumed, int dyUnconsumed, int[] offsetInWindow)
+        {
+            if (isNestedScrollingEnabled() && mNestedScrollingParent != null)
+            {
+                if (dxConsumed != 0 || dyConsumed != 0 || dxUnconsumed != 0 || dyUnconsumed != 0)
+                {
+                    int startX = 0;
+                    int startY = 0;
+                    //if (offsetInWindow != null) {
+                    //    getLocationInWindow(offsetInWindow);
+                    //    startX = offsetInWindow[0];
+                    //    startY = offsetInWindow[1];
+                    //}
+
+                    mNestedScrollingParent.onNestedScroll(this, dxConsumed, dyConsumed,
+                            dxUnconsumed, dyUnconsumed);
+
+                    //if (offsetInWindow != null) {
+                    //    getLocationInWindow(offsetInWindow);
+                    //    offsetInWindow[0] -= startX;
+                    //    offsetInWindow[1] -= startY;
+                    //}
+                    return true;
+                }
+                else if (offsetInWindow != null)
+                {
+                    // No motion, no dispatch. Keep offsetInWindow up to date.
+                    offsetInWindow[0] = 0;
+                    offsetInWindow[1] = 0;
+                }
+            }
+            return false;
+        }
+
+        private int[] mTempNestedScrollConsumed;
+
+        /**
+         * Dispatch one step of a nested scroll in progress before this view consumes any portion of it.
+         *
+         * <p>Nested pre-scroll events are to nested scroll events what touch intercept is to touch.
+         * <code>dispatchNestedPreScroll</code> offers an opportunity for the parent view in a nested
+         * scrolling operation to consume some or all of the scroll operation before the child view
+         * consumes it.</p>
+         *
+         * @param dx Horizontal scroll distance in pixels
+         * @param dy Vertical scroll distance in pixels
+         * @param consumed Output. If not null, consumed[0] will contain the consumed component of dx
+         *                 and consumed[1] the consumed dy.
+         * @param offsetInWindow Optional. If not null, on return this will contain the offset
+         *                       in local view coordinates of this view from before this operation
+         *                       to after it completes. View implementations may use this to adjust
+         *                       expected input coordinate tracking.
+         * @return true if the parent consumed some or all of the scroll delta
+         * @see #dispatchNestedScroll(int, int, int, int, int[])
+         */
+        public bool dispatchNestedPreScroll(int dx, int dy, int[] consumed, int[] offsetInWindow)
+        {
+            if (isNestedScrollingEnabled() && mNestedScrollingParent != null)
+            {
+                if (dx != 0 || dy != 0)
+                {
+                    int startX = 0;
+                    int startY = 0;
+                    //if (offsetInWindow != null) {
+                    //    getLocationInWindow(offsetInWindow);
+                    //    startX = offsetInWindow[0];
+                    //    startY = offsetInWindow[1];
+                    //}
+
+                    if (consumed == null)
+                    {
+                        if (mTempNestedScrollConsumed == null)
+                        {
+                            mTempNestedScrollConsumed = new int[2];
+                        }
+                        consumed = mTempNestedScrollConsumed;
+                    }
+                    consumed[0] = 0;
+                    consumed[1] = 0;
+                    mNestedScrollingParent.onNestedPreScroll(this, dx, dy, consumed);
+
+                    //if (offsetInWindow != null) {
+                    //    getLocationInWindow(offsetInWindow);
+                    //    offsetInWindow[0] -= startX;
+                    //    offsetInWindow[1] -= startY;
+                    //}
+                    return consumed[0] != 0 || consumed[1] != 0;
+                }
+                else if (offsetInWindow != null)
+                {
+                    offsetInWindow[0] = 0;
+                    offsetInWindow[1] = 0;
+                }
+            }
+            return false;
+        }
+        /**
+         * Dispatch a fling to a nested scrolling parent.
+         *
+         * <p>This method should be used to indicate that a nested scrolling child has detected
+         * suitable conditions for a fling. Generally this means that a touch scroll has ended with a
+         * {@link VelocityTracker velocity} in the direction of scrolling that meets or exceeds
+         * the {@link ViewConfiguration#getScaledMinimumFlingVelocity() minimum fling velocity}
+         * along a scrollable axis.</p>
+         *
+         * <p>If a nested scrolling child view would normally fling but it is at the edge of
+         * its own content, it can use this method to delegate the fling to its nested scrolling
+         * parent instead. The parent may optionally consume the fling or observe a child fling.</p>
+         *
+         * @param velocityX Horizontal fling velocity in pixels per second
+         * @param velocityY Vertical fling velocity in pixels per second
+         * @param consumed true if the child consumed the fling, false otherwise
+         * @return true if the nested scrolling parent consumed or otherwise reacted to the fling
+         */
+        public bool dispatchNestedFling(float velocityX, float velocityY, bool consumed)
+        {
+            if (isNestedScrollingEnabled() && mNestedScrollingParent != null)
+            {
+                return mNestedScrollingParent.onNestedFling(this, velocityX, velocityY, consumed);
+            }
+            return false;
+        }
+
+        /**
+         * Dispatch a fling to a nested scrolling parent before it is processed by this view.
+         *
+         * <p>Nested pre-fling events are to nested fling events what touch intercept is to touch
+         * and what nested pre-scroll is to nested scroll. <code>dispatchNestedPreFling</code>
+         * offsets an opportunity for the parent view in a nested fling to fully consume the fling
+         * before the child view consumes it. If this method returns <code>true</code>, a nested
+         * parent view consumed the fling and this view should not scroll as a result.</p>
+         *
+         * <p>For a better user experience, only one view in a nested scrolling chain should consume
+         * the fling at a time. If a parent view consumed the fling this method will return false.
+         * Custom view implementations should account for this in two ways:</p>
+         *
+         * <ul>
+         *     <li>If a custom view is paged and needs to settle to a fixed page-point, do not
+         *     call <code>dispatchNestedPreFling</code>; consume the fling and settle to a valid
+         *     position regardless.</li>
+         *     <li>If a nested parent does consume the fling, this view should not scroll at all,
+         *     even to settle back to a valid idle position.</li>
+         * </ul>
+         *
+         * <p>Views should also not offer fling velocities to nested parent views along an axis
+         * where scrolling is not currently supported; a {@link android.widget.ScrollView ScrollView}
+         * should not offer a horizontal fling velocity to its parents since scrolling along that
+         * axis is not permitted and carrying velocity along that motion does not make sense.</p>
+         *
+         * @param velocityX Horizontal fling velocity in pixels per second
+         * @param velocityY Vertical fling velocity in pixels per second
+         * @return true if a nested scrolling parent consumed the fling
+         */
+        public bool dispatchNestedPreFling(float velocityX, float velocityY)
+        {
+            if (isNestedScrollingEnabled() && mNestedScrollingParent != null)
+            {
+                return mNestedScrollingParent.onNestedPreFling(this, velocityX, velocityY);
+            }
+            return false;
+        }
+
+
+        /**
+         * @inheritDoc
+         */
+        virtual public bool onStartNestedScroll(View child, View target, int nestedScrollAxes)
+        {
+            return false;
+        }
+
+        /**
+         * @inheritDoc
+         */
+        virtual public void onNestedScrollAccepted(View child, View target, int axes)
+        {
+            mNestedScrollAxes = axes;
+        }
+
+        /**
+         * @inheritDoc
+         *
+         * <p>The default implementation of onStopNestedScroll calls
+         * {@link #stopNestedScroll()} to halt any recursive nested scrolling in progress.</p>
+         */
+        virtual public void onStopNestedScroll(View child)
+        {
+            // Stop any recursive nested scrolling.
+            stopNestedScroll();
+            mNestedScrollAxes = 0;
+        }
+
+        /**
+         * @inheritDoc
+         */
+        virtual public void onNestedScroll(View target, int dxConsumed, int dyConsumed,
+            int dxUnconsumed, int dyUnconsumed)
+        {
+            // Re-dispatch up the tree by default
+            dispatchNestedScroll(dxConsumed, dyConsumed, dxUnconsumed, dyUnconsumed, null);
+        }
+
+        /**
+         * @inheritDoc
+         */
+        virtual public void onNestedPreScroll(View target, int dx, int dy, int[] consumed)
+        {
+            // Re-dispatch up the tree by default
+            dispatchNestedPreScroll(dx, dy, consumed, null);
+        }
+
+        /**
+         * @inheritDoc
+         */
+        virtual public bool onNestedFling(View target, float velocityX, float velocityY, bool consumed)
+        {
+            // Re-dispatch up the tree by default
+            return dispatchNestedFling(velocityX, velocityY, consumed);
+        }
+
+        /**
+         * @inheritDoc
+         */
+        virtual public bool onNestedPreFling(View target, float velocityX, float velocityY)
+        {
+            // Re-dispatch up the tree by default
+            return dispatchNestedPreFling(velocityX, velocityY);
+        }
+
+        int mNestedScrollAxes;
+
+        /**
+         * Return the current axes of nested scrolling for this ViewGroup.
+         *
+         * <p>A ViewGroup returning something other than {@link #SCROLL_AXIS_NONE} is currently
+         * acting as a nested scrolling parent for one or more descendant views in the hierarchy.</p>
+         *
+         * @return Flags indicating the current axes of nested scrolling
+         * @see #SCROLL_AXIS_HORIZONTAL
+         * @see #SCROLL_AXIS_VERTICAL
+         * @see #SCROLL_AXIS_NONE
+         */
+        public int getNestedScrollAxes()
+        {
+            return mNestedScrollAxes;
+        }
+
+        /**
+         * Set the scrolled position of your view. This will cause a call to
+         * {@link #onScrollChanged(int, int, int, int)} and the view will be
+         * invalidated.
+         * @param x the x position to scroll to
+         * @param y the y position to scroll to
+         */
+        virtual public void scrollTo(int x, int y)
+        {
+            if (mScrollX != x || mScrollY != y)
+            {
+                int oldX = mScrollX;
+                int oldY = mScrollY;
+                mScrollX = x;
+                mScrollY = y;
+                invalidateParentCaches();
+                onScrollChanged(mScrollX, mScrollY, oldX, oldY);
+                if (!awakenScrollBars())
+                {
+                    postInvalidateOnAnimation();
+                }
+            }
+        }
+
+        /**
+         * Move the scrolled position of your view. This will cause a call to
+         * {@link #onScrollChanged(int, int, int, int)} and the view will be
+         * invalidated.
+         * @param x the amount of pixels to scroll by horizontally
+         * @param y the amount of pixels to scroll by vertically
+         */
+        public void scrollBy(int x, int y)
+        {
+            scrollTo(mScrollX + x, mScrollY + y);
+        }
+
+        /**
+         * <p>Trigger the scrollbars to draw. When invoked this method starts an
+         * animation to fade the scrollbars out after a default delay. If a subclass
+         * provides animated scrolling, the start delay should equal the duration
+         * of the scrolling animation.</p>
+         *
+         * <p>The animation starts only if at least one of the scrollbars is
+         * enabled, as specified by {@link #isHorizontalScrollBarEnabled()} and
+         * {@link #isVerticalScrollBarEnabled()}. When the animation is started,
+         * this method returns true, and false otherwise. If the animation is
+         * started, this method calls {@link #invalidate()}; in that case the
+         * caller should not call {@link #invalidate()}.</p>
+         *
+         * <p>This method should be invoked every time a subclass directly updates
+         * the scroll parameters.</p>
+         *
+         * <p>This method is automatically invoked by {@link #scrollBy(int, int)}
+         * and {@link #scrollTo(int, int)}.</p>
+         *
+         * @return true if the animation is played, false otherwise
+         *
+         * @see #awakenScrollBars(int)
+         * @see #scrollBy(int, int)
+         * @see #scrollTo(int, int)
+         * @see #isHorizontalScrollBarEnabled()
+         * @see #isVerticalScrollBarEnabled()
+         * @see #setHorizontalScrollBarEnabled(bool)
+         * @see #setVerticalScrollBarEnabled(bool)
+         */
+        protected bool awakenScrollBars()
+        {
+            return false; // mScrollCache != null &&
+                          //awakenScrollBars(mScrollCache.scrollBarDefaultDelayBeforeFade, true);
+        }
+
+        /**
+         * Called by a parent to request that a child update its values for mScrollX
+         * and mScrollY if necessary. This will typically be done if the child is
+         * animating a scroll using a {@link android.widget.Scroller Scroller}
+         * object.
+         */
+        virtual public void computeScroll()
+        {
+        }
+
+        /**
+         * <p>Indicate whether the horizontal edges are faded when the view is
+         * scrolled horizontally.</p>
+         *
+         * @return true if the horizontal edges should are faded on scroll, false
+         *         otherwise
+         *
+         * @see #setHorizontalFadingEdgeEnabled(bool)
+         *
+         * @attr ref android.R.styleable#View_requiresFadingEdge
+         */
+        public bool isHorizontalFadingEdgeEnabled()
+        {
+            return (mViewFlags & FADING_EDGE_HORIZONTAL) == FADING_EDGE_HORIZONTAL;
+        }
+
+        /**
+         * <p>Define whether the horizontal edges should be faded when this view
+         * is scrolled horizontally.</p>
+         *
+         * @param horizontalFadingEdgeEnabled true if the horizontal edges should
+         *                                    be faded when the view is scrolled
+         *                                    horizontally
+         *
+         * @see #isHorizontalFadingEdgeEnabled()
+         *
+         * @attr ref android.R.styleable#View_requiresFadingEdge
+         */
+        public void setHorizontalFadingEdgeEnabled(bool horizontalFadingEdgeEnabled)
+        {
+            if (isHorizontalFadingEdgeEnabled() != horizontalFadingEdgeEnabled)
+            {
+                //if (horizontalFadingEdgeEnabled)
+                //{
+                //    initScrollCache();
+                //}
+
+                mViewFlags ^= FADING_EDGE_HORIZONTAL;
+            }
+        }
+
+        /**
+         * <p>Indicate whether the vertical edges are faded when the view is
+         * scrolled horizontally.</p>
+         *
+         * @return true if the vertical edges should are faded on scroll, false
+         *         otherwise
+         *
+         * @see #setVerticalFadingEdgeEnabled(bool)
+         *
+         * @attr ref android.R.styleable#View_requiresFadingEdge
+         */
+        public bool isVerticalFadingEdgeEnabled()
+        {
+            return (mViewFlags & FADING_EDGE_VERTICAL) == FADING_EDGE_VERTICAL;
+        }
+
+        /**
+         * <p>Define whether the vertical edges should be faded when this view
+         * is scrolled vertically.</p>
+         *
+         * @param verticalFadingEdgeEnabled true if the vertical edges should
+         *                                  be faded when the view is scrolled
+         *                                  vertically
+         *
+         * @see #isVerticalFadingEdgeEnabled()
+         *
+         * @attr ref android.R.styleable#View_requiresFadingEdge
+         */
+        public void setVerticalFadingEdgeEnabled(bool verticalFadingEdgeEnabled)
+        {
+            if (isVerticalFadingEdgeEnabled() != verticalFadingEdgeEnabled)
+            {
+                //if (verticalFadingEdgeEnabled)
+                //{
+                //    initScrollCache();
+                //}
+
+                mViewFlags ^= FADING_EDGE_VERTICAL;
+            }
+        }
+
+        /**
+         * Returns the size of the vertical faded edges used to indicate that more
+         * content in this view is visible.
+         *
+         * @return The size in pixels of the vertical faded edge or 0 if vertical
+         *         faded edges are not enabled for this view.
+         * @attr ref android.R.styleable#View_fadingEdgeLength
+         */
+        public int getVerticalFadingEdgeLength()
+        {
+            if (isVerticalFadingEdgeEnabled())
+            {
+                ScrollabilityCache cache = mScrollCache;
+                if (cache != null)
+                {
+                    return cache.fadingEdgeLength;
+                }
+            }
+            return 0;
+        }
+
+        /**
+         * Set the size of the faded edge used to indicate that more content in this
+         * view is available.  Will not change whether the fading edge is enabled; use
+         * {@link #setVerticalFadingEdgeEnabled(bool)} or
+         * {@link #setHorizontalFadingEdgeEnabled(bool)} to enable the fading edge
+         * for the vertical or horizontal fading edges.
+         *
+         * @param length The size in pixels of the faded edge used to indicate that more
+         *        content in this view is visible.
+         */
+        public void setFadingEdgeLength(int length)
+        {
+            //initScrollCache();
+            mScrollCache.fadingEdgeLength = length;
+        }
+
+        /**
+         * Returns the size of the horizontal faded edges used to indicate that more
+         * content in this view is visible.
+         *
+         * @return The size in pixels of the horizontal faded edge or 0 if horizontal
+         *         faded edges are not enabled for this view.
+         * @attr ref android.R.styleable#View_fadingEdgeLength
+         */
+        public int getHorizontalFadingEdgeLength()
+        {
+            if (isHorizontalFadingEdgeEnabled())
+            {
+                ScrollabilityCache cache = mScrollCache;
+                if (cache != null)
+                {
+                    return cache.fadingEdgeLength;
+                }
+            }
+            return 0;
+        }
+
+        /**
+         * Returns the width of the vertical scrollbar.
+         *
+         * @return The width in pixels of the vertical scrollbar or 0 if there
+         *         is no vertical scrollbar.
+         */
+        public int getVerticalScrollbarWidth()
+        {
+            ScrollabilityCache cache = mScrollCache;
+            if (cache != null)
+            {
+                ScrollBarDrawable scrollBar = cache.scrollBar;
+                if (scrollBar != null)
+                {
+                    int size = scrollBar.getSize(true);
+                    if (size <= 0)
+                    {
+                        size = cache.scrollBarSize;
+                    }
+                    return size;
+                }
+                return 0;
+            }
+            return 0;
+        }
+
+        /**
+         * Returns the height of the horizontal scrollbar.
+         *
+         * @return The height in pixels of the horizontal scrollbar or 0 if
+         *         there is no horizontal scrollbar.
+         */
+        protected int getHorizontalScrollbarHeight()
+        {
+            ScrollabilityCache cache = mScrollCache;
+            if (cache != null)
+            {
+                ScrollBarDrawable scrollBar = cache.scrollBar;
+                if (scrollBar != null)
+                {
+                    int size = scrollBar.getSize(false);
+                    if (size <= 0)
+                    {
+                        size = cache.scrollBarSize;
+                    }
+                    return size;
+                }
+                return 0;
+            }
+            return 0;
+        }
+
+        /**
+         * Request that a rectangle of this view be visible on the screen,
+         * scrolling if necessary just enough.
+         *
+         * <p>A View should call this if it maintains some notion of which part
+         * of its content is interesting.  For example, a text editing view
+         * should call this when its cursor moves.
+         * <p>The Rectangle passed into this method should be in the View's content coordinate space.
+         * It should not be affected by which part of the View is currently visible or its scroll
+         * position.
+         *
+         * @param rectangle The rectangle in the View's content coordinate space
+         * @return Whether any parent scrolled.
+         */
+        public bool requestRectangleOnScreen(Rect rectangle)
+        {
+            return requestRectangleOnScreen(rectangle, false);
+        }
+
+        /**
+         * Request that a rectangle of this view be visible on the screen,
+         * scrolling if necessary just enough.
+         *
+         * <p>A View should call this if it maintains some notion of which part
+         * of its content is interesting.  For example, a text editing view
+         * should call this when its cursor moves.
+         * <p>The Rectangle passed into this method should be in the View's content coordinate space.
+         * It should not be affected by which part of the View is currently visible or its scroll
+         * position.
+         * <p>When <code>immediate</code> is set to true, scrolling will not be
+         * animated.
+         *
+         * @param rectangle The rectangle in the View's content coordinate space
+         * @param immediate True to forbid animated scrolling, false otherwise
+         * @return Whether any parent scrolled.
+         */
+        public bool requestRectangleOnScreen(Rect rectangle, bool immediate)
+        {
+            if (mParent == null)
+            {
+                return false;
+            }
+
+            View child = this;
+
+            RectF position = (mAttachInfo != null) ? mAttachInfo.mTmpTransformRect : new RectF();
+            position.set(rectangle);
+
+            ViewParent parent = mParent;
+            bool scrolled = false;
+            while (parent != null && parent is View)
+            {
+                rectangle.set((int)position.left, (int)position.top,
+                        (int)position.right, (int)position.bottom);
+
+                scrolled |= ((View)parent).requestChildRectangleOnScreen(child, rectangle, immediate);
+
+                if (!(parent is View))
+                {
+                    break;
+                }
+
+                // move it from child's content coordinate space to parent's content coordinate space
+                position.offset(child.mLeft - child.getScrollX(), child.mTop - child.getScrollY());
+
+                child = (View)parent;
+                parent = child.getParent();
+            }
+
+            return scrolled;
+        }
+
+        virtual public bool requestChildRectangleOnScreen(View child, Rect rectangle, bool immediate)
+        {
+            return false;
+        }
+
+        /**
+         * Return true if child is a descendant of parent, (or equal to the parent).
+         */
+        public static bool isViewDescendantOf(View child, View parent)
+        {
+            if (child == parent)
+            {
+                return true;
+            }
+
+            ViewParent theParent = child.getParent();
+            return (theParent is View) && isViewDescendantOf((View)theParent, parent);
+        }
+
+        /**
+         * Returns whether this group's children are clipped to their bounds before drawing.
+         * The default value is true.
+         * @see #setClipChildren(bool)
+         *
+         * @return True if the group's children will be clipped to their bounds,
+         * false otherwise.
+         */
+        public bool getClipChildren()
+        {
+            return ((mGroupFlags & FLAG_CLIP_CHILDREN) != 0);
+        }
+
+        /**
+         * By default, children are clipped to their bounds before drawing. This
+         * allows view groups to override this behavior for animations, etc.
+         *
+         * @param clipChildren true to clip children to their bounds,
+         *        false otherwise
+         * @attr ref android.R.styleable#ViewGroup_clipChildren
+         */
+        public void setClipChildren(bool clipChildren)
+        {
+            bool previousValue = (mGroupFlags & FLAG_CLIP_CHILDREN) == FLAG_CLIP_CHILDREN;
+            if (clipChildren != previousValue)
+            {
+                setBoolFlag(FLAG_CLIP_CHILDREN, clipChildren);
+                for (int i = 0; i < mChildrenCount; ++i)
+                {
+                    View child = getChildAt(i);
+                    if (child.mRenderNode != null)
+                    {
+                        //child.mRenderNode.setClipToBounds(clipChildren);
+                    }
+                }
+                invalidate(true);
+            }
+        }
+
+        /**
+         * Sets whether this ViewGroup will clip its children to its padding and resize (but not
+         * clip) any EdgeEffect to the padded region, if padding is present.
+         * <p>
+         * By default, children are clipped to the padding of their parent
+         * ViewGroup. This clipping behavior is only enabled if padding is non-zero.
+         *
+         * @param clipToPadding true to clip children to the padding of the group, and resize (but
+         *        not clip) any EdgeEffect to the padded region. False otherwise.
+         * @attr ref android.R.styleable#ViewGroup_clipToPadding
+         */
+        public void setClipToPadding(bool clipToPadding)
+        {
+            if (hasBoolFlag(FLAG_CLIP_TO_PADDING) != clipToPadding)
+            {
+                setBoolFlag(FLAG_CLIP_TO_PADDING, clipToPadding);
+                invalidate(true);
+            }
+        }
+
+        /**
+         * Returns whether this ViewGroup will clip its children to its padding, and resize (but
+         * not clip) any EdgeEffect to the padded region, if padding is present.
+         * <p>
+         * By default, children are clipped to the padding of their parent
+         * Viewgroup. This clipping behavior is only enabled if padding is non-zero.
+         *
+         * @return true if this ViewGroup clips children to its padding and resizes (but doesn't
+         *         clip) any EdgeEffect to the padded region, false otherwise.
+         *
+         * @attr ref android.R.styleable#ViewGroup_clipToPadding
+         */
+        public bool getClipToPadding()
+        {
+            return hasBoolFlag(FLAG_CLIP_TO_PADDING);
+        }
 
     } // class View
 }

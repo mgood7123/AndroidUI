@@ -104,7 +104,6 @@ namespace MainApp
 
             public override void OnCreate()
             {
-
                 if (false)
                 {
                     LinearLayout linearLayout = new();
@@ -133,63 +132,77 @@ namespace MainApp
                     }
                     else
                     {
+                        if (false)
+                        {
+                            var image = new ImageView();
+                            image.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+                            //var bm = AndroidUI.BitmapFactory.decodeFile("C:/Users/small/Pictures/Screenshot 2022-05-19 034147.jpeg");
+                            //image.setImageBitmap(bm);
+                            //image.setBackgroundColor(AndroidUI.Color.MAGENTA);
+                            image.setImageDrawable(new ColorDrawable(Color.MAGENTA));
 
-                        var image = new ImageView();
-                        //var bm = AndroidUI.BitmapFactory.decodeFile("C:/Users/small/Pictures/Screenshot 2022-05-19 034147.jpeg");
-                        //image.setImageBitmap(bm);
-                        //image.setBackgroundColor(AndroidUI.Color.MAGENTA);
-                        image.setImageDrawable(new ColorDrawable(Color.MAGENTA));
-                        image.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+                            //image.setX(200);
+                            //image.setTranslationX(200);
+                            //image.setY(200);
+                            //image.setTranslationY(200);
 
-                        //image.setX(200);
-                        //image.setTranslationX(200);
-                        //image.setY(200);
-                        //image.setTranslationY(200);
+                            //AndroidUI.Path path = new AndroidUI.Path();
+                            //path.arcTo(0f, 0f, 1000f, 1000f, 270f, -180f, true);
+                            //PathInterpolator pathInterpolator = new PathInterpolator(path);
 
-                        //AndroidUI.Path path = new AndroidUI.Path();
-                        //path.arcTo(0f, 0f, 1000f, 1000f, 270f, -180f, true);
-                        //PathInterpolator pathInterpolator = new PathInterpolator(path);
-
-                        //ObjectAnimator animation = ObjectAnimator.ofFloat(Context, image, "x", 100f);
-                        //animation.setInterpolator(pathInterpolator);
-                        //animation.setDuration(2200);
-                        //animation.start();
+                            //ObjectAnimator animation = ObjectAnimator.ofFloat(Context, image, "x", 100f);
+                            //animation.setInterpolator(pathInterpolator);
+                            //animation.setDuration(2200);
+                            //animation.start();
 
 
-                        ObjectAnimator oa = ObjectAnimator.ofInt(Context, image, "x", new int[] { 0, 100 });
-                        //oa.setRepeatCount(ValueAnimator.INFINITE);
-                        oa.setRepeatMode(ValueAnimator.REVERSE);
-                        oa.setDuration(2200);
+                            ObjectAnimator oa = ObjectAnimator.ofInt(Context, image, "x", new int[] { 0, 100 });
+                            //oa.setRepeatCount(ValueAnimator.INFINITE);
+                            oa.setRepeatMode(ValueAnimator.REVERSE);
+                            oa.setDuration(2200);
 
-                        ObjectAnimator ob = ObjectAnimator.ofInt(Context, image, "y", new int[] { 0, 100 });
-                        //ob.setRepeatCount(ValueAnimator.INFINITE);
-                        ob.setRepeatMode(ValueAnimator.REVERSE);
-                        ob.setDuration(1100);
+                            ObjectAnimator ob = ObjectAnimator.ofInt(Context, image, "y", new int[] { 0, 100 });
+                            //ob.setRepeatCount(ValueAnimator.INFINITE);
+                            ob.setRepeatMode(ValueAnimator.REVERSE);
+                            ob.setDuration(1100);
 
-                        ObjectAnimator oc = ObjectAnimator.ofInt(Context, image, "y", new int[] { 100, 200 });
-                        //ob.setRepeatCount(ValueAnimator.INFINITE);
-                        oc.setRepeatMode(ValueAnimator.REVERSE);
-                        oc.setDuration(1100);
+                            ObjectAnimator oc = ObjectAnimator.ofInt(Context, image, "y", new int[] { 100, 200 });
+                            //ob.setRepeatCount(ValueAnimator.INFINITE);
+                            oc.setRepeatMode(ValueAnimator.REVERSE);
+                            oc.setDuration(1100);
 
-                        AnimatorSet s = new(Context);
-                        s.play(oa).with(ob).before(oc);
-                        s.start();
+                            AnimatorSet s = new(Context);
+                            s.play(oa).with(ob).before(oc);
+                            s.start();
 
-                        //oa.start();
-                        //ob.start();
+                            //oa.start();
+                            //ob.start();
 
-                        //AlphaAnimation anim = new(Context, 0.15f, 1.0f);
-                        //RotateAnimation anim = new(Context, 0, 180);
-                        //TranslateAnimation anim = new(Context, 0, 200, 0, 100);
+                            //AlphaAnimation anim = new(Context, 0.15f, 1.0f);
+                            //RotateAnimation anim = new(Context, 0, 180);
+                            //TranslateAnimation anim = new(Context, 0, 200, 0, 100);
 
-                        //anim.setDuration(2200);
-                        //anim.setRepeatCount(Animation.INFINITE);
-                        //anim.setRepeatMode(Animation.REVERSE);
-                        //anim.setAnimationListener(new l());
-                        //image.startAnimation(anim);
+                            //anim.setDuration(2200);
+                            //anim.setRepeatCount(Animation.INFINITE);
+                            //anim.setRepeatMode(Animation.REVERSE);
+                            //anim.setAnimationListener(new l());
+                            //image.startAnimation(anim);
 
-                        SetContentView(image);
-                        //animator.start();
+                            SetContentView(image);
+                            //animator.start();
+                        }
+                        else
+                        {
+                            var image = new ImageView();
+                            //image.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+                            var bm = BitmapFactory.decodeFile("C:/Users/small/Pictures/Screenshot 2022-05-19 034147.jpeg");
+                            image.setImageBitmap(bm);
+
+                            var s = new ScrollView(Context);
+                            s.addView(image);
+                            SetContentView(s);
+
+                        }
                     }
                 }
             }

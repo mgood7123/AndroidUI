@@ -368,7 +368,7 @@ namespace AndroidUI.Utils.Graphics
          */
         internal static Region obtain()
         {
-            Region region = sPool.Aquire();
+            Region region = sPool.Acquire();
             return region != null ? region : new Region();
         }
 
