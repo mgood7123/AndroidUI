@@ -9566,9 +9566,6 @@ namespace AndroidUI.Widgets
 
 
 
-
-
-
         /**
          * LayoutParams are used by views to tell their parents how they want to be
          * laid out. See
@@ -9831,9 +9828,17 @@ namespace AndroidUI.Widgets
             internal const int DEFAULT_MARGIN_RESOLVED = 0;
             internal const int UNDEFINED_MARGIN = DEFAULT_MARGIN_RELATIVE;
 
+            public MarginLayoutParams() : base()
+            {
+                mMarginFlags |= LEFT_MARGIN_UNDEFINED_MASK;
+                mMarginFlags |= RIGHT_MARGIN_UNDEFINED_MASK;
+
+                mMarginFlags &= ~NEED_RESOLUTION_MASK;
+                mMarginFlags &= ~RTL_COMPATIBILITY_MODE_MASK;
+            }
+
             public MarginLayoutParams(int width, int height) : base(width, height)
             {
-
                 mMarginFlags |= LEFT_MARGIN_UNDEFINED_MASK;
                 mMarginFlags |= RIGHT_MARGIN_UNDEFINED_MASK;
 
@@ -10735,20 +10740,47 @@ namespace AndroidUI.Widgets
 
 
         /**
+         * Return true if the pressed state should be delayed for children or descendants of this
+         * ViewGroup. Generally, this should be done for containers that can scroll, such as a List.
+         * This prevents the pressed state from appearing when the user is actually trying to scroll
+         * the content.
+         *
+         * The default implementation returns true for compatibility reasons. Subclasses that do
+         * not scroll should generally override this method and return false.
+         */
+        virtual public bool shouldDelayChildPressedState()
+        {
+            return true;
+        }
+
+        /**
+         * Returns a new set of layout parameters based on the supplied attributes set.
+         *
+         * @param attrs the attributes to build the layout parameters from
+         *
+         * @return an instance of {@link android.view.ViewGroup.LayoutParams} or one
+         *         of its descendants
+         */
+        virtual public LayoutParams generateLayoutParams()
+        {
+            return new LayoutParams();
+        }
+
+        /**
          * Returns a safe set of layout parameters based on the supplied layout params.
-         * When a View is passed a View whose layout params do not pass the test of
-         * {@link #checkLayoutParams(android.view.View.LayoutParams)}, this method
+         * When a ViewGroup is passed a View whose layout params do not pass the test of
+         * {@link #checkLayoutParams(android.view.ViewGroup.LayoutParams)}, this method
          * is invoked. This method should return a new set of layout params suitable for
-         * this View, possibly by copying the appropriate attributes from the
+         * this ViewGroup, possibly by copying the appropriate attributes from the
          * specified set of layout params.
          *
          * @param p The layout parameters to convert into a suitable set of layout parameters
-         *          for this View.
+         *          for this ViewGroup.
          *
-         * @return an instance of {@link android.view.View.LayoutParams} or one
+         * @return an instance of {@link android.view.ViewGroup.LayoutParams} or one
          *         of its descendants
          */
-        protected virtual LayoutParams generateLayoutParams(LayoutParams p)
+        virtual protected LayoutParams generateLayoutParams(LayoutParams p)
         {
             return p;
         }
@@ -10760,9 +10792,9 @@ namespace AndroidUI.Widgets
          *
          * @return a set of default layout parameters or null
          */
-        protected virtual LayoutParams generateDefaultLayoutParams()
+        virtual protected LayoutParams generateDefaultLayoutParams()
         {
-            return new LayoutParams(WRAP_CONTENT, WRAP_CONTENT);
+            return new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
         }
 
         public void updateViewLayout(View view, LayoutParams layout_params)

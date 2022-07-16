@@ -2010,6 +2010,12 @@ namespace AndroidUI.Widgets
             }
         }
 
+        override
+        public LayoutParams generateLayoutParams()
+        {
+            return new LinearLayout.LayoutParams();
+        }
+
         /**
          * Returns a set of layout parameters with a width of
          * {@link android.view.ViewGroup.LayoutParams#MATCH_PARENT}
@@ -2076,6 +2082,14 @@ namespace AndroidUI.Widgets
              * @see android.view.Gravity
              */
             public int gravity = -1;
+
+            /**
+             * {@inheritDoc}
+             */
+            public LayoutParams() : base()
+            {
+                weight = 0;
+            }
 
             /**
              * {@inheritDoc}
