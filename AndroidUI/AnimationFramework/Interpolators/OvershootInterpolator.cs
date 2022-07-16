@@ -14,19 +14,21 @@
  * limitations under the License.
  */
 
+using AndroidUI.Utils;
+
 namespace AndroidUI.AnimationFramework.Interpolators
 {
     /**
      * An interpolator where the change flings forward and overshoots the last value
      * then comes back.
      */
-    public class OvershootInterpolator : BaseInterpolator, ICloneable
+    public class OvershootInterpolator : BaseInterpolator, Utils.ICloneable
     {
         private float mTension;
 
         virtual public OvershootInterpolator Clone()
         {
-            var obj = (OvershootInterpolator)ICloneable.Clone(this);
+            var obj = (OvershootInterpolator)Utils.ICloneable.Clone(this);
             obj.mTension = mTension;
             return obj;
         }

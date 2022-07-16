@@ -15,6 +15,8 @@
  */
 
 using AndroidUI.AnimationFramework.Interpolators;
+using AndroidUI.Graphics;
+using AndroidUI.Utils;
 using static AndroidUI.AnimationFramework.Animator.Keyframe;
 
 namespace AndroidUI.AnimationFramework.Animator
@@ -173,12 +175,12 @@ namespace AndroidUI.AnimationFramework.Animator
             return new KeyframeSet(keyframes);
         }
 
-        public static PathKeyframes ofPath(Path path)
+        public static PathKeyframes ofPath(Graphics.Path path)
         {
             return new PathKeyframes(path);
         }
 
-        public static PathKeyframes ofPath(Path path, float error)
+        public static PathKeyframes ofPath(Graphics.Path path, float error)
         {
             return new PathKeyframes(path, error);
         }

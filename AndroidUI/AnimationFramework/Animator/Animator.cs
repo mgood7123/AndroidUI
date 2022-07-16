@@ -15,6 +15,7 @@
  */
 
 using AndroidUI.Exceptions;
+using AndroidUI.Utils;
 
 namespace AndroidUI.AnimationFramework.Animator
 {
@@ -22,7 +23,7 @@ namespace AndroidUI.AnimationFramework.Animator
      * This is the superclass for classes which provide basic support for animations which can be
      * started, ended, and have <code>AnimatorListeners</code> added to them.
      */
-    public abstract class Animator : ICloneable
+    public abstract class Animator : Utils.ICloneable
     {
 
         /**
@@ -425,7 +426,7 @@ namespace AndroidUI.AnimationFramework.Animator
 
         virtual public Animator Clone()
         {
-            Animator anim = (Animator)ICloneable.Clone(this);
+            Animator anim = (Animator)Utils.ICloneable.Clone(this);
             anim.mChangingConfigurations = 0;
             anim.mPaused = mPaused;
             if (mConstantState != null)

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+using AndroidUI.Utils;
+
 namespace AndroidUI.AnimationFramework.Interpolators
 {
     /**
@@ -21,11 +23,11 @@ namespace AndroidUI.AnimationFramework.Interpolators
      * rate of change follows a sinusoidal pattern.
      *
      */
-    public class CycleInterpolator : BaseInterpolator, ICloneable
+    public class CycleInterpolator : BaseInterpolator, Utils.ICloneable
     {
         virtual public CycleInterpolator Clone()
         {
-            var obj = (CycleInterpolator)ICloneable.Clone(this);
+            var obj = (CycleInterpolator)Utils.ICloneable.Clone(this);
             obj.mCycles = mCycles;
             return obj;
         }

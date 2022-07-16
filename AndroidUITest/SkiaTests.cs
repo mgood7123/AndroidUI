@@ -1,4 +1,5 @@
 ﻿using AndroidUI.Extensions;
+using AndroidUI.Graphics;
 using AndroidUITestFramework;
 using SkiaSharp;
 
@@ -113,9 +114,9 @@ namespace AndroidUITest
         {
             public static void test_signed_with_max<T>(bool flip = false) where T : unmanaged
             {
-                AndroidUI.Integer<T> max = AndroidUI.Integer<T>.MaxValue;
-                AndroidUI.Integer<T> one = AndroidUI.Integer<T>.ConvertFrom(1);
-                AndroidUI.Integer<T> two = AndroidUI.Integer<T>.ConvertFrom(2);
+                AndroidUI.Utils.Integer<T> max = AndroidUI.Utils.Integer<T>.MaxValue;
+                AndroidUI.Utils.Integer<T> one = AndroidUI.Utils.Integer<T>.ConvertFrom(1);
+                AndroidUI.Utils.Integer<T> two = AndroidUI.Utils.Integer<T>.ConvertFrom(2);
                 {
                     A(flip, max, one, two);
                 }
@@ -125,8 +126,8 @@ namespace AndroidUITest
                 }
 
                 {
-                    AndroidUI.Integer<T> maxSqrtFloor = AndroidUI.Integer<T>.ConvertFrom(Math.Floor(Math.Sqrt(max.ConvertTo<double>())));
-                    AndroidUI.Integer<T> maxSqrtFloorPlus1 = maxSqrtFloor + one;
+                    AndroidUI.Utils.Integer<T> maxSqrtFloor = AndroidUI.Utils.Integer<T>.ConvertFrom(Math.Floor(Math.Sqrt(max.ConvertTo<double>())));
+                    AndroidUI.Utils.Integer<T> maxSqrtFloorPlus1 = maxSqrtFloor + one;
                     SkiaSharp.SKSafeMath safe = new();
                     Tools.AssertTrue(safe.Mul<T>(maxSqrtFloor, maxSqrtFloor) == maxSqrtFloor * maxSqrtFloor);
                     Tools.AssertTrue(safe);
@@ -155,24 +156,24 @@ namespace AndroidUITest
                 }
             }
 
-            private static void C<T>(AndroidUI.Integer<T> max) where T : unmanaged
+            private static void C<T>(AndroidUI.Utils.Integer<T> max) where T : unmanaged
             {
                 SkiaSharp.SKSafeMath safe = new();
                 safe.Mul<T>(max, max);
                 Tools.AssertTrue(!safe);
             }
 
-            private static void B<T>(AndroidUI.Integer<T> max) where T : unmanaged
+            private static void B<T>(AndroidUI.Utils.Integer<T> max) where T : unmanaged
             {
                 SkiaSharp.SKSafeMath safe = new();
                 safe.Add<T>(max, max);
                 Tools.AssertTrue(!safe);
             }
 
-            private static void A<T>(bool flip, AndroidUI.Integer<T> max, AndroidUI.Integer<T> one, AndroidUI.Integer<T> two) where T : unmanaged
+            private static void A<T>(bool flip, AndroidUI.Utils.Integer<T> max, AndroidUI.Utils.Integer<T> one, AndroidUI.Utils.Integer<T> two) where T : unmanaged
             {
-                AndroidUI.Integer<T> halfMax = max >> 1;
-                AndroidUI.Integer<T> halfMaxPlus1 = halfMax + one;
+                AndroidUI.Utils.Integer<T> halfMax = max >> 1;
+                AndroidUI.Utils.Integer<T> halfMaxPlus1 = halfMax + one;
                 SkiaSharp.SKSafeMath safe = new();
                 Tools.AssertTrue(safe.Add<T>(halfMax, halfMax) == two * halfMax);
                 Tools.AssertTrue(safe);
@@ -198,9 +199,9 @@ namespace AndroidUITest
 
             public static unsafe void test_unsigned_with_max<T>(bool flip = false) where T : unmanaged
             {
-                AndroidUI.Integer<T> max = AndroidUI.Integer<T>.MaxValue;
-                AndroidUI.Integer<T> one = AndroidUI.Integer<T>.ConvertFrom(1);
-                AndroidUI.Integer<T> two = AndroidUI.Integer<T>.ConvertFrom(2);
+                AndroidUI.Utils.Integer<T> max = AndroidUI.Utils.Integer<T>.MaxValue;
+                AndroidUI.Utils.Integer<T> one = AndroidUI.Utils.Integer<T>.ConvertFrom(1);
+                AndroidUI.Utils.Integer<T> two = AndroidUI.Utils.Integer<T>.ConvertFrom(2);
 
                 {
                     A(flip, max, one, two);
@@ -213,8 +214,8 @@ namespace AndroidUITest
                 {
                     int bits = sizeof(T) * 8;
                     int halfBits = bits / 2;
-                    AndroidUI.Integer<T> sqrtMax = max >> halfBits;
-                    AndroidUI.Integer<T> sqrtMaxPlus1 = sqrtMax + one;
+                    AndroidUI.Utils.Integer<T> sqrtMax = max >> halfBits;
+                    AndroidUI.Utils.Integer<T> sqrtMaxPlus1 = sqrtMax + one;
                     SkiaSharp.SKSafeMath safe = new();
                     Tools.AssertTrue(safe.Mul<T>(sqrtMax, sqrtMax) == sqrtMax * sqrtMax);
                     Tools.AssertTrue(safe);
@@ -301,9 +302,9 @@ namespace AndroidUITest
             }
 
             static void test_zero<T>() where T : unmanaged {
-                AndroidUI.Integer<T> max = AndroidUI.Integer<T>.MaxValue;
-                AndroidUI.Integer<T> one = AndroidUI.Integer<T>.ConvertFrom(1);
-                AndroidUI.Integer<T> zero = AndroidUI.Integer<T>.ConvertFrom(0);
+                AndroidUI.Utils.Integer<T> max = AndroidUI.Utils.Integer<T>.MaxValue;
+                AndroidUI.Utils.Integer<T> one = AndroidUI.Utils.Integer<T>.ConvertFrom(1);
+                AndroidUI.Utils.Integer<T> zero = AndroidUI.Utils.Integer<T>.ConvertFrom(0);
 
                 {
                     SkiaSharp.SKSafeMath safe = new();
@@ -457,127 +458,127 @@ namespace AndroidUITest
             {
                 public override void Run(TestGroup nullableInstance)
                 {
-                    Tools.ExpectEqual(AndroidUI.Color.CYAN.toHexString(), "ff00ffff");
-                    Tools.ExpectEqual(AndroidUI.Color.toSKColor(AndroidUI.Color.CYAN).ToString(), "#ff00ffff");
-                    Tools.ExpectEqual(AndroidUI.Color.CYAN.ToSKColorF().ToString(), "#ff00ffff");
-                    Tools.ExpectEqual(AndroidUI.Color.CYAN.ToSKColor().ToString(), "#ff00ffff");
-                    Tools.ExpectEqual(AndroidUI.Color.CYAN.ToSKColorF().ToString(), "#ff00ffff"); ;
-                    Tools.ExpectEqual(AndroidUI.Color.CYAN.ToSKColorF().ToSKColor().ToString(), "#ff00ffff");
-                    Tools.ExpectEqual(AndroidUI.Color.CYAN.ToSKColor().ToSKColorF().ToString(), "#ff00ffff");
-                    Tools.ExpectEqual(AndroidUI.Color.CYAN.ToSKColorF().ToSKColor().ToSKColorF().ToString(), "#ff00ffff");
-                    Tools.ExpectEqual(AndroidUI.Color.CYAN.ToSKColor().ToSKColorF().ToSKColor().ToString(), "#ff00ffff");
-                    Tools.ExpectEqual(AndroidUI.Color.CYAN.toUnsignedLong().ToSKColor().ToString(), "#ff00ffff");
-                    Tools.ExpectEqual(AndroidUI.Color.CYAN.toUnsignedLong().ToSKColor().ToSKColorF().ToString(), "#ff00ffff");
-                    Tools.ExpectEqual(AndroidUI.Color.alpha(AndroidUI.Color.CYAN).toHexString(), "ff");
-                    Tools.ExpectEqual(AndroidUI.Color.red(AndroidUI.Color.CYAN).toHexString(), "0");
-                    Tools.ExpectEqual(AndroidUI.Color.green(AndroidUI.Color.CYAN).toHexString(), "ff");
-                    Tools.ExpectEqual(AndroidUI.Color.blue(AndroidUI.Color.CYAN).toHexString(), "ff");
-                    Tools.ExpectEqual(AndroidUI.Color.valueOf(AndroidUI.Color.CYAN).toSKColorF().Alpha.ToColorInt().toHexString(), "ff");
-                    Tools.ExpectEqual(AndroidUI.Color.valueOf(AndroidUI.Color.CYAN).toSKColorF().Red.ToColorInt().toHexString(), "0");
-                    Tools.ExpectEqual(AndroidUI.Color.valueOf(AndroidUI.Color.CYAN).toSKColorF().Green.ToColorInt().toHexString(), "ff");
-                    Tools.ExpectEqual(AndroidUI.Color.valueOf(AndroidUI.Color.CYAN).toSKColorF().Blue.ToColorInt().toHexString(), "ff");
+                    Tools.ExpectEqual(AndroidUI.Graphics.Color.CYAN.toHexString(), "ff00ffff");
+                    Tools.ExpectEqual(AndroidUI.Graphics.Color.toSKColor(AndroidUI.Graphics.Color.CYAN).ToString(), "#ff00ffff");
+                    Tools.ExpectEqual(AndroidUI.Graphics.Color.CYAN.ToSKColorF().ToString(), "#ff00ffff");
+                    Tools.ExpectEqual(AndroidUI.Graphics.Color.CYAN.ToSKColor().ToString(), "#ff00ffff");
+                    Tools.ExpectEqual(AndroidUI.Graphics.Color.CYAN.ToSKColorF().ToString(), "#ff00ffff"); ;
+                    Tools.ExpectEqual(AndroidUI.Graphics.Color.CYAN.ToSKColorF().ToSKColor().ToString(), "#ff00ffff");
+                    Tools.ExpectEqual(AndroidUI.Graphics.Color.CYAN.ToSKColor().ToSKColorF().ToString(), "#ff00ffff");
+                    Tools.ExpectEqual(AndroidUI.Graphics.Color.CYAN.ToSKColorF().ToSKColor().ToSKColorF().ToString(), "#ff00ffff");
+                    Tools.ExpectEqual(AndroidUI.Graphics.Color.CYAN.ToSKColor().ToSKColorF().ToSKColor().ToString(), "#ff00ffff");
+                    Tools.ExpectEqual(AndroidUI.Graphics.Color.CYAN.toUnsignedLong().ToSKColor().ToString(), "#ff00ffff");
+                    Tools.ExpectEqual(AndroidUI.Graphics.Color.CYAN.toUnsignedLong().ToSKColor().ToSKColorF().ToString(), "#ff00ffff");
+                    Tools.ExpectEqual(AndroidUI.Graphics.Color.alpha(AndroidUI.Graphics.Color.CYAN).toHexString(), "ff");
+                    Tools.ExpectEqual(AndroidUI.Graphics.Color.red(AndroidUI.Graphics.Color.CYAN).toHexString(), "0");
+                    Tools.ExpectEqual(AndroidUI.Graphics.Color.green(AndroidUI.Graphics.Color.CYAN).toHexString(), "ff");
+                    Tools.ExpectEqual(AndroidUI.Graphics.Color.blue(AndroidUI.Graphics.Color.CYAN).toHexString(), "ff");
+                    Tools.ExpectEqual(AndroidUI.Graphics.Color.valueOf(AndroidUI.Graphics.Color.CYAN).toSKColorF().Alpha.ToColorInt().toHexString(), "ff");
+                    Tools.ExpectEqual(AndroidUI.Graphics.Color.valueOf(AndroidUI.Graphics.Color.CYAN).toSKColorF().Red.ToColorInt().toHexString(), "0");
+                    Tools.ExpectEqual(AndroidUI.Graphics.Color.valueOf(AndroidUI.Graphics.Color.CYAN).toSKColorF().Green.ToColorInt().toHexString(), "ff");
+                    Tools.ExpectEqual(AndroidUI.Graphics.Color.valueOf(AndroidUI.Graphics.Color.CYAN).toSKColorF().Blue.ToColorInt().toHexString(), "ff");
 
                     // alpha
-                    Tools.ExpectEqual(0xff, AndroidUI.Color.alpha(AndroidUI.Color.RED));
-                    Tools.ExpectEqual(0xff, AndroidUI.Color.alpha(AndroidUI.Color.YELLOW));
+                    Tools.ExpectEqual(0xff, AndroidUI.Graphics.Color.alpha(AndroidUI.Graphics.Color.RED));
+                    Tools.ExpectEqual(0xff, AndroidUI.Graphics.Color.alpha(AndroidUI.Graphics.Color.YELLOW));
 
                     // argb
-                    Tools.ExpectEqual(AndroidUI.Color.RED, AndroidUI.Color.argb(0xff, 0xff, 0x00, 0x00));
-                    Tools.ExpectEqual(AndroidUI.Color.YELLOW, AndroidUI.Color.argb(0xff, 0xff, 0xff, 0x00));
-                    Tools.ExpectEqual(AndroidUI.Color.RED, AndroidUI.Color.argb(1f, 1f, 0f, 0f));
-                    Tools.ExpectEqual(AndroidUI.Color.YELLOW, AndroidUI.Color.argb(1f, 1f, 1f, 0f));
+                    Tools.ExpectEqual(AndroidUI.Graphics.Color.RED, AndroidUI.Graphics.Color.argb(0xff, 0xff, 0x00, 0x00));
+                    Tools.ExpectEqual(AndroidUI.Graphics.Color.YELLOW, AndroidUI.Graphics.Color.argb(0xff, 0xff, 0xff, 0x00));
+                    Tools.ExpectEqual(AndroidUI.Graphics.Color.RED, AndroidUI.Graphics.Color.argb(1f, 1f, 0f, 0f));
+                    Tools.ExpectEqual(AndroidUI.Graphics.Color.YELLOW, AndroidUI.Graphics.Color.argb(1f, 1f, 1f, 0f));
 
                     // blue
-                    Tools.ExpectEqual(0x00, AndroidUI.Color.blue(AndroidUI.Color.RED));
-                    Tools.ExpectEqual(0x00, AndroidUI.Color.blue(AndroidUI.Color.YELLOW));
+                    Tools.ExpectEqual(0x00, AndroidUI.Graphics.Color.blue(AndroidUI.Graphics.Color.RED));
+                    Tools.ExpectEqual(0x00, AndroidUI.Graphics.Color.blue(AndroidUI.Graphics.Color.YELLOW));
 
                     // green
-                    Tools.ExpectEqual(0x00, AndroidUI.Color.green(AndroidUI.Color.RED));
-                    Tools.ExpectEqual(0xff, AndroidUI.Color.green(AndroidUI.Color.GREEN));
+                    Tools.ExpectEqual(0x00, AndroidUI.Graphics.Color.green(AndroidUI.Graphics.Color.RED));
+                    Tools.ExpectEqual(0xff, AndroidUI.Graphics.Color.green(AndroidUI.Graphics.Color.GREEN));
 
                     // abnormal case: hsv length less than 3
                     {
                         float[] hsv = new float[2];
-                        Tools.ExpectException<AndroidUI.Exceptions.IllegalArgumentException>(() => AndroidUI.Color.HSVToColor(hsv));
+                        Tools.ExpectException<AndroidUI.Exceptions.IllegalArgumentException>(() => AndroidUI.Graphics.Color.HSVToColor(hsv));
                     }
 
                     // HSVToColor
                     {
                         float[] hsv = new float[3];
-                        AndroidUI.Color.colorToHSV(AndroidUI.Color.RED, hsv);
-                        Tools.ExpectEqual(AndroidUI.Color.RED, AndroidUI.Color.HSVToColor(hsv));
+                        AndroidUI.Graphics.Color.colorToHSV(AndroidUI.Graphics.Color.RED, hsv);
+                        Tools.ExpectEqual(AndroidUI.Graphics.Color.RED, AndroidUI.Graphics.Color.HSVToColor(hsv));
                     }
 
                     // HSVToColorWithAlpha
                     {
                         float[] hsv = new float[3];
-                        AndroidUI.Color.colorToHSV(AndroidUI.Color.RED, hsv);
-                        Tools.ExpectEqual(AndroidUI.Color.RED, AndroidUI.Color.HSVToColor(0xff, hsv));
+                        AndroidUI.Graphics.Color.colorToHSV(AndroidUI.Graphics.Color.RED, hsv);
+                        Tools.ExpectEqual(AndroidUI.Graphics.Color.RED, AndroidUI.Graphics.Color.HSVToColor(0xff, hsv));
                     }
 
                     // abnormal case: colorString starts with '#' but length is neither 7 nor 9
                     {
-                        Tools.ExpectException<AndroidUI.Exceptions.IllegalArgumentException>(() => AndroidUI.Color.parseColor("#ff00ff0"));
+                        Tools.ExpectException<AndroidUI.Exceptions.IllegalArgumentException>(() => AndroidUI.Graphics.Color.parseColor("#ff00ff0"));
                     }
 
                     // parsecolor
                     {
-                        Tools.ExpectEqual(AndroidUI.Color.RED, AndroidUI.Color.parseColor("#ff0000"));
-                        Tools.ExpectEqual(AndroidUI.Color.RED, AndroidUI.Color.parseColor("#ffff0000"));
+                        Tools.ExpectEqual(AndroidUI.Graphics.Color.RED, AndroidUI.Graphics.Color.parseColor("#ff0000"));
+                        Tools.ExpectEqual(AndroidUI.Graphics.Color.RED, AndroidUI.Graphics.Color.parseColor("#ffff0000"));
 
-                        Tools.ExpectEqual(AndroidUI.Color.BLACK, AndroidUI.Color.parseColor("black"));
-                        Tools.ExpectEqual(AndroidUI.Color.DKGRAY, AndroidUI.Color.parseColor("darkgray"));
-                        Tools.ExpectEqual(AndroidUI.Color.GRAY, AndroidUI.Color.parseColor("gray"));
-                        Tools.ExpectEqual(AndroidUI.Color.LTGRAY, AndroidUI.Color.parseColor("lightgray"));
-                        Tools.ExpectEqual(AndroidUI.Color.WHITE, AndroidUI.Color.parseColor("white"));
-                        Tools.ExpectEqual(AndroidUI.Color.RED, AndroidUI.Color.parseColor("red"));
-                        Tools.ExpectEqual(AndroidUI.Color.GREEN, AndroidUI.Color.parseColor("green"));
-                        Tools.ExpectEqual(AndroidUI.Color.BLUE, AndroidUI.Color.parseColor("blue"));
-                        Tools.ExpectEqual(AndroidUI.Color.YELLOW, AndroidUI.Color.parseColor("yellow"));
-                        Tools.ExpectEqual(AndroidUI.Color.CYAN, AndroidUI.Color.parseColor("cyan"));
-                        Tools.ExpectEqual(AndroidUI.Color.MAGENTA, AndroidUI.Color.parseColor("magenta"));
+                        Tools.ExpectEqual(AndroidUI.Graphics.Color.BLACK, AndroidUI.Graphics.Color.parseColor("black"));
+                        Tools.ExpectEqual(AndroidUI.Graphics.Color.DKGRAY, AndroidUI.Graphics.Color.parseColor("darkgray"));
+                        Tools.ExpectEqual(AndroidUI.Graphics.Color.GRAY, AndroidUI.Graphics.Color.parseColor("gray"));
+                        Tools.ExpectEqual(AndroidUI.Graphics.Color.LTGRAY, AndroidUI.Graphics.Color.parseColor("lightgray"));
+                        Tools.ExpectEqual(AndroidUI.Graphics.Color.WHITE, AndroidUI.Graphics.Color.parseColor("white"));
+                        Tools.ExpectEqual(AndroidUI.Graphics.Color.RED, AndroidUI.Graphics.Color.parseColor("red"));
+                        Tools.ExpectEqual(AndroidUI.Graphics.Color.GREEN, AndroidUI.Graphics.Color.parseColor("green"));
+                        Tools.ExpectEqual(AndroidUI.Graphics.Color.BLUE, AndroidUI.Graphics.Color.parseColor("blue"));
+                        Tools.ExpectEqual(AndroidUI.Graphics.Color.YELLOW, AndroidUI.Graphics.Color.parseColor("yellow"));
+                        Tools.ExpectEqual(AndroidUI.Graphics.Color.CYAN, AndroidUI.Graphics.Color.parseColor("cyan"));
+                        Tools.ExpectEqual(AndroidUI.Graphics.Color.MAGENTA, AndroidUI.Graphics.Color.parseColor("magenta"));
                     }
 
                     // abnormal case: colorString doesn't start with '#' and is unknown color
                     {
-                        Tools.ExpectException<AndroidUI.Exceptions.IllegalArgumentException>(() => AndroidUI.Color.parseColor("hello"));
+                        Tools.ExpectException<AndroidUI.Exceptions.IllegalArgumentException>(() => AndroidUI.Graphics.Color.parseColor("hello"));
                     }
 
                     // red
                     {
-                        Tools.ExpectEqual(0xff, AndroidUI.Color.red(AndroidUI.Color.RED));
-                        Tools.ExpectEqual(0xff, AndroidUI.Color.red(AndroidUI.Color.YELLOW));
+                        Tools.ExpectEqual(0xff, AndroidUI.Graphics.Color.red(AndroidUI.Graphics.Color.RED));
+                        Tools.ExpectEqual(0xff, AndroidUI.Graphics.Color.red(AndroidUI.Graphics.Color.YELLOW));
                     }
 
                     // rbg
                     {
-                        Tools.ExpectEqual(AndroidUI.Color.RED, AndroidUI.Color.rgb(0xff, 0x00, 0x00));
-                        Tools.ExpectEqual(AndroidUI.Color.YELLOW, AndroidUI.Color.rgb(0xff, 0xff, 0x00));
-                        Tools.ExpectEqual(AndroidUI.Color.RED, AndroidUI.Color.rgb(1f, 0f, 0f));
-                        Tools.ExpectEqual(AndroidUI.Color.YELLOW, AndroidUI.Color.rgb(1f, 1f, 0f));
+                        Tools.ExpectEqual(AndroidUI.Graphics.Color.RED, AndroidUI.Graphics.Color.rgb(0xff, 0x00, 0x00));
+                        Tools.ExpectEqual(AndroidUI.Graphics.Color.YELLOW, AndroidUI.Graphics.Color.rgb(0xff, 0xff, 0x00));
+                        Tools.ExpectEqual(AndroidUI.Graphics.Color.RED, AndroidUI.Graphics.Color.rgb(1f, 0f, 0f));
+                        Tools.ExpectEqual(AndroidUI.Graphics.Color.YELLOW, AndroidUI.Graphics.Color.rgb(1f, 1f, 0f));
                     }
 
                     // abnormal case: hsv length less than 3
                     {
                         float[] hsv = new float[2];
-                        Tools.ExpectException<AndroidUI.Exceptions.IllegalArgumentException>(() => AndroidUI.Color.RGBToHSV(0xff, 0x00, 0x00, hsv));
+                        Tools.ExpectException<AndroidUI.Exceptions.IllegalArgumentException>(() => AndroidUI.Graphics.Color.RGBToHSV(0xff, 0x00, 0x00, hsv));
                     }
 
                     // RGBToHSV
                     {
                         float[] hsv = new float[3];
-                        AndroidUI.Color.RGBToHSV(0xff, 0x00, 0x00, hsv);
-                        Tools.ExpectEqual(AndroidUI.Color.RED, AndroidUI.Color.HSVToColor(hsv));
+                        AndroidUI.Graphics.Color.RGBToHSV(0xff, 0x00, 0x00, hsv);
+                        Tools.ExpectEqual(AndroidUI.Graphics.Color.RED, AndroidUI.Graphics.Color.HSVToColor(hsv));
                     }
 
                     // Luminance
                     {
-                        Tools.ExpectEqual(0, AndroidUI.Color.luminance(AndroidUI.Color.BLACK), 0.ToString());
+                        Tools.ExpectEqual(0, AndroidUI.Graphics.Color.luminance(AndroidUI.Graphics.Color.BLACK), 0.ToString());
                         float eps = 0.000001f;
-                        Tools.ExpectEqual(0.0722, AndroidUI.Color.luminance(AndroidUI.Color.BLUE), eps.ToString());
-                        Tools.ExpectEqual(0.2126, AndroidUI.Color.luminance(AndroidUI.Color.RED), eps.ToString());
-                        Tools.ExpectEqual(0.7152, AndroidUI.Color.luminance(AndroidUI.Color.GREEN), eps.ToString());
-                        Tools.ExpectEqual(1, AndroidUI.Color.luminance(AndroidUI.Color.WHITE), 0.ToString());
+                        Tools.ExpectEqual(0.0722, AndroidUI.Graphics.Color.luminance(AndroidUI.Graphics.Color.BLUE), eps.ToString());
+                        Tools.ExpectEqual(0.2126, AndroidUI.Graphics.Color.luminance(AndroidUI.Graphics.Color.RED), eps.ToString());
+                        Tools.ExpectEqual(0.7152, AndroidUI.Graphics.Color.luminance(AndroidUI.Graphics.Color.GREEN), eps.ToString());
+                        Tools.ExpectEqual(1, AndroidUI.Graphics.Color.luminance(AndroidUI.Graphics.Color.WHITE), 0.ToString());
                     }
                 }
             }
@@ -586,9 +587,9 @@ namespace AndroidUITest
             {
                 public override void Run(TestGroup nullableInstance)
                 {
-                    AndroidUI.Bitmap bm = AndroidUI.Bitmap.createBitmap(1, 1, AndroidUI.Bitmap.Config.ARGB_8888);
+                    Bitmap bm = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
                     Tools.ExpectInstanceNotEqual(bm.mNativePtr, null);
-                    Tools.ExpectEqual(bm.getColor(0, 0).toArgb(), AndroidUI.Color.TRANSPARENT);
+                    Tools.ExpectEqual(bm.getColor(0, 0).toArgb(), AndroidUI.Graphics.Color.TRANSPARENT);
                     bm.recycle();
                 }
             }
@@ -597,12 +598,12 @@ namespace AndroidUITest
             {
                 public override void Run(TestGroup nullableInstance)
                 {
-                    AndroidUI.Bitmap bm = AndroidUI.Bitmap.createBitmap(1, 1, AndroidUI.Bitmap.Config.ARGB_8888);
+                    Bitmap bm = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
                     Tools.ExpectInstanceNotEqual(bm.mNativePtr, null);
-                    bm.setPixel(0, 0, AndroidUI.Color.CYAN);
-                    Tools.ExpectNotEqual(bm.getColor(0, 0).toArgb(), AndroidUI.Color.TRANSPARENT);
-                    Tools.ExpectEqual(bm.getColor(0, 0).toArgb(), AndroidUI.Color.CYAN);
-                    Tools.ExpectEqual(bm.getPixel(0, 0), AndroidUI.Color.CYAN);
+                    bm.setPixel(0, 0, AndroidUI.Graphics.Color.CYAN);
+                    Tools.ExpectNotEqual(bm.getColor(0, 0).toArgb(), AndroidUI.Graphics.Color.TRANSPARENT);
+                    Tools.ExpectEqual(bm.getColor(0, 0).toArgb(), AndroidUI.Graphics.Color.CYAN);
+                    Tools.ExpectEqual(bm.getPixel(0, 0), AndroidUI.Graphics.Color.CYAN);
                     bm.recycle();
                 }
             }
@@ -611,16 +612,16 @@ namespace AndroidUITest
             {
                 public override void Run(TestGroup nullableInstance)
                 {
-                    AndroidUI.Bitmap bm = AndroidUI.Bitmap.createBitmap(1, 1, AndroidUI.Bitmap.Config.ARGB_8888);
+                    Bitmap bm = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
                     Tools.ExpectInstanceNotEqual(bm.mNativePtr, null);
-                    bm.setPixel(0, 0, AndroidUI.Color.CYAN);
-                    Tools.ExpectNotEqual(bm.getColor(0, 0).toArgb(), AndroidUI.Color.TRANSPARENT, "set pixel");
-                    Tools.ExpectEqual(bm.getColor(0, 0).toArgb(), AndroidUI.Color.CYAN, "set pixel");
-                    Tools.ExpectEqual(bm.getPixel(0, 0), AndroidUI.Color.CYAN, "set pixel");
-                    bm.eraseColor(AndroidUI.Color.CYAN);
-                    Tools.ExpectNotEqual(bm.getColor(0, 0).toArgb(), AndroidUI.Color.TRANSPARENT, "erase color");
-                    Tools.ExpectEqual(bm.getColor(0, 0).toArgb(), AndroidUI.Color.CYAN, "erase color");
-                    Tools.ExpectEqual(bm.getPixel(0, 0), AndroidUI.Color.CYAN, "erase color");
+                    bm.setPixel(0, 0, AndroidUI.Graphics.Color.CYAN);
+                    Tools.ExpectNotEqual(bm.getColor(0, 0).toArgb(), AndroidUI.Graphics.Color.TRANSPARENT, "set pixel");
+                    Tools.ExpectEqual(bm.getColor(0, 0).toArgb(), AndroidUI.Graphics.Color.CYAN, "set pixel");
+                    Tools.ExpectEqual(bm.getPixel(0, 0), AndroidUI.Graphics.Color.CYAN, "set pixel");
+                    bm.eraseColor(AndroidUI.Graphics.Color.CYAN);
+                    Tools.ExpectNotEqual(bm.getColor(0, 0).toArgb(), AndroidUI.Graphics.Color.TRANSPARENT, "erase color");
+                    Tools.ExpectEqual(bm.getColor(0, 0).toArgb(), AndroidUI.Graphics.Color.CYAN, "erase color");
+                    Tools.ExpectEqual(bm.getPixel(0, 0), AndroidUI.Graphics.Color.CYAN, "erase color");
                     bm.recycle();
                 }
             }
@@ -628,12 +629,12 @@ namespace AndroidUITest
             {
                 public override void Run(TestGroup nullableInstance)
                 {
-                    AndroidUI.Bitmap source = AndroidUI.Bitmap.createBitmap(100, 100, AndroidUI.Bitmap.Config.ARGB_8888);
-                    source.eraseColor(AndroidUI.Color.RED);
-                    AndroidUI.Bitmap result = null;
+                    Bitmap source = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
+                    source.eraseColor(AndroidUI.Graphics.Color.RED);
+                    Bitmap result = null;
                     try
                     {
-                        result = sendOverPipe(source, AndroidUI.Bitmap.CompressFormat.PNG);
+                        result = sendOverPipe(source, Bitmap.CompressFormat.PNG);
                     }
                     catch (Exception e)
                     {
@@ -643,17 +644,17 @@ namespace AndroidUITest
                     Tools.AssertTrue(source.sameAs(result), "expected source to be same as result");
                 }
 
-                private AndroidUI.Bitmap sendOverPipe(AndroidUI.Bitmap source, AndroidUI.Bitmap.CompressFormat format)
+                private Bitmap sendOverPipe(Bitmap source, Bitmap.CompressFormat format)
                 {
-                    AndroidUI.FileDescriptor[] pipeFds = AndroidUI.Os.pipe();
-                    AndroidUI.FileDescriptor readFd = pipeFds[0];
-                    AndroidUI.FileDescriptor writeFd = pipeFds[1];
+                    AndroidUI.OS.FileDescriptor[] pipeFds = AndroidUI.OS.Functions.pipe();
+                    AndroidUI.OS.FileDescriptor readFd = pipeFds[0];
+                    AndroidUI.OS.FileDescriptor writeFd = pipeFds[1];
 
                     Exception[] compressErrors = new Exception[1];
 
                     // CountDownLatch does not appear to be used
 
-                    AndroidUI.Bitmap[] decodedResult = new AndroidUI.Bitmap[1];
+                    Bitmap[] decodedResult = new Bitmap[1];
                     Thread writeThread = new(() =>
                     {
                         try
@@ -682,7 +683,7 @@ namespace AndroidUITest
                     });
                     Thread readThread = new(() =>
                     {
-                        decodedResult[0] = AndroidUI.BitmapFactory.decodeStream(readFd.ToFileInputStream());
+                        decodedResult[0] = BitmapFactory.decodeStream(readFd.ToFileInputStream());
                     });
                     writeThread.Start();
                     readThread.Start();
@@ -717,8 +718,8 @@ namespace AndroidUITest
             {
                 public override void Run(TestGroup nullableInstance)
                 {
-                    AndroidUI.Bitmap bm = AndroidUI.Bitmap.createBitmap(4, 4, AndroidUI.Bitmap.Config.ARGB_8888);
-                    bm.eraseColor(AndroidUI.Color.CYAN);
+                    Bitmap bm = Bitmap.createBitmap(4, 4, Bitmap.Config.ARGB_8888);
+                    bm.eraseColor(AndroidUI.Graphics.Color.CYAN);
                     var bm2 = bm.copy(bm.getConfig(), bm.isMutable());
                     Tools.ExpectTrue(bm.sameAs(bm2), "copy is not same");
                     bm.recycle();
@@ -734,12 +735,12 @@ namespace AndroidUITest
 
                     SKBitmap bm1 = SKBitmap.Decode(Filename);
                     bm1.Dispose();
-                    
-                    AndroidUI.Bitmap bm2 = AndroidUI.BitmapFactory.decodeFile(Filename);
+
+                    Bitmap bm2 = BitmapFactory.decodeFile(Filename);
                     bm2.recycle();
                     
                     SKBitmap bm3 = SKBitmap.Decode(Filename);
-                    AndroidUI.Bitmap bm3_ = new(bm3, bm3.Width, bm3.Height);
+                    Bitmap bm3_ = new(bm3, bm3.Width, bm3.Height);
                     bm3_.recycle();
                 }
             }

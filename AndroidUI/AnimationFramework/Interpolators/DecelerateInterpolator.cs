@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+using AndroidUI.Utils;
+
 namespace AndroidUI.AnimationFramework.Interpolators
 {
     /**
@@ -21,11 +23,11 @@ namespace AndroidUI.AnimationFramework.Interpolators
      * and then decelerates.
      *
      */
-    public class DecelerateInterpolator : BaseInterpolator, ICloneable
+    public class DecelerateInterpolator : BaseInterpolator, Utils.ICloneable
     {
         virtual public DecelerateInterpolator Clone()
         {
-            var obj = (DecelerateInterpolator)ICloneable.Clone(this);
+            var obj = (DecelerateInterpolator)Utils.ICloneable.Clone(this);
             obj.mFactor = mFactor;
             return obj;
         }

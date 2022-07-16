@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+using AndroidUI.Applications;
+using AndroidUI.Utils;
+
 namespace AndroidUI.AnimationFramework.Animation
 {
     /**
@@ -40,7 +43,7 @@ namespace AndroidUI.AnimationFramework.Animation
      * <code>setDuration(500)</code> on an AnimationSet has the same effect as declaring
      * <code>android:duration="500"</code> in an XML resource for an AnimationSet object.</p>
      */
-    public class AnimationSet : Animation, ICloneable
+    public class AnimationSet : Animation, Utils.ICloneable
     {
         private const int PROPERTY_FILL_AFTER_MASK = 0x1;
         private const int PROPERTY_FILL_BEFORE_MASK = 0x2;

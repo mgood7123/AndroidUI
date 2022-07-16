@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+using AndroidUI.Applications;
+using AndroidUI.Graphics;
+using AndroidUI.Utils;
+
 namespace AndroidUI.AnimationFramework.Animator
 {
 
@@ -274,7 +278,7 @@ namespace AndroidUI.AnimationFramework.Animator
          * @return An ObjectAnimator object that is set up to animate along <code>path</code>.
          */
         public static ObjectAnimator ofInt(Context context, object target, string xPropertyName, string yPropertyName,
-                Path path)
+                Graphics.Path path)
         {
             PathKeyframes keyframes = KeyframeSet.ofPath(path);
             PropertyValuesHolder x = PropertyValuesHolder.ofKeyframes(xPropertyName,
@@ -318,7 +322,7 @@ namespace AndroidUI.AnimationFramework.Animator
          * @return An ObjectAnimator object that is set up to animate along <code>path</code>.
          */
         public static ObjectAnimator ofInt<T>(Context context, T target, Property<T, int> xProperty,
-                Property<T, int> yProperty, Path path)
+                Property<T, int> yProperty, Graphics.Path path)
         {
             PathKeyframes keyframes = KeyframeSet.ofPath(path);
             PropertyValuesHolder x = PropertyValuesHolder.ofKeyframes(xProperty,
@@ -365,7 +369,7 @@ namespace AndroidUI.AnimationFramework.Animator
          * @param path The <code>Path</code> to animate values along.
          * @return An ObjectAnimator object that is set up to animate along <code>path</code>.
          */
-        public static ObjectAnimator ofMultiInt(Context context, object target, string propertyName, Path path)
+        public static ObjectAnimator ofMultiInt(Context context, object target, string propertyName, Graphics.Path path)
         {
             PropertyValuesHolder pvh = PropertyValuesHolder.ofMultiInt(propertyName, path);
             return ofPropertyValuesHolder(context, target, pvh);
@@ -481,7 +485,7 @@ namespace AndroidUI.AnimationFramework.Animator
          * @return An ObjectAnimator object that is set up to animate along <code>path</code>.
          */
         public static ObjectAnimator ofFloat(Context context, object target, string xPropertyName, string yPropertyName,
-                Path path)
+                Graphics.Path path)
         {
             PathKeyframes keyframes = KeyframeSet.ofPath(path);
             PropertyValuesHolder x = PropertyValuesHolder.ofKeyframes(xPropertyName,
@@ -526,7 +530,7 @@ namespace AndroidUI.AnimationFramework.Animator
          * @return An ObjectAnimator object that is set up to animate along <code>path</code>.
          */
         public static ObjectAnimator ofFloat<T>(Context context, T target, Property<T, float> xProperty,
-                Property<T, float> yProperty, Path path)
+                Property<T, float> yProperty, Graphics.Path path)
         {
             PathKeyframes keyframes = KeyframeSet.ofPath(path);
             PropertyValuesHolder x = PropertyValuesHolder.ofKeyframes(xProperty,
@@ -574,7 +578,7 @@ namespace AndroidUI.AnimationFramework.Animator
          * @param path The <code>Path</code> to animate values along.
          * @return An ObjectAnimator object that is set up to animate along <code>path</code>.
          */
-        public static ObjectAnimator ofMultiFloat(Context context, object target, string propertyName, Path path)
+        public static ObjectAnimator ofMultiFloat(Context context, object target, string propertyName, Graphics.Path path)
         {
             PropertyValuesHolder pvh = PropertyValuesHolder.ofMultiFloat(propertyName, path);
             return ofPropertyValuesHolder(context, target, pvh);
@@ -658,7 +662,7 @@ namespace AndroidUI.AnimationFramework.Animator
          * @return An ObjectAnimator object that is set up to animate along <code>path</code>.
          */
         public static ObjectAnimator ofObject(Context context, object target, string propertyName,
-                 ITypeConverter converter, Path path)
+                 ITypeConverter converter, Graphics.Path path)
         {
             PropertyValuesHolder pvh = PropertyValuesHolder.ofObject(propertyName, converter, path);
             return ofPropertyValuesHolder(context, target, pvh);
@@ -747,7 +751,7 @@ namespace AndroidUI.AnimationFramework.Animator
          * @return An ObjectAnimator object that is set up to animate along <code>path</code>.
          */
         public static ObjectAnimator ofObject<T, V>(Context context, T target, Property<T, V> property,
-                 TypeConverter<SkiaSharp.SKPoint, V> converter, Path path)
+                 TypeConverter<SkiaSharp.SKPoint, V> converter, Graphics.Path path)
         {
             PropertyValuesHolder pvh = PropertyValuesHolder.ofObject(property, converter, path);
             return ofPropertyValuesHolder(context, target, pvh);

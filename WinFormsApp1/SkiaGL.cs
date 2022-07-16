@@ -1,4 +1,5 @@
-﻿using MainApp;
+﻿using AndroidUI.Utils;
+using MainApp;
 using SkiaSharp.Views.Desktop;
 using System.Runtime.InteropServices;
 
@@ -148,7 +149,7 @@ namespace WinFormsApp1
                 // not tested
                 else if (ims.deviceType == INPUT_MESSAGE_DEVICE_TYPE.IMDT_TOUCHPAD)
                 {
-                    AndroidUI.Log.WriteLine("TOUCHPAD INPUT");
+                    Log.WriteLine("TOUCHPAD INPUT");
                     base.WndProc(ref m);
                 }
             }
@@ -163,7 +164,7 @@ namespace WinFormsApp1
             base.OnKeyDown(e);
             if (e.KeyCode == Keys.Enter)
             {
-                AndroidUI.Log.WriteLine("");
+                Log.WriteLine("");
             }
         }
 

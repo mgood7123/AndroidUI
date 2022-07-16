@@ -15,6 +15,9 @@
  */
 
 using AndroidUI.Exceptions;
+using AndroidUI.Graphics;
+using AndroidUI.Utils;
+using AndroidUI.Utils.Arrays;
 using System.Reflection;
 
 namespace AndroidUI.AnimationFramework.Animator
@@ -25,7 +28,7 @@ namespace AndroidUI.AnimationFramework.Animator
      * animations with ValueAnimator or ObjectAnimator that operate on several different properties
      * in parallel.
      */
-    public class PropertyValuesHolder : ICloneable
+    public class PropertyValuesHolder : Utils.ICloneable
     {
 
         /**
@@ -253,7 +256,7 @@ namespace AndroidUI.AnimationFramework.Animator
          * @return PropertyValuesHolder The constructed PropertyValuesHolder object.
          * @see ObjectAnimator#ofPropertyValuesHolder(Object, PropertyValuesHolder...)
          */
-        public static PropertyValuesHolder ofMultiInt(string propertyName, Path path)
+        public static PropertyValuesHolder ofMultiInt(string propertyName, Graphics.Path path)
         {
             Keyframes keyframes = KeyframeSet.ofPath(path);
             SKPointToIntArray converter = new();
@@ -383,7 +386,7 @@ namespace AndroidUI.AnimationFramework.Animator
          * @return PropertyValuesHolder The constructed PropertyValuesHolder object.
          * @see ObjectAnimator#ofPropertyValuesHolder(Object, PropertyValuesHolder...)
          */
-        public static PropertyValuesHolder ofMultiFloat(string propertyName, Path path)
+        public static PropertyValuesHolder ofMultiFloat(string propertyName, Graphics.Path path)
         {
             Keyframes keyframes = KeyframeSet.ofPath(path);
             SKPointToFloatArray converter = new();
@@ -478,7 +481,7 @@ namespace AndroidUI.AnimationFramework.Animator
          * @return PropertyValuesHolder The constructed PropertyValuesHolder object.
          */
         public static PropertyValuesHolder ofObject(string propertyName,
-                ITypeConverter converter, Path path)
+                ITypeConverter converter, Graphics.Path path)
         {
             PropertyValuesHolder pvh = new(propertyName);
             pvh.mKeyframes = KeyframeSet.ofPath(path);
@@ -564,7 +567,7 @@ namespace AndroidUI.AnimationFramework.Animator
          * @return PropertyValuesHolder The constructed PropertyValuesHolder object.
          */
         public static PropertyValuesHolder ofObject<V>(IProperty property,
-                TypeConverter<SkiaSharp.SKPoint, V> converter, Path path)
+                TypeConverter<SkiaSharp.SKPoint, V> converter, Graphics.Path path)
         {
             PropertyValuesHolder pvh = new(property);
             pvh.mKeyframes = KeyframeSet.ofPath(path);
@@ -1367,7 +1370,7 @@ namespace AndroidUI.AnimationFramework.Animator
 
         public virtual PropertyValuesHolder Clone()
         {
-            PropertyValuesHolder newPVH = (PropertyValuesHolder)ICloneable.Clone(this);
+            PropertyValuesHolder newPVH = (PropertyValuesHolder)Utils.ICloneable.Clone(this);
             newPVH.mPropertyName = mPropertyName;
             newPVH.mProperty = mProperty;
             newPVH.mKeyframes = (Keyframes)mKeyframes.Clone();

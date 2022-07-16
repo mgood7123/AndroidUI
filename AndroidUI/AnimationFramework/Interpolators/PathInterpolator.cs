@@ -15,6 +15,8 @@
  */
 
 using AndroidUI.Exceptions;
+using AndroidUI.Graphics;
+using AndroidUI.Utils;
 
 namespace AndroidUI.AnimationFramework.Interpolators
 {
@@ -34,7 +36,7 @@ namespace AndroidUI.AnimationFramework.Interpolators
      *     path.lineTo(1f, 1f);
      * </pre></blockquote></p>
      */
-    public class PathInterpolator : BaseInterpolator, ICloneable
+    public class PathInterpolator : BaseInterpolator, Utils.ICloneable
     {
 
         // This governs how accurate the approximation of the Path is.
@@ -46,7 +48,7 @@ namespace AndroidUI.AnimationFramework.Interpolators
 
         virtual public PathInterpolator Clone()
         {
-            PathInterpolator obj = (PathInterpolator)ICloneable.Clone(this);
+            PathInterpolator obj = (PathInterpolator)Utils.ICloneable.Clone(this);
             obj.mX = (float[])mX?.Clone();
             obj.mY = (float[])mY?.Clone();
             return obj;
@@ -59,7 +61,7 @@ namespace AndroidUI.AnimationFramework.Interpolators
          *
          * @param path The <code>Path</code> to use to make the line representing the interpolator.
          */
-        public PathInterpolator(Path path)
+        public PathInterpolator(Graphics.Path path)
         {
             initPath(path);
         }
@@ -92,7 +94,7 @@ namespace AndroidUI.AnimationFramework.Interpolators
 
         private void initQuad(float controlX, float controlY)
         {
-            Path path = new();
+            Graphics.Path path = new();
             path.moveTo(0, 0);
             path.quadTo(controlX, controlY, 1f, 1f);
             initPath(path);
@@ -100,13 +102,13 @@ namespace AndroidUI.AnimationFramework.Interpolators
 
         private void initCubic(float x1, float y1, float x2, float y2)
         {
-            Path path = new();
+            Graphics.Path path = new();
             path.moveTo(0, 0);
             path.cubicTo(x1, y1, x2, y2, 1f, 1f);
             initPath(path);
         }
 
-        private void initPath(Path path)
+        private void initPath(Graphics.Path path)
         {
             float[] pointComponents = path.approximate(PRECISION);
 

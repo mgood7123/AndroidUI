@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+using AndroidUI.Applications;
+using AndroidUI.OS;
+using AndroidUI.Utils;
+
 namespace AndroidUI.AnimationFramework.Animator
 {
     /**

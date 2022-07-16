@@ -16,6 +16,8 @@
 
 using AndroidUI.Exceptions;
 using AndroidUI.Extensions;
+using AndroidUI.Graphics;
+using AndroidUI.Utils;
 using static AndroidUI.AnimationFramework.Animator.Keyframes;
 
 namespace AndroidUI.AnimationFramework.Animator
@@ -47,11 +49,11 @@ namespace AndroidUI.AnimationFramework.Animator
         private SkiaSharp.SKPoint mTempPoint = new SkiaSharp.SKPoint();
         private float[] mKeyframeData;
 
-        public PathKeyframes(Path path) : this(path, 0.5f)
+        public PathKeyframes(Graphics.Path path) : this(path, 0.5f)
         {
         }
 
-        public PathKeyframes(Path path, float error)
+        public PathKeyframes(Graphics.Path path, float error)
         {
             if (path == null || path.isEmpty())
             {
@@ -147,7 +149,7 @@ namespace AndroidUI.AnimationFramework.Animator
 
         virtual public PathKeyframes Clone()
         {
-            PathKeyframes clone = (PathKeyframes)ICloneable.Clone(this);
+            PathKeyframes clone = (PathKeyframes)Utils.ICloneable.Clone(this);
             clone.mTempPoint = new SkiaSharp.SKPoint();
             if (mKeyframeData != null)
             {
@@ -182,7 +184,7 @@ namespace AndroidUI.AnimationFramework.Animator
 
             public XI Clone()
             {
-                XI clone = (XI)ICloneable.Clone(this);
+                XI clone = (XI)Utils.ICloneable.Clone(this);
                 clone.outer = outer.Clone();
                 return clone;
             }
@@ -225,7 +227,7 @@ namespace AndroidUI.AnimationFramework.Animator
 
             public YI Clone()
             {
-                YI clone = (YI)ICloneable.Clone(this);
+                YI clone = (YI)Utils.ICloneable.Clone(this);
                 clone.outer = outer.Clone();
                 return clone;
             }
@@ -268,7 +270,7 @@ namespace AndroidUI.AnimationFramework.Animator
 
             public XF Clone()
             {
-                XF clone = (XF)ICloneable.Clone(this);
+                XF clone = (XF)Utils.ICloneable.Clone(this);
                 clone.outer = outer.Clone();
                 return clone;
             }
@@ -311,7 +313,7 @@ namespace AndroidUI.AnimationFramework.Animator
 
             public YF Clone()
             {
-                YF clone = (YF)ICloneable.Clone(this);
+                YF clone = (YF)Utils.ICloneable.Clone(this);
                 clone.outer = outer.Clone();
                 return clone;
             }
@@ -392,7 +394,7 @@ namespace AndroidUI.AnimationFramework.Animator
 
             public Keyframes Clone()
             {
-                Keyframes clone = (Keyframes)ICloneable.Clone(this);
+                Keyframes clone = (Keyframes)Utils.ICloneable.Clone(this);
                 return clone;
             }
 

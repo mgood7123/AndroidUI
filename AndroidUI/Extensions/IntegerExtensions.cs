@@ -1,4 +1,6 @@
-﻿using SkiaSharp;
+﻿using AndroidUI.Applications;
+using AndroidUI.Graphics;
+using SkiaSharp;
 
 namespace AndroidUI.Extensions
 {

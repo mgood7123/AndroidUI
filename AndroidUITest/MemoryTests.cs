@@ -1,4 +1,6 @@
-﻿using AndroidUITestFramework;
+﻿using AndroidUI.Utils;
+using AndroidUI.Utils.Arrays;
+using AndroidUITestFramework;
 
 namespace AndroidUITest
 {
@@ -10,7 +12,7 @@ namespace AndroidUITest
             {
                 public override void Run(TestGroup nullableInstance)
                 {
-                    AndroidUI.MemoryPointer<int> a = new int[] { 1, 2 };
+                    MemoryPointer<int> a = new int[] { 1, 2 };
                     Tools.AssertEqual(a.offset, 0);
                     Tools.AssertEqual(a.Length, 2);
                 }
@@ -20,7 +22,7 @@ namespace AndroidUITest
             {
                 public override void Run(TestGroup nullableInstance)
                 {
-                    AndroidUI.MemoryPointer<int> a = new int[] { 1, 2 };
+                    MemoryPointer<int> a = new int[] { 1, 2 };
                     a += 1;
                     Tools.AssertEqual(a.offset, 1);
                     Tools.AssertEqual(a.Length, 1);
@@ -34,7 +36,7 @@ namespace AndroidUITest
             {
                 public override void Run(TestGroup nullableInstance)
                 {
-                    AndroidUI.MemoryPointer<int> a = new int[] { 1, 2 };
+                    MemoryPointer<int> a = new int[] { 1, 2 };
                     Tools.AssertEqual(a[0], 1);
                     Tools.AssertEqual(a[1], 2);
                 }
@@ -44,7 +46,7 @@ namespace AndroidUITest
             {
                 public override void Run(TestGroup nullableInstance)
                 {
-                    AndroidUI.MemoryPointer<int> a = new int[] { 1, 2 };
+                    MemoryPointer<int> a = new int[] { 1, 2 };
                     a += 1;
                     Tools.AssertEqual(a[0], 2);
                     a -= 1;
@@ -57,8 +59,8 @@ namespace AndroidUITest
             {
                 public override void Run(TestGroup nullableInstance)
                 {
-                    AndroidUI.MemoryPointer<int> a = new int[] { 1, 2 };
-                    AndroidUI.MemoryPointer<int> b = new int[] { 0, 0 };
+                    MemoryPointer<int> a = new int[] { 1, 2 };
+                    MemoryPointer<int> b = new int[] { 0, 0 };
                     a.Copy(b, 2);
                     Tools.AssertEqual(b[0], 1);
                     Tools.AssertEqual(b[1], 2);
@@ -69,7 +71,7 @@ namespace AndroidUITest
             {
                 public override void Run(TestGroup nullableInstance)
                 {
-                    AndroidUI.MemoryPointer<int> a = new int[] { 1, 2, 3, 4 };
+                    MemoryPointer<int> a = new int[] { 1, 2, 3, 4 };
                     int index = 1;
                     foreach (int value in a)
                     {
@@ -86,7 +88,7 @@ namespace AndroidUITest
             {
                 public override void Run(TestGroup nullableInstance)
                 {
-                    AndroidUI.MemoryPointer<int> a = new int[][]{ new int[] { 1, 2 }, new int[] { 3, 4 } };
+                    MemoryPointer<int> a = new int[][]{ new int[] { 1, 2 }, new int[] { 3, 4 } };
                     Tools.AssertEqual(a.offset, 0);
                     Tools.AssertEqual(a.Length, 4);
                 }
@@ -96,7 +98,7 @@ namespace AndroidUITest
             {
                 public override void Run(TestGroup nullableInstance)
                 {
-                    AndroidUI.MemoryPointer<int> a = new int[][] { new int[] { 1, 2 }, new int[] { 3, 4 } };
+                    MemoryPointer<int> a = new int[][] { new int[] { 1, 2 }, new int[] { 3, 4 } };
                     a += 1;
                     Tools.AssertEqual(a.offset, 1);
                     Tools.AssertEqual(a.Length, 3);
@@ -116,7 +118,7 @@ namespace AndroidUITest
             {
                 public override void Run(TestGroup nullableInstance)
                 {
-                    AndroidUI.MemoryPointer<int> a = new int[][] { new int[] { 1, 2 }, new int[] { 3, 4 } };
+                    MemoryPointer<int> a = new int[][] { new int[] { 1, 2 }, new int[] { 3, 4 } };
                     Tools.AssertEqual(a[0], 1);
                     Tools.AssertEqual(a[1], 2);
                     Tools.AssertEqual(a[2], 3);
@@ -128,7 +130,7 @@ namespace AndroidUITest
             {
                 public override void Run(TestGroup nullableInstance)
                 {
-                    AndroidUI.MemoryPointer<int> a = new int[][] { new int[] { 1, 2 }, new int[] { 3, 4 } };
+                    MemoryPointer<int> a = new int[][] { new int[] { 1, 2 }, new int[] { 3, 4 } };
                     a += 1;
                     Tools.AssertEqual(a[0], 2);
                     a++;
@@ -148,8 +150,8 @@ namespace AndroidUITest
             {
                 public override void Run(TestGroup nullableInstance)
                 {
-                    AndroidUI.MemoryPointer<int> a = new int[][] { new int[] { 1, 2 }, new int[] { 3, 4 } };
-                    AndroidUI.MemoryPointer<int> b = new int[][] { new int[] { 0, 0 }, new int[] { 0, 0 } };
+                    MemoryPointer<int> a = new int[][] { new int[] { 1, 2 }, new int[] { 3, 4 } };
+                    MemoryPointer<int> b = new int[][] { new int[] { 0, 0 }, new int[] { 0, 0 } };
                     a.Copy(b, 4);
                     Tools.AssertEqual(b[0], 1);
                     Tools.AssertEqual(b[1], 2);
@@ -162,7 +164,7 @@ namespace AndroidUITest
             {
                 public override void Run(TestGroup nullableInstance)
                 {
-                    AndroidUI.MemoryPointer<int> a = new int[][] { new int[] { 1, 2 }, new int[] { 3, 4 } };
+                    MemoryPointer<int> a = new int[][] { new int[] { 1, 2 }, new int[] { 3, 4 } };
                     int index = 1;
                     foreach (int value in a)
                     {
@@ -205,7 +207,7 @@ namespace AndroidUITest
                     X x2 = new(5);
                     Tools.ExpectEqual(x1.x, 5, "x1 5");
                     Tools.ExpectEqual(x2.x, 5, "x2 5");
-                    AndroidUI.ContiguousArray<int> a = new AndroidUI.Mapper<X, int>[2] {
+                    ContiguousArray<int> a = new Mapper<X, int>[2] {
                         new(x1, (obj, arrayIndex, index) => ref obj.x, 1),
                         new(x2, (obj, arrayIndex, index) => ref obj.x, 1)
                     };
@@ -214,10 +216,10 @@ namespace AndroidUITest
                     Tools.ExpectEqual(x1.x, 1, "x1 1");
                     Tools.ExpectEqual(x2.x, 2, "x2 2");
 
-                    AndroidUI.ValueHolder<XY> x3 = new XY(55, 66);
+                    ValueHolder<XY> x3 = new XY(55, 66);
                     Tools.ExpectEqual(x3.Value.x, 55, "x3 55");
                     Tools.ExpectEqual(x3.Value.y, 66, "x3 66");
-                    AndroidUI.ContiguousArray<int> b = new AndroidUI.Mapper<AndroidUI.ValueHolder<XY>, int>[1] {
+                    ContiguousArray<int> b = new Mapper<ValueHolder<XY>, int>[1] {
                         new(x3, (obj, arrayIndex, index) => ref index == 0 ? ref obj.Value.x : ref obj.Value.y, 2)
                     };
                     b[0] = 5577;
@@ -230,7 +232,7 @@ namespace AndroidUITest
                     Tools.ExpectEqual(x4[0].y, 66, "x4 66");
                     Tools.ExpectEqual(x4[1].x, 77, "x4 77");
                     Tools.ExpectEqual(x4[1].y, 88, "x4 88");
-                    AndroidUI.ContiguousArray<int> c = new AndroidUI.Mapper<XY[], int>[1] {
+                    ContiguousArray<int> c = new Mapper<XY[], int>[1] {
                         new(x4, (obj, arrayIndex, index) => {
                             if (index == 0)
                             {

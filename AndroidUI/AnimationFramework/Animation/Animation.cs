@@ -15,8 +15,10 @@
  */
 
 using AndroidUI.AnimationFramework.Interpolators;
+using AndroidUI.Applications;
 using AndroidUI.Exceptions;
 using AndroidUI.Execution;
+using AndroidUI.Utils;
 
 namespace AndroidUI.AnimationFramework.Animation
 {
@@ -25,13 +27,13 @@ namespace AndroidUI.AnimationFramework.Animation
      * other objects. See the {@link android.view.animation animation package
      * description file}.
      */
-    public class Animation : ICloneable
+    public class Animation : Utils.ICloneable
     {
         internal Context context;
 
         virtual public Animation Clone()
         {
-            Animation animation = (Animation)ICloneable.Clone(this);
+            Animation animation = (Animation)Utils.ICloneable.Clone(this);
             // this state is dependant on animation runtime progress
             animation.mEnded = false;
             animation.mStarted = false;

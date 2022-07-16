@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+using AndroidUI.Applications;
+
 namespace AndroidUI.AnimationFramework.Animation
 {
     /**

@@ -1,3 +1,5 @@
+using AndroidUI.Utils;
+
 namespace WinFormsApp1
 {
     internal static class Program
@@ -32,44 +34,44 @@ namespace WinFormsApp1
             HighDpiMode highDpiMode = Application.HighDpiMode;
             if (highDpiMode == HighDpiMode.PerMonitorV2)
             {
-                AndroidUI.Log.WriteLine("current HighDpiMode is " + Application.HighDpiMode);
+                Log.WriteLine("current HighDpiMode is " + Application.HighDpiMode);
             }
             else
             {
                 if (Application.SetHighDpiMode(HighDpiMode.PerMonitorV2))
                 {
-                    AndroidUI.Log.WriteLine("set HighDpiMode to " + Application.HighDpiMode);
+                    Log.WriteLine("set HighDpiMode to " + Application.HighDpiMode);
                 }
                 else
                 {
-                    AndroidUI.Log.WriteLine("Failed to set HighDpiMode to " + HighDpiMode.PerMonitorV2);
+                    Log.WriteLine("Failed to set HighDpiMode to " + HighDpiMode.PerMonitorV2);
                     if (highDpiMode == HighDpiMode.PerMonitor)
                     {
-                        AndroidUI.Log.WriteLine("current HighDpiMode is " + Application.HighDpiMode);
+                        Log.WriteLine("current HighDpiMode is " + Application.HighDpiMode);
                     }
                     else
                     {
                         if (Application.SetHighDpiMode(HighDpiMode.PerMonitor))
                         {
-                            AndroidUI.Log.WriteLine("set HighDpiMode to " + Application.HighDpiMode);
+                            Log.WriteLine("set HighDpiMode to " + Application.HighDpiMode);
                         }
                         else
                         {
-                            AndroidUI.Log.WriteLine("Failed to set HighDpiMode to " + HighDpiMode.PerMonitor);
+                            Log.WriteLine("Failed to set HighDpiMode to " + HighDpiMode.PerMonitor);
                             if (highDpiMode == HighDpiMode.SystemAware)
                             {
-                                AndroidUI.Log.WriteLine("current HighDpiMode is " + Application.HighDpiMode);
+                                Log.WriteLine("current HighDpiMode is " + Application.HighDpiMode);
                             }
                             else
                             {
                                 if (Application.SetHighDpiMode(HighDpiMode.SystemAware))
                                 {
-                                    AndroidUI.Log.WriteLine("set HighDpiMode to " + Application.HighDpiMode);
+                                    Log.WriteLine("set HighDpiMode to " + Application.HighDpiMode);
                                 }
                                 else
                                 {
-                                    AndroidUI.Log.WriteLine("Failed to set HighDpiMode to " + HighDpiMode.SystemAware);
-                                    AndroidUI.Log.WriteLine("current HighDpiMode is " + Application.HighDpiMode);
+                                    Log.WriteLine("Failed to set HighDpiMode to " + HighDpiMode.SystemAware);
+                                    Log.WriteLine("current HighDpiMode is " + Application.HighDpiMode);
                                 }
                             }
                         }

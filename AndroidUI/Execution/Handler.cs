@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
+using AndroidUI.Applications;
 using AndroidUI.Exceptions;
 using AndroidUI.Extensions;
+using AndroidUI.OS;
+using AndroidUI.Utils;
 using System.Text;
 
 namespace AndroidUI.Execution

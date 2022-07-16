@@ -15,6 +15,7 @@
  */
 
 using AndroidUI.AnimationFramework.Interpolators;
+using AndroidUI.Utils;
 
 namespace AndroidUI.AnimationFramework.Animator
 {
@@ -35,7 +36,7 @@ namespace AndroidUI.AnimationFramework.Animator
      * of {@link TypeEvaluator}), you should stick to using float and int as animations using those
      * types have lower runtime overhead than other types.</p>
      */
-    public abstract class Keyframe : ICloneable
+    public abstract class Keyframe : Utils.ICloneable
     {
         /**
          * Flag to indicate whether this keyframe has a valid value. This flag is used when an
@@ -272,7 +273,7 @@ namespace AndroidUI.AnimationFramework.Animator
 
         public virtual Keyframe Clone()
         {
-            var c = (Keyframe)ICloneable.Clone(this);
+            var c = (Keyframe)Utils.ICloneable.Clone(this);
             c.mInterpolator = mInterpolator;
             c.mHasValue = mHasValue;
             c.mValueWasSetOnStart = mValueWasSetOnStart;

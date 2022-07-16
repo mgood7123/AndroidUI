@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+using AndroidUI.Utils;
+using AndroidUI.Utils.Arrays;
+
 namespace AndroidUI.Execution
 {
 

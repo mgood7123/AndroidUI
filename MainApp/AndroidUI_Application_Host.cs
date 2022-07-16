@@ -1,7 +1,12 @@
 ﻿using AndroidUI.AnimationFramework.Animation;
 using AndroidUI.AnimationFramework.Animator;
 using AndroidUI.AnimationFramework.Interpolators;
+using AndroidUI.Applications;
 using AndroidUI.Extensions;
+using AndroidUI.Graphics;
+using AndroidUI.Graphics.Drawables;
+using AndroidUI.Utils;
+using AndroidUI.Widgets;
 using SkiaSharp;
 using System;
 
@@ -15,12 +20,12 @@ namespace MainApp
          * Use with {@link #setVisibility} and <a href="#attr_android:visibility">{@code
          * android:visibility}.
          */
-        public const int VISIBLE = AndroidUI.View.VISIBLE;
+        public const int VISIBLE = View.VISIBLE;
 
         public void setDensity(float density, int dpi)
         {
-            AndroidUI.Log.d(ToString(), "density changed: " + density + ", dpi: " + dpi);
-            AndroidUI.Application.SetDensity(density, dpi);
+            Log.d(ToString(), "density changed: " + density + ", dpi: " + dpi);
+            Application.SetDensity(density, dpi);
             application?.OnScreenDensityChanged();
         }
 
@@ -29,18 +34,18 @@ namespace MainApp
          * Use with {@link #setVisibility} and <a href="#attr_android:visibility">{@code
          * android:visibility}.
          */
-        public const int INVISIBLE = AndroidUI.View.INVISIBLE;
+        public const int INVISIBLE = View.INVISIBLE;
 
         /**
          * This view is invisible, and it doesn't take any space for layout
          * purposes. Use with {@link #setVisibility} and <a href="#attr_android:visibility">{@code
          * android:visibility}.
          */
-        public const int GONE = AndroidUI.View.GONE;
+        public const int GONE = View.GONE;
 
-        AndroidUI.ApplicationDelegate application = new();
+        ApplicationDelegate application = new();
 
-        class TouchInfoView : AndroidUI.Topten_RichTextKit_TextView
+        class TouchInfoView : Topten_RichTextKit_TextView
         {
             public TouchInfoView() : base()
             {
@@ -76,9 +81,9 @@ namespace MainApp
             }
         }
 
-        class TestApp : AndroidUI.Application
+        class TestApp : Application
         {
-            class A : AndroidUI.View
+            class A : View
             {
 
                 public A()
@@ -89,9 +94,9 @@ namespace MainApp
                 protected override void onDraw(SKCanvas canvas)
                 {
                     base.onDraw(canvas);
-                    var bm = AndroidUI.BitmapFactory.decodeFile("C:/Users/small/Pictures/Screenshot 2022-05-19 034147.jpeg");
-                    var p = new AndroidUI.Paint();
-                    p.setColor(AndroidUI.Color.WHITE);
+                    var bm = BitmapFactory.decodeFile("C:/Users/small/Pictures/Screenshot 2022-05-19 034147.jpeg");
+                    var p = new Paint();
+                    p.setColor(Color.WHITE);
                     canvas.DrawBitmap(bm, 0, 0, p);
                     bm.recycle();
                 }
@@ -102,14 +107,14 @@ namespace MainApp
 
                 if (false)
                 {
-                    AndroidUI.LinearLayout linearLayout = new();
+                    LinearLayout linearLayout = new();
 
-                    linearLayout.setOrientation(AndroidUI.LinearLayout.VERTICAL);
+                    linearLayout.setOrientation(LinearLayout.VERTICAL);
 
-                    linearLayout.addView(new TouchInfoView(), new AndroidUI.LinearLayout.LayoutParams(AndroidUI.View.LayoutParams.MATCH_PARENT, AndroidUI.View.LayoutParams.MATCH_PARENT, 1.0f));
-                    linearLayout.addView(new TouchInfoView(), new AndroidUI.LinearLayout.LayoutParams(AndroidUI.View.LayoutParams.MATCH_PARENT, AndroidUI.View.LayoutParams.MATCH_PARENT, 1.0f));
-                    linearLayout.addView(new TouchInfoView(), new AndroidUI.LinearLayout.LayoutParams(AndroidUI.View.LayoutParams.MATCH_PARENT, AndroidUI.View.LayoutParams.MATCH_PARENT, 1.0f));
-                    linearLayout.addView(new TouchInfoView(), new AndroidUI.LinearLayout.LayoutParams(AndroidUI.View.LayoutParams.MATCH_PARENT, AndroidUI.View.LayoutParams.MATCH_PARENT, 1.0f));
+                    linearLayout.addView(new TouchInfoView(), new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.MATCH_PARENT, 1.0f));
+                    linearLayout.addView(new TouchInfoView(), new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.MATCH_PARENT, 1.0f));
+                    linearLayout.addView(new TouchInfoView(), new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.MATCH_PARENT, 1.0f));
+                    linearLayout.addView(new TouchInfoView(), new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.MATCH_PARENT, 1.0f));
 
                     SetContentView(linearLayout);
                 }
@@ -123,18 +128,18 @@ namespace MainApp
                         }
                         else
                         {
-                            SetContentView(new AndroidUI.BoxView());
+                            SetContentView(new BoxView());
                         }
                     }
                     else
                     {
 
-                        var image = new AndroidUI.ImageView();
+                        var image = new ImageView();
                         //var bm = AndroidUI.BitmapFactory.decodeFile("C:/Users/small/Pictures/Screenshot 2022-05-19 034147.jpeg");
                         //image.setImageBitmap(bm);
                         //image.setBackgroundColor(AndroidUI.Color.MAGENTA);
-                        image.setImageDrawable(new AndroidUI.ColorDrawable(AndroidUI.Color.MAGENTA));
-                        image.setScaleType(AndroidUI.ImageView.ScaleType.CENTER_INSIDE);
+                        image.setImageDrawable(new ColorDrawable(Color.MAGENTA));
+                        image.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
 
                         //image.setX(200);
                         //image.setTranslationX(200);

@@ -15,6 +15,9 @@
  */
 
 using AndroidUI.Exceptions;
+using AndroidUI.OS;
+using AndroidUI.Utils;
+using AndroidUI.Utils.Arrays;
 
 namespace AndroidUI.Execution
 {

@@ -15,8 +15,10 @@
  */
 
 using AndroidUI.AnimationFramework.Interpolators;
+using AndroidUI.Applications;
 using AndroidUI.Exceptions;
 using AndroidUI.Execution;
+using AndroidUI.Utils;
 
 namespace AndroidUI.AnimationFramework.Animator
 {
@@ -2077,7 +2079,7 @@ namespace AndroidUI.AnimationFramework.Animator
          * both dependencies upon other nodes (in the dependencies list) as
          * well as dependencies of other nodes upon this (in the nodeDependents list).
          */
-        private class Node : ICloneable
+        private class Node : Utils.ICloneable
         {
             internal Animator mAnimation;
 
@@ -2134,7 +2136,7 @@ namespace AndroidUI.AnimationFramework.Animator
 
             public Node Clone()
             {
-                Node node = (Node)ICloneable.Clone(this);
+                Node node = (Node)Utils.ICloneable.Clone(this);
                 node.outer = outer;
                 node.mLatestParent = mLatestParent;
                 node.mParentsAdded = mParentsAdded;

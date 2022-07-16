@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+using AndroidUI.Utils;
+
 namespace AndroidUI.AnimationFramework.Animator
 {
     /**
@@ -21,7 +23,7 @@ namespace AndroidUI.AnimationFramework.Animator
      * ValueAnimator to calculate values between those keyframes for a given animation.
      * @hide
      */
-    public interface Keyframes : ICloneable
+    public interface Keyframes : Utils.ICloneable
     {
 
         /**

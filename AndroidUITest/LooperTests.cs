@@ -1,4 +1,6 @@
-﻿using AndroidUI.Execution;
+﻿using AndroidUI.Applications;
+using AndroidUI.Execution;
+using AndroidUI.Utils;
 using AndroidUITestFramework;
 
 namespace AndroidUITest
@@ -9,7 +11,7 @@ namespace AndroidUITest
         {
             public override void Run(TestGroup nullableInstance)
             {
-                AndroidUI.Context c = new();
+                Context c = new();
                 Thread t = new(() =>
                 {
                     Looper.prepare(c);
@@ -35,7 +37,7 @@ namespace AndroidUITest
             public override void Run(TestGroup nullableInstance)
             {
                 //Tools.SKIP();
-                AndroidUI.Context c = new();
+                Context c = new();
                 Looper m = null;
                 Handler h = null;
                 Thread t = new(() =>
@@ -57,10 +59,10 @@ namespace AndroidUITest
                 t.Join(1000);
                 Console.WriteLine("joined for 1 second");
                 Console.WriteLine("posting a runnable...");
-                h.post(AndroidUI.Runnable.Create(() => Console.WriteLine("POSTED")));
+                h.post(Runnable.Create(() => Console.WriteLine("POSTED")));
                 Console.WriteLine("posted a runnable");
                 Console.WriteLine("posting another runnable...");
-                h.post(AndroidUI.Runnable.Create(() => Console.WriteLine("POSTED 2")));
+                h.post(Runnable.Create(() => Console.WriteLine("POSTED 2")));
                 Console.WriteLine("posted another runnable");
                 Console.WriteLine("joining for 1 second...");
                 t.Join(1000);
@@ -87,7 +89,7 @@ namespace AndroidUITest
 
             public override void Run(TestGroup nullableInstance)
             {
-                AndroidUI.Context c = new();
+                Context c = new();
                 Thread t = new(() =>
                 {
                     Looper m = null;
@@ -105,7 +107,7 @@ namespace AndroidUITest
                     Console.WriteLine("finished looping");
 
                     Console.WriteLine("posting a runnable...");
-                    h.post(AndroidUI.Runnable.Create(() => Console.WriteLine("POSTED")));
+                    h.post(Runnable.Create(() => Console.WriteLine("POSTED")));
                     Console.WriteLine("posted a runnable");
 
                     Console.WriteLine("looping UI");
@@ -113,9 +115,9 @@ namespace AndroidUITest
                     Console.WriteLine("finished looping");
 
                     Console.WriteLine("posting runnables...");
-                    h.post(AndroidUI.Runnable.Create(() => Console.WriteLine("POSTED")));
-                    h.post(AndroidUI.Runnable.Create(() => Console.WriteLine("POSTED")));
-                    h.post(AndroidUI.Runnable.Create(() => Console.WriteLine("POSTED")));
+                    h.post(Runnable.Create(() => Console.WriteLine("POSTED")));
+                    h.post(Runnable.Create(() => Console.WriteLine("POSTED")));
+                    h.post(Runnable.Create(() => Console.WriteLine("POSTED")));
                     Console.WriteLine("posted runnables");
 
                     Console.WriteLine("looping UI");

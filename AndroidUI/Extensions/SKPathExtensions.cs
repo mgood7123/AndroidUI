@@ -1,4 +1,6 @@
-﻿using SkiaSharp;
+﻿using AndroidUI.Skia;
+using AndroidUI.Utils.Arrays;
+using SkiaSharp;
 
 namespace AndroidUI.Extensions
 {
