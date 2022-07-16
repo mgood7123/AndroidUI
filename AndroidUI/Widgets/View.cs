@@ -7512,7 +7512,7 @@ namespace AndroidUI.Widgets
          *
          * @param canvas The Canvas to which the View is rendered.
          */
-        public void draw(SKCanvas canvas)
+        virtual public void draw(SKCanvas canvas)
         {
             int privateFlags = mPrivateFlags;
             mPrivateFlags = privateFlags & ~PFLAG_DIRTY_MASK | PFLAG_DRAWN;
