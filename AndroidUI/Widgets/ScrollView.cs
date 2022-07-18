@@ -640,6 +640,7 @@ namespace AndroidUI.Widgets
                         {
                             mIsBeingDragged = true;
                             mLastMotionY = y;
+                            Log.d(TAG, "initVelocityTrackerIfNotExists");
                             initVelocityTrackerIfNotExists();
                             mVelocityTracker.addMovement(ev);
                             mNestedYOffset = 0;
@@ -650,7 +651,7 @@ namespace AndroidUI.Widgets
                             ViewParent parent = getParent();
                             if (parent != null)
                             {
-                                Console.WriteLine("disallow request intercept");
+                                Log.d(TAG, "disallow request intercept");
                                 parent.requestDisallowInterceptTouchEvent(true);
                             }
                         }
@@ -664,7 +665,7 @@ namespace AndroidUI.Widgets
                             int y = (int)touch.location.y;
                             if (!inChild((int)touch.location.x, (int)y))
                             {
-                                Console.WriteLine("! in child");
+                                Log.d(TAG, "! in child");
                                 mIsBeingDragged = false;
                                 recycleVelocityTracker();
                                 break;
@@ -677,6 +678,7 @@ namespace AndroidUI.Widgets
                             mLastMotionY = y;
                             mActivePointerId = ev.index;
 
+                            Log.d(TAG, "initOrResetVelocityTracker");
                             initOrResetVelocityTracker();
                             mVelocityTracker.addMovement(ev);
                             /*
@@ -713,6 +715,7 @@ namespace AndroidUI.Widgets
                         /* Release the drag */
                         mIsBeingDragged = false;
                         mActivePointerId = INVALID_POINTER;
+                        Log.d(TAG, "recycleVelocityTracker");
                         recycleVelocityTracker();
                         if (mScroller.springBack(mScrollX, mScrollY, 0, 0, 0, getScrollRange()))
                         {
@@ -742,6 +745,8 @@ namespace AndroidUI.Widgets
         override
             public bool onTouch(Touch ev)
         {
+            Log.d(TAG, "onTouch");
+            Log.d(TAG, "initVelocityTrackerIfNotExists");
             initVelocityTrackerIfNotExists();
 
             Touch vtev = ev;
@@ -779,6 +784,7 @@ namespace AndroidUI.Widgets
                              */
                             if (!mScroller.isFinished())
                             {
+                                Log.d(TAG, "abortAnimation");
                                 mScroller.abortAnimation();
                                 //if (mFlingStrictSpan != null)
                                 //{
@@ -907,19 +913,24 @@ namespace AndroidUI.Widgets
                     if (ev.touchCount == 1)
                     {
 
+                        Log.d(TAG, "mIsBeingDragged = " + mIsBeingDragged);
                         if (mIsBeingDragged)
                         {
                             VelocityTracker velocityTracker = mVelocityTracker;
                             velocityTracker.computeCurrentVelocity(1000, mMaximumVelocity);
-                            int initialVelocity = (int)velocityTracker.getVelocity(mActivePointerId).y;
+                            VelocityTracker.Velocity velocity = velocityTracker.getVelocity(mActivePointerId);
+                            Log.d(TAG, "velocity = " + velocity);
+                            int initialVelocity = (int)velocity.y;
 
                             if ((Math.Abs(initialVelocity) > mMinimumVelocity))
                             {
+                                Log.d(TAG, "flingWithNestedDispatch");
                                 flingWithNestedDispatch(-initialVelocity);
                             }
                             else if (mScroller.springBack(mScrollX, mScrollY, 0, 0, 0,
                                     getScrollRange()))
                             {
+                                Log.d(TAG, "postInvalidateOnAnimation");
                                 postInvalidateOnAnimation();
                             }
 

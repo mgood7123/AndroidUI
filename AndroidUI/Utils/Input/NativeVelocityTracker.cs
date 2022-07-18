@@ -135,6 +135,8 @@ namespace AndroidUI.Utils.Input
         // increasing id.  Its size should be equal to the number of one bits in idBits.
         internal void addMovement(long eventTime, BitwiseList<object> idBits, Dictionary<object, Position> positions)
         {
+            Log.d(LOG_TAG, "addMovement");
+            Log.d(LOG_TAG, "idBits count = " + idBits.Count);
             if (idBits.Count != positions.Count)
             {
                 throw new Exception("Mismatching number of pointers, idBits=" + idBits.Count + ", positions=" + positions.Count);
@@ -192,6 +194,7 @@ namespace AndroidUI.Utils.Input
         // Adds movement information for all pointers in a MotionEvent, including historical samples.
         internal void addMovement(Touch ev)
         {
+            Log.d(LOG_TAG, "addMovement (Touch)");
             var touch = ev.getTouchAtCurrentIndex();
             var actionMasked = touch.state;
 
@@ -230,18 +233,22 @@ namespace AndroidUI.Utils.Input
             {
                 pointerCount = ev.maxSupportedTouches;
             }
+            Log.d(LOG_TAG, "pointerCount = " + pointerCount);
 
             BitwiseList<object> idBits = ev.getPointerIdBits();
+            Log.d(LOG_TAG, "Touch idBits count = " + idBits.Count);
 
             int[] pointerIndex = new int[ev.maxSupportedTouches];
             for (int i = 0; i < pointerCount; i++)
             {
                 pointerIndex[i] = idBits.IndexOf(ev.getTouchAt(i).identity);
+                Log.d(LOG_TAG, "pointerIndex["+i+"] = " + pointerIndex[i]);
             }
 
             Dictionary<object, Position> positions = new(pointerCount);
 
             int historySize = ev.getHistorySize();
+            Log.d(LOG_TAG, "historySize = " + historySize);
             for (int h = 0; h < historySize; h++)
             {
                 var hi = ev.history[h];

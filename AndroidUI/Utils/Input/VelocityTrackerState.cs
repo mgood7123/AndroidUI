@@ -20,6 +20,7 @@ namespace AndroidUI.Utils.Input
 {
     class VelocityTrackerState
     {
+        const string LOG_TAG = "VelocityTrackerState";
         public VelocityTrackerState(int strategy)
         {
             mVelocityTracker = new((NativeVelocityTracker.Strategy)strategy);
@@ -41,10 +42,13 @@ namespace AndroidUI.Utils.Input
             BitwiseList<object> idBits = new(mVelocityTracker.getCurrentPointerIdBits());
             mCalculatedIdBits = idBits;
 
+            Log.d(LOG_TAG, "idBits count = " + idBits.Count);
+
             foreach (object id in idBits)
             {
                 float vx, vy;
                 mVelocityTracker.getVelocity(id, out vx, out vy);
+                Log.d(LOG_TAG, "velocity x = " + vx + ", velocity y = " + vy);
 
                 vx = vx * units / 1000;
                 vy = vy * units / 1000;
@@ -69,6 +73,7 @@ namespace AndroidUI.Utils.Input
                 Velocity velocity = mCalculatedVelocity[id];
                 velocity.vx = vx;
                 velocity.vy = vy;
+                Log.d(LOG_TAG, "velocity: " + velocity);
             }
         }
 
@@ -107,8 +112,12 @@ namespace AndroidUI.Utils.Input
         private struct Velocity
         {
             internal float vx, vy;
-        };
 
+            public override string ToString()
+            {
+                return "{x: " + vx + ", y: " + vy + "}";
+            }
+        }
         public const int MAX_POINTERS = 10;
 
         private NativeVelocityTracker mVelocityTracker;

@@ -189,11 +189,24 @@ namespace AndroidUI.Utils.Input
         public struct Velocity
         {
             public float x, y;
+            public override string ToString()
+            {
+                return "{x: " + x + ", y: " + y + "}";
+            }
         }
 
-        private static void nativeClear(VelocityTrackerState ptr) { ptr.clear(); }
-        private static void nativeAddMovement(VelocityTrackerState ptr, Touch ev) { ptr.addMovement(ev); }
-        private static void nativeComputeCurrentVelocity(VelocityTrackerState ptr, int units, float maxVelocity) { ptr.computeCurrentVelocity(units, maxVelocity); }
+        private static void nativeClear(VelocityTrackerState ptr)
+        {
+            ptr.clear();
+        }
+        private static void nativeAddMovement(VelocityTrackerState ptr, Touch ev)
+        {
+            ptr.addMovement(ev);
+        }
+        private static void nativeComputeCurrentVelocity(VelocityTrackerState ptr, int units, float maxVelocity)
+        {
+            ptr.computeCurrentVelocity(units, maxVelocity);
+        }
         private static Velocity nativeGetVelocity(VelocityTrackerState ptr, object id)
         {
             Velocity velocity = new();

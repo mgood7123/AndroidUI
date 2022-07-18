@@ -25,10 +25,10 @@ namespace AndroidUI.Utils.Input
     abstract class VelocityTrackerStrategy
     {
         // Log debug messages about velocity tracking.
-        internal const bool DEBUG_VELOCITY = false;
+        internal const bool DEBUG_VELOCITY = true;
 
         // Log debug messages about the progress of the algorithm itself.
-        internal const bool DEBUG_STRATEGY = false;
+        internal const bool DEBUG_STRATEGY = true;
 
         internal const int MAX_POINTERS = 10;
 
