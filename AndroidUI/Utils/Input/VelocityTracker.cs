@@ -169,12 +169,6 @@ namespace AndroidUI.Utils.Input
         private VelocityTrackerState mPtr;
         private int mStrategy;
 
-        // https://cs.android.com/android/platform/superproject/+/master:frameworks/base/core/jni/android_view_VelocityTracker.cpp
-        private static VelocityTrackerState nativeInitialize(int strategy)
-        {
-            return new VelocityTrackerState((int)getStrategyFromInt(strategy));
-        }
-
         // Return a strategy enum from integer value.
         static NativeVelocityTracker.Strategy getStrategyFromInt(int strategy)
         {
@@ -195,36 +189,65 @@ namespace AndroidUI.Utils.Input
             }
         }
 
+        public static bool USE_VELOCITY_TRACKER = true;
+
+        // https://cs.android.com/android/platform/superproject/+/master:frameworks/base/core/jni/android_view_VelocityTracker.cpp
+        private static VelocityTrackerState nativeInitialize(int strategy)
+        {
+            return USE_VELOCITY_TRACKER ? new VelocityTrackerState((int)getStrategyFromInt(strategy)) : null;
+        }
+
         private static void nativeClear(VelocityTrackerState ptr)
         {
-            ptr.clear();
+            if (USE_VELOCITY_TRACKER)
+            {
+                ptr.clear();
+            }
         }
         private static void nativeAddMovement(VelocityTrackerState ptr, Touch ev)
         {
-            ptr.addMovement(ev);
+            if (USE_VELOCITY_TRACKER)
+            {
+                ptr.addMovement(ev);
+            }
         }
         private static void nativeComputeCurrentVelocity(VelocityTrackerState ptr, int units, float maxVelocity)
         {
-            ptr.computeCurrentVelocity(units, maxVelocity);
+            if (USE_VELOCITY_TRACKER)
+            {
+                ptr.computeCurrentVelocity(units, maxVelocity);
+            }
         }
         private static Velocity nativeGetVelocity(VelocityTrackerState ptr, object id)
         {
             Velocity velocity = new();
-            ptr.getVelocity(id, out velocity.x, out velocity.y);
+            if (USE_VELOCITY_TRACKER)
+            {
+                ptr.getVelocity(id, out velocity.x, out velocity.y);
+            } else
+            {
+                velocity.x = 0;
+                velocity.y = 0;
+            }
+
             return velocity;
         }
         private static bool nativeGetEstimator(VelocityTrackerState ptr, object id, Estimator outEstimator)
         {
-            NativeVelocityTracker.Estimator estimator = new();
+            if (USE_VELOCITY_TRACKER)
+            {
+                NativeVelocityTracker.Estimator estimator = new();
 
-            bool result = ptr.getEstimator(id, estimator);
+                bool result = ptr.getEstimator(id, estimator);
 
-            outEstimator.degree = estimator.degree;
-            outEstimator.xCoeff = (float[])estimator.xCoeff.Clone();
-            outEstimator.yCoeff = (float[])estimator.yCoeff.Clone();
-            outEstimator.confidence = estimator.confidence;
+                outEstimator.degree = estimator.degree;
+                outEstimator.xCoeff = (float[])estimator.xCoeff.Clone();
+                outEstimator.yCoeff = (float[])estimator.yCoeff.Clone();
+                outEstimator.confidence = estimator.confidence;
 
-            return result;
+                return result;
+            }
+            return false;
         }
 
         static VelocityTracker()

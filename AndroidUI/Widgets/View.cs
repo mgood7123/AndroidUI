@@ -1663,7 +1663,7 @@ namespace AndroidUI.Widgets
             removeLongPressCallback();
             removePerformClickCallback();
             //clearAccessibilityThrottles();
-            //stopNestedScroll();
+            stopNestedScroll();
 
             // Anything that started animating right before detach should already
             // be in its state when re-attached.
@@ -7041,39 +7041,6 @@ namespace AndroidUI.Widgets
                 return 0;
             }
         }
-        class Interpolator
-        {
-            public Interpolator(int v1, int v2)
-            {
-            }
-        }
-        class ViewConfiguration
-        {
-            internal int getScaledFadingEdgeLength()
-            {
-                throw new NotImplementedException();
-            }
-
-            internal int getScaledScrollBarSize()
-            {
-                throw new NotImplementedException();
-            }
-
-            internal int getScaledMinScrollbarTouchTarget()
-            {
-                throw new NotImplementedException();
-            }
-
-            internal static int getScrollDefaultDelay()
-            {
-                throw new NotImplementedException();
-            }
-
-            internal static int getScrollBarFadeDuration()
-            {
-                throw new NotImplementedException();
-            }
-        }
 
         /**
          * <p>ScrollabilityCache holds various fields used by a View when scrolling
@@ -7082,7 +7049,6 @@ namespace AndroidUI.Widgets
          */
         private class ScrollabilityCache : Runnable
         {
-
             /**
              * Scrollbars are not visible
              */
@@ -7114,7 +7080,7 @@ namespace AndroidUI.Widgets
             public readonly SKMatrix matrix;
             public SKShader shader;
 
-            public readonly Interpolator scrollBarInterpolator = new(1, 2);
+            //public readonly Interpolator scrollBarInterpolator = new(1, 2);
 
             private static readonly float[] OPAQUE = { 255 };
             private static readonly float[] TRANSPARENT = { 0.0f };
@@ -7200,17 +7166,17 @@ namespace AndroidUI.Widgets
 
             public override void run()
             {
-                long now = NanoTime.currentTimeMillis(); //AnimationUtils.currentAnimationTimeMillis(context);
+                long now = AnimationUtils.currentAnimationTimeMillis(host.Context);
+                Log.d("SCOLLABILITY", "run");
                 if (now >= fadeStartTime)
                 {
-
                     // the animation fades the scrollbars out by changing
                     // the opacity (alpha) from fully opaque to fully
                     // transparent
                     int nextFrame = (int)now;
                     int framesCount = 0;
 
-                    Interpolator interpolator = scrollBarInterpolator;
+                    //Interpolator interpolator = scrollBarInterpolator;
 
                     // Start opaque
                     //interpolator.setKeyFrame(framesCount++, nextFrame, OPAQUE);
@@ -8225,17 +8191,18 @@ namespace AndroidUI.Widgets
             //    mInputEventConsistencyVerifier.onTouchEvent(ev, 0);
             //}
 
-            if (ev.getTouchAtCurrentIndex().state == Touch.State.TOUCH_DOWN)
+            Touch.State state = ev.getTouchAtCurrentIndex().state;
+            if (state == Touch.State.TOUCH_DOWN)
             {
                 // Defensive cleanup for new gesture
-                //stopNestedScroll();
+                stopNestedScroll();
             }
 
             if (onFilterTouchEventForSecurity(ev))
             {
-                //if ((mViewFlags & ENABLED_MASK) == ENABLED && handleScrollBarDragging(ev))
+                //if ((mViewFlags & ENABLED_MASK) == ENABLED) && handleScrollBarDragging(ev))
                 //{
-                //result = true;
+                //    result = true;
                 //}
                 //noinspection SimplifiableIfStatement
                 //ListenerInfo li = mListenerInfo;
@@ -8259,11 +8226,12 @@ namespace AndroidUI.Widgets
             // Clean up after nested scrolls if this is the end of a gesture;
             // also cancel it if we tried an ACTION_DOWN but we didn't want the rest
             // of the gesture.
-            //if (actionMasked == Touch_.ACTION_UP ||
-            //        actionMasked == Touch_.ACTION_CANCEL ||
-            //        (actionMasked == Touch_.ACTION_DOWN && !result)) {
-            //    stopNestedScroll();
-            //}
+            if (state == Touch.State.TOUCH_UP ||
+                    state == Touch.State.TOUCH_CANCELLED ||
+                    (state == Touch.State.TOUCH_DOWN && !result))
+            {
+                stopNestedScroll();
+            }
 
             return result;
         }
@@ -8384,7 +8352,7 @@ namespace AndroidUI.Widgets
             clearTouchTargets();
             resetCancelNextUpFlag(this);
             mGroupFlags &= ~FLAG_DISALLOW_INTERCEPT;
-            //mNestedScrollAxes = SCROLL_AXIS_NONE;
+            mNestedScrollAxes = SCROLL_AXIS_NONE;
         }
 
         /**
@@ -8531,7 +8499,7 @@ namespace AndroidUI.Widgets
                 if (!child.hasIdentityMatrix())
                 {
                     // TODO: RESTORE ME
-                    //transformedEvent.transform(child.getInverseMatrix());
+                    // transformedEvent.transform(child.getInverseMatrix());
                 }
 
                 handled = child.dispatchTouchEvent(transformedEvent);
@@ -13006,12 +12974,13 @@ namespace AndroidUI.Widgets
 
             int sx = 0;
             int sy = 0;
-            if (!drawingWithRenderNode)
-            {
-                //computeScroll();
+            //if (!drawingWithRenderNode)
+            //{
+                computeScroll();
                 sx = mScrollX;
                 sy = mScrollY;
-            }
+            //}
+            Log.d(VIEW_LOG_TAG, "sx = " + sx + ", sy = " + sy);
 
             bool drawingWithDrawingCache = cache != null && !drawingWithRenderNode;
             bool offsetForScroll = cache == null && !drawingWithRenderNode;
@@ -17192,8 +17161,9 @@ namespace AndroidUI.Widgets
          */
         protected bool awakenScrollBars()
         {
-            return false; // mScrollCache != null &&
-                          //awakenScrollBars(mScrollCache.scrollBarDefaultDelayBeforeFade, true);
+            return mScrollCache != null
+                //&& awakenScrollBars(mScrollCache.scrollBarDefaultDelayBeforeFade, true)
+            ;
         }
 
         /**

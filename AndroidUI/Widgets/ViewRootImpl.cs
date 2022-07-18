@@ -1500,6 +1500,7 @@ namespace AndroidUI.Widgets
 
                 for (int i = 0; i < viewCount; i++)
                 {
+                    Log.d(TAG, "invalidating view: " + mTempViews[i].GetType().FullName);
                     mTempViews[i].invalidate();
                     mTempViews[i] = null;
                 }
