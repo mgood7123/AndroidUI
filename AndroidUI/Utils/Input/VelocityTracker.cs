@@ -424,7 +424,7 @@ namespace AndroidUI.Utils.Input
          * @param id Which pointer's velocity to return.
          * @return The previously computed X and Y velocity.
          */
-        public Velocity getVelocity(int id)
+        public Velocity getVelocity(object id)
         {
             return nativeGetVelocity(mPtr, id);
         }

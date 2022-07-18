@@ -49,7 +49,7 @@ namespace AndroidUI
                     string s = c == 1 ? "" : "s";
 
                     if (touch.debug) Console.WriteLine("batched " + c + " event" + s);
-                    try
+                    if (System.Diagnostics.Debugger.IsAttached)
                     {
                         touch.batching = true;
                         while (events.Count > 1)
@@ -58,12 +58,27 @@ namespace AndroidUI
                         }
                         touch.batching = false;
                         touch.moveTouch(events.Dequeue());
-                    } catch (Exception e) {
-                        touch.batching = false;
-                        touch.history.Clear();
-                        pumpActive = false;
-                        // rethrow exception and hope we can be recovered earlier up
-                        throw e;
+                    }
+                    else
+                    {
+                        try
+                        {
+                            touch.batching = true;
+                            while (events.Count > 1)
+                            {
+                                touch.moveTouch(events.Dequeue());
+                            }
+                            touch.batching = false;
+                            touch.moveTouch(events.Dequeue());
+                        }
+                        catch (Exception e)
+                        {
+                            touch.batching = false;
+                            touch.history.Clear();
+                            pumpActive = false;
+                            // rethrow exception and hope we can be recovered earlier up
+                            throw e;
+                        }
                     }
                     if (touch.debug) Console.WriteLine("processed " + c + " queued event" + s);
                     handled = true;

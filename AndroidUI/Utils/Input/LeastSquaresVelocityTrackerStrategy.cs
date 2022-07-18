@@ -92,7 +92,8 @@ namespace AndroidUI.Utils.Input
             int count = idBits.Count;
             for (int i = 0; i < count; i++)
             {
-                movement.positions[i] = positions[i];
+                object id = idBits[i];
+                movement.positions[id] = positions[id];
             }
         }
 

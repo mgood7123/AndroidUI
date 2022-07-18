@@ -146,7 +146,7 @@ namespace AndroidUI.Utils.Input
                 idBits.RemoveAt(idBits.Count - 1);
             }
 
-            if ((mCurrentPointerIdBits & idBits) == 0
+            if ((mCurrentPointerIdBits & idBits) == BitwiseList<object>.ZERO
                     && eventTime >= mLastEventTime + ASSUME_POINTER_STOPPED_TIME)
             {
                 if (VelocityTrackerStrategy.DEBUG_VELOCITY)
@@ -255,13 +255,26 @@ namespace AndroidUI.Utils.Input
                 long eventTime = hi.timestamp;
                 for (int i = 0; i < pointerCount; i++)
                 {
-                    Position p = positions[i];
+                    Position p = new();
                     p.x = hi.location.x;
                     p.y = hi.location.y;
-                    positions[i] = p;
+                    positions[hi.identity] = p;
                 }
+                Log.d(LOG_TAG, "TOUCH add movement");
                 addMovement(eventTime, idBits, positions);
             }
+
+            long eventTime_ = touch.timestamp;
+            for (int i = 0; i < pointerCount; i++)
+            {
+                var t = ev.getTouchAt(i);
+                Position p = new();
+                p.x = t.location.x;
+                p.y = t.location.y;
+                positions[t.identity] = p;
+            }
+            Log.d(LOG_TAG, "TOUCH add movement");
+            addMovement(eventTime_, idBits, positions);
         }
 
         // Gets the velocity of the specified pointer id in position units per second.

@@ -70,10 +70,11 @@ namespace AndroidUI.Utils.Input
                     vy = -maxVelocity;
                 }
 
-                Velocity velocity = mCalculatedVelocity[id];
+                Velocity velocity = new();
                 velocity.vx = vx;
                 velocity.vy = vy;
                 Log.d(LOG_TAG, "velocity: " + velocity);
+                mCalculatedVelocity[id] = velocity;
             }
         }
 

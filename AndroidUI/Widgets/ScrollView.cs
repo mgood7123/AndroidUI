@@ -132,7 +132,7 @@ namespace AndroidUI.Widgets
          * ID of the active pointer. This is used to retain consistency during
          * drags/flings if multiple pointers are used.
          */
-        private int mActivePointerId = INVALID_POINTER;
+        private object mActivePointerId = INVALID_POINTER;
 
         /**
          * Used during scrolling to retrieve the new offset within the window.
@@ -154,7 +154,7 @@ namespace AndroidUI.Widgets
          * Sentinel value for no current active pointer.
          * Used by {@link #mActivePointerId}.
          */
-        private const int INVALID_POINTER = -1;
+        private static readonly object INVALID_POINTER = Utils.Lists.BitwiseList<object>.NEGATIVE_ONE;
 
         private /*SavedState*/object mSavedState;
 
@@ -620,20 +620,13 @@ namespace AndroidUI.Widgets
                         * Locally do absolute value. mLastMotionY is set to the y value
                         * of the down event.
                         */
-                        int activePointerId = mActivePointerId;
+                        object activePointerId = mActivePointerId;
                         if (activePointerId == INVALID_POINTER)
                         {
                             // If we don't have a valid id, the touch down wasn't on content.
                             break;
                         }
 
-                        int pointerIndex = ev.index;
-                        if (pointerIndex == -1)
-                        {
-                            Log.e(TAG, "Invalid pointerId=" + activePointerId
-                                    + " in onInterceptTouchEvent");
-                            break;
-                        }
                         int y = (int)touch.location.y;
                         int yDiff = Math.Abs(y - mLastMotionY);
                         if (yDiff > mTouchSlop && (getNestedScrollAxes() & SCROLL_AXIS_VERTICAL) == 0)
@@ -676,7 +669,7 @@ namespace AndroidUI.Widgets
                              * ACTION_DOWN always refers to pointer index 0.
                              */
                             mLastMotionY = y;
-                            mActivePointerId = ev.index;
+                            mActivePointerId = touch.identity;
 
                             Log.d(TAG, "initOrResetVelocityTracker");
                             initOrResetVelocityTracker();
@@ -795,14 +788,14 @@ namespace AndroidUI.Widgets
 
                             // Remember where the motion event started
                             mLastMotionY = (int)touch.location.y;
-                            mActivePointerId = ev.index;
+                            mActivePointerId = touch.identity;
                             startNestedScroll(SCROLL_AXIS_VERTICAL);
                         }
                         break;
                     }
                 case Touch.State.TOUCH_MOVE:
-                    int activePointerIndex = mActivePointerId;
-                    if (activePointerIndex == -1)
+                    object activePointerIndex = mActivePointerId;
+                    if (activePointerIndex == INVALID_POINTER)
                     {
                         Log.e(TAG, "Invalid pointerId=" + mActivePointerId + " in onTouchEvent");
                         break;
