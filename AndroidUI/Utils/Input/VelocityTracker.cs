@@ -17,7 +17,7 @@
 using AndroidUI.Exceptions;
 using AndroidUI.Utils;
 
-namespace AndroidUI.Widgets
+namespace AndroidUI.Utils.Input
 {
     /**
      * Helper for tracking the velocity of touch events, for implementing
@@ -34,7 +34,7 @@ namespace AndroidUI.Widgets
         private static readonly SynchronizedPool<VelocityTracker> sPool =
                 new SynchronizedPool<VelocityTracker>(2);
 
-        private const int ACTIVE_POINTER_ID = -1;
+        internal const int ACTIVE_POINTER_ID = -1;
 
         /**
          * Velocity Tracker Strategy: Invalid.
@@ -145,11 +145,13 @@ namespace AndroidUI.Widgets
         /**
          * Velocity Tracker Strategy look up table.
          */
-        private static readonly Dictionary<String, int> STRATEGIES = new();
+        private static readonly Dictionary<string, int> STRATEGIES = new();
 
         /** @hide */
-        class VelocityTrackerStrategy {
-            enum Strategy {
+        class VelocityTrackerStrategy
+        {
+            enum Strategy
+            {
                 VELOCITY_TRACKER_STRATEGY_DEFAULT,
                 VELOCITY_TRACKER_STRATEGY_IMPULSE,
                 VELOCITY_TRACKER_STRATEGY_LSQ1,
@@ -164,23 +166,56 @@ namespace AndroidUI.Widgets
             }
         }
 
-        private long mPtr;
+        private VelocityTrackerState mPtr;
         private int mStrategy;
 
         // https://cs.android.com/android/platform/superproject/+/master:frameworks/base/core/jni/android_view_VelocityTracker.cpp
-        private static long nativeInitialize(int strategy)
+        private static VelocityTrackerState nativeInitialize(int strategy)
         {
-            return 0;
+            return new VelocityTrackerState((int)getStrategyFromInt(strategy));
         }
-        private static void nativeDispose(long ptr) { }
-        private static void nativeClear(long ptr) { }
-        private static void nativeAddMovement(long ptr, Touch ev) { }
-        private static void nativeComputeCurrentVelocity(long ptr, int units, float maxVelocity) { }
-        private static float nativeGetXVelocity(long ptr, int id) { return 0; }
-        private static float nativeGetYVelocity(long ptr, int id) { return 0; }
-        private static bool nativeGetEstimator(long ptr, int id, Estimator outEstimator) { return false; }
 
-        static VelocityTracker() {
+        // Return a strategy enum from integer value.
+        static NativeVelocityTracker.Strategy getStrategyFromInt(int strategy)
+        {
+            if (strategy < (int)NativeVelocityTracker.Strategy.MIN ||
+                strategy > (int)NativeVelocityTracker.Strategy.MAX)
+            {
+                return NativeVelocityTracker.Strategy.DEFAULT;
+            }
+            return (NativeVelocityTracker.Strategy)strategy;
+        }
+
+        public struct Velocity
+        {
+            public float x, y;
+        }
+
+        private static void nativeClear(VelocityTrackerState ptr) { ptr.clear(); }
+        private static void nativeAddMovement(VelocityTrackerState ptr, Touch ev) { ptr.addMovement(ev); }
+        private static void nativeComputeCurrentVelocity(VelocityTrackerState ptr, int units, float maxVelocity) { ptr.computeCurrentVelocity(units, maxVelocity); }
+        private static Velocity nativeGetVelocity(VelocityTrackerState ptr, object id)
+        {
+            Velocity velocity = new();
+            ptr.getVelocity(id, out velocity.x, out velocity.y);
+            return velocity;
+        }
+        private static bool nativeGetEstimator(VelocityTrackerState ptr, object id, Estimator outEstimator)
+        {
+            NativeVelocityTracker.Estimator estimator = new();
+
+            bool result = ptr.getEstimator(id, estimator);
+
+            outEstimator.degree = estimator.degree;
+            outEstimator.xCoeff = (float[])estimator.xCoeff.Clone();
+            outEstimator.yCoeff = (float[])estimator.yCoeff.Clone();
+            outEstimator.confidence = estimator.confidence;
+
+            return result;
+        }
+
+        static VelocityTracker()
+        {
             // Strategy string and IDs mapping lookup.
             STRATEGIES.Add("impulse", VELOCITY_TRACKER_STRATEGY_IMPULSE);
             STRATEGIES.Add("lsq1", VELOCITY_TRACKER_STRATEGY_LSQ1);
@@ -197,7 +232,7 @@ namespace AndroidUI.Widgets
         /**
          * Return a strategy ID from string.
          */
-        private static int toStrategyId(String strStrategy)
+        private static int toStrategyId(string strStrategy)
         {
             if (STRATEGIES.ContainsKey(strStrategy))
             {
@@ -217,7 +252,7 @@ namespace AndroidUI.Widgets
         static public VelocityTracker obtain()
         {
             VelocityTracker instance = sPool.Acquire();
-            return (instance != null) ? instance
+            return instance != null ? instance
                     : new VelocityTracker(VELOCITY_TRACKER_STRATEGY_DEFAULT);
         }
 
@@ -231,7 +266,7 @@ namespace AndroidUI.Widgets
          *
          * @hide
          */
-        public static VelocityTracker obtain(String strategy)
+        public static VelocityTracker obtain(string strategy)
         {
             if (strategy == null)
             {
@@ -284,7 +319,7 @@ namespace AndroidUI.Widgets
             if (strategy == VELOCITY_TRACKER_STRATEGY_DEFAULT)
             {
                 // Check if user specified strategy by overriding system property.
-                String strategyProperty =
+                string strategyProperty =
                                         null;// SystemProperties.get("persist.input.velocitytracker.strategy");
                 if (string.IsNullOrEmpty(strategyProperty))
                 {
@@ -301,15 +336,6 @@ namespace AndroidUI.Widgets
                 mStrategy = strategy;
             }
             mPtr = nativeInitialize(mStrategy);
-        }
-
-        ~VelocityTracker()
-        {
-            if (mPtr != 0)
-            {
-                nativeDispose(mPtr);
-                mPtr = 0;
-            }
         }
 
         /**
@@ -331,7 +357,8 @@ namespace AndroidUI.Widgets
          */
         public void addMovement(Touch ev)
         {
-            if (ev == null) {
+            if (ev == null)
+            {
                 throw new IllegalArgumentException("event must not be null");
             }
             nativeAddMovement(mPtr, ev);
@@ -367,49 +394,26 @@ namespace AndroidUI.Widgets
         }
 
         /**
-         * Retrieve the last computed X velocity.  You must first call
+         * Retrieve the last computed X velocity and Y velocity.  You must first call
          * {@link #computeCurrentVelocity(int)} before calling this function.
          *
-         * @return The previously computed X velocity.
+         * @return The previously computed X and Y velocity.
          */
-        public float getXVelocity()
+        public Velocity getVelocity()
         {
-            return nativeGetXVelocity(mPtr, ACTIVE_POINTER_ID);
+            return nativeGetVelocity(mPtr, ACTIVE_POINTER_ID);
         }
 
         /**
-         * Retrieve the last computed Y velocity.  You must first call
-         * {@link #computeCurrentVelocity(int)} before calling this function.
-         *
-         * @return The previously computed Y velocity.
-         */
-        public float getYVelocity()
-        {
-            return nativeGetYVelocity(mPtr, ACTIVE_POINTER_ID);
-        }
-
-        /**
-         * Retrieve the last computed X velocity.  You must first call
+         * Retrieve the last computed X velocity and Y velocity.  You must first call
          * {@link #computeCurrentVelocity(int)} before calling this function.
          *
          * @param id Which pointer's velocity to return.
-         * @return The previously computed X velocity.
+         * @return The previously computed X and Y velocity.
          */
-        public float getXVelocity(int id)
+        public Velocity getVelocity(int id)
         {
-            return nativeGetXVelocity(mPtr, id);
-        }
-
-        /**
-         * Retrieve the last computed Y velocity.  You must first call
-         * {@link #computeCurrentVelocity(int)} before calling this function.
-         *
-         * @param id Which pointer's velocity to return.
-         * @return The previously computed Y velocity.
-         */
-        public float getYVelocity(int id)
-        {
-            return nativeGetYVelocity(mPtr, id);
+            return nativeGetVelocity(mPtr, id);
         }
 
         /**

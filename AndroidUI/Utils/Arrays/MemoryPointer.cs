@@ -77,9 +77,17 @@ namespace AndroidUI.Utils.Arrays
         /// </summary>
         public static MemoryPointer<T> operator +(MemoryPointer<T> memoryPointer, int value)
         {
+            return memoryPointer.Increment(value);
+        }
+
+        /// <summary>
+        /// increments the pointer offset by the specified value
+        /// </summary>
+        public MemoryPointer<T> Increment(int value)
+        {
             if (value == 0)
             {
-                return memoryPointer;
+                return this;
             }
 
             if (value < 0)
@@ -87,7 +95,7 @@ namespace AndroidUI.Utils.Arrays
                 throw new IndexOutOfRangeException("negative indexes are not allowed");
             }
 
-            MemoryPointer<T> tmp = new(memoryPointer);
+            MemoryPointer<T> tmp = new(this);
             tmp.offset += value;
             return tmp;
         }
@@ -97,8 +105,16 @@ namespace AndroidUI.Utils.Arrays
         /// </summary>
         public static MemoryPointer<T> operator +(MemoryPointer<T> memoryPointer, MemoryPointer<T> value)
         {
+            return memoryPointer.Increment(value);
+        }
+
+        /// <summary>
+        /// increments the pointer offset by the specified value
+        /// </summary>
+        public MemoryPointer<T> Increment(MemoryPointer<T> value)
+        {
             ArgumentNullException.ThrowIfNull(value, nameof(value));
-            return memoryPointer + value.offset;
+            return Increment(value.offset);
         }
 
         /// <summary>
@@ -106,9 +122,17 @@ namespace AndroidUI.Utils.Arrays
         /// </summary>
         public static MemoryPointer<T> operator -(MemoryPointer<T> memoryPointer, int value)
         {
+            return memoryPointer.Decrement(value);
+        }
+
+        /// <summary>
+        /// decrements the pointer offset by the specified value
+        /// </summary>
+        public MemoryPointer<T> Decrement(int value)
+        {
             if (value == 0)
             {
-                return memoryPointer;
+                return this;
             }
 
             if (value < 0)
@@ -116,7 +140,7 @@ namespace AndroidUI.Utils.Arrays
                 throw new IndexOutOfRangeException("negative indexes are not allowed");
             }
 
-            MemoryPointer<T> tmp = new(memoryPointer);
+            MemoryPointer<T> tmp = new(this);
             tmp.offset -= value;
             return tmp;
         }
@@ -126,8 +150,16 @@ namespace AndroidUI.Utils.Arrays
         /// </summary>
         public static MemoryPointer<T> operator -(MemoryPointer<T> memoryPointer, MemoryPointer<T> value)
         {
+            return memoryPointer.Decrement(value);
+        }
+
+        /// <summary>
+        /// decrements the pointer offset by the specified value
+        /// </summary>
+        public MemoryPointer<T> Decrement(MemoryPointer<T> value)
+        {
             ArgumentNullException.ThrowIfNull(value, nameof(value));
-            return memoryPointer - value.offset;
+            return Decrement(value.offset);
         }
 
         /// <summary>
@@ -135,7 +167,16 @@ namespace AndroidUI.Utils.Arrays
         /// </summary>
         public static MemoryPointer<T> operator ++(MemoryPointer<T> memoryPointer)
         {
-            return memoryPointer + 1;
+            return memoryPointer.Increment();
+        }
+
+        /// <summary>
+        /// increments the pointer offset by the specified value
+        /// </summary>
+        public MemoryPointer<T> Increment()
+        {
+            offset += 1;
+            return this;
         }
 
         /// <summary>
@@ -143,7 +184,35 @@ namespace AndroidUI.Utils.Arrays
         /// </summary>
         public static MemoryPointer<T> operator --(MemoryPointer<T> memoryPointer)
         {
-            return memoryPointer - 1;
+            return memoryPointer.Decrement();
+        }
+
+        /// <summary>
+        /// decrements the pointer offset by the specified value
+        /// </summary>
+        public MemoryPointer<T> Decrement()
+        {
+            offset -= 1;
+            return this;
+        }
+
+        public T Dereference()
+        {
+            return this[0];
+        }
+
+        public T DereferenceAndIncrement()
+        {
+            T r = this[0];
+            Increment();
+            return r;
+        }
+
+        public T DereferenceAndDecrement()
+        {
+            T r = this[0];
+            Decrement();
+            return r;
         }
 
         private class MemoryPointerEnumerator<T> : IEnumerator<T>

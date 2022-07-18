@@ -6,6 +6,16 @@ namespace AndroidUI.Utils.Arrays
 {
     public static class Arrays
     {
+        public static T[][] Create2DArray<T>(int a, int b) where T : new()
+        {
+            T[][] ar = new T[a][];
+            for (int i = 0; i < a; i++)
+            {
+                ar[i] = new T[b];
+            }
+            return ar;
+        }
+
         public static readonly object[] EMPTY_OBJECT_ARRAY = Array.Empty<object>();
 
         // This is Arrays.binarySearch(), but doesn't do any argument validation.

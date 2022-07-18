@@ -18,6 +18,7 @@ using AndroidUI.AnimationFramework.Animation;
 using AndroidUI.Applications;
 using AndroidUI.Exceptions;
 using AndroidUI.Utils;
+using AndroidUI.Utils.Input;
 using AndroidUI.Utils.Widgets;
 
 namespace AndroidUI.Widgets
@@ -910,7 +911,7 @@ namespace AndroidUI.Widgets
                         {
                             VelocityTracker velocityTracker = mVelocityTracker;
                             velocityTracker.computeCurrentVelocity(1000, mMaximumVelocity);
-                            int initialVelocity = (int)velocityTracker.getYVelocity(mActivePointerId);
+                            int initialVelocity = (int)velocityTracker.getVelocity(mActivePointerId).y;
 
                             if ((Math.Abs(initialVelocity) > mMinimumVelocity))
                             {

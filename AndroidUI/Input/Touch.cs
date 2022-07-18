@@ -59,7 +59,7 @@ namespace AndroidUI
             return new Iterator(this);
         }
 
-        private static void listResize<T>(List<T> list, int size) where T : new()
+        public static void listResize<T>(List<T> list, int size) where T : new()
         {
             if (size == 0)
             {
