@@ -1,5 +1,4 @@
-﻿using AndroidUI.Utils;
-using AndroidUI.Widgets;
+﻿using AndroidUI.Widgets;
 
 namespace AndroidUI.Utils.Widgets
 {

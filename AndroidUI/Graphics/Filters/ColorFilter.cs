@@ -1,6 +1,4 @@
-﻿using AndroidUI.Graphics;
-
-namespace AndroidUI.Graphics.Filters
+﻿namespace AndroidUI.Graphics.Filters
 {
     public abstract class ColorFilter
     {

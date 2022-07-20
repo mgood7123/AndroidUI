@@ -367,15 +367,15 @@ namespace AndroidUI.Execution
          */
         public void copyFrom(Message o)
         {
-            this.flags = o.flags & ~FLAGS_TO_CLEAR_ON_COPY_FROM;
-            this.what = o.what;
-            this.arg1 = o.arg1;
-            this.arg2 = o.arg2;
-            this.obj = o.obj;
-            this.replyTo = o.replyTo;
-            this.sendingUid = o.sendingUid;
-            this.workSourceUid = o.workSourceUid;
-            this.waiting = o.waiting;
+            flags = o.flags & ~FLAGS_TO_CLEAR_ON_COPY_FROM;
+            what = o.what;
+            arg1 = o.arg1;
+            arg2 = o.arg2;
+            obj = o.obj;
+            replyTo = o.replyTo;
+            sendingUid = o.sendingUid;
+            workSourceUid = o.workSourceUid;
+            waiting = o.waiting;
 
             //if (o.data != null)
             //{

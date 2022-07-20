@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-using AndroidUI.Utils;
-
 namespace AndroidUI.AnimationFramework.Interpolators
 {
     /**

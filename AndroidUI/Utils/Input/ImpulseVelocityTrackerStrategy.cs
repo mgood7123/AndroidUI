@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-using AndroidUI.Utils;
 using AndroidUI.Utils.Lists;
 
 namespace AndroidUI.Utils.Input

@@ -15,7 +15,6 @@
  */
 
 using AndroidUI.Applications;
-using AndroidUI.Graphics;
 using AndroidUI.Utils;
 
 namespace AndroidUI.AnimationFramework.Animator

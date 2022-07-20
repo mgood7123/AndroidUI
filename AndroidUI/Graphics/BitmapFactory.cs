@@ -15,7 +15,6 @@
  */
 
 using AndroidUI.Exceptions;
-using AndroidUI.Extensions;
 using AndroidUI.Utils;
 using AndroidUI.Utils.Arrays;
 using AndroidUI.Utils.Skia;

@@ -1534,8 +1534,7 @@ namespace AndroidUI.Widgets
                     bool canOverscroll = overscrollMode == OVERSCROLL_MODE.OVER_SCROLL_ALWAYS ||
                             (overscrollMode == OVERSCROLL_MODE.OVER_SCROLL_IF_CONTENT_SCROLLS && range > 0);
 
-                    overScrollBy(x - oldX, y - oldY, oldX, oldY, 0, range,
-                            0, mOverflingDistance, false);
+                    //overScrollBy(x - oldX, y - oldY, oldX, oldY, 0, range, 0, mOverflingDistance, false);
                     onScrollChanged(mScrollX, mScrollY, oldX, oldY);
 
                     if (canOverscroll)
@@ -1554,6 +1553,7 @@ namespace AndroidUI.Widgets
                 if (!awakenScrollBars())
                 {
                     // Keep on drawing until the animation has finished.
+                    Log.d(TAG, "!awaken scroll bars so post invalidate on animate");
                     postInvalidateOnAnimation();
                 }
             }

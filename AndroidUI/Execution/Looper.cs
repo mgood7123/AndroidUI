@@ -372,6 +372,7 @@ namespace AndroidUI.Execution
                     return;
                 }
                 LogExit(logging, "Finished Looping Once");
+                Thread.Sleep(8);
             }
         }
 

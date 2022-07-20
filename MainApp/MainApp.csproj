@@ -6,6 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Stride.Physics" Version="4.1.0.1734" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\AndroidUI\AndroidUI.csproj" />
   </ItemGroup>
 

@@ -3,7 +3,7 @@
     /// <summary>
     /// makes a copy of the internal list BEFORE any method which can modify the list is invoked
     /// </summary>
-    class CopyOnWriteList<T> : SynchronizedList<T>
+    public class CopyOnWriteList<T> : SynchronizedReadWriteNotifyList<T>
     {
         public CopyOnWriteList(LockInfo lockInfo) : base(lockInfo)
         {

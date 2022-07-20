@@ -2130,7 +2130,7 @@ namespace AndroidUI.AnimationFramework.Animator
              */
             public Node(Animator animation, AnimatorSet outer)
             {
-                this.mAnimation = animation;
+                mAnimation = animation;
                 this.outer = outer;
             }
 

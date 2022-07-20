@@ -6,9 +6,13 @@ using AndroidUI.Extensions;
 using AndroidUI.Graphics;
 using AndroidUI.Graphics.Drawables;
 using AndroidUI.Utils;
+using AndroidUI.Utils.Input;
 using AndroidUI.Widgets;
 using SkiaSharp;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 
 namespace MainApp
 {
@@ -81,6 +85,68 @@ namespace MainApp
             }
         }
 
+        class FlywheelView : Topten_RichTextKit_TextView
+        {
+            public FlywheelView() : base()
+            {
+                setText("FlywheelView");
+            }
+
+            Flywheel flywheel = new();
+
+            protected override void onDraw(SKCanvas canvas)
+            {
+                flywheel.AquireLock();
+                flywheel.Spin();
+                string s = "Flywheel\n";
+                s += "  Spinning: " + flywheel.Spinning + "\n";
+                s += "  Friction: " + flywheel.Friction + "\n";
+                s += "  Distance: \n";
+                s += "    x: " + flywheel.Distance.X + " pixels\n";
+                s += "    y: " + flywheel.Distance.Y + " pixels\n";
+                s += "  Total Distance: \n";
+                s += "    x: " + flywheel.TotalDistance.X + " pixels\n";
+                s += "    y: " + flywheel.TotalDistance.Y + " pixels\n";
+                s += "    time: " + flywheel.SpinTime + " ms\n";
+                s += "  Velocity: \n";
+                s += "    x: " + flywheel.Velocity.X + "\n";
+                s += "    y: " + flywheel.Velocity.Y + "\n";
+                s += "  Position: \n";
+                s += "    x: " + flywheel.Position.X + " pixels\n";
+                s += "    y: " + flywheel.Position.Y + " pixels\n";
+                setText(s);
+                base.onDraw(canvas);
+                if (flywheel.Spinning) invalidate();
+                flywheel.ReleaseLock();
+            }
+
+            public override bool onTouch(AndroidUI.Touch touch)
+            {
+                AndroidUI.Touch.Data data = touch.getTouchAtCurrentIndex();
+                var st = data.state;
+                flywheel.AquireLock();
+                switch (st)
+                {
+                    case AndroidUI.Touch.State.TOUCH_CANCELLED:
+                    case AndroidUI.Touch.State.TOUCH_DOWN:
+                        flywheel.Reset();
+                        break;
+                    case AndroidUI.Touch.State.TOUCH_MOVE:
+                        flywheel.AddMovement(data.timestamp, data.location.x, data.location.y);
+                        invalidate();
+                        break;
+                    case AndroidUI.Touch.State.TOUCH_UP:
+                        flywheel.FinalizeMovement();
+                        invalidate();
+                        break;
+                    default:
+                        break;
+                }
+                flywheel.ReleaseLock();
+                return true;
+            }
+        }
+
         class TestApp : Application
         {
             class A : View
@@ -104,94 +170,63 @@ namespace MainApp
 
             public override void OnCreate()
             {
-                if (false)
+                int num = 6;
+                switch(num)
                 {
-                    LinearLayout linearLayout = new();
+                    case 0:
+                        {
+                            SetContentView(new View());
+                        }
+                        break;
+                    case 1:
+                        {
+                            LinearLayout linearLayout = new();
 
-                    linearLayout.setOrientation(LinearLayout.VERTICAL);
+                            linearLayout.setOrientation(LinearLayout.VERTICAL);
 
-                    linearLayout.addView(new TouchInfoView(), new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.MATCH_PARENT, 1.0f));
-                    linearLayout.addView(new TouchInfoView(), new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.MATCH_PARENT, 1.0f));
-                    linearLayout.addView(new TouchInfoView(), new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.MATCH_PARENT, 1.0f));
-                    linearLayout.addView(new TouchInfoView(), new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.MATCH_PARENT, 1.0f));
+                            linearLayout.addView(new TouchInfoView(), new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.MATCH_PARENT, 1.0f));
+                            linearLayout.addView(new TouchInfoView(), new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.MATCH_PARENT, 1.0f));
+                            linearLayout.addView(new TouchInfoView(), new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.MATCH_PARENT, 1.0f));
+                            linearLayout.addView(new TouchInfoView(), new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.MATCH_PARENT, 1.0f));
 
-                    SetContentView(linearLayout);
-                }
-                else
-                {
-                    if (false)
-                    {
-                        if (false)
+                            SetContentView(linearLayout);
+                        }
+                        break;
+                    case 2:
                         {
                             SetContentView(new A());
                         }
-                        else
+                        break;
+                    case 3:
                         {
                             SetContentView(new BoxView());
                         }
-                    }
-                    else
-                    {
-                        if (false)
+                        break;
+                    case 4:
                         {
                             var image = new ImageView();
                             image.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-                            //var bm = AndroidUI.BitmapFactory.decodeFile("C:/Users/small/Pictures/Screenshot 2022-05-19 034147.jpeg");
-                            //image.setImageBitmap(bm);
-                            //image.setBackgroundColor(AndroidUI.Color.MAGENTA);
                             image.setImageDrawable(new ColorDrawable(Color.MAGENTA));
 
-                            //image.setX(200);
-                            //image.setTranslationX(200);
-                            //image.setY(200);
-                            //image.setTranslationY(200);
-
-                            //AndroidUI.Path path = new AndroidUI.Path();
-                            //path.arcTo(0f, 0f, 1000f, 1000f, 270f, -180f, true);
-                            //PathInterpolator pathInterpolator = new PathInterpolator(path);
-
-                            //ObjectAnimator animation = ObjectAnimator.ofFloat(Context, image, "x", 100f);
-                            //animation.setInterpolator(pathInterpolator);
-                            //animation.setDuration(2200);
-                            //animation.start();
-
-
                             ObjectAnimator oa = ObjectAnimator.ofInt(Context, image, "x", new int[] { 0, 100 });
-                            //oa.setRepeatCount(ValueAnimator.INFINITE);
                             oa.setRepeatMode(ValueAnimator.REVERSE);
                             oa.setDuration(2200);
 
                             ObjectAnimator ob = ObjectAnimator.ofInt(Context, image, "y", new int[] { 0, 100 });
-                            //ob.setRepeatCount(ValueAnimator.INFINITE);
                             ob.setRepeatMode(ValueAnimator.REVERSE);
                             ob.setDuration(1100);
 
                             ObjectAnimator oc = ObjectAnimator.ofInt(Context, image, "y", new int[] { 100, 200 });
-                            //ob.setRepeatCount(ValueAnimator.INFINITE);
                             oc.setRepeatMode(ValueAnimator.REVERSE);
                             oc.setDuration(1100);
 
                             AnimatorSet s = new(Context);
                             s.play(oa).with(ob).before(oc);
                             s.start();
-
-                            //oa.start();
-                            //ob.start();
-
-                            //AlphaAnimation anim = new(Context, 0.15f, 1.0f);
-                            //RotateAnimation anim = new(Context, 0, 180);
-                            //TranslateAnimation anim = new(Context, 0, 200, 0, 100);
-
-                            //anim.setDuration(2200);
-                            //anim.setRepeatCount(Animation.INFINITE);
-                            //anim.setRepeatMode(Animation.REVERSE);
-                            //anim.setAnimationListener(new l());
-                            //image.startAnimation(anim);
-
                             SetContentView(image);
-                            //animator.start();
                         }
-                        else
+                        break;
+                    case 5:
                         {
                             var image = new ImageView();
                             //image.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
@@ -201,9 +236,15 @@ namespace MainApp
                             var s = new ScrollView(Context);
                             s.addView(image);
                             SetContentView(s);
-
                         }
-                    }
+                        break;
+                    case 6:
+                        {
+                            SetContentView(new FlywheelView());
+                            break;
+                        }
+                    default:
+                        break;
                 }
             }
         }

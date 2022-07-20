@@ -15,7 +15,6 @@
  */
 
 using AndroidUI.Exceptions;
-using AndroidUI.Graphics;
 using AndroidUI.Utils;
 using AndroidUI.Utils.Arrays;
 using System.Reflection;

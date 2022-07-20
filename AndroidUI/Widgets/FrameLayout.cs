@@ -456,7 +456,7 @@ namespace AndroidUI.Widgets
              */
             public LayoutParams(LayoutParams source) : base(source)
             {
-                this.gravity = source.gravity;
+                gravity = source.gravity;
             }
         }
     }

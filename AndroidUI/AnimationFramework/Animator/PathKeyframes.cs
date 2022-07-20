@@ -16,8 +16,6 @@
 
 using AndroidUI.Exceptions;
 using AndroidUI.Extensions;
-using AndroidUI.Graphics;
-using AndroidUI.Utils;
 using static AndroidUI.AnimationFramework.Animator.Keyframes;
 
 namespace AndroidUI.AnimationFramework.Animator

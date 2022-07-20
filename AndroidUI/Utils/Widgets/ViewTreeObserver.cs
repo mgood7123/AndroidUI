@@ -15,7 +15,6 @@
  */
 
 using AndroidUI.Exceptions;
-using AndroidUI.Utils;
 using AndroidUI.Utils.Graphics;
 using AndroidUI.Utils.Lists;
 using AndroidUI.Widgets;

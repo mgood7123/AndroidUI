@@ -15,7 +15,6 @@
  */
 
 using AndroidUI.AnimationFramework.Interpolators;
-using AndroidUI.Utils;
 
 namespace AndroidUI.AnimationFramework.Animator
 {

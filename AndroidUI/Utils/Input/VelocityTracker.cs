@@ -15,7 +15,6 @@
  */
 
 using AndroidUI.Exceptions;
-using AndroidUI.Utils;
 
 namespace AndroidUI.Utils.Input
 {
@@ -182,7 +181,16 @@ namespace AndroidUI.Utils.Input
 
         public struct Velocity
         {
+            public static readonly Velocity ZERO = new Velocity(0.0f, 0.0f);
+
             public float x, y;
+
+            public Velocity(float x, float y)
+            {
+                this.x = x;
+                this.y = y;
+            }
+
             public override string ToString()
             {
                 return "{x: " + x + ", y: " + y + "}";

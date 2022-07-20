@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-using AndroidUI.Graphics;
-
 namespace AndroidUI.Utils.Graphics
 {
     public class Region

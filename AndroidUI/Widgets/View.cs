@@ -362,7 +362,7 @@ namespace AndroidUI.Widgets
 
             public AttachInfo(Context context)
             {
-                mDebugLayout = true; // draw layout bounds
+                mDebugLayout = false; // draw layout bounds
 
                 mRecomputeGlobalAttributes = false;
                 mHasWindowFocus = true;
@@ -12980,7 +12980,6 @@ namespace AndroidUI.Widgets
                 sx = mScrollX;
                 sy = mScrollY;
             //}
-            Log.d(VIEW_LOG_TAG, "sx = " + sx + ", sy = " + sy);
 
             bool drawingWithDrawingCache = cache != null && !drawingWithRenderNode;
             bool offsetForScroll = cache == null && !drawingWithRenderNode;

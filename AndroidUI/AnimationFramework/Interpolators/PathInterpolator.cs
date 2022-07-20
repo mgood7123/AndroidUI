@@ -15,8 +15,6 @@
  */
 
 using AndroidUI.Exceptions;
-using AndroidUI.Graphics;
-using AndroidUI.Utils;
 
 namespace AndroidUI.AnimationFramework.Interpolators
 {

@@ -15,7 +15,6 @@
  */
 
 using AndroidUI.AnimationFramework.Interpolators;
-using AndroidUI.Graphics;
 using AndroidUI.Utils;
 using static AndroidUI.AnimationFramework.Animator.Keyframe;
 

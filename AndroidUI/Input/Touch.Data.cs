@@ -35,7 +35,7 @@ namespace AndroidUI
             {
                 this.identity = identity is Identity id ? id : new Identity(identity);
 
-                this.timestamp = timestamp_milliseconds;
+                timestamp = timestamp_milliseconds;
                 timestamp_TOUCH_UP = 0;
                 timestamp_TOUCH_MOVE = 0;
                 timestamp_TOUCH_DOWN = 0;

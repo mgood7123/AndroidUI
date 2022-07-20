@@ -129,7 +129,7 @@ namespace AndroidUI.Widgets
         private const bool DEBUG_ORIENTATION = false;
         private const bool DEBUG_INPUT_RESIZE = false;
         private const bool DEBUG_DRAW = false;
-        private const bool DEBUG_FPS = true;
+        private const bool DEBUG_FPS = false;
         private const bool DEBUG_BLAST = false;
 
         private const string TAG = "ViewRootImpl";

@@ -3,24 +3,14 @@ using System.Collections.ObjectModel;
 
 namespace AndroidUI.Utils.Lists
 {
-    class SynchronizedList<T> : ListWrapper<T>
+    public class ReadWriteNotifyList<T> : ListWrapper<T>
     {
 
-        private LockInfo lockInfo;
+        public ReadWriteNotifyList() : base() { }
 
-        public SynchronizedList(LockInfo lockInfo) : base() =>
-            this.lockInfo = lockInfo ?? throw new ArgumentNullException(nameof(lockInfo));
+        public ReadWriteNotifyList(int capacity) : base(capacity) { }
 
-        public SynchronizedList(LockInfo lockInfo, int capacity) : base(capacity) =>
-            this.lockInfo = lockInfo ?? throw new ArgumentNullException(nameof(lockInfo));
-
-        public SynchronizedList(LockInfo lockInfo, IEnumerable<T> collection) : base(collection) =>
-            this.lockInfo = lockInfo ?? throw new ArgumentNullException(nameof(lockInfo));
-
-        ~SynchronizedList()
-        {
-            lockInfo.Dispose();
-        }
+        public ReadWriteNotifyList(IEnumerable<T> collection) : base(collection) { }
 
         virtual protected void BeforeReadOperation() { }
         virtual protected void AfterReadOperation() { }
@@ -31,14 +21,12 @@ namespace AndroidUI.Utils.Lists
         {
             try
             {
-                lockInfo.AcquireReadLock(timeout);
                 BeforeReadOperation();
                 a.Invoke();
             }
             finally
             {
                 AfterReadOperation();
-                lockInfo.ReleaseReadLock();
             }
         }
 
@@ -47,14 +35,12 @@ namespace AndroidUI.Utils.Lists
             T result = default;
             try
             {
-                lockInfo.AcquireReadLock(timeout);
                 BeforeReadOperation();
                 result = a.Invoke();
             }
             finally
             {
                 AfterReadOperation();
-                lockInfo.ReleaseReadLock();
             }
             return result;
         }
@@ -63,14 +49,12 @@ namespace AndroidUI.Utils.Lists
         {
             try
             {
-                lockInfo.AcquireWriteLock(timeout);
                 BeforeWriteOperation();
                 a.Invoke();
             }
             finally
             {
                 AfterWriteOperation();
-                lockInfo.ReleaseWriteLock();
             }
         }
 
@@ -79,14 +63,12 @@ namespace AndroidUI.Utils.Lists
             T result = default;
             try
             {
-                lockInfo.AcquireWriteLock(timeout);
                 BeforeWriteOperation();
                 result = a.Invoke();
             }
             finally
             {
                 AfterWriteOperation();
-                lockInfo.ReleaseWriteLock();
             }
             return result;
         }
@@ -190,7 +172,7 @@ namespace AndroidUI.Utils.Lists
             TryWithWrite(() => base.ForEach(action));
 
         public override EnumeratorWrapper GetEnumerator() =>
-            TryWithReadReturn(() => new SynchronizedEnumerator(this));
+            TryWithReadReturn(() => new ReadWriteNotifyListEnumerator(this));
 
         public override int GetHashCode() =>
             TryWithReadReturn(() => base.GetHashCode());
@@ -268,10 +250,10 @@ namespace AndroidUI.Utils.Lists
             TryWithRead(() => base.ICollection_CopyTo(array, arrayIndex));
 
         protected override IEnumerator IEnumerable_GetEnumerator() =>
-            TryWithReadReturn(() => new SynchronizedEnumerator(this));
+            TryWithReadReturn(() => new ReadWriteNotifyListEnumerator(this));
 
         protected override IEnumerator<T> IEnumerable_T__GetEnumerator() =>
-            TryWithReadReturn(() => new SynchronizedEnumerator(this));
+            TryWithReadReturn(() => new ReadWriteNotifyListEnumerator(this));
 
         protected override int IList_Add(object item) =>
             TryWithWriteReturn(() => base.IList_Add(item));
@@ -294,10 +276,10 @@ namespace AndroidUI.Utils.Lists
         protected override void IList_set_this(int index, object value) =>
             TryWithWrite(() => base.IList_set_this(index, value));
 
-        class SynchronizedEnumerator : EnumeratorWrapper
+        class ReadWriteNotifyListEnumerator : EnumeratorWrapper
         {
-            SynchronizedList<T> outer;
-            public SynchronizedEnumerator(SynchronizedList<T> outer) : base(outer.list) =>
+            ReadWriteNotifyList<T> outer;
+            public ReadWriteNotifyListEnumerator(ReadWriteNotifyList<T> outer) : base(outer.list) =>
                 this.outer = outer;
 
             public override T Current =>
@@ -311,20 +293,6 @@ namespace AndroidUI.Utils.Lists
 
             protected override void IEnumerator_Reset() =>
                 outer.TryWithWrite(() => base.IEnumerator_Reset());
-
-            protected override void OnBeforeDispose()
-            {
-                outer.lockInfo.AcquireWriteLock(-1);
-                base.OnBeforeDispose();
-            }
-
-            protected override void OnAfterDispose()
-            {
-                base.OnAfterDispose();
-                outer.lockInfo.ReleaseWriteLock();
-            }
-
-            // no need to lock in OnDispose()
         }
     }
 }

@@ -13,7 +13,6 @@
  */
 
 using AndroidUI.Exceptions;
-using AndroidUI.Graphics;
 using AndroidUI.Utils.Graphics;
 
 namespace AndroidUI

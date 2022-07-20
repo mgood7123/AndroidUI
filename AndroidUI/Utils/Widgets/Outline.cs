@@ -1,5 +1,4 @@
-﻿using AndroidUI.Utils;
-using SkiaSharp;
+﻿using SkiaSharp;
 
 namespace AndroidUI.Utils.Widgets
 {

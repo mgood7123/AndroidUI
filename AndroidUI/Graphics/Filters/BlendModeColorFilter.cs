@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 using AndroidUI.Extensions;
-using AndroidUI.Graphics;
 
 namespace AndroidUI.Graphics.Filters
 {
