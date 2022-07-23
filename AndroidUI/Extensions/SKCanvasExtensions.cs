@@ -52,6 +52,7 @@ namespace AndroidUI.Extensions
         /// <summary>Creates a Hardware Accelerated canvas.</summary>
         public static SKCanvas CreateHardwareAcceleratedCanvas(this SKCanvas this_canvas, GRContext context, int width, int height)
         {
+            if (width == 0 || height == 0) return null;
             SKSurface s = SKSurface.Create(context, false, new SKImageInfo(width, height));
             SKCanvas c = s.Canvas;
             c.ExtensionProperties_SetValue("GRContext", context);
@@ -64,8 +65,10 @@ namespace AndroidUI.Extensions
         /// <summary>Creates a software canvas, this is not Hardware Accelerated.</summary>
         public static SKCanvas CreateSoftwareCanvas(this SKCanvas this_canvas, int width, int height)
         {
+            if (width == 0 || height == 0) return null;
             SKCanvas c = new(new SKBitmap(width, height));
             c.setWidthHeight(width, height);
+            c.ExtensionProperties_SetValue("HardwareAccelerated", false);
             return c;
         }
 
@@ -73,6 +76,7 @@ namespace AndroidUI.Extensions
         // on the canvas of which this method is invoked from.</summary>
         public static SKCanvas CreateCanvas(this SKCanvas this_canvas, int width, int height)
         {
+            if (width == 0 || height == 0) return null;
             if (this_canvas.isHardwareAccelerated())
             {
                 GRContext context = (GRContext)this_canvas.ExtensionProperties_GetValue("GRContext", null);
