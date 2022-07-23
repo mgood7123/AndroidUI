@@ -6423,7 +6423,8 @@ namespace AndroidUI.Widgets
             //mPrivateFlags4 &= ~PFLAG4_CONTENT_CAPTURE_IMPORTANCE_MASK;
             //mContentCaptureSessionCached = false;
 
-            if ((mPrivateFlags & (PFLAG_DRAWN | PFLAG_HAS_BOUNDS)) == (PFLAG_DRAWN | PFLAG_HAS_BOUNDS)
+            if (
+                    (mPrivateFlags & (PFLAG_DRAWN | PFLAG_HAS_BOUNDS)) == (PFLAG_DRAWN | PFLAG_HAS_BOUNDS)
                     || invalidateCache && (mPrivateFlags & PFLAG_DRAWING_CACHE_VALID) == PFLAG_DRAWING_CACHE_VALID
                     || (mPrivateFlags & PFLAG_INVALIDATED) != PFLAG_INVALIDATED
                     || fullInvalidate && isOpaque() != mLastIsOpaque)
@@ -6534,8 +6535,8 @@ namespace AndroidUI.Widgets
             // Layered parents should be invalidated. Escalate to a full invalidate (and note that
             // we do this after consuming any relevant flags from the originating descendant)
             uint f = (uint)mPrivateFlags;
-            f |= PFLAG_INVALIDATED | PFLAG_DIRTY;
-            mPrivateFlags = (int)f;
+            f |= PFLAG_INVALIDATED;
+            mPrivateFlags = (int)f | PFLAG_DIRTY;
             // TODO: RESTORE ME ?
             //target = this;
             //}
@@ -6591,8 +6592,10 @@ namespace AndroidUI.Widgets
 
                 //if (child.mLayerType != LAYER_TYPE_NONE)
                 //{
-                //    mPrivateFlags |= PFLAG_INVALIDATED;
-                //    mPrivateFlags &= ~PFLAG_DRAWING_CACHE_VALID;
+                uint f = (uint)mPrivateFlags;
+                f |= PFLAG_INVALIDATED;
+                mPrivateFlags = (int)f;
+                mPrivateFlags &= ~PFLAG_DRAWING_CACHE_VALID;
                 //}
 
                 int[] location = attachInfo.mInvalidateChildLocation;
@@ -7532,7 +7535,9 @@ namespace AndroidUI.Widgets
         private void recreateChildDisplayList(View child)
         {
             child.mRecreateDisplayList = (child.mPrivateFlags & PFLAG_INVALIDATED) != 0;
-            child.mPrivateFlags &= (int)~PFLAG_INVALIDATED;
+            uint f = (uint)child.mPrivateFlags;
+            f &= ~PFLAG_INVALIDATED;
+            child.mPrivateFlags = (int)f;
             child.updateDisplayListIfDirty();
             child.mRecreateDisplayList = false;
         }
@@ -12939,7 +12944,9 @@ namespace AndroidUI.Widgets
                 // Clear INVALIDATED flag to allow invalidation to occur during rendering, but
                 // retain the flag's value temporarily in the mRecreateDisplayList flag
                 mRecreateDisplayList = (mPrivateFlags & PFLAG_INVALIDATED) != 0;
-                mPrivateFlags &= (int)~PFLAG_INVALIDATED;
+                uint f = (uint)mPrivateFlags;
+                f &= ~PFLAG_INVALIDATED;
+                mPrivateFlags = (int)f;
             }
 
             // we cannot dispose this since we require it for drawing
