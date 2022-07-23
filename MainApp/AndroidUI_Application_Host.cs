@@ -1,6 +1,4 @@
-﻿using AndroidUI.AnimationFramework.Animation;
-using AndroidUI.AnimationFramework.Animator;
-using AndroidUI.AnimationFramework.Interpolators;
+﻿using AndroidUI.AnimationFramework.Animator;
 using AndroidUI.Applications;
 using AndroidUI.Extensions;
 using AndroidUI.Graphics;
@@ -10,9 +8,6 @@ using AndroidUI.Utils.Input;
 using AndroidUI.Widgets;
 using SkiaSharp;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Numerics;
 
 namespace MainApp
 {
