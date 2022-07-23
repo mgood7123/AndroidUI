@@ -20,7 +20,8 @@ namespace AndroidUI.Applications
 
         public Touch multiTouch;
 
-        SKCanvas canvas;
+        int w, h;
+        bool needsSizeChange;
 
         public Application Application
         {
@@ -53,9 +54,6 @@ namespace AndroidUI.Applications
             multiTouch.MaxSupportedTouches = 10;
             multiTouch.throw_on_error = false;
         }
-
-        int w, h;
-        bool needsSizeChange;
         
         public void OnPaintSurface(GRContext graphicsContext, GRBackendRenderTarget r, SKSurface surface)
         {
@@ -70,30 +68,19 @@ namespace AndroidUI.Applications
                 if (needsSizeChange)
                 {
                     needsSizeChange = false;
-                    if (canvas != null)
-                    {
-                        canvas.DisposeSurface();
-                        canvas.Dispose();
-                        canvas = null;
-                    }
-                    canvas = surface.Canvas.CreateHardwareAcceleratedCanvas(graphicsContext, r.Width, r.Height);
+                    surface.Canvas.ExtensionProperties_SetValue("GRContext", graphicsContext);
+                    surface.Canvas.setWidthHeight(w, h);
+                    surface.Canvas.ExtensionProperties_SetValue("Surface", surface);
+                    surface.Canvas.ExtensionProperties_SetValue("HardwareAccelerated", true);
                     Application.onSizeChanged(r.Width, r.Height);
                 }
-                canvas.Clear(SKColors.Black);
-                Application.Draw(canvas);
-                canvas.Flush();
-                canvas.DrawToCanvas(surface.Canvas, 0, 0);
+                surface.Canvas.Clear(SKColors.Black);
+                Application.Draw(surface.Canvas);
                 surface.Canvas.Flush();
             }
             else
             {
                 // no application, dispose of canvas
-                if (canvas != null)
-                {
-                    canvas.DisposeSurface();
-                    canvas.Dispose();
-                    canvas = null;
-                }
                 surface.Canvas.Clear(SKColors.Black);
             }
         }
