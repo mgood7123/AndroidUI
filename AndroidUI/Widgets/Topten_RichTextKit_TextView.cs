@@ -8,7 +8,7 @@ namespace AndroidUI.Widgets
     public class Topten_RichTextKit_TextView : View
     {
         TextBlock textBlock;
-        Style style;
+        Style textStyle;
         string text;
         float textSize;
         Unit textSizeUnit;
@@ -22,7 +22,7 @@ namespace AndroidUI.Widgets
         public Topten_RichTextKit_TextView() : base()
         {
             textBlock = new();
-            style = new();
+            textStyle = new();
             setText("Topten_RichTextKit_TextView");
             setTextSize(12);
             setTextColor(SKColors.Aqua);
@@ -108,21 +108,21 @@ namespace AndroidUI.Widgets
         {
             if (textChanged || textSizeChanged || textColorChanged)
             {
-                style.FontSize = textSize;
-                style.TextColor = textColor;
+                textStyle.FontSize = textSize;
+                textStyle.TextColor = textColor;
                 if (textChanged)
                 {
                     lock (textBlock)
                     {
                         textBlock.Clear();
-                        textBlock.AddText(text, style);
+                        textBlock.AddText(text, textStyle);
                     }
                 }
                 else
                 {
                     lock (textBlock)
                     {
-                        textBlock.ApplyStyle(0, textBlock.Length, style);
+                        textBlock.ApplyStyle(0, textBlock.Length, textStyle);
                     }
                 }
 
