@@ -12756,16 +12756,14 @@ namespace AndroidUI.Widgets
 
             if (mPreSortedChildren == null)
             {
-                mPreSortedChildren = new(childrenCount);
+                mPreSortedChildren = new(new View[childrenCount]);
             }
             else
             {
                 // callers should clear, so clear shouldn't be necessary, but for safety...
-                mPreSortedChildren.Clear();
-
-                // no equvilant in C#  need to reallocate
-                //mPreSortedChildren.EnsureCapacity(childrenCount);
-                mPreSortedChildren = new(childrenCount);
+                //mPreSortedChildren.Clear();
+                //mPreSortedChildren.Capacity = childrenCount;
+                mPreSortedChildren = new(new View[childrenCount]);
             }
 
             bool customOrder = isChildrenDrawingOrderEnabled();
@@ -12782,7 +12780,7 @@ namespace AndroidUI.Widgets
                 {
                     insertIndex--;
                 }
-                mPreSortedChildren[insertIndex] = nextChild;
+                mPreSortedChildren.Insert(insertIndex, nextChild);
             }
             return mPreSortedChildren;
         }
@@ -13317,7 +13315,7 @@ namespace AndroidUI.Widgets
          * (but after its own view has been drawn).
          * @param canvas the canvas on which to draw the view
          */
-        protected void dispatchDraw(SKCanvas canvas)
+        virtual protected void dispatchDraw(SKCanvas canvas)
         {
             int childrenCount = mChildrenCount;
             View[] children = mChildren;
@@ -13377,8 +13375,7 @@ namespace AndroidUI.Widgets
             int transientIndex = transientCount != 0 ? 0 : -1;
             // Only use the preordered list if not HW accelerated, since the HW pipeline will do the
             // draw reordering internally
-            List<View> preorderedList = isHardwareAccelerated()
-                    ? null : buildOrderedChildList();
+            List<View> preorderedList = buildOrderedChildList();
             bool customOrder = preorderedList == null
                     && isChildrenDrawingOrderEnabled();
             for (int i = 0; i < childrenCount; i++)
