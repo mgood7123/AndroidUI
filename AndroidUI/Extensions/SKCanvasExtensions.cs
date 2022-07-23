@@ -14,6 +14,10 @@ namespace AndroidUI.Extensions
             {
                 s.Dispose();
             }
+            this_canvas.ExtensionProperties_RemoveValue("Surface");
+            this_canvas.ExtensionProperties_RemoveValue("GRContext");
+            this_canvas.ExtensionProperties_RemoveValue("HardwareAccelerated");
+            s = null;
         }
 
         internal static void setWidthHeight(this SKCanvas this_canvas, int width, int height)
