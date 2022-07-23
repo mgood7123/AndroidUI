@@ -54,50 +54,44 @@ namespace AndroidUI.Applications
             multiTouch.throw_on_error = false;
         }
 
-        public void OnPaintSurface(GRContext GRContext, GRBackendRenderTarget r, SKSurface surface)
+        int w, h;
+        bool needsSizeChange;
+        
+        public void OnPaintSurface(GRContext graphicsContext, GRBackendRenderTarget r, SKSurface surface)
         {
+            if (w != r.Width || h != r.Height)
+            {
+                w = r.Width;
+                h = r.Height;
+                needsSizeChange = true;
+            }
             if (Application != null)
             {
-                int w = r.Width;
-                int h = r.Height;
-
-                bool canvas_exists = canvas != null;
-                bool canvas_needs_creation = !canvas_exists
-                    || canvas.getWidth() != w
-                    || canvas.getHeight() != h;
-
-                if (canvas_needs_creation)
+                if (needsSizeChange)
                 {
-                    if (canvas_exists)
+                    needsSizeChange = false;
+                    if (canvas != null)
                     {
-                        canvas.Dispose();
                         canvas.DisposeSurface();
+                        canvas.Dispose();
                         canvas = null;
                     }
-                    if (w != 0 && h != 0)
-                    {
-                        canvas = SKCanvasExtensions.CreateHardwareAcceleratedCanvas(null, GRContext, w, h);
-                    }
-                    Application.onSizeChanged(w, h);
+                    canvas = surface.Canvas.CreateHardwareAcceleratedCanvas(graphicsContext, r.Width, r.Height);
+                    Application.onSizeChanged(r.Width, r.Height);
                 }
-                if (canvas != null)
-                {
-                    canvas.Clear(SKColors.Black);
-
-                    Application.Draw(canvas);
-
-                    canvas.Flush();
-
-                    canvas.DrawToCanvas(surface.Canvas, 0, 0);
-                }
+                canvas.Clear(SKColors.Black);
+                Application.Draw(canvas);
+                canvas.Flush();
+                canvas.DrawToCanvas(surface.Canvas, 0, 0);
+                surface.Canvas.Flush();
             }
             else
             {
                 // no application, dispose of canvas
                 if (canvas != null)
                 {
-                    canvas.Dispose();
                     canvas.DisposeSurface();
+                    canvas.Dispose();
                     canvas = null;
                 }
                 surface.Canvas.Clear(SKColors.Black);
