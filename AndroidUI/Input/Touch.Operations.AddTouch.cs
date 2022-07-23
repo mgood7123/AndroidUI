@@ -13,7 +13,20 @@ namespace AndroidUI
             {
                 TouchContainer touchContainer = touchContainerList.ElementAt(i);
                 if (!TryPurgeTouch(touchContainer)) found = true;
-                if (!found && !touchContainer.used)
+                if ((touchContainer.used && touchContainer.touch.identity == touchData.identity))
+                {
+                    Console.WriteLine("REUSING TOUCH: CONTAINER IDENTITY MATCHES ALREADY ACTIVE IDENTITY FOR TOUCH_DOWN : " + touchData.identity);
+                    found = true;
+                    // when a touch is added all timestamps should be reset
+                    touchContainer.touch = touchData;
+                    touchContainer.touch.state = State.TOUCH_DOWN;
+                    touchContainer.touch.timestamp_TOUCH_DOWN = touchData.timestamp;
+                    touchContainer.used = true;
+                    touchCount++;
+                    index = i;
+                    if (debug) Console.WriteLine("TOUCH_DOWN: INDEX: " + i);
+                }
+                else if ((!found && !touchContainer.used))
                 {
                     found = true;
                     // when a touch is added all timestamps should be reset
