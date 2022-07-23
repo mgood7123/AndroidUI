@@ -12,8 +12,16 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DebugType>full</DebugType>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+
   <ItemGroup>
-    <PackageReference Include="AndroidUI.Native.Nuget" Version="0.0.109" />
+    <PackageReference Include="AndroidUI.Native.Nuget" Version="0.0.110" />
     <PackageReference Include="BepuPhysics" Version="2.5.0-beta.6" />
     <PackageReference Include="SkiaSharp" Version="2.88.1-preview.3304" />
     <PackageReference Include="SkiaSharp.HarfBuzz" Version="2.88.1-preview.3223" />
