@@ -33,7 +33,7 @@ namespace AndroidUI.Utils.Input
         public Vector2 Velocity => velocity;
         public Vector2 Position => position;
 
-        public long SpinTime => endTime - startTime;
+        public long SpinTime => pos.Count >= 2 ? (endTime - startTime) : 0;
 
         public float Friction { get => friction; set => friction = value; }
 
