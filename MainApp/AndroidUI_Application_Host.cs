@@ -168,9 +168,17 @@ namespace MainApp
                 }
             }
 
+            class AL : AnimatorListenerAdapter
+            {
+                public override void onAnimationEnd(Animator animation)
+                {
+                    animation.start();
+                }
+            }
+
             public override void OnCreate()
             {
-                int num = 6;
+                int num = 4;
                 switch(num)
                 {
                     case 0:
@@ -222,6 +230,7 @@ namespace MainApp
 
                             AnimatorSet s = new(Context);
                             s.play(oa).with(ob).before(oc);
+                            s.addListener(new AL());
                             s.start();
                             SetContentView(image);
                         }
