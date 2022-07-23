@@ -15,6 +15,9 @@ namespace WinFormsApp1
             DpiChangedAfterParent += SkiaGL_DpiChangedAfterParent;
             handleDpiChange();
             host.OnCreate();
+
+            // VSync is disabled by default, who knows why, enable it
+            VSync = true;
         }
 
         private void SkiaGL_DpiChangedAfterParent(object? sender, EventArgs e)
@@ -31,7 +34,6 @@ namespace WinFormsApp1
 
         protected override void OnPaintSurface(SKPaintGLSurfaceEventArgs e)
         {
-            base.OnPaintSurface(e);
             host.OnPaint(GRContext, e.BackendRenderTarget, e.Surface);
         }
 
