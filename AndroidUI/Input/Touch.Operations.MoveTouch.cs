@@ -24,7 +24,15 @@ namespace AndroidUI
 
                         if (touchData.hasLocation)
                         {
-                            touchData.location_moved = previous.location.x != touchData.location.x && previous.location.y != touchData.location.y;
+                            if (previous.location.x != touchData.location.x || previous.location.y != touchData.location.y)
+                            {
+                                touchData.location_moved = true;
+                            }
+                            else
+                            {
+                                if (debug && printMoved) Console.WriteLine("aborting MoveTouch, touch has not actually moved, identity: " + touchData.identity);
+                                return;
+                            }
                         }
                         touchData.normalized_location_on_input_surface_moved = previous.normalized_location_on_input_surface.x != touchData.normalized_location_on_input_surface.x || previous.normalized_location_on_input_surface.y != touchData.normalized_location_on_input_surface.y;
                         touchData.location_moved_or_normalized_location_on_input_surface_moved = touchData.location_moved || touchData.normalized_location_on_input_surface_moved;

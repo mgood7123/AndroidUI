@@ -132,23 +132,23 @@ namespace AndroidUI
                     s += ", action : " + StateToString(touch.state);
                     s += ", identity : " + touch.identity;
                     s += ", timestamp : " + touch.timestamp;
-                    //s += ", timestamp (TOUCH_DOWN) : " + touch.timestamp_TOUCH_DOWN;
-                    //s += ", timestamp (TOUCH_MOVE) : " + touch.timestamp_TOUCH_MOVE;
-                    //s += ", timestamp (TOUCH_UP) : " + touch.timestamp_TOUCH_UP;
-                    //s += ", timestamp (TOUCH_CANCELLED) : " + touch.timestamp_TOUCH_CANCELLED;
+                    s += ", timestamp (TOUCH_DOWN) : " + touch.timestamp_TOUCH_DOWN;
+                    s += ", timestamp (TOUCH_MOVE) : " + touch.timestamp_TOUCH_MOVE;
+                    s += ", timestamp (TOUCH_UP) : " + touch.timestamp_TOUCH_UP;
+                    s += ", timestamp (TOUCH_CANCELLED) : " + touch.timestamp_TOUCH_CANCELLED;
                     s += ", has location : " + (touch.hasLocation ? "True" : "False");
                     if (touch.hasLocation)
                     {
                         s += ", x : " + touch.location.x;
                         s += ", y : " + touch.location.y;
-                        //s += ", did touch location move : " + (touch.location_moved ? "True" : "False");
+                        s += ", did touch location move : " + (touch.location_moved ? "True" : "False");
                     }
-                    //s += ", normalized location on input surface x : " + touch.normalized_location_on_input_surface.x;
-                    //s += ", normalized location on input surface y : " + touch.normalized_location_on_input_surface.y;
-                    //s += ", did normalized location on input surface move : " + (touch.normalized_location_on_input_surface_moved ? "True" : "False");
-                    //s += ", did touch location or normalized location on input surface move : " + (touch.location_moved_or_normalized_location_on_input_surface_moved ? "True" : "False");
-                    //s += ", size : " + touch.size;
-                    //s += ", pressure : " + touch.pressure;
+                    s += ", normalized location on input surface x : " + touch.normalized_location_on_input_surface.x;
+                    s += ", normalized location on input surface y : " + touch.normalized_location_on_input_surface.y;
+                    s += ", did normalized location on input surface move : " + (touch.normalized_location_on_input_surface_moved ? "True" : "False");
+                    s += ", did touch location or normalized location on input surface move : " + (touch.location_moved_or_normalized_location_on_input_surface_moved ? "True" : "False");
+                    s += ", size : " + touch.size;
+                    s += ", pressure : " + touch.pressure;
                 }
             }
             return s;
