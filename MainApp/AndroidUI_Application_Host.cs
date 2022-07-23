@@ -133,16 +133,15 @@ namespace MainApp
                         break;
                     case AndroidUI.Touch.State.TOUCH_MOVE:
                         flywheel.AddMovement(data.timestamp, data.location.x, data.location.y);
-                        invalidate();
                         break;
                     case AndroidUI.Touch.State.TOUCH_UP:
                         flywheel.FinalizeMovement();
-                        invalidate();
                         break;
                     default:
                         break;
                 }
                 flywheel.ReleaseLock();
+                invalidate();
                 return true;
             }
         }
@@ -178,7 +177,7 @@ namespace MainApp
 
             public override void OnCreate()
             {
-                int num = 4;
+                int num = 6;
                 switch(num)
                 {
                     case 0:
