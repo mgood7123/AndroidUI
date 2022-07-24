@@ -129,6 +129,8 @@ namespace AndroidUI.Widgets
                 textChanged = false;
                 textSizeChanged = false;
                 textColorChanged = false;
+                requestLayout();
+                invalidate();
             }
         }
 
