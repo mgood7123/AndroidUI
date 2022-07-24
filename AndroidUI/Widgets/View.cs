@@ -6125,11 +6125,24 @@ namespace AndroidUI.Widgets
         {
             if (mParent is View)
             {
-                View p = (View)mParent;
-                uint f = (uint)p.mPrivateFlags;
-                f |= PFLAG_INVALIDATED;
-                p.mPrivateFlags = (int)f;
+                AddInvalidatedFlag((View)mParent);
             }
+        }
+
+        private static void AddInvalidatedFlag(View p)
+        {
+            //Log.d(p.GetType().Name, "A + PFLAG_INVALIDATED");
+            uint f = (uint)p.mPrivateFlags;
+            f |= PFLAG_INVALIDATED;
+            p.mPrivateFlags = (int)f;
+        }
+
+        private static void RemoveInvalidatedFlag(View p)
+        {
+            //Log.d(p.GetType().Name, "R - PFLAG_INVALIDATED");
+            uint f = (uint)p.mPrivateFlags;
+            f &= ~PFLAG_INVALIDATED;
+            p.mPrivateFlags = (int)f;
         }
 
         /**
@@ -6439,9 +6452,7 @@ namespace AndroidUI.Widgets
 
                 if (invalidateCache)
                 {
-                    uint f = (uint)mPrivateFlags;
-                    f |= PFLAG_INVALIDATED;
-                    mPrivateFlags = (int)f;
+                    AddInvalidatedFlag(this);
                     mPrivateFlags &= ~PFLAG_DRAWING_CACHE_VALID;
                 }
 
@@ -6534,9 +6545,8 @@ namespace AndroidUI.Widgets
             //{
             // Layered parents should be invalidated. Escalate to a full invalidate (and note that
             // we do this after consuming any relevant flags from the originating descendant)
-            uint f = (uint)mPrivateFlags;
-            f |= PFLAG_INVALIDATED;
-            mPrivateFlags = (int)f | PFLAG_DIRTY;
+            AddInvalidatedFlag(this);
+            mPrivateFlags |= PFLAG_DIRTY;
             // TODO: RESTORE ME ?
             //target = this;
             //}
@@ -6592,9 +6602,7 @@ namespace AndroidUI.Widgets
 
                 //if (child.mLayerType != LAYER_TYPE_NONE)
                 //{
-                uint f = (uint)mPrivateFlags;
-                f |= PFLAG_INVALIDATED;
-                mPrivateFlags = (int)f;
+                AddInvalidatedFlag(this);
                 mPrivateFlags &= ~PFLAG_DRAWING_CACHE_VALID;
                 //}
 
@@ -6745,9 +6753,7 @@ namespace AndroidUI.Widgets
                 mPrivateFlags &= ~PFLAG_DRAWING_CACHE_VALID;
                 //if (mLayerType != LAYER_TYPE_NONE)
                 //{
-                uint f = (uint)mPrivateFlags;
-                f |= PFLAG_INVALIDATED;
-                mPrivateFlags = (int)f;
+                AddInvalidatedFlag(this);
                 //}
 
                 return mParent;
@@ -7535,9 +7541,7 @@ namespace AndroidUI.Widgets
         private void recreateChildDisplayList(View child)
         {
             child.mRecreateDisplayList = (child.mPrivateFlags & PFLAG_INVALIDATED) != 0;
-            uint f = (uint)child.mPrivateFlags;
-            f &= ~PFLAG_INVALIDATED;
-            child.mPrivateFlags = (int)f;
+            RemoveInvalidatedFlag(child);
             child.updateDisplayListIfDirty();
             child.mRecreateDisplayList = false;
         }
@@ -8781,7 +8785,7 @@ namespace AndroidUI.Widgets
                 Touch.Data currentData = ev.getTouchAtCurrentIndex();
                 Touch.State currentState = currentData.state;
 
-                bool intercepted = stealed_touch__Tracking(ev, currentTouchCount, currentData, currentState);
+                bool intercepted = intercepting = stealed_touch__Tracking(ev, currentTouchCount, currentData, currentState);
                 bool cancelled = resetCancelNextUpFlag(this) || currentState == Touch.State.TOUCH_CANCELLED;
 
                 View found = null;
@@ -8898,7 +8902,7 @@ namespace AndroidUI.Widgets
                                             // store copy of touch data if it doesnt exist
                                             if (!exists)
                                             {
-                                                Log.d(ToString(), "touch with identity " + currentData.identity + " does not exist, adding to view at " + Touch.Data.Position.ToString(child.getX(), child.getY()));
+                                                //Log.d(ToString(), "touch with identity " + currentData.identity + " does not exist, adding to view at " + Touch.Data.Position.ToString(child.getX(), child.getY()));
                                                 down_event = (Touch.Data)currentData.Clone();
                                                 down_event_view = pair.View;
                                                 down_event_touch = pair.Touch;
@@ -8906,7 +8910,7 @@ namespace AndroidUI.Widgets
                                             }
                                             else
                                             {
-                                                Log.d(ToString(), "touch with identity " + currentData.identity + " exists in view at " + Touch.Data.Position.ToString(child.getX(), child.getY()) + ", skipping");
+                                                //Log.d(ToString(), "touch with identity " + currentData.identity + " exists in view at " + Touch.Data.Position.ToString(child.getX(), child.getY()) + ", skipping");
                                             }
                                             break;
                                         }
@@ -8915,7 +8919,7 @@ namespace AndroidUI.Widgets
 
                                 if (trackedViews.Count == 0 || found == null)
                                 {
-                                    Log.d(ToString(), "tracking view at " + Touch.Data.Position.ToString(child.getX(), child.getY()));
+                                    //Log.d(ToString(), "tracking view at " + Touch.Data.Position.ToString(child.getX(), child.getY()));
 
                                     (View View, Touch Touch) pair = new(child, new Touch());
                                     pair.Touch.MaxSupportedTouches = ev.MaxSupportedTouches;
@@ -8935,7 +8939,7 @@ namespace AndroidUI.Widgets
                             // no children
                             if (trackedViews.Count == 0 || found == null)
                             {
-                                Log.d(ToString(), "tracking view at " + Touch.Data.Position.ToString(getX(), getY()));
+                                //Log.d(ToString(), "tracking view at " + Touch.Data.Position.ToString(getX(), getY()));
 
                                 (View View, Touch Touch) pair = new(this, new Touch());
                                 pair.Touch.MaxSupportedTouches = ev.MaxSupportedTouches;
@@ -9128,7 +9132,7 @@ namespace AndroidUI.Widgets
                         // if the last touch has gone up, untrack the view
                         if (lastUp)
                         {
-                            Log.d(ToString(), "untracking view at " + Touch.Data.Position.ToString(pair.View.getX(), pair.View.getY()));
+                            //Log.d(ToString(), "untracking view at " + Touch.Data.Position.ToString(pair.View.getX(), pair.View.getY()));
                             views_to_untrack.Add(pair);
                         }
                     }
@@ -9139,20 +9143,6 @@ namespace AndroidUI.Widgets
                         // TrackingData has no internal allocation
                         // it is safe to delete primary allocation
                         trackedViews.Remove(pair);
-                    }
-
-                    if (intercepting || intercepted)
-                    {
-                        // intercept all following events
-                        intercepting = true;
-                        if (dispatchTouchEvent_(ev))
-                        {
-                            handled = true;
-                        }
-                        if (cancelled || currentState == Touch.State.TOUCH_UP)
-                        {
-                            intercepting = false;
-                        }
                     }
                 }
                 else
@@ -12941,9 +12931,7 @@ namespace AndroidUI.Widgets
                 // Clear INVALIDATED flag to allow invalidation to occur during rendering, but
                 // retain the flag's value temporarily in the mRecreateDisplayList flag
                 mRecreateDisplayList = (mPrivateFlags & PFLAG_INVALIDATED) != 0;
-                uint f = (uint)mPrivateFlags;
-                f &= ~PFLAG_INVALIDATED;
-                mPrivateFlags = (int)f;
+                RemoveInvalidatedFlag(this);
             }
 
             // we cannot dispose this since we require it for drawing
@@ -13829,9 +13817,7 @@ namespace AndroidUI.Widgets
             }
 
             mPrivateFlags |= PFLAG_FORCE_LAYOUT;
-            uint f = (uint)mPrivateFlags;
-            f |= PFLAG_INVALIDATED;
-            mPrivateFlags = (int)f;
+            AddInvalidatedFlag(this);
 
             if (mParent != null && !mParent.isLayoutRequested())
             {
