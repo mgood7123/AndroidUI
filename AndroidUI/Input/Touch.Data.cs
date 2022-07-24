@@ -21,6 +21,7 @@ namespace AndroidUI
             public Position normalized_location_on_input_surface;
             public bool normalized_location_on_input_surface_moved;
             public bool location_moved_or_normalized_location_on_input_surface_moved;
+            public State batchSource;
 
             internal PointF MouseToPointF() => new(location.x, location.y);
             internal PointF NormalizedToPointF() => new(normalized_location_on_input_surface.y, normalized_location_on_input_surface.y);
@@ -40,6 +41,7 @@ namespace AndroidUI
                 timestamp_TOUCH_MOVE = 0;
                 timestamp_TOUCH_DOWN = 0;
                 timestamp_TOUCH_CANCELLED = 0;
+                batchSource = State.NONE;
 
                 if (float.IsNaN(x) || float.IsNaN(y) || float.IsInfinity(x) || float.IsInfinity(y))
                 {
@@ -70,6 +72,7 @@ namespace AndroidUI
                 timestamp_TOUCH_MOVE = 0;
                 timestamp_TOUCH_DOWN = 0;
                 timestamp_TOUCH_CANCELLED = 0;
+                batchSource = State.NONE;
 
                 hasLocation = false;
                 location = null;
@@ -102,6 +105,8 @@ namespace AndroidUI
                 tmp.timestamp_TOUCH_MOVE = timestamp_TOUCH_MOVE;
                 tmp.timestamp_TOUCH_UP = timestamp_TOUCH_UP;
                 tmp.timestamp_TOUCH_CANCELLED = timestamp_TOUCH_CANCELLED;
+
+                tmp.batchSource = batchSource;
 
                 tmp.hasLocation = hasLocation;
                 if (hasLocation)

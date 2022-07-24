@@ -95,7 +95,7 @@ namespace AndroidUI
         public bool moveTouchBatched(Data touchData)
         {
             batcher.addBatch(touchData);
-            return batcher.pump(this);
+            return batcher.pump(this, State.TOUCH_MOVE);
         }
 
         public bool moveTouchBatched(object identity, float x, float y, float normalized_X, float normalized_Y)

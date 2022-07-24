@@ -6,7 +6,7 @@ namespace AndroidUI
     {
         public void addTouch(Data touchData)
         {
-            tryForcePump();
+            tryForcePump(State.TOUCH_DOWN);
             if (debug) Console.WriteLine("adding touch with identity: " + touchData.identity);
             bool found = false;
             for (int i = 0; i < maxSupportedTouches; i++)

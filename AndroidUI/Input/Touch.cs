@@ -4,6 +4,14 @@ namespace AndroidUI
 {
     public partial class Touch
     {
+
+        Utils.LogTag Log;
+        public Touch()
+        {
+            Log = new(this);
+            Log.d("new Touch()");
+        }
+
         public enum State
         {
             NONE,
@@ -19,9 +27,9 @@ namespace AndroidUI
         {
         }
 
-        public bool tryForcePump()
+        public bool tryForcePump(State state = State.NONE)
         {
-            return batcher.pump(this, true);
+            return batcher.pump(this, true, state);
         }
 
         internal List<TouchContainer> touchContainerList = new();
@@ -240,6 +248,8 @@ namespace AndroidUI
                 return ev;
             }
         }
+
+        public bool DontBatchOnTouchUpOrTouchCancel;
 
         Batcher batcher = new();
     }

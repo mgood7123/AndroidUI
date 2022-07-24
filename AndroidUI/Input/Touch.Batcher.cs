@@ -23,12 +23,12 @@ namespace AndroidUI
                 events.Enqueue(touchData);
             }
 
-            internal bool pump(in Touch touch)
+            internal bool pump(in Touch touch, State state = State.NONE)
             {
-                return pump(touch, false);
+                return pump(touch, false, state);
             }
 
-            internal bool pump(in Touch touch, bool force_pump)
+            internal bool pump(in Touch touch, bool force_pump, State state = State.NONE)
             {
                 if (pumpActive)
                 {
@@ -52,24 +52,34 @@ namespace AndroidUI
                     if (System.Diagnostics.Debugger.IsAttached)
                     {
                         touch.batching = true;
+                        Data t;
                         while (events.Count > 1)
                         {
-                            touch.moveTouch(events.Dequeue());
+                            t = events.Dequeue();
+                            t.batchSource = state;
+                            touch.moveTouch(t);
                         }
                         touch.batching = false;
-                        touch.moveTouch(events.Dequeue());
+                        t = events.Dequeue();
+                        t.batchSource = state;
+                        touch.moveTouch(t);
                     }
                     else
                     {
                         try
                         {
                             touch.batching = true;
+                            Data t;
                             while (events.Count > 1)
                             {
-                                touch.moveTouch(events.Dequeue());
+                                t = events.Dequeue();
+                                t.batchSource = state;
+                                touch.moveTouch(t);
                             }
                             touch.batching = false;
-                            touch.moveTouch(events.Dequeue());
+                            t = events.Dequeue();
+                            t.batchSource = state;
+                            touch.moveTouch(t);
                         }
                         catch (Exception e)
                         {
@@ -85,6 +95,26 @@ namespace AndroidUI
                 }
                 pumpActive = false;
                 return handled;
+            }
+
+            internal void Clear(Touch touch)
+            {
+                if (pumpActive)
+                {
+                    throw new Exception("Attempting to clear while already pumping a batch");
+                }
+
+                pumpActive = true;
+                int c = events.Count;
+                pumpTime = currentTimeMillis();
+                if (c != 0)
+                {
+                    if (touch.debug) Console.WriteLine("batch time : " + batchTime);
+                    if (touch.debug) Console.WriteLine("pump time  : " + pumpTime);
+                    events.Clear();
+                    if (touch.debug) Console.WriteLine("cleared " + c + " queued events");
+                }
+                pumpActive = false;
             }
         }
     }

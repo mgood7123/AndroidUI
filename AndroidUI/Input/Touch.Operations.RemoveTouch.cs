@@ -6,7 +6,7 @@ namespace AndroidUI
     {
         public void removeTouch(Data touchData)
         {
-            tryForcePump();
+            tryForcePump(State.TOUCH_UP);
             if (debug) Console.WriteLine("removing touch with identity: " + touchData.identity);
             bool found = false;
             for (int i = 0; i < maxSupportedTouches; i++)

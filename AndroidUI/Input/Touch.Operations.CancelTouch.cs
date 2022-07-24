@@ -6,7 +6,7 @@ namespace AndroidUI
     {
         public void cancelTouch()
         {
-            tryForcePump();
+            tryForcePump(State.TOUCH_CANCELLED);
             long timestamp = NanoTime.currentTimeMillis();
             // cancel the first touch
             if (maxSupportedTouches <= 0)
