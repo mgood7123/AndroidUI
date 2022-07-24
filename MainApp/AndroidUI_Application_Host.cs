@@ -144,11 +144,14 @@ namespace MainApp
 
         class FlywheelScrollView : FrameLayout
         {
+            private const int THRESH_HOLD = 100; // 100 ms
             Topten_RichTextKit_TextView text = new();
             Flywheel flywheel = new();
 
             bool first_draw = true;
             bool text_set;
+            long last_time_previous, last_time_current, time;
+            bool was_down;
 
             public FlywheelScrollView() : base()
             {
@@ -204,6 +207,7 @@ namespace MainApp
                 s += "  Distance: \n";
                 s += "    x: " + flywheel.Distance.X + " pixels\n";
                 s += "    y: " + flywheel.Distance.Y + " pixels\n";
+                s += "    time: " + time + " ms\n";
                 s += "  Total Distance: \n";
                 s += "    x: " + flywheel.TotalDistance.X + " pixels\n";
                 s += "    y: " + flywheel.TotalDistance.Y + " pixels\n";
@@ -219,8 +223,14 @@ namespace MainApp
                 flywheel.ReleaseLock();
             }
 
+            public override void onConfigureTouch(Touch touch)
+            {
+                touch.DontBatchOnTouchUpOrTouchCancel = true;
+            }
+
             public override bool onTouch(Touch touch)
             {
+                touch.DontBatchOnTouchUpOrTouchCancel = true;
                 Touch.Data data = touch.getTouchAtCurrentIndex();
                 var st = data.state;
                 flywheel.AquireLock();
@@ -228,18 +238,44 @@ namespace MainApp
                 {
                     case Touch.State.TOUCH_CANCELLED:
                     case Touch.State.TOUCH_DOWN:
+                        last_time_previous = 0;
+                        last_time_current = data.timestamp;
+                        time = last_time_previous == 0 ? 0 : (last_time_current - last_time_previous);
+                        Log.d("DOWN time: " + time);
                         flywheel.ResetButKeepPosition();
+                        flywheel.AddMovement(data.timestamp, data.location.x, data.location.y);
+                        was_down = true;
                         break;
                     case Touch.State.TOUCH_MOVE:
-                        flywheel.AddMovement(data.timestamp, data.location.x, data.location.y);
-                        if (getChildCount() == 2)
+                        // protect against batching, touch up emits a touch move if it's location has changed
+                        last_time_previous = last_time_current;
+                        last_time_current = data.timestamp;
+                        time = last_time_previous == 0 ? 0 : (last_time_current - last_time_previous);
+                        Log.d("MOVE time: " + time);
+                        if (was_down || time <= THRESH_HOLD)
                         {
-                            View view = getChildAt(1);
-                            view.scrollTo(-flywheel.Position.X.toPixel(), -flywheel.Position.Y.toPixel());
+                            was_down = false;
+                            flywheel.AddMovement(data.timestamp, data.location.x, data.location.y);
+                            if (getChildCount() == 2)
+                            {
+                                View view = getChildAt(1);
+                                view.scrollTo(-flywheel.Position.X.toPixel(), -flywheel.Position.Y.toPixel());
+                            }
                         }
                         break;
                     case Touch.State.TOUCH_UP:
-                        flywheel.FinalizeMovement();
+                        last_time_previous = last_time_current;
+                        last_time_current = data.timestamp;
+                        time = last_time_previous == 0 ? 0 : (last_time_current - last_time_previous);
+                        Log.d("UP time: " + time);
+                        if (!was_down && time <= THRESH_HOLD)
+                        {
+                            flywheel.FinalizeMovement();
+                        }
+                        else
+                        {
+                            was_down = false;
+                        }
                         break;
                     default:
                         break;
