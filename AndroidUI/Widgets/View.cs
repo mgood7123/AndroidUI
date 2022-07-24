@@ -8842,7 +8842,7 @@ namespace AndroidUI.Widgets
 
                             // Find a child that can receive the event.
                             // Scan children from front to back.
-                            List<View> preorderedList = buildTouchDispatchChildList();
+                            ArrayList<View> preorderedList = buildTouchDispatchChildList();
                             bool customOrder = preorderedList == null
                                     && isChildrenDrawingOrderEnabled();
                             View[] children = mChildren;
@@ -9268,7 +9268,7 @@ namespace AndroidUI.Widgets
 
                             // Find a child that can receive the event.
                             // Scan children from front to back.
-                            List<View> preorderedList = buildTouchDispatchChildList();
+                            ArrayList<View> preorderedList = buildTouchDispatchChildList();
                             bool customOrder = preorderedList == null
                                     && isChildrenDrawingOrderEnabled();
                             View[] children = mChildren;
@@ -9442,7 +9442,7 @@ namespace AndroidUI.Widgets
          * after the dispatch is finished.
          * @hide
          */
-        internal List<View> buildTouchDispatchChildList()
+        internal ArrayList<View> buildTouchDispatchChildList()
         {
             return buildOrderedChildList();
         }
@@ -12667,7 +12667,7 @@ namespace AndroidUI.Widgets
             return false;
         }
 
-        List<View> mPreSortedChildren;
+        ArrayList<View> mPreSortedChildren;
 
         /**
          * Indicates whether the View is drawing its children in the order defined by
@@ -12749,7 +12749,7 @@ namespace AndroidUI.Widgets
          * Uses a stable, insertion sort which is commonly O(n) for Views with very few elevated
          * children.
          */
-        List<View> buildOrderedChildList()
+        ArrayList<View> buildOrderedChildList()
         {
             int childrenCount = mChildrenCount;
             if (childrenCount <= 1 || !hasChildWithZ()) return null;
@@ -12761,9 +12761,8 @@ namespace AndroidUI.Widgets
             else
             {
                 // callers should clear, so clear shouldn't be necessary, but for safety...
-                //mPreSortedChildren.Clear();
-                //mPreSortedChildren.Capacity = childrenCount;
-                mPreSortedChildren = new(new View[childrenCount]);
+                mPreSortedChildren.Clear();
+                mPreSortedChildren.Capacity = childrenCount;
             }
 
             bool customOrder = isChildrenDrawingOrderEnabled();
@@ -12786,13 +12785,13 @@ namespace AndroidUI.Widgets
         }
 
 
-        private static View getAndVerifyPreorderedView(List<View> preorderedList, View[] children,
+        private static View getAndVerifyPreorderedView(ArrayList<View> preorderedList, View[] children,
                 int childIndex)
         {
             View child;
             if (preorderedList != null)
             {
-                child = preorderedList.ElementAt(childIndex);
+                child = preorderedList[childIndex];
                 if (child == null)
                 {
                     throw new Exception("Invalid preorderedList contained null child at index "
@@ -13375,7 +13374,7 @@ namespace AndroidUI.Widgets
             int transientIndex = transientCount != 0 ? 0 : -1;
             // Only use the preordered list if not HW accelerated, since the HW pipeline will do the
             // draw reordering internally
-            List<View> preorderedList = buildOrderedChildList();
+            ArrayList<View> preorderedList = buildOrderedChildList();
             bool customOrder = preorderedList == null
                     && isChildrenDrawingOrderEnabled();
             for (int i = 0; i < childrenCount; i++)
