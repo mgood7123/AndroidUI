@@ -17,7 +17,7 @@ namespace AndroidUI.Utils.Input
             }
         }
 
-        public const float DEFAULT_FRICTION = 0.00042f;
+        public const float DEFAULT_FRICTION = 1.0f;
 
         object l = new();
         Lists.RingBuffer<PositionInfo> pos = new(2);
@@ -105,6 +105,17 @@ namespace AndroidUI.Utils.Input
             spinning = false;
         }
 
+        public void ResetButKeepPosition()
+        {
+            pos.Clear();
+            distance = Vector2.Zero;
+            totalDistance = Vector2.Zero;
+            velocity = Vector2.Zero;
+            startTime = 0;
+            endTime = 0;
+            spinning = false;
+        }
+
         public void AddMovement(long timestamp, float x, float y)
         {
             if (pos.Count == 0)
@@ -119,8 +130,7 @@ namespace AndroidUI.Utils.Input
                 distance = pos[count - 1].pos - pos[0].pos;
                 position += distance;
                 totalDistance += distance;
-                long time = pos[count - 1].timestamp - pos[0].timestamp;
-                velocity = distance / time;
+                velocity = distance;
             }
         }
 
