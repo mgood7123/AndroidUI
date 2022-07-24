@@ -1,4 +1,5 @@
-﻿using AndroidUI.AnimationFramework.Animator;
+﻿using AndroidUI;
+using AndroidUI.AnimationFramework.Animator;
 using AndroidUI.Applications;
 using AndroidUI.Extensions;
 using AndroidUI.Graphics;
@@ -51,23 +52,23 @@ namespace MainApp
                 setText("TouchInfoView");
             }
 
-            public override bool onTouch(AndroidUI.Touch touch)
+            public override bool onTouch(Touch touch)
             {
                 var st = touch.getTouchAtCurrentIndex().state;
                 switch (st)
                 {
-                    case AndroidUI.Touch.State.TOUCH_DOWN:
-                    case AndroidUI.Touch.State.TOUCH_MOVE:
-                    case AndroidUI.Touch.State.TOUCH_UP:
+                    case Touch.State.TOUCH_DOWN:
+                    case Touch.State.TOUCH_MOVE:
+                    case Touch.State.TOUCH_UP:
                         {
-                            Console.WriteLine("onTouch invalidating");
+                            Log.d(GetType().Name, "onTouch invalidating");
                             string s = "";
                             s += "view x     : " + getX() + "\n";
                             s += "view y     : " + getY() + "\n";
                             s += "view width : " + getWidth() + "\n";
                             s += "view height: " + getHeight() + "\n";
                             s += touch.ToString();
-                            Console.WriteLine("onTouch: " + s);
+                            Log.d(GetType().Name, "onTouch: " + s);
                             setText(s);
                             invalidate();
                             break;
@@ -115,27 +116,136 @@ namespace MainApp
                 flywheel.ReleaseLock();
             }
 
-            public override bool onTouch(AndroidUI.Touch touch)
+            public override bool onTouch(Touch touch)
             {
-                AndroidUI.Touch.Data data = touch.getTouchAtCurrentIndex();
+                Touch.Data data = touch.getTouchAtCurrentIndex();
                 var st = data.state;
                 flywheel.AquireLock();
                 switch (st)
                 {
-                    case AndroidUI.Touch.State.TOUCH_CANCELLED:
-                    case AndroidUI.Touch.State.TOUCH_DOWN:
+                    case Touch.State.TOUCH_CANCELLED:
+                    case Touch.State.TOUCH_DOWN:
                         flywheel.Reset();
                         break;
-                    case AndroidUI.Touch.State.TOUCH_MOVE:
+                    case Touch.State.TOUCH_MOVE:
                         flywheel.AddMovement(data.timestamp, data.location.x, data.location.y);
                         break;
-                    case AndroidUI.Touch.State.TOUCH_UP:
+                    case Touch.State.TOUCH_UP:
                         flywheel.FinalizeMovement();
                         break;
                     default:
                         break;
                 }
                 flywheel.ReleaseLock();
+                invalidate();
+                return true;
+            }
+        }
+
+        class FlywheelScrollView : FrameLayout
+        {
+            Topten_RichTextKit_TextView text = new();
+            Flywheel flywheel = new();
+
+            bool first_draw = true;
+            bool text_set;
+
+            public FlywheelScrollView() : base()
+            {
+                addView(text, MATCH_PARENT__MATCH_PARENT);
+                text.setZ(float.PositiveInfinity);
+                text.setText("FlywheelScrollView");
+                setWillDraw(true);
+            }
+
+            public override bool onInterceptTouchEvent(Touch ev)
+            {
+                return true;
+            }
+
+            protected override void dispatchDraw(SKCanvas canvas)
+            {
+                base.dispatchDraw(canvas);
+                if (first_draw)
+                {
+                    first_draw = false;
+                    text.invalidate();
+                }
+                else
+                {
+                    flywheel.AquireLock();
+                    if (text_set && flywheel.Spinning)
+                    {
+                        text_set = false;
+                        text.invalidate();
+                    }
+                    flywheel.ReleaseLock();
+                }
+            }
+
+            protected override void onDraw(SKCanvas canvas)
+            {
+                base.onDraw(canvas);
+                flywheel.AquireLock();
+                flywheel.Spin();
+                if (flywheel.Spinning)
+                {
+                    invalidate();
+
+                    if (getChildCount() == 2)
+                    {
+                        View view = getChildAt(1);
+                        view.scrollTo(-flywheel.Position.X.toPixel(), -flywheel.Position.Y.toPixel());
+                    }
+                }
+                string s = "Flywheel\n";
+                s += "  Spinning: " + flywheel.Spinning + "\n";
+                s += "  Friction: " + flywheel.Friction + "\n";
+                s += "  Distance: \n";
+                s += "    x: " + flywheel.Distance.X + " pixels\n";
+                s += "    y: " + flywheel.Distance.Y + " pixels\n";
+                s += "  Total Distance: \n";
+                s += "    x: " + flywheel.TotalDistance.X + " pixels\n";
+                s += "    y: " + flywheel.TotalDistance.Y + " pixels\n";
+                s += "    time: " + flywheel.SpinTime + " ms\n";
+                s += "  Velocity: \n";
+                s += "    x: " + flywheel.Velocity.X + "\n";
+                s += "    y: " + flywheel.Velocity.Y + "\n";
+                s += "  Position: \n";
+                s += "    x: " + flywheel.Position.X + " pixels\n";
+                s += "    y: " + flywheel.Position.Y + " pixels\n";
+                text.setText(s);
+                text_set = true;
+                flywheel.ReleaseLock();
+            }
+
+            public override bool onTouch(Touch touch)
+            {
+                Touch.Data data = touch.getTouchAtCurrentIndex();
+                var st = data.state;
+                flywheel.AquireLock();
+                switch (st)
+                {
+                    case Touch.State.TOUCH_CANCELLED:
+                    case Touch.State.TOUCH_DOWN:
+                        flywheel.ResetButKeepPosition();
+                        break;
+                    case Touch.State.TOUCH_MOVE:
+                        flywheel.AddMovement(data.timestamp, data.location.x, data.location.y);
+                        if (getChildCount() == 2)
+                        {
+                            View view = getChildAt(1);
+                            view.scrollTo(-flywheel.Position.X.toPixel(), -flywheel.Position.Y.toPixel());
+                        }
+                        break;
+                    case Touch.State.TOUCH_UP:
+                        flywheel.FinalizeMovement();
+                        break;
+                    default:
+                        break;
+                }
+                flywheel.ReleaseLock();
+                text.invalidate();
                 invalidate();
                 return true;
             }
@@ -172,7 +282,7 @@ namespace MainApp
 
             public override void OnCreate()
             {
-                int num = 6;
+                int num = 7;
                 switch(num)
                 {
                     case 0:
@@ -246,6 +356,30 @@ namespace MainApp
                             SetContentView(new FlywheelView());
                             break;
                         }
+                    case 7:
+                        {
+                            var image = new ImageView();
+                            //image.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+                            var bm = BitmapFactory.decodeFile("C:/Users/small/Pictures/Screenshot 2022-05-19 034147.jpeg");
+                            image.setImageBitmap(bm);
+
+                            var s = new FlywheelScrollView();
+                            s.addView(image);
+                            SetContentView(s);
+                        }
+                        break;
+                    case 8:
+                        {
+                            FrameLayout f = new FrameLayout();
+                            var t = new Topten_RichTextKit_TextView();
+                            var b = new BoxView();
+                            t.setZ(1);
+                            b.setZ(0);
+                            f.addView(t);
+                            f.addView(b);
+                            SetContentView(f);
+                        }
+                        break;
                     default:
                         break;
                 }
@@ -273,7 +407,7 @@ namespace MainApp
             application.OnPaintSurface(context, r, surface);
         }
 
-        public AndroidUI.Touch getMultiTouch()
+        public Touch getMultiTouch()
         {
             return application.multiTouch;
         }
