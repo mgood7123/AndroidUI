@@ -136,6 +136,8 @@ namespace AndroidUI.Widgets
         {
             lock (textBlock)
             {
+                textBlock.MaxWidth = null;
+                textBlock.MaxHeight = null;
                 int w = 0;
                 int widthMode = MeasureSpec.getMode(widthMeasureSpec);
 
@@ -148,7 +150,16 @@ namespace AndroidUI.Widgets
                         {
                             int t = textBlock.MeasuredWidth.toPixel();
                             int s = MeasureSpec.getSize(widthMeasureSpec);
-                            w = Math.Min(s, t);
+                            if (t == s)
+                            {
+                                w = s;
+                            }
+                            else
+                            {
+                                textBlock.MaxWidth = Math.Min(s, t);
+                                t = textBlock.MeasuredWidth.toPixel();
+                                w = Math.Min(s, t);
+                            }
                             break;
                         }
                     case MeasureSpec.EXACTLY:
@@ -168,7 +179,16 @@ namespace AndroidUI.Widgets
                         {
                             int t = textBlock.MeasuredHeight.toPixel();
                             int s = MeasureSpec.getSize(heightMeasureSpec);
-                            h = Math.Min(s, t);
+                            if (t == s)
+                            {
+                                h = s;
+                            }
+                            else
+                            {
+                                textBlock.MaxHeight = Math.Min(s, t);
+                                t = textBlock.MeasuredHeight.toPixel();
+                                h = Math.Min(s, t);
+                            }
                             break;
                         }
                     case MeasureSpec.EXACTLY:
@@ -186,7 +206,17 @@ namespace AndroidUI.Widgets
             lock (textBlock)
             {
                 textBlock.MaxWidth = getWidth();
-                textBlock.MaxHeight = getHeight();
+                if (textBlock.LineCount == 0)
+                {
+                    textBlock.MaxHeight = textBlock.MeasuredHeight;
+                }
+                else if (textBlock.LineCount == 1)
+                {
+                    textBlock.MaxHeight = textBlock.MeasuredHeight;
+                } else
+                {
+                    textBlock.MaxHeight = getHeight();
+                }
             }
         }
 
