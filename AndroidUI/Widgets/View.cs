@@ -11137,6 +11137,11 @@ namespace AndroidUI.Widgets
             addViewInner(child, index, layout_params, false);
         }
 
+        public virtual void onBeforeAddView()
+        {
+
+        }
+
         // Child views of this View
         private View[] mChildren;
         // Number of valid children in the mChildren array, the rest should be null or not
@@ -11509,7 +11514,7 @@ namespace AndroidUI.Widgets
          * {@link #draw(android.graphics.Canvas)}, {@link #onDraw(android.graphics.Canvas)},
          * {@link #dispatchDraw(android.graphics.Canvas)} or any related method.</p>
          */
-        public void removeView(View view)
+        virtual public void removeView(View view)
         {
             if (removeViewInternal(view))
             {
@@ -11528,7 +11533,7 @@ namespace AndroidUI.Widgets
          *
          * @param view the view to remove from the group
          */
-        public void removeViewInLayout(View view)
+        virtual public void removeViewInLayout(View view)
         {
             removeViewInternal(view);
         }
@@ -11544,7 +11549,7 @@ namespace AndroidUI.Widgets
          * @param start the index of the first view to remove from the group
          * @param count the number of views to remove from the group
          */
-        public void removeViewsInLayout(int start, int count)
+        virtual public void removeViewsInLayout(int start, int count)
         {
             removeViewsInternal(start, count);
         }
@@ -11558,7 +11563,7 @@ namespace AndroidUI.Widgets
          *
          * @param index the position in the group of the view to remove
          */
-        public void removeViewAt(int index)
+        virtual public void removeViewAt(int index)
         {
             removeViewInternal(index, getChildAt(index));
             requestLayout();
@@ -11575,7 +11580,7 @@ namespace AndroidUI.Widgets
          * @param start the first position in the group of the range of views to remove
          * @param count the number of views to remove
          */
-        public void removeViews(int start, int count)
+        virtual public void removeViews(int start, int count)
         {
             removeViewsInternal(start, count);
             requestLayout();
@@ -11931,7 +11936,7 @@ namespace AndroidUI.Widgets
         private void addViewInner(View child, int index, LayoutParams layout_params,
             bool preventRequestLayout)
         {
-
+            onBeforeAddView();
             if (mTransition != null)
             {
                 // Don't prevent other add transitions from completing, but cancel remove
@@ -12083,7 +12088,7 @@ namespace AndroidUI.Widgets
          * @return a positive integer representing the number of children in
          *         the group
          */
-        public int getChildCount()
+        virtual public int getChildCount()
         {
             return mChildrenCount;
         }
@@ -12095,7 +12100,7 @@ namespace AndroidUI.Widgets
          * @return the view at the specified position or null if the position
          *         does not exist within the group
          */
-        public View getChildAt(int index)
+        virtual public View getChildAt(int index)
         {
             if (index < 0 || index >= mChildrenCount)
             {
