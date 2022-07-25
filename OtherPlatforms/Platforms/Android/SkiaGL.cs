@@ -3,14 +3,13 @@ using Android.Content;
 using Android.Runtime;
 using Android.Util;
 using Android.Views;
-using MainApp;
 using SkiaSharp.Views.Android;
 
 namespace OtherPlatforms
 {
     public class SkiaGL : SKGLSurfaceView
     {
-        readonly AndroidUI_Application_Host host = new();
+        readonly AndroidUI.Applications.Host host = new();
 
         public SkiaGL(Context context) : base(context) => main();
 

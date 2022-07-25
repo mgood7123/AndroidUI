@@ -1,13 +1,13 @@
-﻿using AndroidUI.Utils;
-using MainApp;
+﻿using AndroidUI.Applications;
+using AndroidUI.Utils;
 using SkiaSharp.Views.Desktop;
 using System.Runtime.InteropServices;
 
-namespace WinFormsApp1
+namespace AndroidUI.Hosts.Windows
 {
     internal class SkiaGL : SKGLControl
     {
-        readonly AndroidUI_Application_Host host = new();
+        readonly Host host = new();
 
         public SkiaGL()
         {
@@ -137,9 +137,9 @@ namespace WinFormsApp1
         protected override void WndProc(ref Message m)
         {
             if (
-                (m.Msg >= WM_MOUSEFIRST && m.Msg <= WM_MOUSELAST)
-                || (m.Msg >= WM_KEYFIRST && m.Msg <= WM_KEYLAST)
-                || (m.Msg >= WM_TOUCH && m.Msg <= WM_POINTERWHEEL)
+                m.Msg >= WM_MOUSEFIRST && m.Msg <= WM_MOUSELAST
+                || m.Msg >= WM_KEYFIRST && m.Msg <= WM_KEYLAST
+                || m.Msg >= WM_TOUCH && m.Msg <= WM_POINTERWHEEL
             )
             {
                 INPUT_MESSAGE_SOURCE ims = new();

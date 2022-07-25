@@ -22,13 +22,10 @@
 
   <ItemGroup>
     <PackageReference Include="AndroidUI.Native.Nuget" Version="0.0.110" />
-    <PackageReference Include="BepuPhysics" Version="2.5.0-beta.6" />
     <PackageReference Include="SkiaSharp" Version="2.88.1-preview.3304" />
     <PackageReference Include="SkiaSharp.HarfBuzz" Version="2.88.1-preview.3223" />
     <PackageReference Include="SkiaSharp.Views" Version="2.88.1-preview.3223" />
-    <PackageReference Include="Stride.Physics" Version="4.1.0.1734" />
     <PackageReference Include="System.IO.Pipelines" Version="7.0.0-preview.4.22229.4" />
-    <PackageReference Include="System.Security.Permissions" Version="6.0.0" />
     <PackageReference Include="Topten.RichTextKit" Version="0.4.151" />
   </ItemGroup>
 

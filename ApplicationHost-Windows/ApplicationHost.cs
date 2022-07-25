@@ -1,20 +1,21 @@
+﻿using AndroidUI.Utils;
 using System.Diagnostics;
 
-namespace WinFormsApp1
+namespace AndroidUI.Hosts.Windows
 {
-    public partial class Form1 : Form
+    public partial class ApplicationHost : Form
     {
-
         SkiaGL skia = new();
 
-        public Form1()
+        public ApplicationHost()
         {
             InitializeComponent();
 
-            ClientSizeChanged += Form1_Resize;
+            Load += ApplicationHost_Load;
+            ClientSizeChanged += ApplicationHost_Resize;
         }
 
-        private void Form1_Resize(object? sender, EventArgs e)
+        private void ApplicationHost_Resize(object? sender, EventArgs e)
         {
             Control? control = sender as Control;
             if (control != null)
@@ -23,9 +24,23 @@ namespace WinFormsApp1
             }
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        public static void InstallHandlers()
         {
-            Form1_Resize(sender, e);
+            // Add the event handler for handling UI thread exceptions to the event.
+            Application.ThreadException += new ThreadExceptionEventHandler(AndroidUI.Hosts.Windows.ApplicationHost.UIThreadException);
+
+            // Set the unhandled exception mode to force all Windows Forms errors to go through
+            // our handler.
+            Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
+
+            // Add the event handler for handling non-UI thread exceptions to the event.
+            AppDomain.CurrentDomain.UnhandledException +=
+                new UnhandledExceptionEventHandler(AndroidUI.Hosts.Windows.ApplicationHost.NonUIThreadException);
+        }
+
+        private void ApplicationHost_Load(object? sender, EventArgs e)
+        {
+            ApplicationHost_Resize(sender!, e);
             Controls.Add(skia);
         }
 
@@ -102,6 +117,57 @@ namespace WinFormsApp1
             errorMsg = errorMsg + e.Message + "\n\nStack Trace:\n" + e.StackTrace;
             return MessageBox.Show(errorMsg, title, MessageBoxButtons.AbortRetryIgnore,
                 MessageBoxIcon.Stop);
+        }
+
+        public static void TryToSwitchToHighestDpi()
+        {
+            HighDpiMode highDpiMode = Application.HighDpiMode;
+            if (highDpiMode == HighDpiMode.PerMonitorV2)
+            {
+                Log.WriteLine("current HighDpiMode is " + Application.HighDpiMode);
+            }
+            else
+            {
+                if (Application.SetHighDpiMode(HighDpiMode.PerMonitorV2))
+                {
+                    Log.WriteLine("set HighDpiMode to " + Application.HighDpiMode);
+                }
+                else
+                {
+                    Log.WriteLine("Failed to set HighDpiMode to " + HighDpiMode.PerMonitorV2);
+                    if (highDpiMode == HighDpiMode.PerMonitor)
+                    {
+                        Log.WriteLine("current HighDpiMode is " + Application.HighDpiMode);
+                    }
+                    else
+                    {
+                        if (Application.SetHighDpiMode(HighDpiMode.PerMonitor))
+                        {
+                            Log.WriteLine("set HighDpiMode to " + Application.HighDpiMode);
+                        }
+                        else
+                        {
+                            Log.WriteLine("Failed to set HighDpiMode to " + HighDpiMode.PerMonitor);
+                            if (highDpiMode == HighDpiMode.SystemAware)
+                            {
+                                Log.WriteLine("current HighDpiMode is " + Application.HighDpiMode);
+                            }
+                            else
+                            {
+                                if (Application.SetHighDpiMode(HighDpiMode.SystemAware))
+                                {
+                                    Log.WriteLine("set HighDpiMode to " + Application.HighDpiMode);
+                                }
+                                else
+                                {
+                                    Log.WriteLine("Failed to set HighDpiMode to " + HighDpiMode.SystemAware);
+                                    Log.WriteLine("current HighDpiMode is " + Application.HighDpiMode);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

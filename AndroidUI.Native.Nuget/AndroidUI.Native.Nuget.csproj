@@ -105,12 +105,12 @@
 			    self contained bin\runtimes folder
 		-->
 		
-		<Content Include="..\x64\Debug\AndroidUI.Native.Windows.dll">
+		<Content Include="..\AndroidUI.Native.Windows\native\x64\Debug\AndroidUI.Native.Windows.dll">
 			<Pack>true</Pack>
 			<PackagePath>\runtimes\win-x64\native</PackagePath>
 		</Content>
 
-		<Content Include="..\x64\Debug\libAndroidUI_Native_Android.so">
+		<Content Include="..\AndroidUI.Native.Android\native\x64\Debug\libAndroidUI_Native_Android.so">
 			<Pack>true</Pack>
 			<PackagePath>\runtimes\monoandroid-x64\native</PackagePath>
 		</Content>

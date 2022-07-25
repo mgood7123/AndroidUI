@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net6.0-windows</TargetFramework>
+		<StartupObject>AndroidUI_Application_Windows.Program</StartupObject>
+		<Nullable>enable</Nullable>
+		<UseWindowsForms>true</UseWindowsForms>
+		<UseWPF>true</UseWPF>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<RestoreSources>prebuilt\local-nugets</RestoreSources>
+		<RootNamespace>AndroidUI_Application_Windows</RootNamespace>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Reference Include="prebuilt\debug\AndroidUI\AndroidUI.dll" />
+		<Reference Include="prebuilt\debug\AndroidUI\ApplicationHost-Windows.dll" />
+		<PackageReference Include="AndroidUI.Native.Nuget" Version="0.0.110" />
+		<PackageReference Include="SkiaSharp" Version="2.88.1-preview.3304" />
+		<PackageReference Include="SkiaSharp.HarfBuzz" Version="2.88.1-preview.3223" />
+		<PackageReference Include="SkiaSharp.Views" Version="2.88.1-preview.3223" />
+		<PackageReference Include="SkiaSharp.Views.WindowsForms" Version="2.88.1-preview.3223" />
+		<PackageReference Include="System.IO.Pipelines" Version="7.0.0-preview.4.22229.4" />
+		<PackageReference Include="Topten.RichTextKit" Version="0.4.151" />
+	</ItemGroup>
+</Project>

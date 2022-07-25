@@ -53,7 +53,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\MainApp\MainApp.csproj" />
+	  <ProjectReference Include="..\AndroidUI\AndroidUI.csproj" />
 	</ItemGroup>
 
 	<ProjectExtensions><VisualStudio><UserProperties XamarinHotReloadDebuggerTimeoutExceptionOtherPlatformsHideInfoBar="True" /></VisualStudio></ProjectExtensions>

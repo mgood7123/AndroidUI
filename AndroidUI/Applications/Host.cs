@@ -1,6 +1,4 @@
-﻿using AndroidUI;
-using AndroidUI.AnimationFramework.Animator;
-using AndroidUI.Applications;
+﻿using AndroidUI.AnimationFramework.Animator;
 using AndroidUI.Extensions;
 using AndroidUI.Graphics;
 using AndroidUI.Graphics.Drawables;
@@ -8,11 +6,11 @@ using AndroidUI.Utils;
 using AndroidUI.Utils.Input;
 using AndroidUI.Widgets;
 using SkiaSharp;
-using System;
 
-namespace MainApp
+namespace AndroidUI.Applications
 {
-    public class AndroidUI_Application_Host
+
+    public class Host
     {
 
         /**
@@ -174,7 +172,7 @@ namespace MainApp
             public override void OnCreate()
             {
                 int num = 7;
-                switch(num)
+                switch (num)
                 {
                     case 0:
                         {

@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0-windows</TargetFramework>
+    <RootNamespace>ApplicationHost_Windows</RootNamespace>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="SkiaSharp.HarfBuzz" Version="2.88.1-preview.3223" />
+		<PackageReference Include="SkiaSharp.Views" Version="2.88.1-preview.3223" />
+		<PackageReference Include="SkiaSharp.Views.WindowsForms" Version="2.88.1-preview.3223" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\AndroidUI\AndroidUI.csproj" />
+	</ItemGroup>
+	
+</Project>
