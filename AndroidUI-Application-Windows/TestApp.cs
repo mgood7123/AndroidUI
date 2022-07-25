@@ -1,4 +1,8 @@
-﻿using AndroidUI.AnimationFramework.Animator;
+﻿/*
+ * this contains some basic test applications that test basic components of AndroidUI
+ */
+
+using AndroidUI.AnimationFramework.Animator;
 using AndroidUI.Extensions;
 using AndroidUI.Graphics;
 using AndroidUI.Graphics.Drawables;
@@ -199,14 +203,14 @@ namespace AndroidUI_Application_Windows
                     break;
                 case 5:
                     {
-                        var image = new ImageView();
-                        //image.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-                        var bm = BitmapFactory.decodeFile("C:/Users/small/Pictures/Screenshot 2022-05-19 034147.jpeg");
-                        image.setImageBitmap(bm);
-
-                        var s = new ScrollView(Context);
-                        s.addView(image);
-                        SetContentView(s);
+                        FrameLayout f = new FrameLayout();
+                        var t = new Topten_RichTextKit_TextView();
+                        var b = new BoxView();
+                        t.setZ(1);
+                        b.setZ(0);
+                        f.addView(t);
+                        f.addView(b);
+                        SetContentView(f);
                     }
                     break;
                 case 6:
@@ -225,18 +229,6 @@ namespace AndroidUI_Application_Windows
                         s.SmoothScroll = false;
                         s.addView(image);
                         SetContentView(s);
-                    }
-                    break;
-                case 8:
-                    {
-                        FrameLayout f = new FrameLayout();
-                        var t = new Topten_RichTextKit_TextView();
-                        var b = new BoxView();
-                        t.setZ(1);
-                        b.setZ(0);
-                        f.addView(t);
-                        f.addView(b);
-                        SetContentView(f);
                     }
                     break;
                 default:

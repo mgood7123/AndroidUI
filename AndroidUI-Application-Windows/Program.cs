@@ -8,13 +8,19 @@
         [STAThread]
         static void Main()
         {
-            // To customize application configuration such as set high DPI settings or default font,
-            // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
 
-            AndroidUI.Hosts.Windows.ApplicationHost.InstallHandlers();
+            AndroidUI.Hosts.Windows.ApplicationHost.InstallHandlers(); // exception handling
+
             AndroidUI.Hosts.Windows.ApplicationHost.TryToSwitchToHighestDpi();
-            Application.Run(new AndroidUI.Hosts.Windows.ApplicationHost(new TestApp()));
+
+            Application.Run(
+                new AndroidUI.Hosts.Windows.ApplicationHost(
+
+                    // replace this with your own instance of AndroidUI.Applications.Application
+                    new MainApplication()
+                )
+            );
         }
     }
 }
