@@ -26,7 +26,6 @@
     <PackageReference Include="SkiaSharp.HarfBuzz" Version="2.88.1-preview.3223" />
     <PackageReference Include="SkiaSharp.Views" Version="2.88.1-preview.3223" />
     <PackageReference Include="System.IO.Pipelines" Version="7.0.0-preview.4.22229.4" />
-    <PackageReference Include="System.Security.Permissions" Version="6.0.0" />
     <PackageReference Include="Topten.RichTextKit" Version="0.4.151" />
   </ItemGroup>
 

@@ -408,12 +408,6 @@ namespace AndroidUI.Utils
     {
         static public readonly int ProcessorCount = GetProcessorCount();
 
-        ///  
-        /// Critical - Asserts in order to get the processor count from the environment
-        /// Safe - this data isn't actually protected so it's ok to leak 
-        ///  
-        [SecurityCritical, SecurityTreatAsSafe]
-        [EnvironmentPermission(SecurityAction.Assert, Read = "NUMBER_OF_PROCESSORS")]
         static int GetProcessorCount()
         {
             return Environment.ProcessorCount;
