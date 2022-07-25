@@ -255,6 +255,7 @@ namespace MainApp
                             image.setImageBitmap(bm);
 
                             var s = new FlywheelScrollView();
+                            s.SmoothScroll = false;
                             s.addView(image);
                             SetContentView(s);
                         }

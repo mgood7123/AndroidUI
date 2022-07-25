@@ -15,6 +15,9 @@ namespace AndroidUI.Widgets
         bool text_set;
         long last_time_previous, last_time_current, time;
         bool was_down;
+        private bool smoothScroll;
+
+        public bool SmoothScroll { get => smoothScroll; set => smoothScroll = value; }
 
         public FlywheelScrollView() : base()
         {
@@ -131,7 +134,7 @@ namespace AndroidUI.Widgets
                     last_time_current = data.timestamp;
                     time = last_time_previous == 0 ? 0 : (last_time_current - last_time_previous);
                     Log.d("UP time: " + time);
-                    if (!was_down && time <= THRESH_HOLD)
+                    if (smoothScroll && !was_down && time <= THRESH_HOLD)
                     {
                         flywheel.FinalizeMovement();
                     }
