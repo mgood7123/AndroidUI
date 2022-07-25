@@ -41,7 +41,7 @@ namespace AndroidUI.Utils
     // Since the statistics are a heuristic as to how often something is happening, they 
     // do not need to be perfect.
     // 
-    class SynchronizedPool<T> where T : class
+    public class SynchronizedPool<T> where T : class
     {
         Entry[] entries;
         PendingEntry[] pending;
