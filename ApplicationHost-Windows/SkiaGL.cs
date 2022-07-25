@@ -9,11 +9,16 @@ namespace AndroidUI.Hosts.Windows
     {
         readonly Host host = new();
 
-        public SkiaGL()
+        public SkiaGL(Applications.Application application = null)
         {
+            host.SetApplication(application);
+
             host.SetInvalidateCallback(Invalidate);
+
             DpiChangedAfterParent += SkiaGL_DpiChangedAfterParent;
+
             handleDpiChange();
+
             host.OnCreate();
 
             // VSync is disabled by default, who knows why, enable it

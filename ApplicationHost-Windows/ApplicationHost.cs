@@ -5,11 +5,13 @@ namespace AndroidUI.Hosts.Windows
 {
     public partial class ApplicationHost : Form
     {
-        SkiaGL skia = new();
+        SkiaGL skia;
 
-        public ApplicationHost()
+        public ApplicationHost(Applications.Application application = null)
         {
             InitializeComponent();
+
+            skia = new(application);
 
             Load += ApplicationHost_Load;
             ClientSizeChanged += ApplicationHost_Resize;
@@ -22,20 +24,6 @@ namespace AndroidUI.Hosts.Windows
             {
                 skia.Size = ClientSize;
             }
-        }
-
-        public static void InstallHandlers()
-        {
-            // Add the event handler for handling UI thread exceptions to the event.
-            Application.ThreadException += new ThreadExceptionEventHandler(AndroidUI.Hosts.Windows.ApplicationHost.UIThreadException);
-
-            // Set the unhandled exception mode to force all Windows Forms errors to go through
-            // our handler.
-            Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
-
-            // Add the event handler for handling non-UI thread exceptions to the event.
-            AppDomain.CurrentDomain.UnhandledException +=
-                new UnhandledExceptionEventHandler(AndroidUI.Hosts.Windows.ApplicationHost.NonUIThreadException);
         }
 
         private void ApplicationHost_Load(object? sender, EventArgs e)
@@ -117,6 +105,20 @@ namespace AndroidUI.Hosts.Windows
             errorMsg = errorMsg + e.Message + "\n\nStack Trace:\n" + e.StackTrace;
             return MessageBox.Show(errorMsg, title, MessageBoxButtons.AbortRetryIgnore,
                 MessageBoxIcon.Stop);
+        }
+
+        public static void InstallHandlers()
+        {
+            // Add the event handler for handling UI thread exceptions to the event.
+            Application.ThreadException += new ThreadExceptionEventHandler(AndroidUI.Hosts.Windows.ApplicationHost.UIThreadException);
+
+            // Set the unhandled exception mode to force all Windows Forms errors to go through
+            // our handler.
+            Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
+
+            // Add the event handler for handling non-UI thread exceptions to the event.
+            AppDomain.CurrentDomain.UnhandledException +=
+                new UnhandledExceptionEventHandler(AndroidUI.Hosts.Windows.ApplicationHost.NonUIThreadException);
         }
 
         public static void TryToSwitchToHighestDpi()

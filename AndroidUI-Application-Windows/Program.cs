@@ -14,7 +14,7 @@
 
             AndroidUI.Hosts.Windows.ApplicationHost.InstallHandlers();
             AndroidUI.Hosts.Windows.ApplicationHost.TryToSwitchToHighestDpi();
-            Application.Run(new AndroidUI.Hosts.Windows.ApplicationHost());
+            Application.Run(new AndroidUI.Hosts.Windows.ApplicationHost(new TestApp()));
         }
     }
 }
