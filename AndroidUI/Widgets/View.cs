@@ -40,6 +40,8 @@ namespace AndroidUI.Widgets
     public class View : ViewParent, Drawable.Callback
     {
 
+        // TODO: implement view protection: internalize added views, invisible to user but visible to us
+
         public void onDescendantUnbufferedRequested()
         {
             if (getParent() != null)
@@ -11137,7 +11139,7 @@ namespace AndroidUI.Widgets
             addViewInner(child, index, layout_params, false);
         }
 
-        public virtual void onBeforeAddView()
+        public virtual void onBeforeAddView(View child, int index, LayoutParams layout_params)
         {
 
         }
@@ -11936,7 +11938,7 @@ namespace AndroidUI.Widgets
         private void addViewInner(View child, int index, LayoutParams layout_params,
             bool preventRequestLayout)
         {
-            onBeforeAddView();
+            onBeforeAddView(child, index, layout_params);
             if (mTransition != null)
             {
                 // Don't prevent other add transitions from completing, but cancel remove
@@ -12088,7 +12090,7 @@ namespace AndroidUI.Widgets
          * @return a positive integer representing the number of children in
          *         the group
          */
-        virtual public int getChildCount()
+        public int getChildCount()
         {
             return mChildrenCount;
         }
@@ -12100,7 +12102,7 @@ namespace AndroidUI.Widgets
          * @return the view at the specified position or null if the position
          *         does not exist within the group
          */
-        virtual public View getChildAt(int index)
+        public View getChildAt(int index)
         {
             if (index < 0 || index >= mChildrenCount)
             {

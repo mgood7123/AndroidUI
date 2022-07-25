@@ -149,7 +149,7 @@ namespace AndroidUI.Widgets
             return true;
         }
 
-        public override void onBeforeAddView()
+        public override void onBeforeAddView(View child, int index, View.LayoutParams layout_params)
         {
             if (getChildCount() == 2)
             {
@@ -159,32 +159,29 @@ namespace AndroidUI.Widgets
 
         public override void removeViewAt(int index)
         {
-            base.removeViewAt(index + 1);
+            if (index == 0)
+            {
+                throw new Exception("ScrollView cannot remove internal text view");
+            }
+            base.removeViewAt(index);
         }
 
         public override void removeViews(int start, int count)
         {
-            base.removeViews(start + 1, count);
-        }
-
-        public override View getChildAt(int index)
-        {
-            return base.getChildAt(index + 1);
-        }
-
-        public override int getChildCount()
-        {
-            return base.getChildCount() - 1;
-        }
-
-        public override void addView(View child, int index, View.LayoutParams layout_params)
-        {
-            base.addView(child, index + 1, layout_params);
+            if (start == 0)
+            {
+                throw new Exception("ScrollView cannot remove internal text view");
+            }
+            base.removeViews(start, count);
         }
 
         public override void removeViewsInLayout(int start, int count)
         {
-            base.removeViewsInLayout(start + 1, count);
+            if (start == 0)
+            {
+                throw new Exception("ScrollView cannot remove internal text view");
+            }
+            base.removeViewsInLayout(start, count);
         }
     }
 }
