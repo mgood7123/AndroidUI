@@ -1,4 +1,4 @@
-﻿using AndroidUI;
+﻿using AndroidUI.Input;
 using AndroidUITestFramework;
 
 namespace AndroidUITest

@@ -1,6 +1,6 @@
 ﻿using AndroidUI.Utils.Lists;
 
-namespace AndroidUI
+namespace AndroidUI.Input
 {
     public partial class Touch
     {

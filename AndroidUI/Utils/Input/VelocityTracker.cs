@@ -15,6 +15,7 @@
  */
 
 using AndroidUI.Exceptions;
+using AndroidUI.Input;
 
 namespace AndroidUI.Utils.Input
 {

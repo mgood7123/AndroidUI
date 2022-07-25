@@ -1,4 +1,4 @@
-﻿namespace AndroidUI
+﻿namespace AndroidUI.Input
 {
     public partial class Touch
     {

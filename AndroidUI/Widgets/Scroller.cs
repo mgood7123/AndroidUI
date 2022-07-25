@@ -17,6 +17,7 @@
 using AndroidUI.AnimationFramework.Animation;
 using AndroidUI.AnimationFramework.Interpolators;
 using AndroidUI.Applications;
+using AndroidUI.Utils;
 using AndroidUI.Utils.Const;
 
 namespace AndroidUI.Widgets

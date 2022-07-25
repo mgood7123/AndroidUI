@@ -1,4 +1,5 @@
 ﻿using AndroidUI.Extensions;
+using AndroidUI.Input;
 using SkiaSharp;
 
 namespace AndroidUI.Applications
@@ -23,6 +24,7 @@ namespace AndroidUI.Applications
         int w, h;
         bool needsSizeChange;
 
+        // TODO: set application state correctly
         public Application Application
         {
             get => application;

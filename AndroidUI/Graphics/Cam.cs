@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+using AndroidUI.Utils;
 using AndroidUI.Utils.Graphics;
 
 namespace AndroidUI.Graphics

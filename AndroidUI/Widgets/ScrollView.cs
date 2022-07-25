@@ -17,6 +17,7 @@
 using AndroidUI.AnimationFramework.Animation;
 using AndroidUI.Applications;
 using AndroidUI.Exceptions;
+using AndroidUI.Input;
 using AndroidUI.Utils;
 using AndroidUI.Utils.Input;
 using AndroidUI.Utils.Widgets;

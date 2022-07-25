@@ -1,6 +1,4 @@
-﻿using AndroidUI.Utils;
-
-namespace AndroidUI
+﻿namespace AndroidUI.Utils
 {
     using static CastUtils;
     public static partial class MathUtils

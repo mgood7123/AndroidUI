@@ -1,11 +1,9 @@
-﻿using AndroidUI.Utils;
+﻿using AndroidUI.Exceptions;
+using AndroidUI.Extensions;
+using AndroidUI.Utils.Const;
 
-namespace AndroidUI
+namespace AndroidUI.Utils
 {
-    using AndroidUI.Exceptions;
-    using AndroidUI.Extensions;
-    using AndroidUI.Utils;
-    using AndroidUI.Utils.Const;
     using static CastUtils;
     public static partial class MathUtils
     {
@@ -254,7 +252,7 @@ namespace AndroidUI
             switch (exp)
             {
                 case FloatConsts.MAX_EXPONENT + 1:        // NaN or infinity
-                    return Math.Abs(f);
+                    return MathF.Abs(f);
 
                 case FloatConsts.MIN_EXPONENT - 1:        // zero or subnormal
                     return FloatConsts.MIN_VALUE;
@@ -1232,7 +1230,7 @@ namespace AndroidUI
         }
 
         public static double cbrt(double x) => MUSL.cbrt(x);
-        public static float sqrtf(float x) => MUSL.sqrtf(x);
+        public static float sqrtf(float x) => MathF.Sqrt(x);
         public static double hypot(double x, double y) => HYPOT_IMP.hypot(x, y);
         public static float hypotf(float x, float y) => HYPOT_IMP.hypotf(x, y);
         public static double hypotl(double x, double y) => HYPOT_IMP.hypotl(x, y);
@@ -1272,7 +1270,7 @@ namespace AndroidUI
             float x = x2 - x1;
             float y = y2 - y1;
             float z = z2 - z1;
-            return (float)Math.Sqrt(x * x + y * y + z * z);
+            return MathF.Sqrt(x * x + y * y + z * z);
         }
 
         public static float mag(float a, float b)
@@ -1282,7 +1280,7 @@ namespace AndroidUI
 
         public static float mag(float a, float b, float c)
         {
-            return (float)Math.Sqrt(a * a + b * b + c * c);
+            return MathF.Sqrt(a * a + b * b + c * c);
         }
 
         public static float sq(float v)

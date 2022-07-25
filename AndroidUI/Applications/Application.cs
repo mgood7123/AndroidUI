@@ -15,6 +15,7 @@
  */
 
 using AndroidUI.Execution;
+using AndroidUI.Input;
 using AndroidUI.Utils;
 using AndroidUI.Utils.Widgets;
 using AndroidUI.Widgets;
