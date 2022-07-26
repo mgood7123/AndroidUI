@@ -29,6 +29,7 @@ using AndroidUI.Input;
 using AndroidUI.OS;
 using AndroidUI.Utils;
 using AndroidUI.Utils.Arrays;
+using AndroidUI.Utils.Input;
 using AndroidUI.Utils.Lists;
 using AndroidUI.Utils.Widgets;
 using SkiaSharp;
@@ -3482,37 +3483,103 @@ namespace AndroidUI.Widgets
             return true;
         }
 
-        class CheckForLongPress : Runnable
+        private sealed class CheckForLongPress : Runnable
         {
+            private int mOriginalWindowAttachCount;
+            private float mX;
+            private float mY;
+            private bool mOriginalPressedState;
+
+            View outer;
+
+            public CheckForLongPress(View outer)
+            {
+                this.outer = outer;
+            }
+
             public override void run()
             {
-                //throw new NotImplementedException();
+                if ((mOriginalPressedState == outer.isPressed()) && (outer.mParent != null)
+                        && mOriginalWindowAttachCount == outer.mWindowAttachCount)
+                {
+                    if (outer.performLongClick(mX, mY))
+                    {
+                        outer.mHasPerformedLongPress = true;
+                    }
+                }
+            }
+
+            public void setAnchor(float x, float y)
+            {
+                mX = x;
+                mY = y;
+            }
+
+            public void rememberWindowAttachCount()
+            {
+                mOriginalWindowAttachCount = outer.mWindowAttachCount;
+            }
+
+            public void rememberPressedState()
+            {
+                mOriginalPressedState = outer.isPressed();
             }
         }
-        private CheckForLongPress mPendingCheckForLongPress;
-        class CheckForTap : Runnable
+
+        private sealed class CheckForTap : Runnable
         {
+            public float x;
+            public float y;
+
+            View outer;
+
+            public CheckForTap(View outer)
+            {
+                this.outer = outer;
+            }
+
             public override void run()
             {
-                //throw new NotImplementedException();
+                outer.mPrivateFlags &= ~View.PFLAG_PREPRESSED;
+                outer.setPressed(true, x, y);
+                long delay = ViewConfiguration.getLongPressTimeout() - ViewConfiguration.getTapTimeout();
+                outer.checkForLongClick(delay, x, y);
             }
         }
-        private CheckForTap mPendingCheckForTap = null;
-        class PerformClick : Runnable
+
+        private sealed class PerformClick : Runnable
         {
+            View outer;
+
+            public PerformClick(View outer)
+            {
+                this.outer = outer;
+            }
+
             public override void run()
             {
-                //throw new NotImplementedException();
+                outer.performClickInternal();
             }
         }
-        private PerformClick mPerformClick;
         class UnsetPressedState : Runnable
         {
+
+            View outer;
+
+            public UnsetPressedState(View outer)
+            {
+                this.outer = outer;
+            }
+
             public override void run()
             {
-                //throw new NotImplementedException();
+                outer.setPressed(false);
             }
         }
+
+        private CheckForLongPress mPendingCheckForLongPress;
+        private CheckForTap mPendingCheckForTap;
+        private PerformClick mPerformClick;
         private UnsetPressedState mUnsetPressedState;
 
         /**
@@ -3536,12 +3603,12 @@ namespace AndroidUI.Widgets
             {
                 return false;
             }
-            //AttachInfo attachInfo = mAttachInfo;
-            //if (attachInfo == null)
-            //{
-            return false;
-            //}
-            //return attachInfo.mHandler.hasCallbacks(mPendingCheckForLongPress);
+            AttachInfo attachInfo = mAttachInfo;
+            if (attachInfo == null)
+            {
+                return false;
+            }
+            return attachInfo.mHandler.hasCallbacks(mPendingCheckForLongPress);
         }
 
         /**
@@ -3639,7 +3706,7 @@ namespace AndroidUI.Widgets
          *
          * @return True if this view has or contains focus, false otherwise.
          */
-        public bool hasFocus()
+        virtual public bool hasFocus()
         {
             return (mPrivateFlags & PFLAG_FOCUSED) != 0 || mFocused != null;
         }
@@ -3651,7 +3718,7 @@ namespace AndroidUI.Widgets
          * @return The view that currently has focus, or null if no focused view can
          *         be found.
          */
-        public View findFocus()
+        virtual public View findFocus()
         {
             if (isFocused())
             {
@@ -3663,6 +3730,73 @@ namespace AndroidUI.Widgets
                 return mFocused.findFocus();
             }
             return null;
+        }
+
+        /**
+         * Set whether this view can receive the focus.
+         * <p>
+         * Setting this to false will also ensure that this view is not focusable
+         * in touch mode.
+         *
+         * @param focusable If true, this view can receive the focus.
+         *
+         * @see #setFocusableInTouchMode(bool)
+         * @see #setFocusable(int)
+         * @attr ref android.R.styleable#View_focusable
+         */
+        virtual public void setFocusable(bool focusable)
+        {
+            setFocusable(focusable ? FOCUSABLE : NOT_FOCUSABLE);
+        }
+
+        /**
+         * Sets whether this view can receive focus.
+         * <p>
+         * Setting this to {@link #FOCUSABLE_AUTO} tells the framework to determine focusability
+         * automatically based on the view's interactivity. This is the default.
+         * <p>
+         * Setting this to NOT_FOCUSABLE will ensure that this view is also not focusable
+         * in touch mode.
+         *
+         * @param focusable One of {@link #NOT_FOCUSABLE}, {@link #FOCUSABLE},
+         *                  or {@link #FOCUSABLE_AUTO}.
+         * @see #setFocusableInTouchMode(bool)
+         * @attr ref android.R.styleable#View_focusable
+         */
+        virtual public void setFocusable(int focusable)
+        {
+            if ((focusable & (FOCUSABLE_AUTO | FOCUSABLE)) == 0)
+            {
+                setFlags(0, FOCUSABLE_IN_TOUCH_MODE);
+            }
+            setFlags(focusable, FOCUSABLE_MASK);
+        }
+
+        /**
+         * Set whether this view can receive focus while in touch mode.
+         *
+         * Setting this to true will also ensure that this view is focusable.
+         *
+         * @param focusableInTouchMode If true, this view can receive the focus while
+         *   in touch mode.
+         *
+         * @see #setFocusable(bool)
+         * @attr ref android.R.styleable#View_focusableInTouchMode
+         */
+        virtual public void setFocusableInTouchMode(bool focusableInTouchMode)
+        {
+            // Focusable in touch mode should always be set before the focusable flag
+            // otherwise, setting the focusable flag will trigger a focusableViewAvailable()
+            // which, in touch mode, will not successfully request focus on this view
+            // because the focusable in touch mode flag is not set
+            setFlags(focusableInTouchMode ? FOCUSABLE_IN_TOUCH_MODE : 0, FOCUSABLE_IN_TOUCH_MODE);
+
+            // Clear FOCUSABLE_AUTO if set.
+            if (focusableInTouchMode)
+            {
+                // Clears FOCUSABLE_AUTO if set.
+                setFlags(FOCUSABLE, FOCUSABLE_MASK);
+            }
         }
 
         private bool hasSize()
@@ -3933,6 +4067,26 @@ namespace AndroidUI.Widgets
         public void setContextClickable(bool contextClickable)
         {
             setFlags(contextClickable ? CONTEXT_CLICKABLE : 0, CONTEXT_CLICKABLE);
+        }
+
+        /**
+         * Sets the pressed state for this view and provides a touch coordinate for
+         * animation hinting.
+         *
+         * @param pressed Pass true to set the View's internal state to "pressed",
+         *            or false to reverts the View's internal state from a
+         *            previously set "pressed" state.
+         * @param x The x coordinate of the touch that caused the press
+         * @param y The y coordinate of the touch that caused the press
+         */
+        private void setPressed(bool pressed, float x, float y)
+        {
+            if (pressed)
+            {
+                drawableHotspotChanged(x, y);
+            }
+
+            setPressed(pressed);
         }
 
         /**
@@ -8149,34 +8303,34 @@ namespace AndroidUI.Widgets
          * take ownership of the current gesture at any point.
          *
          * <p>Using this function takes some care, as it has a fairly complicated
-         * interaction with {@link View#onTouchEvent(Touch)
-         * View.onTouchEvent(Touch)}, and using it requires implementing
+         * interaction with {@link View#onTouch(Touch)
+         * View.onTouch(Touch)}, and using it requires implementing
          * that method as well as this one in the correct way.  Events will be
          * received in the following order:
          *
          * <ol>
          * <li> You will receive the down event here.
          * <li> The down event will be handled either by a child of this view
-         * group, or given to your own onTouchEvent() method to handle; this means
-         * you should implement onTouchEvent() to return true, so you will
+         * group, or given to your own onTouch() method to handle; this means
+         * you should implement onTouch() to return true, so you will
          * continue to see the rest of the gesture (instead of looking for
          * a parent view to handle it).  Also, by returning true from
-         * onTouchEvent(), you will not receive any following
+         * onTouch(), you will not receive any following
          * events in onInterceptTouchEvent() and all touch processing must
-         * happen in onTouchEvent() like normal.
+         * happen in onTouch() like normal.
          * <li> For as long as you return false from this function, each following
          * event (up to and including the up) will be delivered first here
-         * and then to the target's onTouchEvent().
+         * and then to the target's onTouch().
          * <li> If you return true from here, you will not receive any
          * following events: the target view will receive the same event but
          * with the action {@link Touch#ACTION_CANCEL}, and all further
-         * events will be delivered to your onTouchEvent() method and no longer
+         * events will be delivered to your onTouch() method and no longer
          * appear here.
          * </ol>
          *
          * @param ev The motion event being dispatched down the hierarchy.
          * @return Return true to steal motion events from the children and have
-         * them dispatched to this ViewGroup through onTouchEvent().
+         * them dispatched to this ViewGroup through onTouch().
          * The current target will receive an ACTION_CANCEL event, and no further
          * messages will be delivered here.
          */
@@ -8206,7 +8360,7 @@ namespace AndroidUI.Widgets
             bool result = false;
 
             //if (mInputEventConsistencyVerifier != null) {
-            //    mInputEventConsistencyVerifier.onTouchEvent(ev, 0);
+            //    mInputEventConsistencyVerifier.onTouch(ev, 0);
             //}
 
             Touch.State state = ev.getTouchAtCurrentIndex().state;
@@ -8223,13 +8377,13 @@ namespace AndroidUI.Widgets
                 //    result = true;
                 //}
                 //noinspection SimplifiableIfStatement
-                //ListenerInfo li = mListenerInfo;
-                //if (li != null && li.mOnTouchListener != null
-                //        && (mViewFlags & ENABLED_MASK) == ENABLED
-                //        && li.mOnTouchListener.onTouch(this, ev))
-                //{
-                //    result = true;
-                //}
+                ListenerInfo li = mListenerInfo;
+                if (li != null && li.mOnTouchListener != null
+                        && (mViewFlags & ENABLED_MASK) == ENABLED
+                        && li.mOnTouchListener.onTouch(this, ev))
+                {
+                    result = true;
+                }
 
                 if (!result && onTouch(ev))
                 {
@@ -8284,7 +8438,7 @@ namespace AndroidUI.Widgets
         private class TouchTarget
         {
             private static int MAX_RECYCLED = 32;
-            private static object sRecycleLock = new object[0];
+            private static object sRecycleLock = new();
             private static TouchTarget sRecycleBin;
             private static int sRecycledCount;
 
@@ -9462,15 +9616,303 @@ namespace AndroidUI.Widgets
         }
 
         /**
-         * Implement this method to handle touch screen motion events.
-         * <p>
-         *
-         * @param event The motion event.
-         * @return True if the event was handled, false otherwise.
+         * The delegate to handle touch events that are physically in this view
+         * but should be handled by another view.
          */
+        private TouchDelegate mTouchDelegate = null;
+
+        /**
+        * Sets the TouchDelegate for this View.
+        */
+        public void setTouchDelegate(TouchDelegate touchDelegate) {
+            mTouchDelegate = touchDelegate;
+        }
+
+        /**
+         * Gets the TouchDelegate for this View.
+         */
+        public TouchDelegate getTouchDelegate() {
+            return mTouchDelegate;
+        }
+
+        /**
+         * Whether the next up event should be ignored for the purposes of gesture recognition. This is
+         * true after a stylus button press has occured, when the next up event should not be recognized
+         * as a tap.
+         */
+        private bool mIgnoreNextUpEvent;
+
+        private void checkForLongClick(long delay, float x, float y)
+        {
+            if ((mViewFlags & LONG_CLICKABLE) == LONG_CLICKABLE) // || (mViewFlags & TOOLTIP) == TOOLTIP)
+            {
+                mHasPerformedLongPress = false;
+
+                if (mPendingCheckForLongPress == null)
+                {
+                    mPendingCheckForLongPress = new CheckForLongPress(this);
+                }
+                mPendingCheckForLongPress.setAnchor(x, y);
+                mPendingCheckForLongPress.rememberWindowAttachCount();
+                mPendingCheckForLongPress.rememberPressedState();
+                postDelayed(mPendingCheckForLongPress, delay);
+            }
+        }
+
+        /**
+          * Implement this method to handle touch screen motion events.
+          * <p>
+          * If this method is used to detect click actions, it is recommended that
+          * the actions be performed by implementing and calling
+          * {@link #performClick()}. This will ensure consistent system behavior,
+          * including:
+          * <ul>
+          * <li>obeying click sound preferences
+          * <li>dispatching OnClickListener calls
+          * <li>handling {@link AccessibilityNodeInfo#ACTION_CLICK ACTION_CLICK} when
+          * accessibility features are enabled
+          * </ul>
+          *
+          * @param event The motion event.
+          * @return True if the event was handled, false otherwise.
+          */
         public virtual bool onTouch(Touch touch)
         {
             Console.WriteLine("onTouch from " + this);
+            var t = touch.getTouchAtCurrentIndex();
+            float x = 0.0f;
+            float y = 0.0f;
+            if (t.state != Touch.State.TOUCH_CANCELLED)
+            {
+                x = t.location.y;
+                y = t.location.x;
+            }
+            int viewFlags = mViewFlags;
+            var action = t.state;
+
+            bool clickable = ((viewFlags & CLICKABLE) == CLICKABLE
+                    || (viewFlags & LONG_CLICKABLE) == LONG_CLICKABLE)
+                    || (viewFlags & CONTEXT_CLICKABLE) == CONTEXT_CLICKABLE;
+
+            if ((viewFlags & ENABLED_MASK) == DISABLED
+                    && (mPrivateFlags4 & PFLAG4_ALLOW_CLICK_WHEN_DISABLED) == 0) {
+                if (action == Touch.State.TOUCH_UP && (mPrivateFlags & PFLAG_PRESSED) != 0) {
+                    setPressed(false);
+                }
+                mPrivateFlags3 &= ~PFLAG3_FINGER_DOWN;
+                // A disabled view that is clickable still consumes the touch
+                // events, it just doesn't respond to them.
+                return clickable;
+            }
+            if (mTouchDelegate != null) {
+                if (mTouchDelegate.onTouch(touch)) {
+                    return true;
+                }
+            }
+
+            if (clickable) { // || (viewFlags & TOOLTIP) == TOOLTIP) {
+                switch (action) {
+                    case Touch.State.TOUCH_UP:
+                        {
+                            mPrivateFlags3 &= ~PFLAG3_FINGER_DOWN;
+                            //if ((viewFlags & TOOLTIP) == TOOLTIP) {
+                            //    handleTooltipUp();
+                            //}
+                            if (!clickable)
+                            {
+                                removeTapCallback();
+                                removeLongPressCallback();
+                                //mInContextButtonPress = false;
+                                mHasPerformedLongPress = false;
+                                mIgnoreNextUpEvent = false;
+                                break;
+                            }
+                            bool prepressed = (mPrivateFlags & PFLAG_PREPRESSED) != 0;
+                            if ((mPrivateFlags & PFLAG_PRESSED) != 0 || prepressed)
+                            {
+                                // take focus if we don't have it already and we should in
+                                // touch mode.
+                                bool focusTaken = false;
+                                if (isFocusable() && isFocusableInTouchMode() && !isFocused())
+                                {
+                                    focusTaken = requestFocus();
+                                }
+
+                                if (prepressed)
+                                {
+                                    // The button is being released before we actually
+                                    // showed it as pressed.  Make it show the pressed
+                                    // state now (before scheduling the click) to ensure
+                                    // the user sees it.
+                                    setPressed(true, x, y);
+                                }
+
+                                if (!mHasPerformedLongPress && !mIgnoreNextUpEvent)
+                                {
+                                    // This is a tap, so remove the longpress check
+                                    removeLongPressCallback();
+
+                                    // Only perform take click actions if we were in the pressed state
+                                    if (!focusTaken)
+                                    {
+                                        // Use a Runnable and post this rather than calling
+                                        // performClick directly. This lets other visual state
+                                        // of the view update before click actions start.
+                                        if (mPerformClick == null)
+                                        {
+                                            mPerformClick = new PerformClick(this);
+                                        }
+                                        if (!post(mPerformClick))
+                                        {
+                                            performClickInternal();
+                                        }
+                                    }
+                                }
+
+                                if (mUnsetPressedState == null)
+                                {
+                                    mUnsetPressedState = new UnsetPressedState(this);
+                                }
+
+                                if (prepressed)
+                                {
+                                    postDelayed(mUnsetPressedState,
+                                            ViewConfiguration.getPressedStateDuration());
+                                }
+                                else if (!post(mUnsetPressedState))
+                                {
+                                    // If the post failed, unpress right now
+                                    mUnsetPressedState.run();
+                                }
+
+                                removeTapCallback();
+                            }
+                            mIgnoreNextUpEvent = false;
+                            break;
+                        }
+
+                    case Touch.State.TOUCH_DOWN:
+                        {
+                            mPrivateFlags3 |= PFLAG3_FINGER_DOWN;
+                            mHasPerformedLongPress = false;
+
+                            if (!clickable)
+                            {
+                                checkForLongClick(
+                                        ViewConfiguration.getLongPressTimeout(),
+                                        x,
+                                        y);
+                                break;
+                            }
+
+                            // TODO: this calls context menu on mouse secondary button click
+                            //if (performButtonActionOnTouchDown(event)) {
+                            //    break;
+                            //}
+
+                            // Walk up the hierarchy to determine if we're inside a scrolling container.
+                            bool isInScrollingContainer = false; // isInScrollingContainer();
+
+                            // For views inside a scrolling container, delay the pressed feedback for
+                            // a short period in case this is a scroll.
+                            if (isInScrollingContainer)
+                            {
+                                mPrivateFlags |= PFLAG_PREPRESSED;
+                                if (mPendingCheckForTap == null)
+                                {
+                                    mPendingCheckForTap = new CheckForTap(this);
+                                }
+                                mPendingCheckForTap.x = t.location.x;
+                                mPendingCheckForTap.y = t.location.y;
+                                postDelayed(mPendingCheckForTap, ViewConfiguration.getTapTimeout());
+                            }
+                            else
+                            {
+                                // Not inside a scrolling container, so show the feedback right away
+                                setPressed(true, x, y);
+                                checkForLongClick(
+                                        ViewConfiguration.getLongPressTimeout(),
+                                        x,
+                                        y);
+                            }
+                            break;
+                        }
+
+                    case Touch.State.TOUCH_CANCELLED:
+                        {
+                            if (clickable)
+                            {
+                                setPressed(false);
+                            }
+                            removeTapCallback();
+                            removeLongPressCallback();
+                            //mInContextButtonPress = false;
+                            mHasPerformedLongPress = false;
+                            mIgnoreNextUpEvent = false;
+                            mPrivateFlags3 &= ~PFLAG3_FINGER_DOWN;
+                            break;
+                        }
+                    case Touch.State.TOUCH_MOVE:
+                        {
+                            if (clickable)
+                            {
+                                drawableHotspotChanged(x, y);
+                            }
+
+                            int touchSlop = ViewConfiguration.getTouchSlop();
+                            //bool ambiguousGesture =
+                            //        motionClassification == MotionEvent.CLASSIFICATION_AMBIGUOUS_GESTURE;
+                            //if (ambiguousGesture && hasPendingLongPressCallback()) {
+                            //    if (!pointInView(x, y, touchSlop)) {
+                            //        // The default action here is to cancel long press. But instead, we
+                            //        // just extend the timeout here, in case the classification
+                            //        // stays ambiguous.
+                            //        removeLongPressCallback();
+                            //        long delay = (long) (ViewConfiguration.getLongPressTimeout()
+                            //                * mAmbiguousGestureMultiplier);
+                            //        // Subtract the time already spent
+                            //        delay -= event.getEventTime() - event.getDownTime();
+                            //        checkForLongClick(
+                            //                delay,
+                            //                x,
+                            //                y,
+                            //                TOUCH_GESTURE_CLASSIFIED__CLASSIFICATION__LONG_PRESS);
+                            //    }
+                            //    touchSlop *= mAmbiguousGestureMultiplier;
+                            //}
+
+                            // Be lenient about moving outside of buttons
+                            if (!pointInView(x, y, touchSlop))
+                            {
+                                // Outside button
+                                // Remove any future long press/tap checks
+                                removeTapCallback();
+                                removeLongPressCallback();
+                                if ((mPrivateFlags & PFLAG_PRESSED) != 0)
+                                {
+                                    setPressed(false);
+                                }
+                                mPrivateFlags3 &= ~PFLAG3_FINGER_DOWN;
+                            }
+
+                            //bool deepPress =
+                            //        motionClassification == MotionEvent.CLASSIFICATION_DEEP_PRESS;
+                            //if (deepPress && hasPendingLongPressCallback()) {
+                            //    // process the long click action immediately
+                            //    removeLongPressCallback();
+                            //    checkForLongClick(
+                            //            0 /* send immediately */,
+                            //            x,
+                            //            y,
+                            //            TOUCH_GESTURE_CLASSIFIED__CLASSIFICATION__DEEP_PRESS);
+                            //}
+
+                            break;
+                        }
+                }
+
+                return true;
+            }
             return false;
         }
 
@@ -11780,7 +12222,7 @@ namespace AndroidUI.Widgets
          * {@link #draw(android.graphics.Canvas)}, {@link #onDraw(android.graphics.Canvas)},
          * {@link #dispatchDraw(android.graphics.Canvas)} or any related method.</p>
          */
-        public void removeAllViews()
+        virtual public void removeAllViews()
         {
             removeAllViewsInLayout();
             requestLayout();
@@ -11800,7 +12242,7 @@ namespace AndroidUI.Widgets
          * {@link #draw(android.graphics.Canvas)}, {@link #onDraw(android.graphics.Canvas)},
          * {@link #dispatchDraw(android.graphics.Canvas)} or any related method.</p>
          */
-        public void removeAllViewsInLayout()
+        virtual public void removeAllViewsInLayout()
         {
             int count = mChildrenCount;
             if (count <= 0)
@@ -15646,7 +16088,7 @@ namespace AndroidUI.Widgets
          *
          * @return true if the children can be animated, false otherwise
          */
-        protected bool canAnimate()
+        virtual protected bool canAnimate()
         {
             return mLayoutAnimationController != null;
         }
@@ -16307,6 +16749,326 @@ namespace AndroidUI.Widgets
         }
 
 
+        /**
+         * Interface definition for a callback to be invoked when a view is clicked.
+         */
+        public interface OnClickListener
+        {
+            /**
+             * Called when a view has been clicked.
+             *
+             * @param v The view that was clicked.
+             */
+            void onClick(View v);
+        }
+
+        /**
+         * Interface definition for a callback to be invoked when a view has been clicked and held.
+         */
+        public interface OnLongClickListener
+        {
+            /**
+             * Called when a view has been clicked and held.
+             *
+             * @param v The view that was clicked and held.
+             *
+             * @return true if the callback consumed the long click, false otherwise.
+             */
+            bool onLongClick(View v);
+        }
+
+        /**
+         * Register a callback to be invoked when this view is clicked. If this view is not
+         * clickable, it becomes clickable.
+         *
+         * @param l The callback that will run
+         *
+         * @see #setClickable(bool)
+         */
+        virtual public void setOnClickListener(OnClickListener l)
+        {
+            if (!isClickable())
+            {
+                setClickable(true);
+            }
+            getListenerInfo().mOnClickListener = l;
+        }
+
+        class RunnableClickListener : OnClickListener
+        {
+            Action<View> action;
+
+            public RunnableClickListener(Action<View> action)
+            {
+                this.action = action;
+            }
+
+            public void onClick(View v) => action?.Invoke(v);
+        }
+
+        class RunnableLongClickListener : OnLongClickListener
+        {
+            Func<View, bool> action;
+
+            public RunnableLongClickListener(Func<View, bool> action)
+            {
+                this.action = action;
+            }
+
+            public bool onLongClick(View v) => action == null ? false : action.Invoke(v);
+        }
+
+        /**
+         * Register a callback to be invoked when this view is clicked. If this view is not
+         * clickable, it becomes clickable.
+         *
+         * @param l The callback that will run
+         *
+         * @see #setClickable(bool)
+         */
+        virtual public void setOnClickListener(Action<View> l)
+        {
+            if (!isClickable())
+            {
+                setClickable(true);
+            }
+            getListenerInfo().mOnClickListener = new RunnableClickListener(l);
+        }
+
+        /**
+         * Return whether this view has an attached OnClickListener.  Returns
+         * true if there is a listener, false if there is none.
+         */
+        public bool hasOnClickListeners()
+        {
+            ListenerInfo li = mListenerInfo;
+            return (li != null && li.mOnClickListener != null);
+        }
+
+        /**
+         * Register a callback to be invoked when this view is clicked and held. If this view is not
+         * long clickable, it becomes long clickable.
+         *
+         * @param l The callback that will run
+         *
+         * @see #setLongClickable(bool)
+         */
+        virtual public void setOnLongClickListener(OnLongClickListener l)
+        {
+            if (!isLongClickable())
+            {
+                setLongClickable(true);
+            }
+            getListenerInfo().mOnLongClickListener = l;
+        }
+
+        /**
+         * Register a callback to be invoked when this view is clicked and held. If this view is not
+         * long clickable, it becomes long clickable.
+         *
+         * @param l The callback that will run
+         *
+         * @see #setLongClickable(bool)
+         */
+        virtual public void setOnLongClickListener(Func<View, bool> l)
+        {
+            if (!isLongClickable())
+            {
+                setLongClickable(true);
+            }
+            getListenerInfo().mOnLongClickListener = new RunnableLongClickListener(l);
+        }
+
+        /**
+         * Return whether this view has an attached OnLongClickListener.  Returns
+         * true if there is a listener, false if there is none.
+         */
+        public bool hasOnLongClickListeners()
+        {
+            ListenerInfo li = mListenerInfo;
+            return (li != null && li.mOnLongClickListener != null);
+        }
+
+        /**
+         * @return the registered {@link OnLongClickListener} if there is one, {@code null} otherwise.
+         * @hide
+         */
+        public OnLongClickListener getOnLongClickListener()
+        {
+            ListenerInfo li = mListenerInfo;
+            return (li != null) ? li.mOnLongClickListener : null;
+        }
+
+        /**
+         * Entry point for {@link #performClick()} - other methods on View should call it instead of
+         * {@code performClick()} directly to make sure the autofill manager is notified when
+         * necessary (as subclasses could extend {@code performClick()} without calling the parent's
+         * method).
+         */
+        private bool performClickInternal()
+        {
+            // Must notify autofill manager before performing the click actions to avoid scenarios where
+            // the app has a click listener that changes the state of views the autofill service might
+            // be interested on.
+            //notifyAutofillManagerOnClick();
+
+            return performClick();
+        }
+
+        /**
+         * Call this view's OnClickListener, if it is defined.  Performs all normal
+         * actions associated with clicking: reporting accessibility event, playing
+         * a sound, etc.
+         *
+         * @return True there was an assigned OnClickListener that was called, false
+         *         otherwise is returned.
+         */
+        // NOTE: other methods on View should not call this method directly, but performClickInternal()
+        // instead, to guarantee that the autofill manager is notified when necessary (as subclasses
+        // could extend this method without calling super.performClick()).
+        public bool performClick()
+        {
+            // We still need to call this method to handle the cases where performClick() was called
+            // externally, instead of through performClickInternal()
+            //notifyAutofillManagerOnClick();
+
+            bool result;
+            ListenerInfo li = mListenerInfo;
+            if (li != null && li.mOnClickListener != null)
+            {
+                //playSoundEffect(SoundEffectConstants.CLICK);
+                li.mOnClickListener.onClick(this);
+                result = true;
+            }
+            else
+            {
+                result = false;
+            }
+
+            //sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_CLICKED);
+
+            //notifyEnterOrExitForAutoFillIfNeeded(true);
+
+            return result;
+        }
+
+        /**
+         * Directly call any attached OnClickListener.  Unlike {@link #performClick()},
+         * this only calls the listener, and does not do any associated clicking
+         * actions like reporting an accessibility event.
+         *
+         * @return True there was an assigned OnClickListener that was called, false
+         *         otherwise is returned.
+         */
+        public bool callOnClick()
+        {
+            ListenerInfo li = mListenerInfo;
+            if (li != null && li.mOnClickListener != null)
+            {
+                li.mOnClickListener.onClick(this);
+                return true;
+            }
+            return false;
+        }
+
+        // Temporary values used to hold (x,y) coordinates when delegating from the
+        // two-arg performLongClick() method to the legacy no-arg version.
+        private float mLongClickX = float.NaN;
+        private float mLongClickY = float.NaN;
+
+        /**
+         * Calls this view's OnLongClickListener, if it is defined. Invokes the
+         * context menu if the OnLongClickListener did not consume the event.
+         *
+         * @return {@code true} if one of the above receivers consumed the event,
+         *         {@code false} otherwise
+         */
+        public bool performLongClick()
+        {
+            return performLongClickInternal(mLongClickX, mLongClickY);
+        }
+
+        /**
+         * Calls this view's OnLongClickListener, if it is defined. Invokes the
+         * context menu if the OnLongClickListener did not consume the event,
+         * anchoring it to an (x,y) coordinate.
+         *
+         * @param x x coordinate of the anchoring touch event, or {@link Float#NaN}
+         *          to disable anchoring
+         * @param y y coordinate of the anchoring touch event, or {@link Float#NaN}
+         *          to disable anchoring
+         * @return {@code true} if one of the above receivers consumed the event,
+         *         {@code false} otherwise
+         */
+        public bool performLongClick(float x, float y)
+        {
+            mLongClickX = x;
+            mLongClickY = y;
+            bool handled = performLongClick();
+            mLongClickX = float.NaN;
+            mLongClickY = float.NaN;
+            return handled;
+        }
+
+        /**
+         * Calls this view's OnLongClickListener, if it is defined. Invokes the
+         * context menu if the OnLongClickListener did not consume the event,
+         * optionally anchoring it to an (x,y) coordinate.
+         *
+         * @param x x coordinate of the anchoring touch event, or {@link Float#NaN}
+         *          to disable anchoring
+         * @param y y coordinate of the anchoring touch event, or {@link Float#NaN}
+         *          to disable anchoring
+         * @return {@code true} if one of the above receivers consumed the event,
+         *         {@code false} otherwise
+         */
+        private bool performLongClickInternal(float x, float y)
+        {
+            //sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_LONG_CLICKED);
+
+            bool handled = false;
+            ListenerInfo li = mListenerInfo;
+            if (li != null && li.mOnLongClickListener != null)
+            {
+                handled = li.mOnLongClickListener.onLongClick(this);
+            }
+            if (!handled)
+            {
+                bool isAnchored = !float.IsNaN(x) && !float.IsNaN(y);
+                //handled = isAnchored ? showContextMenu(x, y) : showContextMenu();
+            }
+            //if ((mViewFlags & TOOLTIP) == TOOLTIP)
+            //{
+            //    if (!handled)
+            //    {
+            //        handled = showLongClickTooltip((int)x, (int)y);
+            //    }
+            //}
+            if (handled)
+            {
+                //performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+            }
+            return handled;
+        }
+
+        /**
+         * Interface definition for a callback to be invoked when a touch event is
+         * dispatched to this view. The callback will be invoked before the touch
+         * event is given to the view.
+         */
+        public interface OnTouchListener
+        {
+            /**
+             * Called when a touch event is dispatched to a view. This allows listeners to
+             * get a chance to respond before the target view.
+             *
+             * @param v The view the touch event has been dispatched to.
+             * @param event The MotionEvent object containing full information about
+             *        the event.
+             * @return True if the listener has consumed the event, false otherwise.
+             */
+            bool onTouch(View v, Touch ev);
+        }
 
         internal class ListenerInfo
         {
@@ -16334,14 +17096,14 @@ namespace AndroidUI.Widgets
              * This field should be made private, so it is hidden from the SDK.
              * {@hide}
              */
-            //internal OnClickListener mOnClickListener;
+            internal OnClickListener mOnClickListener;
 
             /**
              * Listener used to dispatch long click events.
              * This field should be made private, so it is hidden from the SDK.
              * {@hide}
              */
-            //internal OnLongClickListener mOnLongClickListener;
+            internal OnLongClickListener mOnLongClickListener;
 
             /**
              * Listener used to dispatch context click events. This field should be made private, so it
@@ -16359,7 +17121,7 @@ namespace AndroidUI.Widgets
 
             //internal OnKeyListener mOnKeyListener;
 
-            //internal OnTouchListener mOnTouchListener;
+            internal OnTouchListener mOnTouchListener;
 
             //internal OnHoverListener mOnHoverListener;
 

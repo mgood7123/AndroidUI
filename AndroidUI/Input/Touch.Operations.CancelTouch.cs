@@ -16,6 +16,11 @@ namespace AndroidUI.Input
             else
             {
                 TouchContainer touchContainer = touchContainerList.ElementAt(0);
+                if (touchContainer.touch.location == null)
+                {
+                    touchContainer.touch.hasLocation = true;
+                    touchContainer.touch.location = new(0, 0);
+                }
                 touchContainer.touch.location_moved = false;
                 touchContainer.touch.normalized_location_on_input_surface_moved = false;
                 touchContainer.touch.location_moved_or_normalized_location_on_input_surface_moved = false;
