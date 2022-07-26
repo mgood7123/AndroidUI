@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-using AndroidUI.Applications;
 using AndroidUI.OS;
 using AndroidUI.Utils;
 using AndroidUI.Utils.Widgets;
@@ -34,14 +33,13 @@ namespace AndroidUI.Widgets
      * <a href="{@docRoot}guide/topics/ui/binding.html">Binding to Data with AdapterView</a>
      * developer guide.</p></div>
      */
-    public abstract class AdapterView<T> : View where T : Adapter
+    public abstract class AdapterView<AdapterType, BaseType> : View where AdapterType : Adapter<BaseType>
     {
-
         /**
          * The item view type returned by {@link Adapter#getItemViewType(int)} when
          * the adapter does not want the item's view recycled.
          */
-        public const int ITEM_VIEW_TYPE_IGNORE = Adapter.IGNORE_ITEM_VIEW_TYPE;
+        public const int ITEM_VIEW_TYPE_IGNORE = Adapter<BaseType>.IGNORE_ITEM_VIEW_TYPE;
 
         /**
          * The item view type returned by {@link Adapter#getItemViewType(int)} when
@@ -244,7 +242,7 @@ namespace AndroidUI.Widgets
              * @param position The position of the view in the adapter.
              * @param id The row id of the item that was clicked.
              */
-            void onItemClick(AdapterView<T> parent, View view, int position, long id);
+            void onItemClick(AdapterView<AdapterType, BaseType> parent, View view, int position, long id);
         }
 
         /**
@@ -319,7 +317,7 @@ namespace AndroidUI.Widgets
              *
              * @return true if the callback consumed the long click, false otherwise
              */
-            bool onItemLongClick(AdapterView<T> parent, View view, int position, long id);
+            bool onItemLongClick(AdapterView<AdapterType, BaseType> parent, View view, int position, long id);
         }
 
 
@@ -367,7 +365,7 @@ namespace AndroidUI.Widgets
              * @param position The position of the view in the adapter
              * @param id The row id of the item that is selected
              */
-            void onItemSelected(AdapterView<T> parent, View view, int position, long id);
+            void onItemSelected(AdapterView<AdapterType, BaseType> parent, View view, int position, long id);
 
             /**
              * Callback method to be invoked when the selection disappears from this
@@ -376,7 +374,7 @@ namespace AndroidUI.Widgets
              *
              * @param parent The AdapterView that now contains no selected item.
              */
-            void onNothingSelected(AdapterView<T> parent);
+            void onNothingSelected(AdapterView<AdapterType, BaseType> parent);
         }
 
 
@@ -435,7 +433,7 @@ namespace AndroidUI.Widgets
          *
          * @return The adapter used to provide this view's content.
          */
-        public abstract T getAdapter();
+        public abstract AdapterType getAdapter();
 
         /**
          * Sets the adapter that provides the data and the views to represent the data
@@ -443,7 +441,7 @@ namespace AndroidUI.Widgets
          *
          * @param adapter The adapter to use to create this view's content.
          */
-        public abstract void setAdapter(T adapter);
+        public abstract void setAdapter(AdapterType adapter);
 
         /**
          * This method is not supported and throws an NotSupportedException when called.
@@ -575,9 +573,9 @@ namespace AndroidUI.Widgets
          * @return The data corresponding to the currently selected item, or
          * null if there is nothing selected.
          */
-        public Object getSelectedItem()
+        public ValueHolder<BaseType> getSelectedItem()
         {
-            T adapter = getAdapter();
+            AdapterType adapter = getAdapter();
             int selection = getSelectedItemPosition();
             if (adapter != null && adapter.getCount() > 0 && selection >= 0)
             {
@@ -696,7 +694,7 @@ namespace AndroidUI.Widgets
             //    emptyView.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_YES);
             //}
 
-            T adapter = getAdapter();
+            AdapterType adapter = getAdapter();
             bool empty = ((adapter == null) || adapter.isEmpty());
             updateEmptyStatus(empty);
         }
@@ -727,7 +725,7 @@ namespace AndroidUI.Widgets
         override
             public void setFocusable(int focusable)
         {
-            T adapter = getAdapter();
+            AdapterType adapter = getAdapter();
             bool empty = adapter == null || adapter.getCount() == 0;
 
             mDesiredFocusableState = focusable;
@@ -742,7 +740,7 @@ namespace AndroidUI.Widgets
         override
             public void setFocusableInTouchMode(bool focusable)
         {
-            T adapter = getAdapter();
+            AdapterType adapter = getAdapter();
             bool empty = adapter == null || adapter.getCount() == 0;
 
             mDesiredFocusableInTouchModeState = focusable;
@@ -756,7 +754,7 @@ namespace AndroidUI.Widgets
 
         void checkFocus()
         {
-            T adapter = getAdapter();
+            AdapterType adapter = getAdapter();
             bool empty = adapter == null || adapter.getCount() == 0;
             bool focusable = !empty || isInFilterMode();
             // The order in which we set focusable in touch mode/focusable may matter
@@ -816,15 +814,15 @@ namespace AndroidUI.Widgets
          * @param position Which data to get
          * @return The data associated with the specified position in the list
          */
-        public Object getItemAtPosition(int position)
+        public ValueHolder<BaseType> getItemAtPosition(int position)
         {
-            T adapter = getAdapter();
+            AdapterType adapter = getAdapter();
             return (adapter == null || position < 0) ? null : adapter.getItem(position);
         }
 
         public long getItemIdAtPosition(int position)
         {
-            T adapter = getAdapter();
+            AdapterType adapter = getAdapter();
             return (adapter == null || position < 0) ? INVALID_ROW_ID : adapter.getItemId(position);
         }
 
@@ -855,8 +853,8 @@ namespace AndroidUI.Widgets
 
         class AdapterDataSetObserver : DataSetObserver
         {
-            AdapterView<T> outer;
-            public AdapterDataSetObserver(AdapterView<T> outer)
+            AdapterView<AdapterType, BaseType> outer;
+            public AdapterDataSetObserver(AdapterView<AdapterType, BaseType> outer)
             {
                 this.outer = outer;
             }
@@ -927,8 +925,8 @@ namespace AndroidUI.Widgets
 
         private class SelectionNotifier : Runnable
         {
-            AdapterView<T> outer;
-            public SelectionNotifier(AdapterView<T> outer)
+            AdapterView<AdapterType, BaseType> outer;
+            public SelectionNotifier(AdapterView<AdapterType, BaseType> outer)
             {
                 this.outer = outer;
             }
@@ -1264,7 +1262,7 @@ namespace AndroidUI.Widgets
 
             // Get the item ID locally (instead of getItemIdAtPosition), so
             // we need the adapter
-            T adapter = getAdapter();
+            AdapterType adapter = getAdapter();
             if (adapter == null)
             {
                 return INVALID_POSITION;
@@ -1377,7 +1375,7 @@ namespace AndroidUI.Widgets
                 {
                     // Sync the based on the offset of the first view
                     View v = getChildAt(0);
-                    T adapter = getAdapter();
+                    AdapterType adapter = getAdapter();
                     if (mFirstPosition >= 0 && mFirstPosition < adapter.getCount())
                     {
                         mSyncRowId = adapter.getItemId(mFirstPosition);

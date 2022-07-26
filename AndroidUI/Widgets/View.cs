@@ -8838,11 +8838,6 @@ namespace AndroidUI.Widgets
             return mTempPosition;
         }
 
-        public class NullableClass<T>
-        {
-            public T value;
-        }
-
         /**
          * Returns true if a child view contains the specified point when transformed
          * into its coordinate space.
@@ -8850,7 +8845,7 @@ namespace AndroidUI.Widgets
          * @hide
          */
         internal bool isTransformedTouchPointInView(float x, float y, View child,
-            NullableClass<PointF> outLocalPoint)
+            ValueHolder<PointF> outLocalPoint)
         {
             float[] point = getTempLocationF();
             point[0] = x;
@@ -8859,8 +8854,8 @@ namespace AndroidUI.Widgets
             bool isInView = child.pointInView(point[0], point[1]);
             if (isInView && outLocalPoint != null)
             {
-                outLocalPoint.value.X = point[0];
-                outLocalPoint.value.Y = point[1];
+                outLocalPoint.Value.X = point[0];
+                outLocalPoint.Value.Y = point[1];
             }
             return isInView;
         }

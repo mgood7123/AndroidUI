@@ -29,7 +29,7 @@ namespace AndroidUI.Utils.Widgets
      * @see android.widget.CursorAdapter
      * @see android.widget.SimpleCursorAdapter
      */
-    public interface Adapter
+    public interface Adapter<T>
     {
         /**
          * Register an observer that is called when changes happen to the data used by this adapter.
@@ -60,7 +60,7 @@ namespace AndroidUI.Utils.Widgets
          * data set.
          * @return The data at the specified position.
          */
-        Object getItem(int position);
+        T getItem(int position);
 
         /**
          * Get the row id associated with the specified position in the list.
