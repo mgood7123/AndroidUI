@@ -1,6 +1,6 @@
 ﻿namespace AndroidUI.Utils.Lists
 {
-    class ArrayList<T> : ListWrapper<T>
+    public class ArrayList<T> : ListWrapper<T>
     {
         public ArrayList()
         {
