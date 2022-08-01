@@ -19,124 +19,204 @@ namespace AndroidUI.Utils.Input
 
         public const float DEFAULT_FRICTION = 1.0f;
 
-        object l = new();
-        Lists.RingBuffer<PositionInfo> pos = new(2);
-        Vector2 distance, totalDistance, velocity, position;
-        long startTime, endTime;
-        bool spinning;
+        readonly object LOCK = new();
+
+        class Info : ICloneable
+        {
+            public Lists.RingBuffer<PositionInfo> pos = new(2);
+            public Vector2 distance, totalDistance, velocity, position;
+            public long startTime, endTime;
+            public bool spinning;
+
+            public Info Clone()
+            {
+                Info c = (Info)ICloneable.Clone(this);
+                c.pos = new(pos.Capacity);
+                c.pos.AddRange(pos);
+                c.distance = distance;
+                c.totalDistance = totalDistance;
+                c.velocity = velocity;
+                c.position = position;
+                c.startTime = startTime;
+                c.endTime = endTime;
+                c.spinning = spinning;
+                return c;
+            }
+        }
+
+        Info current;
+
+        readonly Queue<Info> queue;
+
+        int maxHistory = 1;
+
+        public Flywheel()
+        {
+            current = new Info();
+            queue = new(Arrays.Arrays.AsArray(current));
+        }
+
+        void push()
+        {
+            if (maxHistory > 1)
+            {
+                if (queue.Count == maxHistory)
+                {
+                    queue.Dequeue();
+                }
+                queue.Enqueue(current);
+                current = current.Clone();
+            }
+        }
+
+        public bool Undo()
+        {
+            if (queue.Count > 1)
+            {
+                queue.Dequeue();
+                current = queue.Peek();
+                return true;
+            }
+            return false;
+        }
 
         private float friction = DEFAULT_FRICTION;
-        public bool Spinning => spinning;
+        public bool Spinning => current.spinning;
 
-        public Vector2 Distance => distance;
-        public Vector2 TotalDistance => totalDistance;
-        public Vector2 Velocity => velocity;
-        public Vector2 Position => position;
+        public Vector2 Distance => current.distance;
+        public Vector2 TotalDistance => current.totalDistance;
+        public Vector2 Velocity { get => current.velocity; set => current.velocity = value; }
+        public Vector2 Position { get => current.position; set => current.position = value; }
 
-        public long SpinTime => pos.Count >= 2 ? (endTime - startTime) : 0;
+        public long SpinTime => current.pos.Count >= 2 ? (current.endTime - current.startTime) : 0;
 
         public float Friction { get => friction; set => friction = value; }
+        public int MaxHistory { get => maxHistory; set => maxHistory = value; }
 
         public void Spin()
         {
-            if (spinning)
+            if (current.spinning)
             {
-                if (velocity.X > 0)
+                bool pushed = false;
+                if (current.velocity.X > 0)
                 {
-                    velocity.X -= friction;
-                    if (velocity.X < 0)
+                    push();
+                    pushed = true;
+                    current.velocity.X -= friction;
+                    if (current.velocity.X < 0)
                     {
-                        velocity.X = 0;
+                        current.velocity.X = 0;
                     }
                 }
-                else if (velocity.X < 0)
+                else if (current.velocity.X < 0)
                 {
-                    velocity.X += friction;
-                    if (velocity.X > 0)
+                    push();
+                    pushed = true;
+                    current.velocity.X += friction;
+                    if (current.velocity.X > 0)
                     {
-                        velocity.X = 0;
-                    }
-                }
-
-                if (velocity.Y > 0)
-                {
-                    velocity.Y -= friction;
-                    if (velocity.Y < 0)
-                    {
-                        velocity.Y = 0;
-                    }
-                }
-                else if (velocity.Y < 0)
-                {
-                    velocity.Y += friction;
-                    if (velocity.Y > 0)
-                    {
-                        velocity.Y = 0;
+                        current.velocity.X = 0;
                     }
                 }
 
-                position += velocity;
-                if (velocity == Vector2.Zero)
+                if (current.velocity.Y > 0)
                 {
-                    spinning = false;
+                    if (!pushed)
+                    {
+                        push();
+                        pushed = true;
+                    }
+                    current.velocity.Y -= friction;
+                    if (current.velocity.Y < 0)
+                    {
+                        current.velocity.Y = 0;
+                    }
+                }
+                else if (current.velocity.Y < 0)
+                {
+                    if (!pushed)
+                    {
+                        push();
+                        pushed = true;
+                    }
+                    current.velocity.Y += friction;
+                    if (current.velocity.Y > 0)
+                    {
+                        current.velocity.Y = 0;
+                    }
+                }
+
+                if (!pushed)
+                {
+                    push();
+                    pushed = true;
+                }
+                current.position += current.velocity;
+                if (current.velocity == Vector2.Zero)
+                {
+                    current.spinning = false;
                 }
             }
         }
 
         public void AquireLock()
         {
-            l.Lock();
+            LOCK.Lock();
         }
 
         public void ReleaseLock()
         {
-            l.Unlock();
+            LOCK.Unlock();
         }
 
         public void Reset()
         {
-            pos.Clear();
-            distance = Vector2.Zero;
-            totalDistance = Vector2.Zero;
-            velocity = Vector2.Zero;
-            position = Vector2.Zero;
-            startTime = 0;
-            endTime = 0;
-            spinning = false;
+            push();
+            current.pos.Clear();
+            current.distance = Vector2.Zero;
+            current.totalDistance = Vector2.Zero;
+            current.velocity = Vector2.Zero;
+            current.position = Vector2.Zero;
+            current.startTime = 0;
+            current.endTime = 0;
+            current.spinning = false;
         }
 
         public void ResetButKeepPosition()
         {
-            pos.Clear();
-            distance = Vector2.Zero;
-            totalDistance = Vector2.Zero;
-            velocity = Vector2.Zero;
-            startTime = 0;
-            endTime = 0;
-            spinning = false;
+            push();
+            current.pos.Clear();
+            current.distance = Vector2.Zero;
+            current.totalDistance = Vector2.Zero;
+            current.velocity = Vector2.Zero;
+            current.startTime = 0;
+            current.endTime = 0;
+            current.spinning = false;
         }
 
         public void AddMovement(long timestamp, float x, float y)
         {
-            if (pos.Count == 0)
+            push();
+            if (current.pos.Count == 0)
             {
-                startTime = timestamp;
+                current.startTime = timestamp;
             }
-            pos.Add(new(timestamp, x, y));
-            int count = pos.Count;
+            current.pos.Add(new(timestamp, x, y));
+            int count = current.pos.Count;
             if (count >= 2)
             {
-                endTime = timestamp;
-                distance = pos[count - 1].pos - pos[0].pos;
-                position += distance;
-                totalDistance += distance;
-                velocity = distance;
+                current.endTime = timestamp;
+                current.distance = current.pos[count - 1].pos - current.pos[0].pos;
+                current.position += current.distance;
+                current.totalDistance += current.distance;
+                current.velocity = current.distance;
             }
         }
 
         public void FinalizeMovement()
         {
-            spinning = true;
+            push();
+            current.spinning = true;
         }
     }
 }
