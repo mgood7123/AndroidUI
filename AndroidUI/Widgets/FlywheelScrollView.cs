@@ -17,8 +17,10 @@ namespace AndroidUI.Widgets
         long last_time_previous, last_time_current, time;
         bool was_down;
         private bool smoothScroll;
+        bool limitScrollingToViewBounds = true;
 
         public bool SmoothScroll { get => smoothScroll; set => smoothScroll = value; }
+        public bool LimitScrollingToChildViewBounds { get => limitScrollingToViewBounds; set => limitScrollingToViewBounds = value; }
 
         public FlywheelScrollView() : base()
         {
@@ -53,19 +55,97 @@ namespace AndroidUI.Widgets
             }
         }
 
+        enum RESULT
+        {
+            OK, CLAMP_X, CLAMP_Y, CLAMP_XY
+        }
+
+        RESULT NeedsClamp(View child, ref int x, ref int y)
+        {
+            RESULT r = RESULT.OK;
+            Log.d("attempting to scroll to: " + x + ", " + y);
+            if (limitScrollingToViewBounds)
+            {
+                if (x < 0)
+                {
+                    x = 0;
+                    r = RESULT.CLAMP_X;
+                }
+                if (y < 0)
+                {
+                    y = 0;
+                    if (r == RESULT.OK)
+                    {
+                        r = RESULT.CLAMP_Y;
+                    }
+                    else if (r == RESULT.CLAMP_X)
+                    {
+                        r = RESULT.CLAMP_XY;
+                    }
+                }
+                if ((getMeasuredWidth() + x) > child.getMeasuredWidth())
+                {
+                    x = child.getMeasuredWidth() - getMeasuredWidth();
+                    if (r == RESULT.OK)
+                    {
+                        r = RESULT.CLAMP_X;
+                    }
+                    else if (r == RESULT.CLAMP_Y)
+                    {
+                        r = RESULT.CLAMP_XY;
+                    }
+                }
+                if ((getMeasuredHeight() + y) > child.getMeasuredHeight())
+                {
+                    y = child.getMeasuredHeight() - getMeasuredHeight();
+                    if (r == RESULT.OK)
+                    {
+                        r = RESULT.CLAMP_Y;
+                    }
+                    else if (r == RESULT.CLAMP_X)
+                    {
+                        r = RESULT.CLAMP_XY;
+                    }
+                }
+            }
+            return r;
+        }
+
         protected override void onDraw(SKCanvas canvas)
         {
             base.onDraw(canvas);
             flywheel.AquireLock();
-            flywheel.Spin();
-            if (flywheel.Spinning)
+            if (smoothScroll)
             {
-                invalidate();
-
-                if (getChildCount() == 2)
+                flywheel.Spin();
+                if (flywheel.Spinning)
                 {
-                    View view = getChildAt(1);
-                    view.scrollTo(-flywheel.Position.X.toPixel(), -flywheel.Position.Y.toPixel());
+                    invalidate();
+
+                    if (getChildCount() == 2)
+                    {
+                        View view = getChildAt(1);
+                        int x = -flywheel.Position.X.toPixel();
+                        int y = -flywheel.Position.Y.toPixel();
+                        RESULT r = NeedsClamp(view, ref x, ref y);
+                        if (r != RESULT.OK)
+                        {
+                            flywheel.Position = new(-x, -y);
+                            if (r == RESULT.CLAMP_X)
+                            {
+                                flywheel.Velocity = new(0, flywheel.Velocity.Y);
+                            }
+                            else if (r == RESULT.CLAMP_Y)
+                            {
+                                flywheel.Velocity = new(flywheel.Velocity.X, 0);
+                            }
+                            else if (r == RESULT.CLAMP_XY)
+                            {
+                                flywheel.Velocity = System.Numerics.Vector2.Zero;
+                            }
+                        }
+                        view.scrollTo(x, y);
+                    }
                 }
             }
             string s = "Flywheel\n";
@@ -97,7 +177,6 @@ namespace AndroidUI.Widgets
 
         public override bool onTouch(Touch touch)
         {
-            touch.DontBatchOnTouchUpOrTouchCancel = true;
             Touch.Data data = touch.getTouchAtCurrentIndex();
             var st = data.state;
             flywheel.AquireLock();
@@ -105,11 +184,8 @@ namespace AndroidUI.Widgets
             {
                 case Touch.State.TOUCH_CANCELLED:
                 case Touch.State.TOUCH_DOWN:
-                    last_time_previous = 0;
-                    last_time_current = data.timestamp;
-                    time = last_time_previous == 0 ? 0 : (last_time_current - last_time_previous);
+                    ResetButKeepPosition(data.timestamp);
                     Log.d("DOWN time: " + time);
-                    flywheel.ResetButKeepPosition();
                     flywheel.AddMovement(data.timestamp, data.location.x, data.location.y);
                     was_down = true;
                     break;
@@ -119,14 +195,33 @@ namespace AndroidUI.Widgets
                     last_time_current = data.timestamp;
                     time = last_time_previous == 0 ? 0 : (last_time_current - last_time_previous);
                     Log.d("MOVE time: " + time);
-                    if (was_down || time <= THRESH_HOLD)
+                    if (!smoothScroll || was_down || time <= THRESH_HOLD)
                     {
                         was_down = false;
                         flywheel.AddMovement(data.timestamp, data.location.x, data.location.y);
                         if (getChildCount() == 2)
                         {
                             View view = getChildAt(1);
-                            view.scrollTo(-flywheel.Position.X.toPixel(), -flywheel.Position.Y.toPixel());
+                            int x = -flywheel.Position.X.toPixel();
+                            int y = -flywheel.Position.Y.toPixel();
+                            RESULT r = NeedsClamp(view, ref x, ref y);
+                            if (r != RESULT.OK)
+                            {
+                                flywheel.Position = new(-x, -y);
+                                if (r == RESULT.CLAMP_X)
+                                {
+                                    flywheel.Velocity = new(0, flywheel.Velocity.Y);
+                                }
+                                else if (r == RESULT.CLAMP_Y)
+                                {
+                                    flywheel.Velocity = new(flywheel.Velocity.X, 0);
+                                }
+                                else if (r == RESULT.CLAMP_XY)
+                                {
+                                    flywheel.Velocity = System.Numerics.Vector2.Zero;
+                                }
+                            }
+                            view.scrollTo(x, y);
                         }
                     }
                     break;
@@ -137,7 +232,30 @@ namespace AndroidUI.Widgets
                     Log.d("UP time: " + time);
                     if (smoothScroll && !was_down && time <= THRESH_HOLD)
                     {
-                        flywheel.FinalizeMovement();
+                        if (getChildCount() == 2)
+                        {
+                            View view = getChildAt(1);
+                            int x = -flywheel.Position.X.toPixel();
+                            int y = -flywheel.Position.Y.toPixel();
+                            RESULT r = NeedsClamp(view, ref x, ref y);
+                            if (r != RESULT.OK)
+                            {
+                                flywheel.Position = new(-x, -y);
+                                if (r == RESULT.CLAMP_X)
+                                {
+                                    flywheel.Velocity = new(0, flywheel.Velocity.Y);
+                                }
+                                else if (r == RESULT.CLAMP_Y)
+                                {
+                                    flywheel.Velocity = new(flywheel.Velocity.X, 0);
+                                }
+                                else if (r == RESULT.CLAMP_XY)
+                                {
+                                    flywheel.Velocity = System.Numerics.Vector2.Zero;
+                                }
+                            }
+                            flywheel.FinalizeMovement();
+                        }
                     }
                     else
                     {
@@ -151,6 +269,22 @@ namespace AndroidUI.Widgets
             text.invalidate();
             invalidate();
             return true;
+        }
+
+        private void Reset(long timestamp)
+        {
+            last_time_previous = 0;
+            last_time_current = timestamp;
+            time = 0;
+            flywheel.Reset();
+        }
+
+        private void ResetButKeepPosition(long timestamp)
+        {
+            last_time_previous = 0;
+            last_time_current = timestamp;
+            time = 0;
+            flywheel.ResetButKeepPosition();
         }
 
         public override void onBeforeAddView(View child, int index, View.LayoutParams layout_params)
@@ -186,6 +320,90 @@ namespace AndroidUI.Widgets
                 throw new Exception("ScrollView cannot remove internal text view");
             }
             base.removeViewsInLayout(start, count);
+        }
+
+        protected override void onMeasure(int widthMeasureSpec, int heightMeasureSpec)
+        {
+            base.onMeasure(widthMeasureSpec, heightMeasureSpec);
+
+            //if (!mFillViewport)
+            //{
+            //    return;
+            //}
+
+            int heightMode = MeasureSpec.getMode(heightMeasureSpec);
+            if (heightMode == MeasureSpec.UNSPECIFIED)
+            {
+                return;
+            }
+
+            if (getChildCount() > 1)
+            {
+                View child = getChildAt(1);
+                int widthPadding;
+                int heightPadding;
+                //final int targetSdkVersion = getContext().getApplicationInfo().targetSdkVersion;
+                FrameLayout.LayoutParams lp = (LayoutParams)child.getLayoutParams();
+                //if (targetSdkVersion >= VERSION_CODES.M)
+                //{
+                    widthPadding = mPaddingLeft + mPaddingRight + lp.leftMargin + lp.rightMargin;
+                    heightPadding = mPaddingTop + mPaddingBottom + lp.topMargin + lp.bottomMargin;
+                //}
+                //else
+                //{
+                //    widthPadding = mPaddingLeft + mPaddingRight;
+                //    heightPadding = mPaddingTop + mPaddingBottom;
+                //}
+
+                int desiredWidth = getMeasuredWidth() - widthPadding;
+                int desiredHeight = getMeasuredHeight() - heightPadding;
+                if (child.getMeasuredHeight() < desiredHeight)
+                {
+                    int childWidthMeasureSpec = MeasureSpec.makeSafeMeasureSpec(
+                            desiredWidth, MeasureSpec.EXACTLY);
+                    int childHeightMeasureSpec = MeasureSpec.makeSafeMeasureSpec(
+                            desiredHeight, MeasureSpec.EXACTLY);
+                    child.measure(childWidthMeasureSpec, childHeightMeasureSpec);
+                }
+            }
+        }
+
+        protected override void measureChild(View child, int parentWidthMeasureSpec, int parentHeightMeasureSpec)
+        {
+            View.LayoutParams lp = child.getLayoutParams();
+
+            int childWidthMeasureSpec;
+            int childHeightMeasureSpec;
+
+            int horizontalPadding = mPaddingLeft + mPaddingRight;
+            int verticalPadding = mPaddingTop + mPaddingBottom;
+            childWidthMeasureSpec = MeasureSpec.makeSafeMeasureSpec(
+                    Math.Max(0, MeasureSpec.getSize(parentWidthMeasureSpec) - horizontalPadding),
+                    MeasureSpec.UNSPECIFIED);
+            childHeightMeasureSpec = MeasureSpec.makeSafeMeasureSpec(
+                    Math.Max(0, MeasureSpec.getSize(parentHeightMeasureSpec) - verticalPadding),
+                    MeasureSpec.UNSPECIFIED);
+
+            child.measure(childWidthMeasureSpec, childHeightMeasureSpec);
+        }
+
+        protected override void measureChildWithMargins(View child, int parentWidthMeasureSpec, int widthUsed,
+                                               int parentHeightMeasureSpec, int heightUsed)
+        {
+            MarginLayoutParams lp = (MarginLayoutParams)child.getLayoutParams();
+
+            int usedTotalW = getPaddingLeft() + getPaddingRight() + lp.leftMargin + lp.rightMargin +
+                    widthUsed;
+            int usedTotalH = getPaddingTop() + getPaddingBottom() + lp.topMargin + lp.bottomMargin +
+                    heightUsed;
+            int childWidthMeasureSpec = MeasureSpec.makeMeasureSpec(
+                    Math.Max(0, MeasureSpec.getSize(parentWidthMeasureSpec) - usedTotalW),
+                    MeasureSpec.UNSPECIFIED);
+            int childHeightMeasureSpec = MeasureSpec.makeMeasureSpec(
+                    Math.Max(0, MeasureSpec.getSize(parentHeightMeasureSpec) - usedTotalH),
+                    MeasureSpec.UNSPECIFIED);
+
+            child.measure(childWidthMeasureSpec, childHeightMeasureSpec);
         }
     }
 }
