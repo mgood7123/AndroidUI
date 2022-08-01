@@ -7662,7 +7662,7 @@ namespace AndroidUI.Widgets
          *
          * @hide
          */
-        internal void dispatchGetDisplayList()
+        internal void dispatchGetDisplayList(SKCanvas hardwareCanvas)
         {
             int count = mChildrenCount;
             View[] children = mChildren;
@@ -7673,7 +7673,7 @@ namespace AndroidUI.Widgets
                     || child.getAnimation() != null
                     )
                 {
-                    recreateChildDisplayList(child);
+                    recreateChildDisplayList(child, hardwareCanvas);
                 }
             }
             int transientCount = mTransientViews == null ? 0 : mTransientIndices.size();
@@ -7682,13 +7682,13 @@ namespace AndroidUI.Widgets
                 View child = mTransientViews.ElementAt(i);
                 if ((child.mViewFlags & VISIBILITY_MASK) == VISIBLE || child.getAnimation() != null)
                 {
-                    recreateChildDisplayList(child);
+                    recreateChildDisplayList(child, hardwareCanvas);
                 }
             }
             //if (mOverlay != null)
             //{
             //    View overlayView = mOverlay.getOverlayView();
-            //    recreateChildDisplayList(overlayView);
+            //    recreateChildDisplayList(overlayView, hardwareCanvas);
             //}
             if (mDisappearingChildren != null)
             {
@@ -7697,16 +7697,16 @@ namespace AndroidUI.Widgets
                 for (int i = 0; i < disappearingCount; ++i)
                 {
                     View child = disappearingChildren.ElementAt(i);
-                    recreateChildDisplayList(child);
+                    recreateChildDisplayList(child, hardwareCanvas);
                 }
             }
         }
 
-        private void recreateChildDisplayList(View child)
+        private void recreateChildDisplayList(View child, SKCanvas hardwareCanvas)
         {
             child.mRecreateDisplayList = (child.mPrivateFlags & PFLAG_INVALIDATED) != 0;
             RemoveInvalidatedFlag(child);
-            child.updateDisplayListIfDirty();
+            child.updateDisplayListIfDirty(hardwareCanvas);
             child.mRecreateDisplayList = false;
         }
 
@@ -7714,7 +7714,7 @@ namespace AndroidUI.Widgets
          * Gets the RenderNode for the view, and updates its DisplayList (if needed and supported)
          * @hide
          */
-        internal SKPicture updateDisplayListIfDirty()
+        internal SKPicture updateDisplayListIfDirty(SKCanvas hardwareCanvas)
         {
             //if (!canHaveDisplayList())
             //{
@@ -7738,7 +7738,7 @@ namespace AndroidUI.Widgets
                 {
                     mPrivateFlags |= PFLAG_DRAWN | PFLAG_DRAWING_CACHE_VALID;
                     mPrivateFlags &= ~PFLAG_DIRTY_MASK;
-                    dispatchGetDisplayList();
+                    dispatchGetDisplayList(hardwareCanvas);
 
                     return mRenderNode; // no work needed
                 }
@@ -7760,8 +7760,8 @@ namespace AndroidUI.Widgets
 
                 //SKCanvas canvas = mAttachInfo.mViewRootImpl.drawingCanvas;
                 SKCanvas canvas = pictureRecorder.BeginRecording(new SKRect(0, 0, width, height));
-                canvas.setIsHardwareAccelerated(true);
-                canvas.setWidthHeight(width, height);
+
+                canvas.AdoptHardwareAcceleratedCanvas(hardwareCanvas, width, height);
 
                 try
                 {
@@ -13440,7 +13440,7 @@ namespace AndroidUI.Widgets
             {
                 // Delay getting the display list until animation-driven alpha values are
                 // set up and possibly passed on to the view
-                renderNode = updateDisplayListIfDirty();
+                renderNode = updateDisplayListIfDirty(canvas);
                 //if (!renderNode.hasDisplayList())
                 //{
                 //    // Uncommon, but possible. If a view is removed from the hierarchy during the call

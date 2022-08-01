@@ -7,7 +7,7 @@ namespace AndroidUI.Extensions
 {
     public static class SKCanvasExtensions
     {
-        internal static void DisposeSurface(this SKCanvas this_canvas)
+        public static void DisposeSurface(this SKCanvas this_canvas)
         {
             SKSurface s = (SKSurface)this_canvas.ExtensionProperties_GetValue("Surface", null);
             if (s != null)
@@ -49,10 +49,29 @@ namespace AndroidUI.Extensions
             this_canvas.ExtensionProperties_SetValue("HardwareAccelerated", value);
         }
 
+        /// <summary>Adopts a Hardware Accelerated canvas. Can be used to store the values required to create a Hardwate Accelerated canvas inside of another canvas</summary>
+        public static void AdoptHardwareAcceleratedCanvas(this SKCanvas this_canvas, SKCanvas hardwareAcceleratedCanvas, int width, int height)
+        {
+            this_canvas.AdoptHardwareAcceleratedCanvas(hardwareAcceleratedCanvas);
+            this_canvas.setWidthHeight(width, height);
+        }
+
+        /// <summary>Adopts a Hardware Accelerated canvas. Can be used to store the values required to create a Hardwate Accelerated canvas inside of another canvas</summary>
+        public static void AdoptHardwareAcceleratedCanvas(this SKCanvas this_canvas, SKCanvas hardwareAcceleratedCanvas)
+        {
+            GRContext c = (GRContext)hardwareAcceleratedCanvas.ExtensionProperties_GetValue("GRContext", null);
+            if (c == null)
+            {
+                Log.e("SKCanvas", "attempting to adopt a Hardware Accelerated canvas that has no GRContext associated with it");
+            }
+            this_canvas.ExtensionProperties_SetValue("GRContext", c);
+            this_canvas.ExtensionProperties_SetValue("HardwareAccelerated", hardwareAcceleratedCanvas.ExtensionProperties_GetValue("HardwareAccelerated", false));
+        }
+
         /// <summary>Creates a Hardware Accelerated canvas.</summary>
         public static SKCanvas CreateHardwareAcceleratedCanvas(this SKCanvas this_canvas, GRContext context, int width, int height)
         {
-            if (width == 0 || height == 0) return null;
+            if (!this_canvas.isHardwareAccelerated() || width == 0 || height == 0) return null;
             SKSurface s = SKSurface.Create(context, false, new SKImageInfo(width, height));
             SKCanvas c = s.Canvas;
             c.ExtensionProperties_SetValue("GRContext", context);
@@ -60,6 +79,12 @@ namespace AndroidUI.Extensions
             c.ExtensionProperties_SetValue("Surface", s);
             c.ExtensionProperties_SetValue("HardwareAccelerated", true);
             return c;
+        }
+
+        /// <summary>Creates a Hardware Accelerated canvas.</summary>
+        public static SKCanvas CreateHardwareAcceleratedCanvas(this SKCanvas this_canvas, int width, int height)
+        {
+            return CreateHardwareAcceleratedCanvas(this_canvas, (GRContext)this_canvas.ExtensionProperties_GetValue("GRContext", null), width, height);
         }
 
         /// <summary>Creates a software canvas, this is not Hardware Accelerated.</summary>
@@ -114,23 +139,35 @@ namespace AndroidUI.Extensions
         /// <summary>Draws this canvas to a canvas.</summary>
         public static void DrawToCanvas(this SKCanvas this_canvas, SKCanvas canvas, int x, int y, SKPaint paint = null)
         {
-            if (this_canvas.isHardwareAccelerated())
+            if (!this_canvas.isHardwareAccelerated())
             {
-                SKSurface s = (SKSurface)this_canvas.ExtensionProperties_GetValue("Surface", null);
-                if (s == null) throw new NullReferenceException("the canvas is hardware accelerated but it has no surface");
-                canvas.DrawSurface(s, x, y, paint);
+                Log.e("SKCanvas", "this canvas is not hardware accelerated, DrawToCanvas does not support a suftware canvas");
+                return;
             }
+            SKSurface s = (SKSurface)this_canvas.ExtensionProperties_GetValue("Surface", null);
+            if (s == null)
+            {
+                Log.e("SKCanvas", "this canvas is hardware accelerated but it has no surface");
+                return;
+            }
+            canvas.DrawSurface(s, x, y, paint);
         }
 
         /// <summary>Draws this canvas to a canvas.</summary>
         public static void DrawToCanvas(this SKCanvas this_canvas, SKCanvas canvas, SKPoint point, SKPaint paint = null)
         {
-            if (this_canvas.isHardwareAccelerated())
+            if (!this_canvas.isHardwareAccelerated())
             {
-                SKSurface s = (SKSurface)this_canvas.ExtensionProperties_GetValue("Surface", null);
-                if (s == null) throw new NullReferenceException("the canvas is hardware accelerated but it has no surface");
-                canvas.DrawSurface(s, point, paint);
+                Log.e("SKCanvas", "this canvas is not hardware accelerated, DrawToCanvas does not support a suftware canvas");
+                return;
             }
+            SKSurface s = (SKSurface)this_canvas.ExtensionProperties_GetValue("Surface", null);
+            if (s == null)
+            {
+                Log.e("SKCanvas", "this canvas is hardware accelerated but it has no surface");
+                return;
+            }
+            canvas.DrawSurface(s, point, paint);
         }
 
         public static SKRectI GetDeviceClipBounds(this SKCanvas canvas)

@@ -2464,7 +2464,7 @@ namespace AndroidUI.Widgets
             view.mPrivateFlags |= View.PFLAG_DRAWN;
             view.mRecreateDisplayList = (view.mPrivateFlags & View.PFLAG_INVALIDATED) == View.PFLAG_INVALIDATED;
             view.mPrivateFlags &= (int)~View.PFLAG_INVALIDATED;
-            SKPicture displayList = view.updateDisplayListIfDirty();
+            SKPicture displayList = view.updateDisplayListIfDirty(drawingCanvas);
             if (displayList != null)
             {
                 drawingCanvas.DrawPicture(displayList, 0, 0);
