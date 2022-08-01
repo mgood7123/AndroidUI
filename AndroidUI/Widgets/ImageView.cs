@@ -152,7 +152,7 @@ namespace AndroidUI.Widgets
         private void initImageView()
         {
             mMatrix = SKMatrix.Identity;
-            mScaleType = ScaleType.FIT_CENTER;
+            mScaleType = ScaleType.CENTER_INSIDE;
 
 
             // By default, ImageView is not important for autofill but important for content capture.
@@ -361,7 +361,7 @@ namespace AndroidUI.Widgets
             ImageView outer;
             private readonly Drawable drawable;
 
-            ImageDrawableCallback(ImageView outer, Drawable drawable)
+            public ImageDrawableCallback(ImageView outer, Drawable drawable)
             {
                 this.drawable = drawable;
                 this.outer = outer;
@@ -397,7 +397,7 @@ namespace AndroidUI.Widgets
             }
         }
 
-        // TODO: restore me
+        // TODO: RESTORE ME
         ///**
         // * Sets the content of this ImageView to the specified Icon.
         // *
@@ -880,10 +880,10 @@ namespace AndroidUI.Widgets
         }
 
         private static readonly SKMatrixScaleToFit[] sS2FArray = {
-        SKMatrixScaleToFit.Fill,
-        SKMatrixScaleToFit.Start,
-        SKMatrixScaleToFit.Center,
-        SKMatrixScaleToFit.End
+            SKMatrixScaleToFit.Fill,
+            SKMatrixScaleToFit.Start,
+            SKMatrixScaleToFit.Center,
+            SKMatrixScaleToFit.End
         };
 
         private static SKMatrixScaleToFit scaleTypeToScaleToFit(ScaleType st)
