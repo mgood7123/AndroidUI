@@ -8409,6 +8409,24 @@ namespace AndroidUI.Widgets
         }
 
         /**
+         * Register a callback to be invoked when a touch event is sent to this view.
+         * @param l the touch listener to attach to this view
+         */
+        public void setOnTouchListener(OnTouchListener l)
+        {
+            getListenerInfo().mOnTouchListener = l;
+        }
+
+        /**
+         * Register a callback to be invoked when a touch event is sent to this view.
+         * @param l the touch listener to attach to this view
+         */
+        public void setOnTouchListener(Func<View, Touch, bool> l)
+        {
+            getListenerInfo().mOnTouchListener = new RunnableOnTouchListener(l);
+        }
+
+        /**
          * Filter the touch event to apply security policies.
          *
          * @param event The motion event to be filtered.
@@ -17063,6 +17081,19 @@ namespace AndroidUI.Widgets
              * @return True if the listener has consumed the event, false otherwise.
              */
             bool onTouch(View v, Touch ev);
+        }
+
+        class RunnableOnTouchListener : OnTouchListener
+        {
+            Func<View, Touch, bool> action;
+
+            public RunnableOnTouchListener(Func<View, Touch, bool> action)
+            {
+                this.action = action;
+            }
+
+
+            public bool onTouch(View v, Touch ev) => action == null ? false : action.Invoke(v, ev);
         }
 
         internal class ListenerInfo
