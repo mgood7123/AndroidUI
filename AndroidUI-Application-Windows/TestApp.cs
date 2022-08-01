@@ -7,9 +7,13 @@ using AndroidUI.Extensions;
 using AndroidUI.Graphics;
 using AndroidUI.Graphics.Drawables;
 using AndroidUI.Input;
+using AndroidUI.Utils;
 using AndroidUI.Utils.Input;
+using AndroidUI.Utils.Lists;
+using AndroidUI.Utils.Widgets;
 using AndroidUI.Widgets;
 using SkiaSharp;
+using static AndroidUI.Widgets.View;
 using Application = AndroidUI.Applications.Application;
 using Color = AndroidUI.Graphics.Color;
 using View = AndroidUI.Widgets.View;
@@ -142,9 +146,47 @@ namespace AndroidUI_Application_Windows
             }
         }
 
+        class MyAdapterView : AdapterView<ArrayAdapter<string>, string>
+        {
+            ArrayAdapter<string> mAdapter;
+
+            private int mSelectedPosition;
+            private int mFirstPosition;
+
+            public override ArrayAdapter<string> getAdapter()
+            {
+                Log.d("getAdapter");
+                return mAdapter;
+            }
+
+            public override View getSelectedView()
+            {
+                Log.d("getSelectedView");
+                if (getCount() > 0 && mSelectedPosition >= 0)
+                {
+                    return getChildAt(mSelectedPosition - mFirstPosition);
+                }
+                else
+                {
+                    return null;
+                }
+            }
+
+            public override void setAdapter(ArrayAdapter<string> adapter)
+            {
+                Log.d("setAdapter: " + adapter);
+                mAdapter = adapter;
+            }
+
+            public override void setSelection(int position)
+            {
+                Log.d("setSelection: " + position);
+            }
+        }
+
         public override void OnCreate()
         {
-            int num = 7;
+            int num = 10;
             switch (num)
             {
                 case 0:
@@ -227,6 +269,37 @@ namespace AndroidUI_Application_Windows
 
                         var s = new FlywheelScrollView();
                         s.SmoothScroll = false;
+                        s.LimitScrollingToChildViewBounds = false;
+                        s.addView(image);
+                        SetContentView(s);
+                    }
+                    break;
+                case 8:
+                    {
+                        var t = new Topten_RichTextKit_TextView();
+                        t.setOnClickListener(v => t.setText("Clicked!"));
+                        t.setOnLongClickListener(v => { t.setText("Long clicked!"); return true; });
+                        SetContentView(t);
+                        break;
+                    }
+                case 9:
+                    {
+                        var av = new MyAdapterView();
+                        av.setAdapter(new(() => new(), "1", "2", "3"));
+                        av.getAdapter().notifyDataSetChanged();
+                        av.getAdapter().notifyDataSetInvalidated();
+                        SetContentView(av);
+                        break;
+                    }
+                case 10:
+                    {
+                        var image = new ImageView();
+                        var bm = BitmapFactory.decodeFile("C:/Users/small/Pictures/Screenshot 2022-05-19 034147.jpeg");
+                        image.setImageBitmap(bm);
+                        image.setScaleType(ImageView.ScaleType.MATRIX);
+
+                        var s = new FlywheelScrollView();
+                        s.SmoothScroll = true;
                         s.addView(image);
                         SetContentView(s);
                     }
