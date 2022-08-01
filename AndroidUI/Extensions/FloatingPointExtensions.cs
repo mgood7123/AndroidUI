@@ -3,10 +3,16 @@
     public static class FloatingPointExtensions
     {
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static int toPixel(this float pixelF) => (int)MathF.Ceiling(pixelF);
+        public static int toPixel(this float pixelF)
+        {
+            return pixelF > 0.0f ? (int)MathF.Ceiling(pixelF) : (int)MathF.Floor(pixelF);
+        }
 
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static long toPixel(this double pixel) => (long)Math.Ceiling(pixel);
+        public static long toPixel(this double pixel)
+        {
+            return pixel > 0.0f ? (long)Math.Ceiling(pixel) : (long)Math.Floor(pixel);
+        }
 
         /// <summary>
         /// Returns a representation of the specified floating-point value

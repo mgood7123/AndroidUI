@@ -184,128 +184,245 @@ namespace AndroidUI_Application_Windows
             }
         }
 
+        class TabView : LinearLayout
+        {
+            //FlywheelScrollView tabContainer;
+            LinearLayout tabs;
+            FrameLayout tabContent;
+
+            public TabView()
+            {
+                setOrientation(HORIZONTAL);
+                InitTabView();
+            }
+
+            public void addTab(string title, View content)
+            {
+                Topten_RichTextKit_TextView a = new();
+                a.setText(title);
+                a.setTextSize(16);
+                a.setTag(content);
+                a.setOnClickListener(v =>
+                {
+                    tabContent.removeAllViews();
+                    tabContent.addView((View)v.getTag(), MATCH_PARENT__MATCH_PARENT);
+                });
+                tabs.addView(a, new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.WRAP_CONTENT));
+            }
+
+            public void addTab(string title, Func<View> builder)
+            {
+                addTab(title, builder.Invoke());
+            }
+
+            private void InitTabView()
+            {
+                tabs = new();
+                //tabContainer = new();
+                tabContent = new();
+
+                tabs.setOrientation(VERTICAL);
+
+                //tabContainer.SmoothScroll = false;
+                //tabContainer.addView(tabs);
+                addView(tabs, new LinearLayout.LayoutParams(View.LayoutParams.WRAP_CONTENT, View.LayoutParams.MATCH_PARENT));
+                addView(tabContent, new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.MATCH_PARENT, 1));
+                tabs.setZ(1);
+                post(new Runnable.ActionRunnable(() => tabs.setBackgroundColor(Color.BLACK)));
+            }
+        }
+
         public override void OnCreate()
         {
-            int num = 10;
-            switch (num)
+            TabView tabView = new();
+
+            tabView.addTab("View", () => new View());
+            tabView.addTab("Touch Info Linear Layout", () =>
             {
-                case 0:
-                    {
-                        SetContentView(new View());
-                    }
-                    break;
-                case 1:
-                    {
-                        LinearLayout linearLayout = new();
+                LinearLayout linearLayout = new();
 
-                        linearLayout.setOrientation(LinearLayout.VERTICAL);
+                linearLayout.setOrientation(LinearLayout.VERTICAL);
 
-                        linearLayout.addView(new TouchInfoView(), new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.MATCH_PARENT, 1.0f));
-                        linearLayout.addView(new TouchInfoView(), new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.MATCH_PARENT, 1.0f));
-                        linearLayout.addView(new TouchInfoView(), new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.MATCH_PARENT, 1.0f));
-                        linearLayout.addView(new TouchInfoView(), new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.MATCH_PARENT, 1.0f));
+                linearLayout.addView(new TouchInfoView(), new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.MATCH_PARENT, 1.0f));
+                linearLayout.addView(new TouchInfoView(), new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.MATCH_PARENT, 1.0f));
+                linearLayout.addView(new TouchInfoView(), new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.MATCH_PARENT, 1.0f));
+                linearLayout.addView(new TouchInfoView(), new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.MATCH_PARENT, 1.0f));
+                return linearLayout;
+            });
+            tabView.addTab("Bitmap", () => new A());
+            tabView.addTab("ColorView", () =>
+            {
+                ColorView colorView = new ColorView();
+                colorView.setOnClickListener(v =>
+                {
+                    colorView.Color = new SKColor(
+                        (byte)Random.Shared.Next(255),
+                        (byte)Random.Shared.Next(255),
+                        (byte)Random.Shared.Next(255)
+                    );
+                });
+                return colorView;
+            });
+            tabView.addTab("Animation", () => 
+            {
+                var image = new ImageView();
+                image.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+                image.setImageDrawable(new ColorDrawable(Color.MAGENTA));
 
-                        SetContentView(linearLayout);
-                    }
-                    break;
-                case 2:
-                    {
-                        SetContentView(new A());
-                    }
-                    break;
-                case 3:
-                    {
-                        SetContentView(new BoxView());
-                    }
-                    break;
-                case 4:
-                    {
-                        var image = new ImageView();
-                        image.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-                        image.setImageDrawable(new ColorDrawable(Color.MAGENTA));
+                ObjectAnimator oa = ObjectAnimator.ofInt(Context, image, "x", new int[] { 0, 100 });
+                oa.setRepeatMode(ValueAnimator.REVERSE);
+                oa.setDuration(2200);
 
-                        ObjectAnimator oa = ObjectAnimator.ofInt(Context, image, "x", new int[] { 0, 100 });
-                        oa.setRepeatMode(ValueAnimator.REVERSE);
-                        oa.setDuration(2200);
+                ObjectAnimator ob = ObjectAnimator.ofInt(Context, image, "y", new int[] { 0, 100 });
+                ob.setRepeatMode(ValueAnimator.REVERSE);
+                ob.setDuration(1100);
 
-                        ObjectAnimator ob = ObjectAnimator.ofInt(Context, image, "y", new int[] { 0, 100 });
-                        ob.setRepeatMode(ValueAnimator.REVERSE);
-                        ob.setDuration(1100);
+                ObjectAnimator oc = ObjectAnimator.ofInt(Context, image, "y", new int[] { 100, 200 });
+                oc.setRepeatMode(ValueAnimator.REVERSE);
+                oc.setDuration(1100);
 
-                        ObjectAnimator oc = ObjectAnimator.ofInt(Context, image, "y", new int[] { 100, 200 });
-                        oc.setRepeatMode(ValueAnimator.REVERSE);
-                        oc.setDuration(1100);
+                AnimatorSet s = new(Context);
+                s.play(oa).with(ob).before(oc);
+                s.addListener(new AL());
+                s.start();
+                return image;
+            });
+            tabView.addTab("Z Ordering", () =>
+            {
+                FrameLayout f = new FrameLayout();
 
-                        AnimatorSet s = new(Context);
-                        s.play(oa).with(ob).before(oc);
-                        s.addListener(new AL());
-                        s.start();
-                        SetContentView(image);
-                    }
-                    break;
-                case 5:
-                    {
-                        FrameLayout f = new FrameLayout();
-                        var t = new Topten_RichTextKit_TextView();
-                        var b = new BoxView();
-                        t.setZ(1);
-                        b.setZ(0);
-                        f.addView(t);
-                        f.addView(b);
-                        SetContentView(f);
-                    }
-                    break;
-                case 6:
-                    {
-                        SetContentView(new FlywheelView());
-                        break;
-                    }
-                case 7:
-                    {
-                        var image = new ImageView();
-                        //image.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-                        var bm = BitmapFactory.decodeFile("C:/Users/small/Pictures/Screenshot 2022-05-19 034147.jpeg");
-                        image.setImageBitmap(bm);
+                var a = new ColorView();
+                var t = new Topten_RichTextKit_TextView();
+                a.setZ(0);
+                t.setZ(1);
+                f.addView(a);
+                f.addView(t);
+                return f;
+            });
+            tabView.addTab("Flywheel", () => new FlywheelView());
+            tabView.addTab("Scrolling", () =>
+            {
+                var image = new ImageView();
+                //image.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+                var bm = BitmapFactory.decodeFile("C:/Users/small/Pictures/Screenshot 2022-05-19 034147.jpeg");
+                image.setImageBitmap(bm);
 
-                        var s = new FlywheelScrollView();
-                        s.SmoothScroll = false;
-                        s.LimitScrollingToChildViewBounds = false;
-                        s.addView(image);
-                        SetContentView(s);
-                    }
-                    break;
-                case 8:
-                    {
-                        var t = new Topten_RichTextKit_TextView();
-                        t.setOnClickListener(v => t.setText("Clicked!"));
-                        t.setOnLongClickListener(v => { t.setText("Long clicked!"); return true; });
-                        SetContentView(t);
-                        break;
-                    }
-                case 9:
-                    {
-                        var av = new MyAdapterView();
-                        av.setAdapter(new(() => new(), "1", "2", "3"));
-                        av.getAdapter().notifyDataSetChanged();
-                        av.getAdapter().notifyDataSetInvalidated();
-                        SetContentView(av);
-                        break;
-                    }
-                case 10:
-                    {
-                        var image = new ImageView();
-                        var bm = BitmapFactory.decodeFile("C:/Users/small/Pictures/Screenshot 2022-05-19 034147.jpeg");
-                        image.setImageBitmap(bm);
-                        image.setScaleType(ImageView.ScaleType.MATRIX);
+                var s = new FlywheelScrollView();
+                s.SmoothScroll = false;
+                s.LimitScrollingToChildViewBounds = false;
+                s.addView(image);
+                return s;
+            });
+            tabView.addTab("Clicking", () =>
+            {
+                var t = new Topten_RichTextKit_TextView();
+                t.setOnClickListener(v => t.setText("Clicked!"));
+                t.setOnLongClickListener(v => { t.setText("Long clicked!"); return true; });
+                return t;
+            });
+            tabView.addTab("Adapter", () =>
+            {
+                var av = new MyAdapterView();
+                av.setAdapter(new(() => new(), "1", "2", "3"));
+                av.getAdapter().notifyDataSetChanged();
+                av.getAdapter().notifyDataSetInvalidated();
+                return av;
+            });
+            tabView.addTab("Scrolling 2", () =>
+            {
+                var image = new ImageView();
+                var bm = BitmapFactory.decodeFile("C:/Users/small/Pictures/Screenshot 2022-05-19 034147.jpeg");
+                image.setImageBitmap(bm);
+                image.setScaleType(ImageView.ScaleType.MATRIX);
 
-                        var s = new FlywheelScrollView();
-                        s.SmoothScroll = true;
-                        s.addView(image);
-                        SetContentView(s);
-                    }
-                    break;
-                default:
-                    break;
+                var s = new FlywheelScrollView();
+                s.SmoothScroll = true;
+                s.addView(image);
+                return s;
+            });
+            tabView.addTab("TabView", () =>
+            {
+                TabView tabView = new();
+
+                var a = new ImageView();
+                a.setImageDrawable(new ColorDrawable(Color.MAGENTA));
+                tabView.addTab("magenta", a);
+
+                var b = new ImageView();
+                b.setImageDrawable(new ColorDrawable(Color.BLUE));
+                tabView.addTab("blue", b);
+
+                return tabView;
+            });
+            tabView.addTab("Linear Layout", () =>
+            {
+                LinearLayout linearLayout = new();
+
+                linearLayout.setOrientation(LinearLayout.VERTICAL);
+
+                linearLayout.addView(
+                    new Topten_RichTextKit_TextView(),
+                    new LinearLayout.LayoutParams(
+                        View.LayoutParams.WRAP_CONTENT,
+                        View.LayoutParams.WRAP_CONTENT
+                    )
+                );
+                linearLayout.addView(
+                    new ColorView(Color.MAGENTA),
+                    new LinearLayout.LayoutParams(
+                        View.LayoutParams.MATCH_PARENT,
+                        View.LayoutParams.MATCH_PARENT,
+                        1
+                    )
+                );
+
+                return linearLayout;
+            });
+            SetContentView(tabView);
+
+            //ColorView colorView = new ColorView();
+            //colorView.setOnClickListener(v =>
+            //{
+            //    colorView.Color = new SKColor(
+            //        (byte)Random.Shared.Next(255),
+            //        (byte)Random.Shared.Next(255),
+            //        (byte)Random.Shared.Next(255)
+            //    );
+            //});
+
+            //ColorView colorViewB = new ColorView();
+            //colorViewB.setOnClickListener(v =>
+            //{
+            //    colorViewB.Color = new SKColor(
+            //        (byte)Random.Shared.Next(255),
+            //        (byte)Random.Shared.Next(255),
+            //        (byte)Random.Shared.Next(255)
+            //    );
+            //});
+
+            //var l = new LinearLayout();
+            //l.setOrientation(LinearLayout.HORIZONTAL);
+            //l.addView(colorView, new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.MATCH_PARENT, 1));
+            //VV tabContent = new();
+            //tabContent.addView(colorViewB, MATCH_PARENT__MATCH_PARENT);
+            //l.addView(tabContent, new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.MATCH_PARENT, 1));
+            //SetContentView(l);
+        }
+
+        class VV : View
+        {
+            protected override void onMeasure(int widthMeasureSpec, int heightMeasureSpec)
+            {
+                base.onMeasure(widthMeasureSpec, heightMeasureSpec);
+            }
+            protected override void onLayout(bool changed, int l, int t, int r, int b)
+            {
+                base.onLayout(changed, l, t, r, b);
+            }
+
+            protected override void onDraw(SKCanvas canvas)
+            {
+                base.onDraw(canvas);
             }
         }
     }

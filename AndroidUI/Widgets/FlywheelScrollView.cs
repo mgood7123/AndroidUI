@@ -12,6 +12,8 @@ namespace AndroidUI.Widgets
         Topten_RichTextKit_TextView text = new();
         Flywheel flywheel = new();
 
+        bool showDebugText;
+
         bool first_draw = true;
         bool text_set;
         long last_time_previous, last_time_current, time;
@@ -19,15 +21,39 @@ namespace AndroidUI.Widgets
         private bool smoothScroll;
         bool limitScrollingToViewBounds = true;
 
-        public bool SmoothScroll { get => smoothScroll; set => smoothScroll = value; }
+        public bool SmoothScroll
+        {
+            get => smoothScroll; set
+            {
+                smoothScroll = value;
+                setWillDraw(showDebugText || smoothScroll);
+            }
+        }
         public bool LimitScrollingToChildViewBounds { get => limitScrollingToViewBounds; set => limitScrollingToViewBounds = value; }
+
+        public bool ShowDebugText
+        {
+            get => showDebugText;
+
+            set
+            {
+                showDebugText = value;
+                text.setVisibility(showDebugText ? VISIBLE : GONE);
+                if (showDebugText)
+                {
+                    text.invalidate();
+                }
+                setWillDraw(showDebugText || smoothScroll);
+            }
+        }
 
         public FlywheelScrollView() : base()
         {
             addView(text, MATCH_PARENT__MATCH_PARENT);
             text.setZ(float.PositiveInfinity);
             text.setText("FlywheelScrollView");
-            setWillDraw(true);
+            ShowDebugText = false;
+            SmoothScroll = false;
         }
 
         public override bool onInterceptTouchEvent(Touch ev)
@@ -41,17 +67,23 @@ namespace AndroidUI.Widgets
             if (first_draw)
             {
                 first_draw = false;
-                text.invalidate();
+                if (showDebugText)
+                {
+                    text.invalidate();
+                }
             }
             else
             {
-                flywheel.AquireLock();
-                if (text_set && flywheel.Spinning)
+                if (showDebugText)
                 {
-                    text_set = false;
-                    text.invalidate();
+                    flywheel.AquireLock();
+                    if (text_set && flywheel.Spinning)
+                    {
+                        text_set = false;
+                        text.invalidate();
+                    }
+                    flywheel.ReleaseLock();
                 }
-                flywheel.ReleaseLock();
             }
         }
 
@@ -63,7 +95,6 @@ namespace AndroidUI.Widgets
         RESULT NeedsClamp(View child, ref int x, ref int y)
         {
             RESULT r = RESULT.OK;
-            Log.d("attempting to scroll to: " + x + ", " + y);
             if (limitScrollingToViewBounds)
             {
                 if (x < 0)
@@ -148,30 +179,35 @@ namespace AndroidUI.Widgets
                     }
                 }
             }
-            string s = "Flywheel\n";
-            s += "  Spinning: " + flywheel.Spinning + "\n";
-            s += "  Friction: " + flywheel.Friction + "\n";
-            s += "  Distance: \n";
-            s += "    x: " + flywheel.Distance.X + " pixels\n";
-            s += "    y: " + flywheel.Distance.Y + " pixels\n";
-            s += "    time: " + time + " ms\n";
-            s += "  Total Distance: \n";
-            s += "    x: " + flywheel.TotalDistance.X + " pixels\n";
-            s += "    y: " + flywheel.TotalDistance.Y + " pixels\n";
-            s += "    time: " + flywheel.SpinTime + " ms\n";
-            s += "  Velocity: \n";
-            s += "    x: " + flywheel.Velocity.X + "\n";
-            s += "    y: " + flywheel.Velocity.Y + "\n";
-            s += "  Position: \n";
-            s += "    x: " + flywheel.Position.X + " pixels\n";
-            s += "    y: " + flywheel.Position.Y + " pixels\n";
-            text.setText(s);
-            text_set = true;
+            if (showDebugText)
+            {
+                string s = "Flywheel\n";
+                s += "  Spinning: " + flywheel.Spinning + "\n";
+                s += "  Friction: " + flywheel.Friction + "\n";
+                s += "  Distance: \n";
+                s += "    x: " + flywheel.Distance.X + " pixels\n";
+                s += "    y: " + flywheel.Distance.Y + " pixels\n";
+                s += "    time: " + time + " ms\n";
+                s += "  Total Distance: \n";
+                s += "    x: " + flywheel.TotalDistance.X + " pixels\n";
+                s += "    y: " + flywheel.TotalDistance.Y + " pixels\n";
+                s += "    time: " + flywheel.SpinTime + " ms\n";
+                s += "  Velocity: \n";
+                s += "    x: " + flywheel.Velocity.X + "\n";
+                s += "    y: " + flywheel.Velocity.Y + "\n";
+                s += "  Position: \n";
+                s += "    x: " + flywheel.Position.X + " pixels\n";
+                s += "    y: " + flywheel.Position.Y + " pixels\n";
+                text.setText(s);
+                text_set = true;
+            }
             flywheel.ReleaseLock();
         }
 
         public override void onConfigureTouch(Touch touch)
         {
+            // protect against batching, touch up emits a touch move if it's location has changed
+            // this can cause a slight decrease in velocity upon lifting up
             touch.DontBatchOnTouchUpOrTouchCancel = true;
         }
 
@@ -183,18 +219,18 @@ namespace AndroidUI.Widgets
             switch (st)
             {
                 case Touch.State.TOUCH_CANCELLED:
+                    ResetButKeepPosition(0);
+                    was_down = false;
+                    break;
                 case Touch.State.TOUCH_DOWN:
                     ResetButKeepPosition(data.timestamp);
-                    Log.d("DOWN time: " + time);
                     flywheel.AddMovement(data.timestamp, data.location.x, data.location.y);
                     was_down = true;
                     break;
                 case Touch.State.TOUCH_MOVE:
-                    // protect against batching, touch up emits a touch move if it's location has changed
                     last_time_previous = last_time_current;
                     last_time_current = data.timestamp;
                     time = last_time_previous == 0 ? 0 : (last_time_current - last_time_previous);
-                    Log.d("MOVE time: " + time);
                     if (!smoothScroll || was_down || time <= THRESH_HOLD)
                     {
                         was_down = false;
@@ -229,7 +265,6 @@ namespace AndroidUI.Widgets
                     last_time_previous = last_time_current;
                     last_time_current = data.timestamp;
                     time = last_time_previous == 0 ? 0 : (last_time_current - last_time_previous);
-                    Log.d("UP time: " + time);
                     if (smoothScroll && !was_down && time <= THRESH_HOLD)
                     {
                         if (getChildCount() == 2)
@@ -266,7 +301,7 @@ namespace AndroidUI.Widgets
                     break;
             }
             flywheel.ReleaseLock();
-            text.invalidate();
+            if (showDebugText) text.invalidate();
             invalidate();
             return true;
         }

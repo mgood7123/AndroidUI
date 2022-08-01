@@ -56,7 +56,21 @@ namespace AndroidUI.Applications
             if (looper != null)
             {
                 looper.quitSafely();
-                Looper.loopUI(context);
+                if (System.Diagnostics.Debugger.IsAttached)
+                {
+                    Looper.loopUI(context);
+                }
+                else
+                {
+                    try
+                    {
+                        Looper.loopUI(context);
+                    }
+                    catch (Exception e)
+                    {
+                        Log.v("Application", "Caught exception while looping UI: " + e);
+                    }
+                }
                 looper = null;
                 handler = null;
             }
@@ -127,11 +141,39 @@ namespace AndroidUI.Applications
         {
             if (looper != null)
             {
-                Looper.loopUI(context);
+                if (System.Diagnostics.Debugger.IsAttached)
+                {
+                    Looper.loopUI(context);
+                }
+                else
+                {
+                    try
+                    {
+                        Looper.loopUI(context);
+                    }
+                    catch (Exception e)
+                    {
+                        Log.v("Application", "Caught exception while looping UI: " + e);
+                    }
+                }
             }
             if (context.mAttachInfo.mViewRootImpl.hasContent())
             {
-                context.mAttachInfo.mViewRootImpl.draw(canvas);
+                if (System.Diagnostics.Debugger.IsAttached)
+                {
+                    context.mAttachInfo.mViewRootImpl.draw(canvas);
+                }
+                else
+                {
+                    try
+                    {
+                        context.mAttachInfo.mViewRootImpl.draw(canvas);
+                    }
+                    catch (Exception e)
+                    {
+                        Log.v("Application", "Caught exception while drawing: " + e);
+                    }
+                }
             }
         }
 
@@ -187,7 +229,21 @@ namespace AndroidUI.Applications
 
         public void onTouch(Touch ev)
         {
-            context.mAttachInfo.mViewRootImpl.onTouch(ev);
+            if (System.Diagnostics.Debugger.IsAttached)
+            {
+                context.mAttachInfo.mViewRootImpl.onTouch(ev);
+            }
+            else
+            {
+                try
+                {
+                    context.mAttachInfo.mViewRootImpl.onTouch(ev);
+                }
+                catch (Exception e)
+                {
+                    Log.v("Application", "Caught exception while executing touch event: " + e);
+                }
+            }
         }
 
         public void onDescendantInvalidated(View view, View target)

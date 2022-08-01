@@ -28,94 +28,6 @@ namespace AndroidUI.Widgets
 {
     public class ViewRootImpl : ViewParent
     {
-        public void clearChildFocus(View child)
-        {
-        }
-
-        public void onDescendantUnbufferedRequested()
-        {
-            if (getParent() != null)
-            {
-                getParent().onDescendantUnbufferedRequested();
-            }
-        }
-
-        public bool canResolveLayoutDirection()
-        {
-            return false;
-        }
-
-        public void OnScreenDensityChanged()
-        {
-            mView.OnScreenDensityChanged();
-            scheduleTraversals();
-        }
-
-        public void requestDisallowInterceptTouchEvent(bool disallowIntercept)
-        {
-        }
-
-        public void invalidateChild(View view, Rect dirty)
-        {
-            invalidateChildInParent(null, dirty);
-        }
-
-
-        public ViewParent invalidateChildInParent(int[] location, Rect dirty)
-        {
-            //checkThread();
-            if (DEBUG_DRAW) Log.v(mTag, "Invalidate child: " + dirty);
-
-            if (dirty == null)
-            {
-                invalidate();
-                return null;
-            }
-            else if (dirty.isEmpty() && !mIsAnimating)
-            {
-                return null;
-            }
-
-            if (mCurScrollY != 0)
-            {
-                mTempRect.set(dirty);
-                dirty = mTempRect;
-                if (mCurScrollY != 0)
-                {
-                    dirty.offset(0, -mCurScrollY);
-                }
-                if (context.mAttachInfo.mScalingRequired)
-                {
-                    dirty.inset(-1, -1);
-                }
-            }
-
-            invalidateRectOnScreen(dirty);
-
-            return null;
-        }
-
-        private void invalidateRectOnScreen(Rect dirty)
-        {
-            Rect localDirty = mDirty;
-
-            // Add the new dirty rect to the current one
-            localDirty.union(dirty.left, dirty.top, dirty.right, dirty.bottom);
-            // Intersect with the bounds of the window to skip
-            // updates that lie outside of the visible region
-            float appScale = context.mAttachInfo.mApplicationScale;
-            bool intersected = localDirty.intersect(0, 0,
-                    (int)(mWidth * appScale + 0.5f), (int)(mHeight * appScale + 0.5f));
-            if (!intersected)
-            {
-                localDirty.setEmpty();
-            }
-            if (!mWillDrawSoon && (intersected || mIsAnimating))
-            {
-                scheduleTraversals();
-            }
-        }
-
         private View mContentParent;
 
         internal bool hasContent() => mContentParent != null;
@@ -228,7 +140,21 @@ namespace AndroidUI.Widgets
         {
             if (mView != null)
             {
-                mView.dispatchTouchEvent(ev);
+                if (System.Diagnostics.Debugger.IsAttached)
+                {
+                    mView.dispatchTouchEvent(ev);
+                }
+                else
+                {
+                    try
+                    {
+                        mView.dispatchTouchEvent(ev);
+                    }
+                    catch (Exception e)
+                    {
+                        Log.v(mTag, "Caught exception while dispatching touch event to view: " + e);
+                    }
+                }
             }
         }
 
@@ -1501,7 +1427,6 @@ namespace AndroidUI.Widgets
 
                 for (int i = 0; i < viewCount; i++)
                 {
-                    Log.d(TAG, "invalidating view: " + mTempViews[i].GetType().FullName);
                     mTempViews[i].invalidate();
                     mTempViews[i] = null;
                 }
@@ -2655,18 +2580,44 @@ namespace AndroidUI.Widgets
                 //}
 
 
-                mContentParent?.invalidate();
-
-                if (DBG)
+                if (System.Diagnostics.Debugger.IsAttached)
                 {
-                    long s = NanoTime.currentTimeMillis();
-                    performTraversals(canvas);
-                    long e = NanoTime.currentTimeMillis();
-                    Log.d(TAG, "performed traversal in " + (e - s) + " milliseconds");
+                    mContentParent?.invalidate();
+
+                    if (DBG)
+                    {
+                        long s = NanoTime.currentTimeMillis();
+                        performTraversals(canvas);
+                        long e = NanoTime.currentTimeMillis();
+                        Log.d(TAG, "performed traversal in " + (e - s) + " milliseconds");
+                    }
+                    else
+                    {
+                        performTraversals(canvas);
+                    }
                 }
                 else
                 {
-                    performTraversals(canvas);
+                    try
+                    {
+                        mContentParent?.invalidate();
+
+                        if (DBG)
+                        {
+                            long s = NanoTime.currentTimeMillis();
+                            performTraversals(canvas);
+                            long e = NanoTime.currentTimeMillis();
+                            Log.d(TAG, "performed traversal in " + (e - s) + " milliseconds");
+                        }
+                        else
+                        {
+                            performTraversals(canvas);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Log.v(mTag, "Caught exception while performing traversal: " + e);
+                    }
                 }
 
                 //if (mProfile)
@@ -2808,6 +2759,94 @@ namespace AndroidUI.Widgets
             rq = new HandlerActionQueue();
             s.Value = rq;
             return rq;
+        }
+
+        public void clearChildFocus(View child)
+        {
+        }
+
+        public void onDescendantUnbufferedRequested()
+        {
+            if (getParent() != null)
+            {
+                getParent().onDescendantUnbufferedRequested();
+            }
+        }
+
+        public bool canResolveLayoutDirection()
+        {
+            return false;
+        }
+
+        public void OnScreenDensityChanged()
+        {
+            mView.OnScreenDensityChanged();
+            scheduleTraversals();
+        }
+
+        public void requestDisallowInterceptTouchEvent(bool disallowIntercept)
+        {
+        }
+
+        public void invalidateChild(View view, Rect dirty)
+        {
+            invalidateChildInParent(null, dirty);
+        }
+
+
+        public ViewParent invalidateChildInParent(int[] location, Rect dirty)
+        {
+            //checkThread();
+            if (DEBUG_DRAW) Log.v(mTag, "Invalidate child: " + dirty);
+
+            if (dirty == null)
+            {
+                invalidate();
+                return null;
+            }
+            else if (dirty.isEmpty() && !mIsAnimating)
+            {
+                return null;
+            }
+
+            if (mCurScrollY != 0)
+            {
+                mTempRect.set(dirty);
+                dirty = mTempRect;
+                if (mCurScrollY != 0)
+                {
+                    dirty.offset(0, -mCurScrollY);
+                }
+                if (context.mAttachInfo.mScalingRequired)
+                {
+                    dirty.inset(-1, -1);
+                }
+            }
+
+            invalidateRectOnScreen(dirty);
+
+            return null;
+        }
+
+        private void invalidateRectOnScreen(Rect dirty)
+        {
+            Rect localDirty = mDirty;
+
+            // Add the new dirty rect to the current one
+            localDirty.union(dirty.left, dirty.top, dirty.right, dirty.bottom);
+            // Intersect with the bounds of the window to skip
+            // updates that lie outside of the visible region
+            float appScale = context.mAttachInfo.mApplicationScale;
+            bool intersected = localDirty.intersect(0, 0,
+                    (int)(mWidth * appScale + 0.5f), (int)(mHeight * appScale + 0.5f));
+            if (!intersected)
+            {
+                localDirty.setEmpty();
+            }
+            if (!mWillDrawSoon && (intersected || mIsAnimating))
+            {
+                scheduleTraversals();
+            }
         }
     }
 }

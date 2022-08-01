@@ -120,7 +120,7 @@ namespace AndroidUI.Widgets
             return mParent;
         }
 
-        public LayoutParams mLayoutParams { get; set; }
+        internal LayoutParams mLayoutParams { get; set; }
 
         private int l = 0, t = 0, r = 0, b = 0;
 
@@ -371,7 +371,7 @@ namespace AndroidUI.Widgets
 
             public AttachInfo(Context context)
             {
-                mDebugLayout = false; // draw layout bounds
+                mDebugLayout = true; // draw layout bounds
 
                 mRecomputeGlobalAttributes = false;
                 mHasWindowFocus = true;
@@ -1693,8 +1693,9 @@ namespace AndroidUI.Widgets
 
         private void resetDisplayList()
         {
-            mRenderNode.Dispose();
+            mRenderNode?.Dispose();
             mRenderNode = null;
+            invalidate();
             //mRenderNode.discardDisplayList();
             //if (mBackgroundRenderNode != null)
             //{
@@ -7723,6 +7724,7 @@ namespace AndroidUI.Widgets
 
             if (
                 (mPrivateFlags & PFLAG_DRAWING_CACHE_VALID) == 0
+                || mRenderNode == null
             //|| !renderNode.hasDisplayList()
             //|| (mRecreateDisplayList)
             )
@@ -7730,6 +7732,7 @@ namespace AndroidUI.Widgets
                 // Don't need to recreate the display list, just need to tell our
                 // children to restore/recreate theirs
                 if (
+                    mRenderNode != null &&
                     //renderNode.hasDisplayList() &&
                     !mRecreateDisplayList)
                 {
@@ -7775,7 +7778,7 @@ namespace AndroidUI.Widgets
                     //{
                     //computeScroll();
                     int r = canvas.Save();
-                    canvas.Translate(getX(), getY());
+                    //canvas.Translate(getX(), getY());
 
                     canvas.Translate(-mScrollX, -mScrollY);
 
@@ -13625,7 +13628,7 @@ namespace AndroidUI.Widgets
                     {
                         sparePaint.setAlpha(alpha.ToColorInt());
                     }
-                    canvas.DrawPicture(renderNode, 0, 0, sparePaint);
+                    canvas.DrawPicture(renderNode, getX(), getY(), sparePaint);
                 }
                 else
                 {

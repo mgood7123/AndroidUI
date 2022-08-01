@@ -85,7 +85,17 @@ namespace AndroidUI.Utils.Input
 
         public Vector2 Distance => current.distance;
         public Vector2 TotalDistance => current.totalDistance;
-        public Vector2 Velocity { get => current.velocity; set => current.velocity = value; }
+        public Vector2 Velocity
+        {
+            get => current.velocity; set
+            {
+                current.velocity = value;
+                if (current.velocity == Vector2.Zero)
+                {
+                    current.spinning = false;
+                }
+            }
+        }
         public Vector2 Position { get => current.position; set => current.position = value; }
 
         public long SpinTime => current.pos.Count >= 2 ? (current.endTime - current.startTime) : 0;
