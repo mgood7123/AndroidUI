@@ -335,10 +335,11 @@ namespace AndroidUI_Application_Windows
                 image.setImageBitmap(bm);
                 image.setScaleType(ImageView.ScaleType.MATRIX);
 
-                var s = new FlywheelScrollView();
-                s.SmoothScroll = true;
-                s.addView(image);
-                return s;
+                var scrollView = new FlywheelScrollView();
+                scrollView.ShowDebugText = true;
+                scrollView.SmoothScroll = true;
+                scrollView.addView(image);
+                return scrollView;
             });
             tabView.addTab("Scrolling 2 (Unbounded)", () =>
             {
@@ -395,6 +396,7 @@ namespace AndroidUI_Application_Windows
             tabView.addTab("Scrolling 3", () =>
             {
                 FlywheelScrollView scrollView = new();
+                scrollView.ShowDebugText = true;
 
                 ColorView colorView = new ColorView();
                 colorView.setOnClickListener(v =>
@@ -410,9 +412,11 @@ namespace AndroidUI_Application_Windows
 
                 return scrollView;
             });
-            tabView.addTab("Scrolling 4 (large)", () =>
+            tabView.addTab("Scrolling 4 (large, clickable)", () =>
             {
                 FlywheelScrollView scrollView = new();
+                scrollView.ShowDebugText = true;
+                scrollView.SmoothScroll = true;
 
                 ColorView colorView = new ColorView();
                 colorView.setOnClickListener(v =>
@@ -425,7 +429,21 @@ namespace AndroidUI_Application_Windows
                 });
 
                 FrameLayout fl = new();
-                fl.addView(colorView, new LayoutParams(1000, 1000));
+                fl.addView(colorView, new LayoutParams(100000, 100000));
+                scrollView.addView(fl);
+
+                return scrollView;
+            });
+            tabView.addTab("Scrolling 4 (large, non-clickable)", () =>
+            {
+                FlywheelScrollView scrollView = new();
+                scrollView.ShowDebugText = true;
+                scrollView.SmoothScroll = true;
+
+                ColorView colorView = new ColorView();
+
+                FrameLayout fl = new();
+                fl.addView(colorView, new LayoutParams(100000, 100000));
                 scrollView.addView(fl);
 
                 return scrollView;

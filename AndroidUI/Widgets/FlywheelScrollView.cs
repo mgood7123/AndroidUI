@@ -142,22 +142,24 @@ namespace AndroidUI.Widgets
             if (mScrollX == 0 && mScrollY == 0)
             {
                 // if we get here then we HAVE NOT yet scrolled anywhere
-                bool p = limitScrollingToViewBounds;
-                limitScrollingToViewBounds = true;
-                int x = 1;
-                int y = 1;
-                RESULT r = NeedsClamp(child, ref x, ref y);
-                limitScrollingToViewBounds = p;
-                if (r == RESULT.CLAMP_XY)
+                if (limitScrollingToViewBounds)
                 {
-                    Log.d("INTERCEPT TOUCH CANNOT SCROLL");
-                    // if we get here, we cannot scroll in either X or Y
-                    // in other words, we are larger than our child
-                    return false;
+                    int x = 1;
+                    int y = 1;
+                    RESULT r = NeedsClamp(child, ref x, ref y);
+                    if (r == RESULT.CLAMP_XY)
+                    {
+                        Log.d("INTERCEPT TOUCH CANNOT SCROLL");
+                        // if we get here, we cannot scroll in either X or Y
+                        // in other words, we are larger than our child
+                        // and we are not allowed to scroll past our child
+                        return false;
+                    }
                 }
                 Log.d("INTERCEPT TOUCH CAN SCROLL");
                 // if we get here, we can scroll in either X or Y
                 // in other words, our child is larger than us
+                // or we are allowed to scroll past our child
 
                 // we could either be a down followed be an up
 
@@ -247,8 +249,8 @@ namespace AndroidUI.Widgets
                             float x_ = data.location.x;
                             float y_ = data.location.y;
 
-                            float xDiff = MathF.Abs(x - lastX);
-                            float yDiff = MathF.Abs(y - lastY);
+                            float xDiff = MathF.Abs(x_ - lastX);
+                            float yDiff = MathF.Abs(y_ - lastY);
 
                             if (xDiff > 30 || yDiff > 30)
                             {
