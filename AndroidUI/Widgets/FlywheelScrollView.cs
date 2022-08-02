@@ -52,13 +52,252 @@ namespace AndroidUI.Widgets
             addView(text, MATCH_PARENT__MATCH_PARENT);
             text.setZ(float.PositiveInfinity);
             text.setText("FlywheelScrollView");
+            var c = new Graphics.Drawables.ColorDrawable(Graphics.Color.GRAY);
+            c.setAlpha((0.25f).ToColorByte());
+            post(new Utils.Runnable.ActionRunnable(() => text.setBackground(c)));
             ShowDebugText = false;
             SmoothScroll = false;
         }
 
+        bool mIsBeingDragged = false;
+        float lastX;
+        float lastY;
+
         public override bool onInterceptTouchEvent(Touch ev)
         {
-            return true;
+            Log.d("INTERCEPT TOUCH");
+            /*
+             * This method JUST determines whether we want to intercept the motion.
+             * If we return true, onMotionEvent will be called and we do the actual
+             * scrolling there.
+             */
+
+            /*
+            * Shortcut the most recurring case: the user is in the dragging
+            * state and they is moving their finger.  We want to intercept this
+            * motion.
+            */
+            var data = ev.getTouchAtCurrentIndex();
+            var state = data.state;
+            if ((state == Touch.State.TOUCH_MOVE) && (mIsBeingDragged))
+            {
+                Log.d("INTERCEPT TOUCH MOVE ALREADY DRAGGING");
+                flywheel.AquireLock();
+                last_time_previous = last_time_current;
+                last_time_current = data.timestamp;
+                time = last_time_previous == 0 ? 0 : (last_time_current - last_time_previous);
+                if (!smoothScroll || was_down || time > 0)
+                {
+                    was_down = false;
+                    flywheel.AddMovement(data.timestamp, data.location.x, data.location.y);
+                    if (getChildCount() == 2)
+                    {
+                        View view = getChildAt(1);
+                        int x = -flywheel.Position.X.toPixel();
+                        int y = -flywheel.Position.Y.toPixel();
+                        RESULT r = NeedsClamp(view, ref x, ref y);
+                        if (r != RESULT.OK)
+                        {
+                            flywheel.Position = new(-x, -y);
+                            if (r == RESULT.CLAMP_X)
+                            {
+                                flywheel.Velocity = new(0, flywheel.Velocity.Y);
+                            }
+                            else if (r == RESULT.CLAMP_Y)
+                            {
+                                flywheel.Velocity = new(flywheel.Velocity.X, 0);
+                            }
+                            else if (r == RESULT.CLAMP_XY)
+                            {
+                                flywheel.Velocity = System.Numerics.Vector2.Zero;
+                            }
+                        }
+                        view.scrollTo(x, y);
+                    }
+                }
+                flywheel.ReleaseLock();
+                return true;
+            }
+
+            if (base.onInterceptTouchEvent(ev))
+            {
+                Log.d("INTERCEPT TOUCH BASE");
+                return true;
+            }
+
+            /*
+             * Don't intercept if we have no child
+             */
+            if (getChildCount() == 1)
+            {
+                Log.d("INTERCEPT TOUCH NO CHILD");
+                return false;
+            }
+
+            /*
+             * Don't try to intercept touch if we can't scroll anyway.
+             */
+            View child = getChildAt(1);
+
+            if (mScrollX == 0 && mScrollY == 0)
+            {
+                // if we get here then we HAVE NOT yet scrolled anywhere
+                bool p = limitScrollingToViewBounds;
+                limitScrollingToViewBounds = true;
+                int x = 1;
+                int y = 1;
+                RESULT r = NeedsClamp(child, ref x, ref y);
+                limitScrollingToViewBounds = p;
+                if (r == RESULT.CLAMP_XY)
+                {
+                    Log.d("INTERCEPT TOUCH CANNOT SCROLL");
+                    // if we get here, we cannot scroll in either X or Y
+                    // in other words, we are larger than our child
+                    return false;
+                }
+                Log.d("INTERCEPT TOUCH CAN SCROLL");
+                // if we get here, we can scroll in either X or Y
+                // in other words, our child is larger than us
+
+                // we could either be a down followed be an up
+
+
+                // or we could be a down followed by a move
+
+                flywheel.AquireLock();
+
+                switch (state)
+                {
+                    case Touch.State.TOUCH_DOWN:
+                        Log.d("INTERCEPT TOUCH DOWN");
+                        // remember last down
+                        lastX = data.location.x;
+                        lastY = data.location.y;
+
+                        ResetButKeepPosition(data.timestamp);
+                        flywheel.AddMovement(data.timestamp, lastX, lastY);
+                        was_down = true;
+
+                        mIsBeingDragged = flywheel.Spinning;
+                        break;
+                    case Touch.State.TOUCH_CANCELLED:
+                        Log.d("INTERCEPT TOUCH CANCELLED");
+                        ResetButKeepPosition(0);
+                        was_down = false;
+                        if (mIsBeingDragged)
+                        {
+                            mIsBeingDragged = false;
+                            flywheel.ReleaseLock();
+                            return true;
+                        }
+                        mIsBeingDragged = false;
+                        break;
+                    case Touch.State.TOUCH_UP:
+                        {
+                            Log.d("INTERCEPT TOUCH UP");
+                            last_time_previous = last_time_current;
+                            last_time_current = data.timestamp;
+                            time = last_time_previous == 0 ? 0 : (last_time_current - last_time_previous);
+                            if (smoothScroll && !was_down && time <= THRESH_HOLD)
+                            {
+                                mIsBeingDragged = true;
+                                int x2 = -flywheel.Position.X.toPixel();
+                                int y2 = -flywheel.Position.Y.toPixel();
+                                RESULT r2 = NeedsClamp(child, ref x2, ref y2);
+                                if (r2 != RESULT.OK)
+                                {
+                                    flywheel.Position = new(-x2, -y2);
+                                    if (r2 == RESULT.CLAMP_X)
+                                    {
+                                        flywheel.Velocity = new(0, flywheel.Velocity.Y);
+                                    }
+                                    else if (r2 == RESULT.CLAMP_Y)
+                                    {
+                                        flywheel.Velocity = new(flywheel.Velocity.X, 0);
+                                    }
+                                    else if (r2 == RESULT.CLAMP_XY)
+                                    {
+                                        flywheel.Velocity = System.Numerics.Vector2.Zero;
+                                    }
+                                }
+                                flywheel.FinalizeMovement();
+                            }
+                            else
+                            {
+                                ResetButKeepPosition(0);
+                                was_down = false;
+                                if (mIsBeingDragged)
+                                {
+                                    mIsBeingDragged = false;
+                                    flywheel.ReleaseLock();
+                                    return true;
+                                }
+                                mIsBeingDragged = false;
+                            }
+                        }
+                        break;
+                    case Touch.State.TOUCH_MOVE:
+                        {
+                            Log.d("INTERCEPT TOUCH MOVE");
+                            /*
+                             * mIsBeingDragged == false, otherwise the shortcut would have caught it. Check
+                             * whether the user has moved far enough from their original down touch.
+                             */
+
+                            float x_ = data.location.x;
+                            float y_ = data.location.y;
+
+                            float xDiff = MathF.Abs(x - lastX);
+                            float yDiff = MathF.Abs(y - lastY);
+
+                            if (xDiff > 30 || yDiff > 30)
+                            {
+                                last_time_previous = last_time_current;
+                                last_time_current = data.timestamp;
+                                time = last_time_previous == 0 ? 0 : (last_time_current - last_time_previous);
+                                if (!smoothScroll || was_down || time <= THRESH_HOLD)
+                                {
+                                    was_down = false;
+                                    mIsBeingDragged = true;
+                                    lastX = x_;
+                                    lastY = y_;
+                                    flywheel.AddMovement(last_time_current, x_, y_);
+                                    int x2 = -flywheel.Position.X.toPixel();
+                                    int y2 = -flywheel.Position.Y.toPixel();
+                                    RESULT r2 = NeedsClamp(child, ref x2, ref y2);
+                                    if (r2 != RESULT.OK)
+                                    {
+                                        flywheel.Position = new(-x2, -y2);
+                                        if (r2 == RESULT.CLAMP_X)
+                                        {
+                                            flywheel.Velocity = new(0, flywheel.Velocity.Y);
+                                        }
+                                        else if (r2 == RESULT.CLAMP_Y)
+                                        {
+                                            flywheel.Velocity = new(flywheel.Velocity.X, 0);
+                                        }
+                                        else if (r2 == RESULT.CLAMP_XY)
+                                        {
+                                            flywheel.Velocity = System.Numerics.Vector2.Zero;
+                                        }
+                                    }
+                                    child.scrollTo(x2, y2);
+
+                                    var parent = getParent();
+                                    if (parent != null)
+                                    {
+                                        parent.requestDisallowInterceptTouchEvent(true);
+                                    }
+                                }
+                            }
+
+                            break;
+                        }
+                }
+                flywheel.ReleaseLock();
+            }
+            Log.d("INTERCEPT TOUCH IS BEING DRAGGED: " + mIsBeingDragged);
+            return mIsBeingDragged;
         }
 
         protected override void dispatchDraw(SKCanvas canvas)
@@ -209,101 +448,6 @@ namespace AndroidUI.Widgets
             // protect against batching, touch up emits a touch move if it's location has changed
             // this can cause a slight decrease in velocity upon lifting up
             touch.DontBatchOnTouchUpOrTouchCancel = true;
-        }
-
-        public override bool onTouch(Touch touch)
-        {
-            Touch.Data data = touch.getTouchAtCurrentIndex();
-            var st = data.state;
-            flywheel.AquireLock();
-            switch (st)
-            {
-                case Touch.State.TOUCH_CANCELLED:
-                    ResetButKeepPosition(0);
-                    was_down = false;
-                    break;
-                case Touch.State.TOUCH_DOWN:
-                    ResetButKeepPosition(data.timestamp);
-                    flywheel.AddMovement(data.timestamp, data.location.x, data.location.y);
-                    was_down = true;
-                    break;
-                case Touch.State.TOUCH_MOVE:
-                    last_time_previous = last_time_current;
-                    last_time_current = data.timestamp;
-                    time = last_time_previous == 0 ? 0 : (last_time_current - last_time_previous);
-                    if (!smoothScroll || was_down || time <= THRESH_HOLD)
-                    {
-                        was_down = false;
-                        flywheel.AddMovement(data.timestamp, data.location.x, data.location.y);
-                        if (getChildCount() == 2)
-                        {
-                            View view = getChildAt(1);
-                            int x = -flywheel.Position.X.toPixel();
-                            int y = -flywheel.Position.Y.toPixel();
-                            RESULT r = NeedsClamp(view, ref x, ref y);
-                            if (r != RESULT.OK)
-                            {
-                                flywheel.Position = new(-x, -y);
-                                if (r == RESULT.CLAMP_X)
-                                {
-                                    flywheel.Velocity = new(0, flywheel.Velocity.Y);
-                                }
-                                else if (r == RESULT.CLAMP_Y)
-                                {
-                                    flywheel.Velocity = new(flywheel.Velocity.X, 0);
-                                }
-                                else if (r == RESULT.CLAMP_XY)
-                                {
-                                    flywheel.Velocity = System.Numerics.Vector2.Zero;
-                                }
-                            }
-                            view.scrollTo(x, y);
-                        }
-                    }
-                    break;
-                case Touch.State.TOUCH_UP:
-                    last_time_previous = last_time_current;
-                    last_time_current = data.timestamp;
-                    time = last_time_previous == 0 ? 0 : (last_time_current - last_time_previous);
-                    if (smoothScroll && !was_down && time <= THRESH_HOLD)
-                    {
-                        if (getChildCount() == 2)
-                        {
-                            View view = getChildAt(1);
-                            int x = -flywheel.Position.X.toPixel();
-                            int y = -flywheel.Position.Y.toPixel();
-                            RESULT r = NeedsClamp(view, ref x, ref y);
-                            if (r != RESULT.OK)
-                            {
-                                flywheel.Position = new(-x, -y);
-                                if (r == RESULT.CLAMP_X)
-                                {
-                                    flywheel.Velocity = new(0, flywheel.Velocity.Y);
-                                }
-                                else if (r == RESULT.CLAMP_Y)
-                                {
-                                    flywheel.Velocity = new(flywheel.Velocity.X, 0);
-                                }
-                                else if (r == RESULT.CLAMP_XY)
-                                {
-                                    flywheel.Velocity = System.Numerics.Vector2.Zero;
-                                }
-                            }
-                            flywheel.FinalizeMovement();
-                        }
-                    }
-                    else
-                    {
-                        was_down = false;
-                    }
-                    break;
-                default:
-                    break;
-            }
-            flywheel.ReleaseLock();
-            if (showDebugText) text.invalidate();
-            invalidate();
-            return true;
         }
 
         private void Reset(long timestamp)

@@ -340,6 +340,20 @@ namespace AndroidUI_Application_Windows
                 s.addView(image);
                 return s;
             });
+            tabView.addTab("Scrolling 2 (Unbounded)", () =>
+            {
+                var image = new ImageView();
+                var bm = BitmapFactory.decodeFile("C:/Users/small/Pictures/Screenshot 2022-05-19 034147.jpeg");
+                image.setImageBitmap(bm);
+                image.setScaleType(ImageView.ScaleType.MATRIX);
+
+                var s = new FlywheelScrollView();
+                s.ShowDebugText = true;
+                s.SmoothScroll = true;
+                s.LimitScrollingToChildViewBounds = false;
+                s.addView(image);
+                return s;
+            });
             tabView.addTab("TabView", () =>
             {
                 TabView tabView = new();
@@ -378,52 +392,45 @@ namespace AndroidUI_Application_Windows
 
                 return linearLayout;
             });
+            tabView.addTab("Scrolling 3", () =>
+            {
+                FlywheelScrollView scrollView = new();
+
+                ColorView colorView = new ColorView();
+                colorView.setOnClickListener(v =>
+                {
+                    colorView.Color = new SKColor(
+                        (byte)Random.Shared.Next(255),
+                        (byte)Random.Shared.Next(255),
+                        (byte)Random.Shared.Next(255)
+                    );
+                });
+
+                scrollView.addView(colorView);
+
+                return scrollView;
+            });
+            tabView.addTab("Scrolling 4 (large)", () =>
+            {
+                FlywheelScrollView scrollView = new();
+
+                ColorView colorView = new ColorView();
+                colorView.setOnClickListener(v =>
+                {
+                    colorView.Color = new SKColor(
+                        (byte)Random.Shared.Next(255),
+                        (byte)Random.Shared.Next(255),
+                        (byte)Random.Shared.Next(255)
+                    );
+                });
+
+                FrameLayout fl = new();
+                fl.addView(colorView, new LayoutParams(1000, 1000));
+                scrollView.addView(fl);
+
+                return scrollView;
+            });
             SetContentView(tabView);
-
-            //ColorView colorView = new ColorView();
-            //colorView.setOnClickListener(v =>
-            //{
-            //    colorView.Color = new SKColor(
-            //        (byte)Random.Shared.Next(255),
-            //        (byte)Random.Shared.Next(255),
-            //        (byte)Random.Shared.Next(255)
-            //    );
-            //});
-
-            //ColorView colorViewB = new ColorView();
-            //colorViewB.setOnClickListener(v =>
-            //{
-            //    colorViewB.Color = new SKColor(
-            //        (byte)Random.Shared.Next(255),
-            //        (byte)Random.Shared.Next(255),
-            //        (byte)Random.Shared.Next(255)
-            //    );
-            //});
-
-            //var l = new LinearLayout();
-            //l.setOrientation(LinearLayout.HORIZONTAL);
-            //l.addView(colorView, new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.MATCH_PARENT, 1));
-            //VV tabContent = new();
-            //tabContent.addView(colorViewB, MATCH_PARENT__MATCH_PARENT);
-            //l.addView(tabContent, new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.MATCH_PARENT, 1));
-            //SetContentView(l);
-        }
-
-        class VV : View
-        {
-            protected override void onMeasure(int widthMeasureSpec, int heightMeasureSpec)
-            {
-                base.onMeasure(widthMeasureSpec, heightMeasureSpec);
-            }
-            protected override void onLayout(bool changed, int l, int t, int r, int b)
-            {
-                base.onLayout(changed, l, t, r, b);
-            }
-
-            protected override void onDraw(SKCanvas canvas)
-            {
-                base.onDraw(canvas);
-            }
         }
     }
 }
