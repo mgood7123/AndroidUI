@@ -430,7 +430,7 @@ namespace AndroidUI_Application_Windows
 
                 FrameLayout fl = new();
                 fl.addView(colorView, new LayoutParams(100000, 100000));
-                scrollView.addView(fl);
+                scrollView.addView(fl, WRAP_CONTENT__WRAP_CONTENT);
 
                 return scrollView;
             });
@@ -444,11 +444,54 @@ namespace AndroidUI_Application_Windows
 
                 FrameLayout fl = new();
                 fl.addView(colorView, new LayoutParams(100000, 100000));
-                scrollView.addView(fl);
+                scrollView.addView(fl, WRAP_CONTENT__WRAP_CONTENT);
+
+                return scrollView;
+            });
+
+            tabView.addTab("Scrolling 4 (large, HORIZONTAL)", () =>
+            {
+                FlywheelScrollView scrollView = new();
+                scrollView.ShowDebugText = true;
+                scrollView.SmoothScroll = true;
+                scrollView.LimitScrollingToChildViewBounds = true;
+
+                ColorView colorView = new ColorView();
+
+                FL fl = new();
+                fl.addView(colorView, new LayoutParams(100000, 50));
+                scrollView.addView(fl, WRAP_CONTENT__WRAP_CONTENT);
+
+                return scrollView;
+            });
+
+            tabView.addTab("Scrolling 4 (large, VERTICAL)", () =>
+            {
+                FlywheelScrollView scrollView = new();
+                scrollView.ShowDebugText = true;
+                scrollView.SmoothScroll = true;
+                scrollView.LimitScrollingToChildViewBounds = true;
+
+                ColorView colorView = new ColorView();
+
+                FL fl = new();
+                scrollView.addView(colorView, new LayoutParams(50, 100000));
 
                 return scrollView;
             });
             SetContentView(tabView);
+        }
+    }
+    class FL : FrameLayout
+    {
+        protected override void onMeasure(int widthMeasureSpec, int heightMeasureSpec)
+        {
+            base.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        }
+
+        protected override void onLayout(bool changed, int left, int top, int right, int bottom)
+        {
+            base.onLayout(changed, left, top, right, bottom);
         }
     }
 }

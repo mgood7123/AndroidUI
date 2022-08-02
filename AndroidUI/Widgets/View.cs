@@ -2850,6 +2850,7 @@ namespace AndroidUI.Widgets
 
         protected void setMeasuredDimension(int measuredWidth, int measuredHeight)
         {
+            if (DBG) Log.d("setMeasuredDimension: " + measuredWidth + ", " + measuredHeight);
             mMeasuredWidth = measuredWidth;
             mMeasuredHeight = measuredHeight;
 
@@ -9694,7 +9695,7 @@ namespace AndroidUI.Widgets
           */
         public virtual bool onTouch(Touch touch)
         {
-            Console.WriteLine("onTouch from " + this);
+            if (DBG) Console.WriteLine("onTouch from " + this);
             var t = touch.getTouchAtCurrentIndex();
             float x = 0.0f;
             float y = 0.0f;
@@ -13999,7 +14000,7 @@ namespace AndroidUI.Widgets
             mTag = tag;
         }
 
-        private const bool DBG = false;
+        public const bool DBG = false;
 
         /**
          * The logging tag used by this class with android.util.Log.

@@ -65,7 +65,7 @@ namespace AndroidUI.Widgets
 
         public override bool onInterceptTouchEvent(Touch ev)
         {
-            Log.d("INTERCEPT TOUCH");
+            if (DBG) Log.d("INTERCEPT TOUCH");
             /*
              * This method JUST determines whether we want to intercept the motion.
              * If we return true, onMotionEvent will be called and we do the actual
@@ -81,7 +81,7 @@ namespace AndroidUI.Widgets
             var state = data.state;
             if ((state == Touch.State.TOUCH_MOVE) && (mIsBeingDragged))
             {
-                Log.d("INTERCEPT TOUCH MOVE ALREADY DRAGGING");
+                if (DBG) Log.d("INTERCEPT TOUCH MOVE ALREADY DRAGGING");
                 flywheel.AquireLock();
                 last_time_previous = last_time_current;
                 last_time_current = data.timestamp;
@@ -121,7 +121,7 @@ namespace AndroidUI.Widgets
 
             if (base.onInterceptTouchEvent(ev))
             {
-                Log.d("INTERCEPT TOUCH BASE");
+                if (DBG) Log.d("INTERCEPT TOUCH BASE");
                 return true;
             }
 
@@ -130,7 +130,7 @@ namespace AndroidUI.Widgets
              */
             if (getChildCount() == 1)
             {
-                Log.d("INTERCEPT TOUCH NO CHILD");
+                if (DBG) Log.d("INTERCEPT TOUCH NO CHILD");
                 return false;
             }
 
@@ -149,14 +149,14 @@ namespace AndroidUI.Widgets
                     RESULT r = NeedsClamp(child, ref x, ref y);
                     if (r == RESULT.CLAMP_XY)
                     {
-                        Log.d("INTERCEPT TOUCH CANNOT SCROLL");
+                        if (DBG) Log.d("INTERCEPT TOUCH CANNOT SCROLL");
                         // if we get here, we cannot scroll in either X or Y
                         // in other words, we are larger than our child
                         // and we are not allowed to scroll past our child
                         return false;
                     }
                 }
-                Log.d("INTERCEPT TOUCH CAN SCROLL");
+                if (DBG) Log.d("INTERCEPT TOUCH CAN SCROLL");
                 // if we get here, we can scroll in either X or Y
                 // in other words, our child is larger than us
                 // or we are allowed to scroll past our child
@@ -171,7 +171,7 @@ namespace AndroidUI.Widgets
                 switch (state)
                 {
                     case Touch.State.TOUCH_DOWN:
-                        Log.d("INTERCEPT TOUCH DOWN");
+                        if (DBG) Log.d("INTERCEPT TOUCH DOWN");
                         // remember last down
                         lastX = data.location.x;
                         lastY = data.location.y;
@@ -183,7 +183,7 @@ namespace AndroidUI.Widgets
                         mIsBeingDragged = flywheel.Spinning;
                         break;
                     case Touch.State.TOUCH_CANCELLED:
-                        Log.d("INTERCEPT TOUCH CANCELLED");
+                        if (DBG) Log.d("INTERCEPT TOUCH CANCELLED");
                         ResetButKeepPosition(0);
                         was_down = false;
                         if (mIsBeingDragged)
@@ -196,7 +196,7 @@ namespace AndroidUI.Widgets
                         break;
                     case Touch.State.TOUCH_UP:
                         {
-                            Log.d("INTERCEPT TOUCH UP");
+                            if (DBG) Log.d("INTERCEPT TOUCH UP");
                             last_time_previous = last_time_current;
                             last_time_current = data.timestamp;
                             time = last_time_previous == 0 ? 0 : (last_time_current - last_time_previous);
@@ -240,7 +240,7 @@ namespace AndroidUI.Widgets
                         break;
                     case Touch.State.TOUCH_MOVE:
                         {
-                            Log.d("INTERCEPT TOUCH MOVE");
+                            if (DBG) Log.d("INTERCEPT TOUCH MOVE");
                             /*
                              * mIsBeingDragged == false, otherwise the shortcut would have caught it. Check
                              * whether the user has moved far enough from their original down touch.
@@ -298,7 +298,7 @@ namespace AndroidUI.Widgets
                 }
                 flywheel.ReleaseLock();
             }
-            Log.d("INTERCEPT TOUCH IS BEING DRAGGED: " + mIsBeingDragged);
+            if (DBG) Log.d("INTERCEPT TOUCH IS BEING DRAGGED: " + mIsBeingDragged);
             return mIsBeingDragged;
         }
 
@@ -355,9 +355,27 @@ namespace AndroidUI.Widgets
                         r = RESULT.CLAMP_XY;
                     }
                 }
-                if ((getMeasuredWidth() + x) > child.getMeasuredWidth())
+                int width = getMeasuredWidth();
+                int childWidth = child.getMeasuredWidth();
+                if (childWidth > width)
                 {
-                    x = child.getMeasuredWidth() - getMeasuredWidth();
+                    if ((width + x) > childWidth)
+                    {
+                        x = childWidth - width;
+                        if (r == RESULT.OK)
+                        {
+                            r = RESULT.CLAMP_X;
+                        }
+                        else if (r == RESULT.CLAMP_Y)
+                        {
+                            r = RESULT.CLAMP_XY;
+                        }
+                    }
+                }
+                else
+                {
+                    // child is same size or smaller than us, dont scroll horizontally
+                    x = 0;
                     if (r == RESULT.OK)
                     {
                         r = RESULT.CLAMP_X;
@@ -367,9 +385,27 @@ namespace AndroidUI.Widgets
                         r = RESULT.CLAMP_XY;
                     }
                 }
-                if ((getMeasuredHeight() + y) > child.getMeasuredHeight())
+                int height = getMeasuredHeight();
+                int childHeight = child.getMeasuredHeight();
+                if (childHeight > height)
                 {
-                    y = child.getMeasuredHeight() - getMeasuredHeight();
+                    if ((height + y) > childHeight)
+                    {
+                        y = childHeight - height;
+                        if (r == RESULT.OK)
+                        {
+                            r = RESULT.CLAMP_Y;
+                        }
+                        else if (r == RESULT.CLAMP_X)
+                        {
+                            r = RESULT.CLAMP_XY;
+                        }
+                    }
+                }
+                else
+                {
+                    // child is same size or smaller than us, dont scroll vertically
+                    y = 0;
                     if (r == RESULT.OK)
                     {
                         r = RESULT.CLAMP_Y;
@@ -507,45 +543,47 @@ namespace AndroidUI.Widgets
         {
             base.onMeasure(widthMeasureSpec, heightMeasureSpec);
 
-            //if (!mFillViewport)
-            //{
-            //    return;
-            //}
-
             int heightMode = MeasureSpec.getMode(heightMeasureSpec);
             if (heightMode == MeasureSpec.UNSPECIFIED)
             {
                 return;
             }
 
-            if (getChildCount() > 1)
+            if (getChildCount() == 2)
             {
                 View child = getChildAt(1);
                 int widthPadding;
                 int heightPadding;
-                //final int targetSdkVersion = getContext().getApplicationInfo().targetSdkVersion;
-                FrameLayout.LayoutParams lp = (LayoutParams)child.getLayoutParams();
-                //if (targetSdkVersion >= VERSION_CODES.M)
-                //{
-                    widthPadding = mPaddingLeft + mPaddingRight + lp.leftMargin + lp.rightMargin;
-                    heightPadding = mPaddingTop + mPaddingBottom + lp.topMargin + lp.bottomMargin;
-                //}
-                //else
-                //{
-                //    widthPadding = mPaddingLeft + mPaddingRight;
-                //    heightPadding = mPaddingTop + mPaddingBottom;
-                //}
 
-                int desiredWidth = getMeasuredWidth() - widthPadding;
-                int desiredHeight = getMeasuredHeight() - heightPadding;
-                if (child.getMeasuredHeight() < desiredHeight)
-                {
-                    int childWidthMeasureSpec = MeasureSpec.makeSafeMeasureSpec(
-                            desiredWidth, MeasureSpec.EXACTLY);
-                    int childHeightMeasureSpec = MeasureSpec.makeSafeMeasureSpec(
-                            desiredHeight, MeasureSpec.EXACTLY);
-                    child.measure(childWidthMeasureSpec, childHeightMeasureSpec);
-                }
+                // remeasure child according to its layout params
+
+                LayoutParams lp = (LayoutParams)child.getLayoutParams();
+
+
+                widthPadding = mPaddingLeft + mPaddingRight + lp.leftMargin + lp.rightMargin;
+                heightPadding = mPaddingTop + mPaddingBottom + lp.topMargin + lp.bottomMargin;
+
+                int widthMeasureSpec1 = getChildMeasureSpec(MeasureSpec.withMode(widthMeasureSpec, MeasureSpec.UNSPECIFIED), widthPadding, lp.width);
+                int heightMeasureSpec1 = getChildMeasureSpec(MeasureSpec.withMode(heightMeasureSpec, MeasureSpec.UNSPECIFIED), heightPadding, lp.height);
+                child.measure(
+                    widthMeasureSpec1,
+                    heightMeasureSpec1
+                );
+
+                //int desiredWidth = getMeasuredWidth() - widthPadding;
+                //int desiredHeight = getMeasuredHeight() - heightPadding;
+
+                //int childWidth = child.getMeasuredWidth();
+                //int childHeight = child.getMeasuredHeight();
+
+                //if (childHeight < desiredHeight)
+                //{
+                //    int childWidthMeasureSpec = MeasureSpec.makeSafeMeasureSpec(
+                //            desiredWidth, MeasureSpec.EXACTLY);
+                //    int childHeightMeasureSpec = MeasureSpec.makeSafeMeasureSpec(
+                //            desiredHeight, MeasureSpec.EXACTLY);
+                //    child.measure(childWidthMeasureSpec, childHeightMeasureSpec);
+                //}
             }
         }
 

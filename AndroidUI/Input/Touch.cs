@@ -9,7 +9,7 @@ namespace AndroidUI.Input
         public Touch()
         {
             Log = new(this);
-            Log.d("new Touch()");
+            if (Widgets.View.DBG) Log.d("new Touch()");
         }
 
         public enum State
