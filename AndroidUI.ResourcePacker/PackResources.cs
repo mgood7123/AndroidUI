@@ -101,7 +101,6 @@ namespace AndroidUI.Resources {
                         {
                             Log.LogWarning("unsupported file type: " + f);
                         }
-
                     }
                 }
                 else
