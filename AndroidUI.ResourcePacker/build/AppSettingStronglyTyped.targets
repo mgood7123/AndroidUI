@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+	<!--Defining all the text files input parameters-->
+	<ItemGroup>
+		<SettingFiles Include="$(RootFolder)\*.mysettings" />
+	</ItemGroup>
+
+	<!--It is generated a target which is executed before the compilation-->
+	<Target Name="BeforeCompile" Inputs="@(SettingFiles)" Outputs="$(RootFolder)\Resources.generated.cs">
+		<!--Calling our custom task-->
+		<PackResources/>
+		<!--Our generated file is included to be compiled-->
+		<ItemGroup>
+			<Compile Remove="Resources.generated.cs" />
+			<Compile Include="Resources.generated.cs" />
+		</ItemGroup>
+	</Target>
+
+	<!--The generated file is deleted after a general clean. It will force the regeneration on rebuild-->
+	<Target Name="AfterClean">
+		<Delete Files="$(RootFolder)\Resources.generated.cs" />
+	</Target>
+</Project>

@@ -3,7 +3,8 @@
 	<PropertyGroup>
 		
 		<!-- change this to `Exe` if you want the Application Output (Log) to show -->
-		<OutputType>WinExe</OutputType>
+		<!-- change this to `WinExe` if you want the Application Output (Log) to be hidden -->
+		<OutputType>Exe</OutputType>
 		
 		<!-- you can change these or add other stuff here -->
 		<Nullable>enable</Nullable>
@@ -19,14 +20,35 @@
 		<UseWindowsForms>true</UseWindowsForms>
 		<UseWPF>true</UseWPF>
 		<RestoreSources>prebuilt\local-nugets</RestoreSources>
-	
+
+		<RootFolder>$(MSBuildProjectDirectory)</RootFolder>
 	</PropertyGroup>
 
+	<UsingTask TaskName="AndroidUI.PackResources" AssemblyFile="$(RootFolder)/prebuilt/debug/AndroidUI/AndroidUI.ResourcePacker.dll" />
+
 	<ItemGroup>
+		<!-- Don't compile anything inside the Resources directory -->
+		<Folder Remove="Resources\" />
+	</ItemGroup>
+
+	<Target Name="GenerateSetting" BeforeTargets="BeforeBuild" Outputs="$(RootFolder)\Resources.generated.cs">
+		<PackResources ResourceDirectory="Resources" />
+	</Target>
+
+	<Target Name="ForceReGenerateOnRebuild" AfterTargets="CoreClean">
+		<Delete Files="$(RootFolder)\Resources.generated.cs" />
+	</Target>
+	
+	<ItemGroup>
+
+		<!-- all of the below without needing to copy for each build -->
+		<ProjectReference Include="..\ApplicationHost-Windows\ApplicationHost-Windows.csproj" />
 		
 		<!-- do not touch these -->
-		<Reference Include="prebuilt\debug\AndroidUI\AndroidUI.dll" />
-		<Reference Include="prebuilt\debug\AndroidUI\ApplicationHost-Windows.dll" />
+		<!--
+		<Reference Include="$(RootFolder)\prebuilt\debug\AndroidUI\AndroidUI.dll" />
+		<Reference Include="$(RootFolder)\prebuilt\debug\AndroidUI\ApplicationHost-Windows.dll" />
+		-->
 		<PackageReference Include="AndroidUI.Native.Nuget" Version="0.0.110" />
 		
 		<!-- do not touch these
@@ -39,14 +61,18 @@
 			it is planned to merge these changes into the official SkiaSharp when possible
 			
 		-->
+		<!--
 		<PackageReference Include="SkiaSharp" Version="2.88.1-preview.3304" />
 		<PackageReference Include="SkiaSharp.HarfBuzz" Version="2.88.1-preview.3223" />
 		<PackageReference Include="SkiaSharp.Views" Version="2.88.1-preview.3223" />
 		<PackageReference Include="SkiaSharp.Views.WindowsForms" Version="2.88.1-preview.3223" />
+		-->
 
 		<!-- these are required by AndroidUI -->
+		<!--
 		<PackageReference Include="System.IO.Pipelines" Version="7.0.0-preview.4.22229.4" />
 		<PackageReference Include="Topten.RichTextKit" Version="0.4.151" />
+		-->
 	
 	</ItemGroup>
 </Project>
