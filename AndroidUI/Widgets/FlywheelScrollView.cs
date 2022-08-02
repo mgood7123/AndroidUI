@@ -7,7 +7,7 @@ namespace AndroidUI.Widgets
 {
     public class FlywheelScrollView : FrameLayout
     {
-        private const int THRESH_HOLD = 90; // 90 ms
+        private const int THRESH_HOLD = 100; // 100 ms
 
         Topten_RichTextKit_TextView text = new();
         Flywheel flywheel = new();
@@ -60,8 +60,6 @@ namespace AndroidUI.Widgets
         }
 
         bool mIsBeingDragged = false;
-        float lastX;
-        float lastY;
 
         public override bool onInterceptTouchEvent(Touch ev)
         {
@@ -172,12 +170,8 @@ namespace AndroidUI.Widgets
                 {
                     case Touch.State.TOUCH_DOWN:
                         if (DBG) Log.d("INTERCEPT TOUCH DOWN");
-                        // remember last down
-                        lastX = data.location.x;
-                        lastY = data.location.y;
-
                         ResetButKeepPosition(data.timestamp);
-                        flywheel.AddMovement(data.timestamp, lastX, lastY);
+                        flywheel.AddMovement(data.timestamp, data.location.x, data.location.y);
                         was_down = true;
 
                         mIsBeingDragged = flywheel.Spinning;
@@ -249,47 +243,39 @@ namespace AndroidUI.Widgets
                             float x_ = data.location.x;
                             float y_ = data.location.y;
 
-                            float xDiff = MathF.Abs(x_ - lastX);
-                            float yDiff = MathF.Abs(y_ - lastY);
-
-                            if (xDiff > 30 || yDiff > 30)
+                            last_time_previous = last_time_current;
+                            last_time_current = data.timestamp;
+                            time = last_time_previous == 0 ? 0 : (last_time_current - last_time_previous);
+                            if (!smoothScroll || was_down || time <= THRESH_HOLD)
                             {
-                                last_time_previous = last_time_current;
-                                last_time_current = data.timestamp;
-                                time = last_time_previous == 0 ? 0 : (last_time_current - last_time_previous);
-                                if (!smoothScroll || was_down || time <= THRESH_HOLD)
+                                was_down = false;
+                                mIsBeingDragged = true;
+                                flywheel.AddMovement(last_time_current, x_, y_);
+                                int x2 = -flywheel.Position.X.toPixel();
+                                int y2 = -flywheel.Position.Y.toPixel();
+                                RESULT r2 = NeedsClamp(child, ref x2, ref y2);
+                                if (r2 != RESULT.OK)
                                 {
-                                    was_down = false;
-                                    mIsBeingDragged = true;
-                                    lastX = x_;
-                                    lastY = y_;
-                                    flywheel.AddMovement(last_time_current, x_, y_);
-                                    int x2 = -flywheel.Position.X.toPixel();
-                                    int y2 = -flywheel.Position.Y.toPixel();
-                                    RESULT r2 = NeedsClamp(child, ref x2, ref y2);
-                                    if (r2 != RESULT.OK)
+                                    flywheel.Position = new(-x2, -y2);
+                                    if (r2 == RESULT.CLAMP_X)
                                     {
-                                        flywheel.Position = new(-x2, -y2);
-                                        if (r2 == RESULT.CLAMP_X)
-                                        {
-                                            flywheel.Velocity = new(0, flywheel.Velocity.Y);
-                                        }
-                                        else if (r2 == RESULT.CLAMP_Y)
-                                        {
-                                            flywheel.Velocity = new(flywheel.Velocity.X, 0);
-                                        }
-                                        else if (r2 == RESULT.CLAMP_XY)
-                                        {
-                                            flywheel.Velocity = System.Numerics.Vector2.Zero;
-                                        }
+                                        flywheel.Velocity = new(0, flywheel.Velocity.Y);
                                     }
-                                    child.scrollTo(x2, y2);
+                                    else if (r2 == RESULT.CLAMP_Y)
+                                    {
+                                        flywheel.Velocity = new(flywheel.Velocity.X, 0);
+                                    }
+                                    else if (r2 == RESULT.CLAMP_XY)
+                                    {
+                                        flywheel.Velocity = System.Numerics.Vector2.Zero;
+                                    }
+                                }
+                                child.scrollTo(x2, y2);
 
-                                    var parent = getParent();
-                                    if (parent != null)
-                                    {
-                                        parent.requestDisallowInterceptTouchEvent(true);
-                                    }
+                                var parent = getParent();
+                                if (parent != null)
+                                {
+                                    parent.requestDisallowInterceptTouchEvent(true);
                                 }
                             }
 

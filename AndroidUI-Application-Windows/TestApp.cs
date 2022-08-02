@@ -186,7 +186,7 @@ namespace AndroidUI_Application_Windows
 
         class TabView : LinearLayout
         {
-            //FlywheelScrollView tabContainer;
+            FlywheelScrollView tabContainer;
             LinearLayout tabs;
             FrameLayout tabContent;
 
@@ -218,17 +218,19 @@ namespace AndroidUI_Application_Windows
             private void InitTabView()
             {
                 tabs = new();
-                //tabContainer = new();
+                tabContainer = new();
                 tabContent = new();
 
                 tabs.setOrientation(VERTICAL);
 
-                //tabContainer.SmoothScroll = false;
-                //tabContainer.addView(tabs);
-                addView(tabs, new LinearLayout.LayoutParams(View.LayoutParams.WRAP_CONTENT, View.LayoutParams.MATCH_PARENT));
+                tabContainer.SmoothScroll = true;
+
+                tabContainer.addView(tabs);
+
+                addView(tabContainer, new LinearLayout.LayoutParams(View.LayoutParams.WRAP_CONTENT, View.LayoutParams.MATCH_PARENT));
                 addView(tabContent, new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.MATCH_PARENT, 1));
-                tabs.setZ(1);
-                post(new Runnable.ActionRunnable(() => tabs.setBackgroundColor(Color.BLACK)));
+                tabContainer.setZ(1);
+                post(new Runnable.ActionRunnable(() => tabContainer.setBackgroundColor(Color.BLACK)));
             }
         }
 
