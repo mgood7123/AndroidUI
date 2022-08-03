@@ -1,5 +1,4 @@
 ﻿using AndroidUITestFramework;
-using static AndroidUI.MathUtils;
 
 namespace AndroidUITest
 {

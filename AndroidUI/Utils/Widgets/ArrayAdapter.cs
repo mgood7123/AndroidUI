@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-using AndroidUI.Utils.Lists;
 using AndroidUI.Widgets;
 
 namespace AndroidUI.Utils.Widgets
