@@ -5,9 +5,22 @@
     /// </summary>
     public class CopyOnWriteList<T> : SynchronizedReadWriteNotifyList<T>
     {
+        public CopyOnWriteList()
+        {
+        }
+
+        public CopyOnWriteList(int capacity) : base(capacity)
+        {
+        }
+
+        public CopyOnWriteList(IEnumerable<T> collection) : base(collection)
+        {
+        }
+
         public CopyOnWriteList(LockInfo lockInfo) : base(lockInfo)
         {
         }
+
 
         public CopyOnWriteList(LockInfo lockInfo, int capacity) : base(lockInfo, capacity)
         {

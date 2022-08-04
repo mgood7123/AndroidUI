@@ -21,7 +21,7 @@
         /// </summary>
         public void ObtainLock()
         {
-            if (lock_object != null)
+            if (lock_object == null)
             {
                 disposedValue = false;
                 lock_object = CreateLock();

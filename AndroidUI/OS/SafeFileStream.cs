@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace AndroidUI.OS
 {
+
     // on android, passing a FileDescriptor to a FileOutputStream will adopt said FileDescriptor but not take ownership of it
     // on JVM passing a FileDescriptor to a FileOutputStream will take ownership of said FileDescriptor
     public class SafeFileStream : FileStream

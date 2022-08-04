@@ -188,7 +188,7 @@ namespace AndroidUI.Execution
                 int thresholdOverride = 0;
 
                 me.mSlowDeliveryDetected = false;
-                for (;;)
+                while(true)
                 {
                     if (!loopOnceUI(me, ident, thresholdOverride))
                     {
@@ -363,7 +363,7 @@ namespace AndroidUI.Execution
 
             // This must be in a local variable, in case a UI event sets the logger
             TextWriter logging = me.mLogging;
-            for (;;)
+            while(true)
             {
                 LogEnter(logging, "Looping Once");
                 if (!loopOnce(me, ident, thresholdOverride))
@@ -372,7 +372,7 @@ namespace AndroidUI.Execution
                     return;
                 }
                 LogExit(logging, "Finished Looping Once");
-                Thread.Sleep(8);
+                Thread.Sleep(Utils.Const.Constants.THREAD_LOOP_SLEEP_TIME);
             }
         }
 

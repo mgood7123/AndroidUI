@@ -8,6 +8,10 @@ namespace AndroidUI.Utils.Lists
 
         LockInfo lockInfo;
 
+        public SynchronizedReadWriteNotifyList() : this(new ReaderWriterLockSlimInfo()) { }
+        public SynchronizedReadWriteNotifyList(int capacity) : this(new ReaderWriterLockSlimInfo(), capacity) { }
+        public SynchronizedReadWriteNotifyList(IEnumerable<T> collection) : this(new ReaderWriterLockSlimInfo(), collection) { }
+
         public SynchronizedReadWriteNotifyList(LockInfo lockInfo) : base() =>
             this.lockInfo = lockInfo ?? throw new ArgumentNullException(nameof(lockInfo));
 
