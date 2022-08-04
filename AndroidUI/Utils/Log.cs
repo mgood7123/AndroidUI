@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-using HarfBuzzSharp;
 using System.Diagnostics.Contracts;
 using System.Text;
 

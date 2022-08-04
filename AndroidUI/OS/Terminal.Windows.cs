@@ -1,6 +1,4 @@
-﻿using AndroidUI.Utils;
-using Microsoft.Win32.SafeHandles;
-using System.CommandLine;
+﻿using Microsoft.Win32.SafeHandles;
 using static AndroidUI.OS.Terminal.Windows.Native.ConsoleApi;
 using static AndroidUI.OS.Terminal.Windows.ProcessAPI;
 using static AndroidUI.OS.Terminal.Windows.Psuedo;

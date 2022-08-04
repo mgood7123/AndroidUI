@@ -19,12 +19,12 @@
 		<TargetFramework>net6.0-windows</TargetFramework>
 		<UseWindowsForms>true</UseWindowsForms>
 		<UseWPF>true</UseWPF>
-		<RestoreSources>prebuilt\local-nugets</RestoreSources>
+		<RestoreSources>..\prebuilt\local-nugets</RestoreSources>
 
 		<RootFolder>$(MSBuildProjectDirectory)</RootFolder>
 	</PropertyGroup>
 
-	<UsingTask TaskName="AndroidUI.PackResources" AssemblyFile="$(RootFolder)/prebuilt/debug/AndroidUI/AndroidUI.ResourcePacker.dll" />
+	<UsingTask TaskName="AndroidUI.PackResources" AssemblyFile="../prebuilt/debug/AndroidUI/AndroidUI.ResourcePacker.dll" />
 
 	<ItemGroup>
 		<!-- Don't compile anything inside the Resources directory -->
@@ -49,7 +49,7 @@
 		<Reference Include="$(RootFolder)\prebuilt\debug\AndroidUI\AndroidUI.dll" />
 		<Reference Include="$(RootFolder)\prebuilt\debug\AndroidUI\ApplicationHost-Windows.dll" />
 		-->
-		<PackageReference Include="AndroidUI.Native.Nuget" Version="0.0.110" />
+		<PackageReference Include="AndroidUI.Native.Nuget" Version="0.0.114" />
 		
 		<!-- do not touch these
 		

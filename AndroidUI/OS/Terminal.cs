@@ -1,9 +1,4 @@
-﻿using System.CommandLine;
-using System.Runtime.InteropServices;
-using static AndroidUI.OS.Terminal.Windows.Psuedo;
-using static AndroidUI.OS.Terminal;
-using Microsoft.VisualBasic;
-using AndroidUI.Utils;
+﻿using System.Runtime.InteropServices;
 
 namespace AndroidUI.OS
 {

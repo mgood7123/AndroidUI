@@ -10,10 +10,11 @@
     <RootNamespace>AndroidUITest</RootNamespace>
     <ProduceReferenceAssembly>False</ProduceReferenceAssembly>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	<RestoreSources>..\prebuilt\local-nugets</RestoreSources>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AndroidUI.Native.Nuget" Version="0.0.110" />
+    <PackageReference Include="AndroidUI.Native.Nuget" Version="0.0.114" />
   </ItemGroup>
 
   <ItemGroup>

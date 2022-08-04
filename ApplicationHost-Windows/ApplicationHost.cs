@@ -1,5 +1,4 @@
 ﻿using AndroidUI.Utils;
-using System.Diagnostics;
 
 namespace AndroidUI.Hosts.Windows
 {

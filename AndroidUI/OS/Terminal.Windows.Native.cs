@@ -1,6 +1,5 @@
 ﻿using Microsoft.Win32.SafeHandles;
 using System.Runtime.InteropServices;
-using System.Runtime.Intrinsics.X86;
 
 namespace AndroidUI.OS
 {

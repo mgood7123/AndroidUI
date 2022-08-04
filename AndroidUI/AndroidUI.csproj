@@ -11,6 +11,7 @@
     <AnalysisLevel>latest-all</AnalysisLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
+	<RestoreSources>..\prebuilt\local-nugets</RestoreSources>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -22,7 +23,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AndroidUI.Native.Nuget" Version="0.0.110" />
+    <PackageReference Include="AndroidUI.Native.Nuget" Version="0.0.114" />
     <PackageReference Include="SkiaSharp" Version="2.88.1-preview.3304" />
     <PackageReference Include="SkiaSharp.HarfBuzz" Version="2.88.1-preview.3223" />
     <PackageReference Include="SkiaSharp.Views" Version="2.88.1-preview.3223" />
