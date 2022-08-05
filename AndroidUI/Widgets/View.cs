@@ -53,11 +53,11 @@ namespace AndroidUI.Widgets
         }
 
         // commonly used layout configurations
-        public static LayoutParams MATCH_PARENT__MATCH_PARENT => new(MATCH_PARENT, MATCH_PARENT);
-        public static LayoutParams MATCH_PARENT__WRAP_CONTENT => new(MATCH_PARENT, WRAP_CONTENT);
+        public static LayoutParams MATCH_PARENT_W__MATCH_PARENT_H => new(MATCH_PARENT, MATCH_PARENT);
+        public static LayoutParams MATCH_PARENT_W__WRAP_CONTENT_H => new(MATCH_PARENT, WRAP_CONTENT);
 
-        public static LayoutParams WRAP_CONTENT__MATCH_PARENT => new(WRAP_CONTENT, MATCH_PARENT);
-        public static LayoutParams WRAP_CONTENT__WRAP_CONTENT => new(WRAP_CONTENT, WRAP_CONTENT);
+        public static LayoutParams WRAP_CONTENT_W__MATCH_PARENT_H => new(WRAP_CONTENT, MATCH_PARENT);
+        public static LayoutParams WRAP_CONTENT_W__WRAP_CONTENT_H => new(WRAP_CONTENT, WRAP_CONTENT);
 
         /**
          * Always return a size of 0 for MeasureSpec values with a mode of UNSPECIFIED
@@ -11508,7 +11508,7 @@ namespace AndroidUI.Widgets
          */
         virtual protected LayoutParams generateDefaultLayoutParams()
         {
-            return new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+            return WRAP_CONTENT_W__WRAP_CONTENT_H;
         }
 
         public void updateViewLayout(View view, LayoutParams layout_params)

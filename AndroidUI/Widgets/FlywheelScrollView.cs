@@ -49,7 +49,7 @@ namespace AndroidUI.Widgets
 
         public FlywheelScrollView() : base()
         {
-            addView(text, MATCH_PARENT__MATCH_PARENT);
+            addView(text, MATCH_PARENT_W__MATCH_PARENT_H);
             text.setZ(float.PositiveInfinity);
             text.setText("FlywheelScrollView");
             var c = new Graphics.Drawables.ColorDrawable(Graphics.Color.GRAY);

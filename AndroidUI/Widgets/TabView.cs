@@ -40,7 +40,7 @@ namespace AndroidUI.Widgets
             a.setOnClickListener(v =>
             {
                 tabContent.removeAllViews();
-                tabContent.addView((View)v.getTag(), MATCH_PARENT__MATCH_PARENT);
+                tabContent.addView((View)v.getTag(), MATCH_PARENT_W__MATCH_PARENT_H);
             });
             tabs.addView(a, new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.WRAP_CONTENT));
         }
