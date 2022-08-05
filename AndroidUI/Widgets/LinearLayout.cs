@@ -159,7 +159,7 @@ namespace AndroidUI.Widgets
         public LinearLayout() : base()
         {
 
-            setOrientation(0);
+            setOrientation(VERTICAL);
 
             setGravity(0);
 
