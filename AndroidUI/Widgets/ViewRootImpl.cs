@@ -23,6 +23,7 @@ using AndroidUI.OS;
 using AndroidUI.Utils;
 using AndroidUI.Utils.Widgets;
 using SkiaSharp;
+using static AndroidUI.Widgets.View.LayoutParams;
 
 namespace AndroidUI.Widgets
 {
@@ -37,13 +38,13 @@ namespace AndroidUI.Widgets
             doTraversal(canvas);
         }
 
-        private const bool DBG = false;
-        private const bool DEBUG_LAYOUT = false;
-        private const bool DEBUG_ORIENTATION = false;
-        private const bool DEBUG_INPUT_RESIZE = false;
-        private const bool DEBUG_DRAW = false;
-        private const bool DEBUG_FPS = false;
-        private const bool DEBUG_BLAST = false;
+        private static bool DBG = false;
+        private static bool DEBUG_LAYOUT = false;
+        private static bool DEBUG_ORIENTATION = false;
+        private static bool DEBUG_INPUT_RESIZE = false;
+        private static bool DEBUG_DRAW = false;
+        private static bool DEBUG_FPS = false;
+        private static bool DEBUG_BLAST = false;
 
         private const string TAG = "ViewRootImpl";
         private const string mTag = TAG;
@@ -55,8 +56,8 @@ namespace AndroidUI.Widgets
             {
                 if (mContentParent != null)
                 {
-                    mContentParent.removeAllViews();
-                    mView.removeAllViews();
+                    mContentParent.removeViewAt(0);
+                    holderApp.removeViewAt(0);
                     mContentParent = null;
                 }
             }
@@ -65,11 +66,11 @@ namespace AndroidUI.Widgets
                 if (mContentParent == null)
                 {
                     mContentParent = new View();
-                    mView.addView(mContentParent, new View.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.MATCH_PARENT));
+                    holderApp.addView(mContentParent, new View.LayoutParams(MATCH_PARENT, MATCH_PARENT));
                 }
                 else
                 {
-                    mContentParent.removeAllViews();
+                    mContentParent.removeViewAt(0);
                 }
                 mContentParent.addView(view, layoutParams);
             }
@@ -1567,13 +1568,18 @@ namespace AndroidUI.Widgets
             mInvalidateOnAnimationRunnable.removeView(view);
         }
 
+        LinearLayout holder;
+        FrameLayout holderApp;
+        bool optionsIsShowing;
+        View options_page;
+
         public ViewRootImpl(Context context, Looper looper)
         {
             this.context = context;
             mFirst = true;
             mView = new()
             {
-                mLayoutParams = View.MATCH_PARENT__MATCH_PARENT
+                mLayoutParams = View.MATCH_PARENT_W__MATCH_PARENT_H
             };
             mView.assignParent(this);
             mView.mAttachInfo = context.mAttachInfo;
@@ -1583,6 +1589,115 @@ namespace AndroidUI.Widgets
             mInvalidateOnAnimationRunnable = new InvalidateOnAnimationRunnable(this);
             mHandler = new(looper);
             context.mAttachInfo.mHandler = mHandler;
+
+            holder = new();
+            holderApp = new();
+            FrameLayout options = new();
+            Topten_RichTextKit_TextView optionsText = new();
+            var l = new FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT);
+            l.gravity = Gravity.CENTER;
+            options.addView(optionsText, l);
+            optionsText.setTextColor(Color.BLACK);
+            optionsText.setText("AndroidUI Options");
+            options.setOnClickListener(v =>
+            {
+                if (!optionsIsShowing)
+                {
+                    optionsIsShowing = true;
+                    holder.removeView(holderApp);
+                    holder.addView(options_page, View.MATCH_PARENT_W__MATCH_PARENT_H);
+                    holder.invalidate();
+                }
+                else
+                {
+                    optionsIsShowing = false;
+                    holder.removeView(options_page);
+                    holder.addView(holderApp, View.MATCH_PARENT_W__MATCH_PARENT_H);
+                    holder.invalidate();
+                }
+            });
+            options.setZ(float.PositiveInfinity);
+            holder.addView(options, Widgets.View.MATCH_PARENT_W__WRAP_CONTENT_H);
+            holder.addView(holderApp, View.MATCH_PARENT_W__MATCH_PARENT_H);
+            mView.addView(holder, View.MATCH_PARENT_W__MATCH_PARENT_H);
+
+            LinearLayout CreateSettingsRow(string title, string enabledText, string disabledText, Func<bool> GetValue, Action<bool> SetValue)
+            {
+                LinearLayout row = new();
+                row.setOrientation(LinearLayout.HORIZONTAL);
+                var titleView = new Topten_RichTextKit_TextView();
+                var valueView = new Topten_RichTextKit_TextView();
+
+                titleView.setTextColor(Color.WHITE);
+                valueView.setTextColor(Color.WHITE);
+
+                titleView.setText(title);
+                titleView.setTextSize(20);
+                valueView.setTextSize(20);
+
+                bool value = GetValue.Invoke();
+                valueView.setText(value ? enabledText : disabledText);
+                valueView.setTextColor(value ? Color.GREEN : Color.RED);
+
+                row.addView(titleView, new LinearLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT, 1));
+                row.addView(valueView, new LinearLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT, 1));
+
+                row.setOnClickListener(v =>
+                {
+                    bool value = !GetValue.Invoke();
+                    SetValue.Invoke(value);
+                    valueView.setText(value ? enabledText : disabledText);
+                    valueView.setTextColor(value ? Color.GREEN : Color.RED);
+                    invalidate();
+                });
+
+                return row;
+            }
+
+            LinearLayout optionsPage = new LinearLayout();
+            optionsPage.addView(CreateSettingsRow("Show Layout Bounds", "Enabled", "Disabled", () => context.mAttachInfo.mDebugLayout, value =>
+            {
+                lock (context.mAttachInfo)
+                {
+                    context.mAttachInfo.mDebugLayout = value;
+                }
+            }));
+            optionsPage.addView(CreateSettingsRow("View: Debug", "Enabled", "Disabled", () => View.DBG, value => View.DBG = value));
+            optionsPage.addView(CreateSettingsRow("ViewRootImpl: Debug", "Enabled", "Disabled", () => DBG, value => getRunQueue().post(new Runnable.ActionRunnable(() => DBG = value))));
+            optionsPage.addView(CreateSettingsRow("ViewRootImpl: Debug FPS", "Enabled", "Disabled", () => DEBUG_FPS, value => DEBUG_FPS = value));
+            optionsPage.addView(CreateSettingsRow("ViewRootImpl: Debug Layout", "Enabled", "Disabled", () => DEBUG_LAYOUT, value => DEBUG_LAYOUT = value));
+            optionsPage.addView(CreateSettingsRow("ViewRootImpl: Debug Draw", "Enabled", "Disabled", () => DEBUG_DRAW, value => DEBUG_DRAW = value));
+            optionsPage.addView(CreateSettingsRow("ViewRootImpl: Debug Orientation", "Enabled", "Disabled", () => DEBUG_ORIENTATION, value => DEBUG_ORIENTATION = value));
+            optionsPage.addView(CreateSettingsRow("ViewRootImpl: Debug Input Resize", "Enabled", "Disabled", () => DEBUG_INPUT_RESIZE, value => DEBUG_INPUT_RESIZE = value));
+            optionsPage.addView(CreateSettingsRow("ViewRootImpl: Debug Blast", "Enabled", "Disabled", () => DEBUG_BLAST, value => DEBUG_BLAST = value));
+            options_page = optionsPage;
+
+            Runnable.ActionRunnable setBackground1 = new Runnable.ActionRunnable();
+            Runnable.ActionRunnable setBackground2 = new Runnable.ActionRunnable();
+            setBackground1.action = () =>
+            {
+                if (options.Context == null)
+                {
+                    getRunQueue().post(setBackground1);
+                }
+                else
+                {
+                    options.setBackgroundColor(Color.GRAY);
+                }
+            };
+            setBackground2.action = () =>
+            {
+                if (options_page.Context == null)
+                {
+                    getRunQueue().post(setBackground2);
+                }
+                else
+                {
+                    options_page.setBackgroundColor(Color.BLACK);
+                }
+            };
+            getRunQueue().post(setBackground1);
+            getRunQueue().post(setBackground2);
         }
 
         public void DestroyHandler()
@@ -2582,7 +2697,7 @@ namespace AndroidUI.Widgets
 
                 if (System.Diagnostics.Debugger.IsAttached)
                 {
-                    mContentParent?.invalidate();
+                    mView.invalidate();
 
                     if (DBG)
                     {
@@ -2600,7 +2715,7 @@ namespace AndroidUI.Widgets
                 {
                     try
                     {
-                        mContentParent?.invalidate();
+                        mView.invalidate();
 
                         if (DBG)
                         {

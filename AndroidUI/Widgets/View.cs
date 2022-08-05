@@ -78,13 +78,22 @@ namespace AndroidUI.Widgets
             initView();
         }
 
+        bool wasShowingLayoutBounds;
+
         /**
          * Returns {@code true} when the View is attached and the system developer setting to show
          * the layout bounds is enabled or {@code false} otherwise.
          */
         public bool isShowingLayoutBounds()
         {
-            return mAttachInfo != null && mAttachInfo.mDebugLayout;
+            if (mAttachInfo != null)
+            {
+                lock (mAttachInfo)
+                {
+                    return mAttachInfo.mDebugLayout;
+                }
+            }
+            return false;
         }
 
         public void INTERNAL_ERROR(string error)
@@ -371,7 +380,7 @@ namespace AndroidUI.Widgets
 
             public AttachInfo(Context context)
             {
-                mDebugLayout = true; // draw layout bounds
+                mDebugLayout = false;
 
                 mRecomputeGlobalAttributes = false;
                 mHasWindowFocus = true;
@@ -6294,7 +6303,6 @@ namespace AndroidUI.Widgets
 
         private static void AddInvalidatedFlag(View p)
         {
-            if (DBG) p.Log.d("A + PFLAG_INVALIDATED");
             uint f = (uint)p.mPrivateFlags;
             f |= PFLAG_INVALIDATED;
             p.mPrivateFlags = (int)f;
@@ -6302,7 +6310,6 @@ namespace AndroidUI.Widgets
 
         private static void RemoveInvalidatedFlag(View p)
         {
-            if (DBG) p.Log.d("R - PFLAG_INVALIDATED");
             uint f = (uint)p.mPrivateFlags;
             f &= ~PFLAG_INVALIDATED;
             p.mPrivateFlags = (int)f;
@@ -7722,6 +7729,25 @@ namespace AndroidUI.Widgets
             //    // can't populate RenderNode, don't try
             //    return renderNode;
             //}
+
+            lock (mAttachInfo)
+            {
+                if (isShowingLayoutBounds())
+                {
+                    if (!wasShowingLayoutBounds)
+                    {
+                        wasShowingLayoutBounds = true;
+                        invalidate();
+                    }
+                } else
+                {
+                    if (wasShowingLayoutBounds)
+                    {
+                        wasShowingLayoutBounds = false;
+                        invalidate();
+                    }
+                }
+            }
 
             if (
                 (mPrivateFlags & PFLAG_DRAWING_CACHE_VALID) == 0
@@ -14038,7 +14064,7 @@ namespace AndroidUI.Widgets
             mTag = tag;
         }
 
-        public const bool DBG = false;
+        public static bool DBG = false;
 
         /**
          * The logging tag used by this class with android.util.Log.
