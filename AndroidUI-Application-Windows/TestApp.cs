@@ -379,7 +379,7 @@ namespace AndroidUI_Application_Windows
 
                 FrameLayout fl = new();
                 fl.addView(colorView, new LayoutParams(100000, 100000));
-                scrollView.addView(fl, WRAP_CONTENT__WRAP_CONTENT);
+                scrollView.addView(fl, WRAP_CONTENT_W__WRAP_CONTENT_H);
 
                 return scrollView;
             });
@@ -393,7 +393,7 @@ namespace AndroidUI_Application_Windows
 
                 FrameLayout fl = new();
                 fl.addView(colorView, new LayoutParams(100000, 100000));
-                scrollView.addView(fl, WRAP_CONTENT__WRAP_CONTENT);
+                scrollView.addView(fl, WRAP_CONTENT_W__WRAP_CONTENT_H);
 
                 return scrollView;
             });
@@ -409,7 +409,7 @@ namespace AndroidUI_Application_Windows
 
                 FL fl = new();
                 fl.addView(colorView, new LayoutParams(100000, 50));
-                scrollView.addView(fl, WRAP_CONTENT__WRAP_CONTENT);
+                scrollView.addView(fl, WRAP_CONTENT_W__WRAP_CONTENT_H);
 
                 return scrollView;
             });
