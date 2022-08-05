@@ -8826,8 +8826,14 @@ namespace AndroidUI.Widgets
                         float offsetX = mScrollX - pair.View.mLeft;
                         float offsetY = mScrollY - pair.View.mTop;
                         pair.Touch.offsetLocation(offsetX, offsetY);
-                        pair.View.dispatchTouchEvent__Tracking(pair.Touch);
+                        var h = pair.View.dispatchTouchEvent__Tracking(pair.Touch);
                         pair.Touch.offsetLocation(-offsetX, -offsetY);
+                        if (!h)
+                        {
+                            if (pair.View.onTouch(pair.Touch))
+                            {
+                            }
+                        }
                     }
                     break;
                 }
@@ -8956,6 +8962,7 @@ namespace AndroidUI.Widgets
 
         bool intercepting = false;
 
+        // reimplement touch dispatch using view tracking
         bool dispatchTouchEvent__Tracking(Touch ev)
         {
             bool handled = false;
@@ -9086,7 +9093,6 @@ namespace AndroidUI.Widgets
                                                 down_event = (Touch.Data)currentData.Clone();
                                                 down_event_view = pair.View;
                                                 down_event_touch = pair.Touch;
-                                                handled = true;
                                             }
                                             else
                                             {
@@ -9111,7 +9117,6 @@ namespace AndroidUI.Widgets
                                     found = pair.View;
                                     trackedViews.Add(pair);
                                     child.onConfigureTouch(pair.Touch);
-                                    handled = true;
                                 }
                             }
                         }
@@ -9132,7 +9137,6 @@ namespace AndroidUI.Widgets
                                 found = pair.View;
                                 trackedViews.Add(pair);
                                 onConfigureTouch(pair.Touch);
-                                handled = true;
                             }
                         }
                     }
@@ -9215,11 +9219,19 @@ namespace AndroidUI.Widgets
                                 float offsetX = mScrollX - pair.View.mLeft;
                                 float offsetY = mScrollY - pair.View.mTop;
                                 pair.Touch.offsetLocation(offsetX, offsetY);
-                                if (pair.View.dispatchTouchEvent__Tracking(pair.Touch))
+                                var h = pair.View.dispatchTouchEvent__Tracking(pair.Touch);
+                                pair.Touch.offsetLocation(-offsetX, -offsetY);
+                                if (!h)
+                                {
+                                    if (pair.View.onTouch(pair.Touch))
+                                    {
+                                        handled = true;
+                                    }
+                                }
+                                else
                                 {
                                     handled = true;
                                 }
-                                pair.Touch.offsetLocation(-offsetX, -offsetY);
                             }
                         }
 
@@ -9249,11 +9261,19 @@ namespace AndroidUI.Widgets
                                 float offsetX = mScrollX - pair.View.mLeft;
                                 float offsetY = mScrollY - pair.View.mTop;
                                 pair.Touch.offsetLocation(offsetX, offsetY);
-                                if (pair.View.dispatchTouchEvent__Tracking(pair.Touch))
+                                var h = pair.View.dispatchTouchEvent__Tracking(pair.Touch);
+                                pair.Touch.offsetLocation(-offsetX, -offsetY);
+                                if (!h)
+                                {
+                                    if (pair.View.onTouch(pair.Touch))
+                                    {
+                                        handled = true;
+                                    }
+                                }
+                                else
                                 {
                                     handled = true;
                                 }
-                                pair.Touch.offsetLocation(-offsetX, -offsetY);
                             }
                         }
 
@@ -9273,14 +9293,23 @@ namespace AndroidUI.Widgets
                             }
                             else
                             {
-                                float offsetX = mScrollX - pair.View.mLeft;
-                                float offsetY = mScrollY - pair.View.mTop;
-                                pair.Touch.offsetLocation(offsetX, offsetY);
-                                if (down_event_view.dispatchTouchEvent__Tracking(down_event_touch))
+                                float offsetX = mScrollX - down_event_view.mLeft;
+                                float offsetY = mScrollY - down_event_view.mTop;
+                                down_event_touch.offsetLocation(offsetX, offsetY);
+                                var h = down_event_view.dispatchTouchEvent__Tracking(down_event_touch);
+                                down_event_touch.offsetLocation(-offsetX, -offsetY);
+                                if (!h)
+                                {
+                                    if (down_event_view.onTouch(down_event_touch))
+                                    {
+                                        handled = true;
+                                    }
+                                }
+                                else
                                 {
                                     handled = true;
                                 }
-                                pair.Touch.offsetLocation(-offsetX, -offsetY);
+                                down_event_touch.offsetLocation(-offsetX, -offsetY);
                             }
 
                             down_event = null;
@@ -9306,11 +9335,19 @@ namespace AndroidUI.Widgets
                                 float offsetX = mScrollX - pair.View.mLeft;
                                 float offsetY = mScrollY - pair.View.mTop;
                                 pair.Touch.offsetLocation(offsetX, offsetY);
-                                if (pair.View.dispatchTouchEvent__Tracking(pair.Touch))
+                                var h = pair.View.dispatchTouchEvent__Tracking(pair.Touch);
+                                pair.Touch.offsetLocation(-offsetX, -offsetY);
+                                if (!h)
+                                {
+                                    if (pair.View.onTouch(pair.Touch))
+                                    {
+                                        handled = true;
+                                    }
+                                }
+                                else
                                 {
                                     handled = true;
                                 }
-                                pair.Touch.offsetLocation(-offsetX, -offsetY);
                             }
                         }
 
@@ -9721,6 +9758,7 @@ namespace AndroidUI.Widgets
                 // events, it just doesn't respond to them.
                 return clickable;
             }
+
             if (mTouchDelegate != null) {
                 if (mTouchDelegate.onTouch(touch)) {
                     return true;
