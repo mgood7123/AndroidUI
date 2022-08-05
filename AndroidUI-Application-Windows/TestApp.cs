@@ -183,56 +183,6 @@ namespace AndroidUI_Application_Windows
             }
         }
 
-        class TabView : LinearLayout
-        {
-            FlywheelScrollView tabContainer;
-            LinearLayout tabs;
-            FrameLayout tabContent;
-
-            public TabView()
-            {
-                setOrientation(HORIZONTAL);
-                InitTabView();
-            }
-
-            public void addTab(string title, View content)
-            {
-                Topten_RichTextKit_TextView a = new();
-                a.setText(title);
-                a.setTextSize(16);
-                a.setTag(content);
-                a.setOnClickListener(v =>
-                {
-                    tabContent.removeAllViews();
-                    tabContent.addView((View)v.getTag(), MATCH_PARENT__MATCH_PARENT);
-                });
-                tabs.addView(a, new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.WRAP_CONTENT));
-            }
-
-            public void addTab(string title, Func<View> builder)
-            {
-                addTab(title, builder.Invoke());
-            }
-
-            private void InitTabView()
-            {
-                tabs = new();
-                tabContainer = new();
-                tabContent = new();
-
-                tabs.setOrientation(VERTICAL);
-
-                tabContainer.SmoothScroll = true;
-
-                tabContainer.addView(tabs);
-
-                addView(tabContainer, new LinearLayout.LayoutParams(View.LayoutParams.WRAP_CONTENT, View.LayoutParams.MATCH_PARENT));
-                addView(tabContent, new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.MATCH_PARENT, 1));
-                tabContainer.setZ(1);
-                post(new Runnable.ActionRunnable(() => tabContainer.setBackgroundColor(Color.BLACK)));
-            }
-        }
-
         public override void OnCreate()
         {
             TabView tabView = new();
@@ -266,9 +216,7 @@ namespace AndroidUI_Application_Windows
             });
             tabView.addTab("Animation", () => 
             {
-                var image = new ImageView();
-                image.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-                image.setImageDrawable(new ColorDrawable(Color.MAGENTA));
+                var image = new ColorView(Color.MAGENTA);
 
                 ObjectAnimator oa = ObjectAnimator.ofInt(Context, image, "x", new int[] { 0, 100 });
                 oa.setRepeatMode(ValueAnimator.REVERSE);
