@@ -22,7 +22,12 @@ namespace AndroidUI.Utils
 
         public class ActionRunnable : Runnable
         {
-            Action action;
+            public Action action;
+
+            public ActionRunnable()
+            {
+                this.action = null;
+            }
 
             public ActionRunnable(Action action)
             {
