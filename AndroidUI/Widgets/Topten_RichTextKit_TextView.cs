@@ -99,6 +99,17 @@ namespace AndroidUI.Widgets
             }
         }
 
+        public void setTextColor(int color)
+        {
+            var c = color.ToSKColor();
+            if (textColor != c)
+            {
+                textColor = c;
+                textColorChanged = true;
+                update();
+            }
+        }
+
         public SKColor getTextColor()
         {
             return textColor;
