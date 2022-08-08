@@ -191,7 +191,7 @@ namespace AndroidUI_Application_Windows
             {
                 LinearLayout linearLayout = new();
 
-                linearLayout.setOrientation(LinearLayout.VERTICAL);
+                linearLayout.setOrientation(LinearLayout.OrientationMode.VERTICAL);
 
                 linearLayout.addView(new TouchInfoView(), new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.MATCH_PARENT, 1.0f));
                 linearLayout.addView(new TouchInfoView(), new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.MATCH_PARENT, 1.0f));
@@ -330,7 +330,7 @@ namespace AndroidUI_Application_Windows
             {
                 LinearLayout linearLayout = new();
 
-                linearLayout.setOrientation(LinearLayout.VERTICAL);
+                linearLayout.setOrientation(LinearLayout.OrientationMode.VERTICAL);
 
                 linearLayout.addView(
                     new Topten_RichTextKit_TextView(),
@@ -366,9 +366,7 @@ namespace AndroidUI_Application_Windows
                     );
                 });
 
-                FrameLayout fl = new();
-                fl.addView(colorView, new LayoutParams(100000, 100000));
-                scrollView.addView(fl, WRAP_CONTENT_W__WRAP_CONTENT_H);
+                scrollView.addView(colorView, new LayoutParams(100000, 100000));
 
                 return scrollView;
             });
@@ -380,9 +378,7 @@ namespace AndroidUI_Application_Windows
 
                 ColorView colorView = new ColorView();
 
-                FrameLayout fl = new();
-                fl.addView(colorView, new LayoutParams(100000, 100000));
-                scrollView.addView(fl, WRAP_CONTENT_W__WRAP_CONTENT_H);
+                scrollView.addView(colorView, new LayoutParams(100000, 100000));
 
                 return scrollView;
             });
@@ -396,9 +392,7 @@ namespace AndroidUI_Application_Windows
 
                 ColorView colorView = new ColorView();
 
-                FL fl = new();
-                fl.addView(colorView, new LayoutParams(100000, 50));
-                scrollView.addView(fl, WRAP_CONTENT_W__WRAP_CONTENT_H);
+                scrollView.addView(colorView, new LayoutParams(100000, 50));
 
                 return scrollView;
             });
@@ -412,7 +406,6 @@ namespace AndroidUI_Application_Windows
 
                 ColorView colorView = new ColorView();
 
-                FL fl = new();
                 scrollView.addView(colorView, new LayoutParams(50, 100000));
 
                 return scrollView;
@@ -503,34 +496,12 @@ namespace AndroidUI_Application_Windows
                 scrollView.SmoothScroll = true;
                 scrollView.LimitScrollingToChildViewBounds = true;
 
-                int number = 0;
-
-                void AddButton(View parent)
-                {
-                    var n = number++;
-                    var button = new Topten_RichTextKit_TextView("Button " + n, 24, SkiaSharp.SKColors.Black);
-
-                    FrameLayout frame = new();
-                    frame.addView(
-                        button,
-                        new FrameLayout.LayoutParams(
-                            View.LayoutParams.WRAP_CONTENT,
-                            View.LayoutParams.WRAP_CONTENT,
-                            Gravity.CENTER
-                        )
-                    );
-                    frame.setBackgroundColor((int)(uint)AndroidUI.Utils.Const.Constants.color_code_LineageOS);
-                    frame.setOnClickListener(v => v.Log.d("Clicked button " + n));
-                    frame.setTagRecursively(button.getText());
-                    parent.addView(frame, MATCH_PARENT_W__WRAP_CONTENT_H);
-                }
-
                 LinearLayout list = new();
-                list.setOrientation(LinearLayout.VERTICAL);
+                list.setOrientation(LinearLayout.OrientationMode.VERTICAL);
 
                 for (int i = 0; i < 50; i++)
                 {
-                    AddButton(list);
+                    AddButton(list, i+1);
                 }
 
                 scrollView.addView(list, MATCH_PARENT_W__WRAP_CONTENT_H);
@@ -538,19 +509,36 @@ namespace AndroidUI_Application_Windows
                 return scrollView;
             });
 
+            tabView.addTab("ListView Buttons", () =>
+            {
+                AndroidUI.Widgets.ListView list = new();
+                for (int i = 0; i < 100; i++)
+                {
+                    AddButton(list, i + 1);
+                }
+                return list;
+            });
+
             SetContentView(tabView);
         }
-    }
-    class FL : FrameLayout
-    {
-        protected override void onMeasure(int widthMeasureSpec, int heightMeasureSpec)
-        {
-            base.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        }
 
-        protected override void onLayout(bool changed, int left, int top, int right, int bottom)
+        void AddButton(View parent, int n)
         {
-            base.onLayout(changed, left, top, right, bottom);
+            var button = new Topten_RichTextKit_TextView("Button " + n, 24, SkiaSharp.SKColors.Black);
+
+            FrameLayout frame = new();
+            frame.addView(
+                button,
+                new FrameLayout.LayoutParams(
+                    View.LayoutParams.WRAP_CONTENT,
+                    View.LayoutParams.WRAP_CONTENT,
+                    Gravity.CENTER
+                )
+            );
+            frame.setBackgroundColor((int)(uint)AndroidUI.Utils.Const.Constants.color_code_LineageOS);
+            frame.setOnClickListener(v => v.Log.d("Clicked button " + n));
+            frame.setTagRecursively(button.getText());
+            parent.addView(frame, MATCH_PARENT_W__WRAP_CONTENT_H);
         }
     }
 }

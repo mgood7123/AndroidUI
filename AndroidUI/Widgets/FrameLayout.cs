@@ -131,7 +131,7 @@ namespace AndroidUI.Widgets
         override
         protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec)
         {
-            int count = getChildCount();
+            int count = mChildrenCount;
 
             bool measureMatchParentChildren =
                     MeasureSpec.getMode(widthMeasureSpec) != MeasureSpec.EXACTLY ||
@@ -240,7 +240,7 @@ namespace AndroidUI.Widgets
 
         void layoutChildren(int left, int top, int right, int bottom, bool forceLeftGravity)
         {
-            int count = getChildCount();
+            int count = mChildrenCount;
 
             int parentLeft = getPaddingLeftWithForeground();
             int parentRight = right - left - getPaddingRightWithForeground();

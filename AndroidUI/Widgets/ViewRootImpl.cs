@@ -1624,7 +1624,7 @@ namespace AndroidUI.Widgets
             {
                 LinearLayout row = new();
 
-                row.setOrientation(LinearLayout.HORIZONTAL);
+                row.setOrientation(LinearLayout.OrientationMode.HORIZONTAL);
 
                 var lp = new View.LayoutParams(MATCH_PARENT, WRAP_CONTENT);
                 row.setLayoutParams(lp);

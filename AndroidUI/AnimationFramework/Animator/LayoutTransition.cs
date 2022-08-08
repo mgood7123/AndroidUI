@@ -789,7 +789,7 @@ namespace AndroidUI.AnimationFramework.Animator
             //    // If the observer's not in a good state, skip the transition
             //    return;
             //}
-            int numChildren = parent.getChildCount();
+            int numChildren = parent.mChildrenCount;
 
             for (int i = 0; i < numChildren; ++i)
             {

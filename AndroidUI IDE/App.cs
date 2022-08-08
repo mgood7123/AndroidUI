@@ -1,8 +1,6 @@
-﻿using AndroidUI.Utils;
-using AndroidUI.Utils.Widgets;
+﻿using AndroidUI.Utils.Widgets;
 using AndroidUI.Widgets;
 using System.IO;
-using static AndroidUI.Utils.Runnable;
 using View = AndroidUI.Widgets.View;
 
 namespace AndroidUI.IDE
@@ -23,8 +21,8 @@ namespace AndroidUI.IDE
                 Log.d("    found: '" + s + "'");
                 projectList.Add(s);
             }
+            Log.d("found " + projectList.Count + " projects");
             return projectList;
-            // dotnet build "C:/Users/small/source/repos/AndroidUI\AndroidUI-Application-Windows\AndroidUI-Application-Windows.csproj"
         }
 
         void buildProject(string project)
@@ -68,11 +66,9 @@ namespace AndroidUI.IDE
             terminal.RedirectOutput = false;
             terminal.RedirectInput = false;
             terminal.NeedsInput = false;
+            Log.d("started dotnet process");
             terminal.Run("dotnet build " + project).Dispose();
-
-            //Log.d("started dotnet process");
-            //terminal.Run("IDE", "dotnet build \"" + project + "\"");
-            //Log.d("dotnet process has ended");
+            Log.d("dotnet process has ended");
         }
 
         class TextViewWriterStream : OS.WriteStream
@@ -133,68 +129,35 @@ namespace AndroidUI.IDE
 
             LinearLayout linearLayout = new();
             FlywheelScrollView ProjectContent = new();
-            LinearLayout projectsList = new();
             FlywheelScrollView ConsoleOutput = new();
 
-            Topten_RichTextKit_TextView ConsoleTextView = new();
+            Topten_RichTextKit_TextView ConsoleOutputTextView = new();
+            LinearLayout projectsList = new();
             foreach (string proj in projects)
             {
                 FrameLayout row = new();
-
-                var button = new Widgets.Topten_RichTextKit_TextView("Build project", 18, SkiaSharp.SKColors.Black);
-                button.setTag("Build Project");
+                var button = new Topten_RichTextKit_TextView("Build project", 18, SkiaSharp.SKColors.Black);
                 button.setBackgroundColor((int)(uint)Utils.Const.Constants.color_code_LineageOS);
-
-                button.setOnClickListener(v =>
-                {
-                    Log.d("CLICKED");
-                    Task.Run(() =>
-                    {
-                        lock (ConsoleTextView)
-                        {
-                            Log.d("STARTED");
-                            button.setText("Building...");
-
-                            var terminal = OS.Terminal.Create();
-                            terminal.NeedsInput = false;
-                            terminal.RedirectOutput = true;
-
-                            terminal.Run(
-                                new TextViewWriterStream(ConsoleOutput, ConsoleTextView),
-                                "dotnet build " + proj
-                            );
-                            terminal.Dispose();
-
-                            button.setText("Build project");
-                        }
-                    });
-                });
-
+                setOnClickBuildProject(ConsoleOutput, ConsoleOutputTextView, proj, button);
                 Topten_RichTextKit_TextView text = new();
                 text.setText(proj);
                 text.setTextSize(18);
-
-
                 LinearLayout linear = new();
-
-                linear.setOrientation(LinearLayout.HORIZONTAL);
-
-                linear.addView(button, new LinearLayout.LayoutParams(View.LayoutParams.WRAP_CONTENT, View.LayoutParams.WRAP_CONTENT));
+                linear.setOrientation(LinearLayout.OrientationMode.HORIZONTAL);
+                linear.addView(button, new LinearLayout.LayoutParams(100, View.LayoutParams.WRAP_CONTENT));
                 linear.addView(new Space(), new LinearLayout.LayoutParams(20, View.LayoutParams.WRAP_CONTENT));
-                linear.addView(text, new LinearLayout.LayoutParams(View.LayoutParams.WRAP_CONTENT, View.LayoutParams.WRAP_CONTENT, 1));
-                linear.setTag("build project: " + proj);
-
-                projectsList.addView(linear, new Layout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.WRAP_CONTENT));
+                linear.addView(text, new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.WRAP_CONTENT));
+                projectsList.addView(linear, new View.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.WRAP_CONTENT));
             }
-            projectsList.setTag("Project List");
 
-            ConsoleTextView.setTextColor(Graphics.Color.GRAY);
-            ConsoleOutput.addView(ConsoleTextView, View.MATCH_PARENT_W__MATCH_PARENT_H);
-            ConsoleTextView.setTag("Console TextView");
+            ConsoleOutputTextView.setText("Console Output");
+            ConsoleOutputTextView.setTextColor(Graphics.Color.GRAY);
+            ConsoleOutput.addView(ConsoleOutputTextView, View.MATCH_PARENT_W__MATCH_PARENT_H);
+            ConsoleOutputTextView.setTag("Console Output TextView");
             ConsoleOutput.setTag("Console Output");
             ConsoleOutput.AutoScroll = true;
 
-            var dotnet_help = new Widgets.Topten_RichTextKit_TextView("dotnet help", 18, SkiaSharp.SKColors.Black);
+            var dotnet_help = new Topten_RichTextKit_TextView("dotnet help", 18, SkiaSharp.SKColors.Black);
             dotnet_help.setTag("dotnet help");
             dotnet_help.setBackgroundColor((int)(uint)Utils.Const.Constants.color_code_LineageOS);
 
@@ -203,7 +166,7 @@ namespace AndroidUI.IDE
                 Log.d("CLICKED");
                 Task.Run(() =>
                 {
-                    lock (ConsoleTextView)
+                    lock (ConsoleOutputTextView)
                     {
                         Log.d("STARTED");
                         dotnet_help.setText("Executing dotnet help ...");
@@ -213,7 +176,7 @@ namespace AndroidUI.IDE
                         terminal.RedirectOutput = true;
 
                         terminal.Run(
-                            new TextViewWriterStream(ConsoleOutput, ConsoleTextView),
+                            new TextViewWriterStream(ConsoleOutput, ConsoleOutputTextView),
                             "dotnet help "
                         );
                         terminal.Dispose();
@@ -223,7 +186,7 @@ namespace AndroidUI.IDE
                 });
             });
 
-            var erase_console_output = new Widgets.Topten_RichTextKit_TextView("Erase console output", 18, SkiaSharp.SKColors.Black);
+            var erase_console_output = new Topten_RichTextKit_TextView("Erase console output", 18, SkiaSharp.SKColors.Black);
             erase_console_output.setTag("Erase console output");
             erase_console_output.setBackgroundColor((int)(uint)Utils.Const.Constants.color_code_LineageOS);
             erase_console_output.setOnClickListener(v =>
@@ -231,10 +194,11 @@ namespace AndroidUI.IDE
                 Log.d("CLICKED");
                 Task.Run(() =>
                 {
-                    lock (ConsoleTextView)
+                    lock (ConsoleOutputTextView)
                     {
                         erase_console_output.setText("Clearing...");
-                        ConsoleTextView.setText("");
+                        ConsoleOutputTextView.setTextColor(Graphics.Color.GRAY);
+                        ConsoleOutputTextView.setText("Console Output");
                         erase_console_output.setText("Erase console output");
                     }
                 });
@@ -243,13 +207,41 @@ namespace AndroidUI.IDE
             linearLayout.addView(erase_console_output, new LinearLayout.LayoutParams(View.LayoutParams.WRAP_CONTENT, View.LayoutParams.WRAP_CONTENT));
             linearLayout.addView(dotnet_help, new LinearLayout.LayoutParams(View.LayoutParams.WRAP_CONTENT, View.LayoutParams.WRAP_CONTENT));
 
-            ProjectContent.addView(projectsList, View.MATCH_PARENT_W__MATCH_PARENT_H);
+            ProjectContent.addView(projectsList, View.MATCH_PARENT_W__WRAP_CONTENT_H);
             ProjectContent.setTag("Project Content (holds Project List)");
 
             linearLayout.addView(ProjectContent, new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.MATCH_PARENT, 2));
             linearLayout.addView(ConsoleOutput, new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.MATCH_PARENT, 1));
             linearLayout.setTag("Project List/Console Output");
             SetContentView(linearLayout);
+        }
+
+        private void setOnClickBuildProject(FlywheelScrollView ConsoleOutput, Topten_RichTextKit_TextView ConsoleOutputTextView, string proj, Topten_RichTextKit_TextView button)
+        {
+            button.setOnClickListener(v =>
+            {
+                Log.d("CLICKED");
+                Task.Run(() =>
+                {
+                    lock (ConsoleOutputTextView)
+                    {
+                        Log.d("STARTED");
+                        button.setText("Building...");
+
+                        var terminal = OS.Terminal.Create();
+                        terminal.NeedsInput = false;
+                        terminal.RedirectOutput = true;
+
+                        terminal.Run(
+                            new TextViewWriterStream(ConsoleOutput, ConsoleOutputTextView),
+                            "dotnet build " + proj
+                        );
+                        terminal.Dispose();
+
+                        button.setText("Build project");
+                    }
+                });
+            });
         }
     }
 }

@@ -1,73 +1,18 @@
-﻿/*
- * Copyright (C) 2006 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-using AndroidUI.Graphics;
+﻿using AndroidUI.Graphics;
+using AndroidUI.Input;
 using AndroidUI.Utils.Widgets;
 using SkiaSharp;
+using static AndroidUI.Widgets.LinearLayout;
 
 namespace AndroidUI.Widgets
 {
-    /**
-     * A layout that arranges other views either horizontally in a single column
-     * or vertically in a single row.
-     *
-     * <p>The following snippet shows how to include a linear layout in your layout XML file:</p>
-     *
-     * <pre>&lt;LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-     *   android:layout_width="match_parent"
-     *   android:layout_height="match_parent"
-     *   android:paddingLeft="16dp"
-     *   android:paddingRight="16dp"
-     *   android:orientation="horizontal"
-     *   android:gravity="center"&gt;
-     *
-     *   &lt;!-- Include other widget or layout tags here. These are considered
-     *           "child views" or "children" of the linear layout --&gt;
-     *
-     * &lt;/LinearLayout&gt;</pre>
-     *
-     * <p>Set {@link android.R.styleable#LinearLayout_orientation android:orientation} to specify
-     * whether child views are displayed in a row or column.</p>
-     *
-     * <p>To control how linear layout aligns all the views it contains, set a value for
-     * {@link android.R.styleable#LinearLayout_gravity android:gravity}.  For example, the
-     * snippet above sets android:gravity to "center".  The value you set affects
-     * both horizontal and vertical alignment of all child views within the single row or column.</p>
-     *
-     * <p>You can set
-     * {@link android.R.styleable#LinearLayout_Layout_layout_weight android:layout_weight}
-     * on individual child views to specify how linear layout divides remaining space amongst
-     * the views it contains. See the
-     * <a href="https://developer.android.com/guide/topics/ui/layout/linear.html">Linear Layout</a>
-     * guide for an example.</p>
-     *
-     * <p>See
-     * {@link android.widget.LinearLayout.LayoutParams LinearLayout.LayoutParams}
-     * to learn about other attributes you can set on a child view to affect its
-     * position and size in the containing linear layout.</p>
-     *
-     * @attr ref android.R.styleable#LinearLayout_baselineAligned
-     * @attr ref android.R.styleable#LinearLayout_baselineAlignedChildIndex
-     * @attr ref android.R.styleable#LinearLayout_gravity
-     * @attr ref android.R.styleable#LinearLayout_measureWithLargestChild
-     * @attr ref android.R.styleable#LinearLayout_orientation
-     * @attr ref android.R.styleable#LinearLayout_weightSum
-     */
-    public class LinearLayout : View
+    public class ListView : View, ScrollHost
     {
+        ScrollViewHostInstance host;
+        public bool AutoScroll { get => host.autoScroll; set => host.autoScroll = value; }
+
+        public bool SmoothScroll { get => host.SmoothScroll; set => host.SmoothScroll = value; }
+
         /**
          * Don't show any dividers.
          */
@@ -85,12 +30,6 @@ namespace AndroidUI.Widgets
          */
         public const int SHOW_DIVIDER_END = 4;
 
-        /**
-         * Compatibility check. Old versions of the platform would give different
-         * results from measurement passes using EXACTLY and non-EXACTLY modes,
-         * even when the resulting size was the same.
-         */
-        private bool mAllowInconsistentMeasurement;
 
         /**
          * Whether the children of this layout are baseline aligned.  Only applicable
@@ -120,8 +59,6 @@ namespace AndroidUI.Widgets
 
         private int mTotalLength;
 
-        private float mWeightSum;
-
         private bool mUseLargestChild;
 
         private int[] mMaxAscent;
@@ -142,27 +79,17 @@ namespace AndroidUI.Widgets
 
         //private int mLayoutDirection = View.LAYOUT_DIRECTION_UNDEFINED;
 
-        /**
-         * Signals that compatibility bools have been initialized according to
-         * target SDK versions.
-         */
-        private static bool sCompatibilityDone = false;
-
-        /**
-         * Behavior change in P; always remeasure weighted children, regardless of excess space.
-         */
-        private static bool sRemeasureWeightedChildren = true;
-
-        public LinearLayout() : base()
+        public ListView() : base()
         {
+            host = new(this);
+
+            SmoothScroll = true;
 
             setOrientation(OrientationMode.VERTICAL);
 
             setGravity(0);
 
             setBaselineAligned(true);
-
-            mWeightSum = -1;
 
             mBaselineAlignedChildIndex = -1;
 
@@ -171,9 +98,6 @@ namespace AndroidUI.Widgets
             mShowDividers = SHOW_DIVIDER_NONE;
             mDividerPadding = 0;
             setDividerDrawable(null);
-
-            mAllowInconsistentMeasurement = false;
-            sCompatibilityDone = true;
         }
 
         /**
@@ -201,7 +125,7 @@ namespace AndroidUI.Widgets
             mShowDividers = showDividers;
 
             bool showingDividers = isShowingDividers();
-            setWillNotDraw(!showingDividers);
+            setWillDraw(showingDividers || host.SmoothScroll);
             if (showingDividers)
             {
                 requestLayout();
@@ -228,7 +152,7 @@ namespace AndroidUI.Widgets
          *
          * @see #setDividerDrawable(Drawable)
          *
-         * @attr ref android.R.styleable#LinearLayout_divider
+         * @attr ref android.R.styleable#ListView_divider
          */
         public Drawable getDividerDrawable()
         {
@@ -242,7 +166,7 @@ namespace AndroidUI.Widgets
          *
          * @see #setShowDividers(int)
          *
-         * @attr ref android.R.styleable#LinearLayout_divider
+         * @attr ref android.R.styleable#ListView_divider
          */
         public void setDividerDrawable(Drawable divider)
         {
@@ -263,7 +187,7 @@ namespace AndroidUI.Widgets
             }
 
             bool showingDividers = isShowingDividers();
-            setWillNotDraw(!showingDividers);
+            setWillDraw(showingDividers || host.SmoothScroll);
             if (showingDividers)
             {
                 requestLayout();
@@ -319,8 +243,23 @@ namespace AndroidUI.Widgets
             return mDividerWidth;
         }
 
+        public override void onConfigureTouch(Touch touch)
+        {
+            host.onConfigureTouch(touch);
+        }
+
+        public override bool onInterceptTouchEvent(Touch ev)
+        {
+            return host.InterceptTouch(this, t => base.onInterceptTouchEvent(t), this, ev);
+        }
+
         protected override void onDraw(SKCanvas canvas)
         {
+            base.onDraw(canvas);
+            host.flywheel.AquireLock();
+            host.OnDraw(this, this);
+            host.flywheel.ReleaseLock();
+
             if (mDivider == null)
             {
                 return;
@@ -346,7 +285,7 @@ namespace AndroidUI.Widgets
                 {
                     if (hasDividerBeforeChildAt(i))
                     {
-                        LayoutParams lp = (LayoutParams)child.getLayoutParams();
+                        MarginLayoutParams lp = (MarginLayoutParams)child.getLayoutParams();
                         int top_margin = 0;
                         if (lp is MarginLayoutParams)
                         {
@@ -368,7 +307,7 @@ namespace AndroidUI.Widgets
                 }
                 else
                 {
-                    LayoutParams lp = (LayoutParams)child.getLayoutParams();
+                    MarginLayoutParams lp = (MarginLayoutParams)child.getLayoutParams();
                     bottom = child.getBottom() + lp.bottomMargin;
                 }
                 drawHorizontalDivider(canvas, bottom);
@@ -403,7 +342,7 @@ namespace AndroidUI.Widgets
                 {
                     if (hasDividerBeforeChildAt(i))
                     {
-                        LayoutParams lp = (LayoutParams)child.getLayoutParams();
+                        MarginLayoutParams lp = (MarginLayoutParams)child.getLayoutParams();
                         int position;
                         if (isLayoutRtl_)
                         {
@@ -435,7 +374,7 @@ namespace AndroidUI.Widgets
                 }
                 else
                 {
-                    LayoutParams lp = (LayoutParams)child.getLayoutParams();
+                    MarginLayoutParams lp = (MarginLayoutParams)child.getLayoutParams();
                     if (isLayoutRtl_)
                     {
                         position = child.getLeft() - lp.leftMargin - mDividerWidth;
@@ -481,7 +420,7 @@ namespace AndroidUI.Widgets
          * @param baselineAligned true to align widgets on their baseline,
          *         false otherwise
          *
-         * @attr ref android.R.styleable#LinearLayout_baselineAligned
+         * @attr ref android.R.styleable#ListView_baselineAligned
          */
         public void setBaselineAligned(bool baselineAligned)
         {
@@ -496,7 +435,7 @@ namespace AndroidUI.Widgets
          * @return True to measure children with a weight using the minimum
          *         size of the largest child, false otherwise.
          *
-         * @attr ref android.R.styleable#LinearLayout_measureWithLargestChild
+         * @attr ref android.R.styleable#ListView_measureWithLargestChild
          */
         public bool isMeasureWithLargestChildEnabled()
         {
@@ -513,7 +452,7 @@ namespace AndroidUI.Widgets
          * @param enabled True to measure children with a weight using the
          *        minimum size of the largest child, false otherwise.
          *
-         * @attr ref android.R.styleable#LinearLayout_measureWithLargestChild
+         * @attr ref android.R.styleable#ListView_measureWithLargestChild
          */
         public void setMeasureWithLargestChildEnabled(bool enabled)
         {
@@ -529,7 +468,7 @@ namespace AndroidUI.Widgets
 
             if (mChildrenCount <= mBaselineAlignedChildIndex)
             {
-                throw new Exception("mBaselineAlignedChildIndex of LinearLayout "
+                throw new Exception("mBaselineAlignedChildIndex of ListView "
                         + "set to an index that is out of bounds.");
             }
 
@@ -545,7 +484,7 @@ namespace AndroidUI.Widgets
                 }
                 // the user picked an index that points to something that doesn't
                 // know how to calculate its baseline.
-                throw new Exception("mBaselineAlignedChildIndex of LinearLayout "
+                throw new Exception("mBaselineAlignedChildIndex of ListView "
                         + "points to a View that doesn't know how to get its baseline.");
             }
 
@@ -576,7 +515,7 @@ namespace AndroidUI.Widgets
                 }
             }
 
-            LayoutParams lp = (LayoutParams)child.getLayoutParams();
+            MarginLayoutParams lp = (MarginLayoutParams)child.getLayoutParams();
             return childTop + lp.topMargin + childBaseline;
         }
 
@@ -594,7 +533,7 @@ namespace AndroidUI.Widgets
          * @param i The index of the child that will be used if this layout is
          *          part of a larger layout that is baseline aligned.
          *
-         * @attr ref android.R.styleable#LinearLayout_baselineAlignedChildIndex
+         * @attr ref android.R.styleable#ListView_baselineAlignedChildIndex
          */
         public void setBaselineAlignedChildIndex(int i)
         {
@@ -634,35 +573,6 @@ namespace AndroidUI.Widgets
             return mChildrenCount;
         }
 
-        /**
-         * Returns the desired weights sum.
-         *
-         * @return A number greater than 0.0f if the weight sum is defined, or
-         *         a number lower than or equals to 0.0f if not weight sum is
-         *         to be used.
-         */
-        public float getWeightSum()
-        {
-            return mWeightSum;
-        }
-
-        /**
-         * Defines the desired weights sum. If unspecified the weights sum is computed
-         * at layout time by adding the layout_weight of each child.
-         *
-         * This can be used for instance to give a single child 50% of the total
-         * available space by giving it a layout_weight of 0.5 and setting the
-         * weightSum to 1.0.
-         *
-         * @param weightSum a number greater than 0.0f, or a number lower than or equals
-         *        to 0.0f if the weight sum should be computed from the children's
-         *        layout_weight
-         */
-        public void setWeightSum(float weightSum)
-        {
-            mWeightSum = Math.Max(0.0f, weightSum);
-        }
-
         protected override void onMeasure(int widthMeasureSpec, int heightMeasureSpec)
         {
             if (mOrientation == OrientationMode.VERTICAL)
@@ -672,6 +582,10 @@ namespace AndroidUI.Widgets
             else
             {
                 measureHorizontal(widthMeasureSpec, heightMeasureSpec);
+            }
+            if (AutoScroll)
+            {
+                host.AutoScrollOnMeasure(this, this);
             }
         }
 
@@ -718,7 +632,7 @@ namespace AndroidUI.Widgets
         }
 
         /**
-         * Measures the children when the orientation of this LinearLayout is set
+         * Measures the children when the orientation of this ListView is set
          * to {@link #VERTICAL}.
          *
          * @param widthMeasureSpec Horizontal space requirements as imposed by the parent.
@@ -734,24 +648,15 @@ namespace AndroidUI.Widgets
             int maxWidth = 0;
             int childState = 0;
             int alternativeMaxWidth = 0;
-            int weightedMaxWidth = 0;
             bool allFillParent = true;
-            float totalWeight = 0;
 
             int count = getVirtualChildCount();
 
             int widthMode = MeasureSpec.getMode(widthMeasureSpec);
-            int heightMode = MeasureSpec.getMode(heightMeasureSpec);
 
             bool matchWidth = false;
-            bool skippedMeasure = false;
 
             int baselineChildIndex = mBaselineAlignedChildIndex;
-            bool useLargestChild = mUseLargestChild;
-
-            int largestChildHeight = int.MinValue;
-            int consumedExcessSpace = 0;
-
             int nonSkippedChildCount = 0;
 
             // See how tall everyone is. Also remember max width.
@@ -776,59 +681,21 @@ namespace AndroidUI.Widgets
                     mTotalLength += mDividerHeight;
                 }
 
-                LayoutParams lp = (LayoutParams)child.getLayoutParams();
+                MarginLayoutParams lp = (MarginLayoutParams)child.getLayoutParams();
 
-                totalWeight += lp.weight;
+                // Determine how big this child would like to be. If this or
+                // previous children have given a weight, then we allow it to
+                // use all available space (and we will shrink things later
+                // if needed).
+                int usedHeight = mTotalLength;
+                measureChildBeforeLayout(child, i, widthMeasureSpec, 0,
+                        heightMeasureSpec, usedHeight);
 
-                bool useExcessSpace = lp.height == 0 && lp.weight > 0;
-                if (heightMode == MeasureSpec.EXACTLY && useExcessSpace)
-                {
-                    // Optimization: don't bother measuring children who are only
-                    // laid out using excess space. These views will get measured
-                    // later if we have space to distribute.
-                    int totalLength = mTotalLength;
-                    mTotalLength = Math.Max(totalLength, totalLength + lp.topMargin + lp.bottomMargin);
-                    skippedMeasure = true;
-                }
-                else
-                {
-                    if (useExcessSpace)
-                    {
-                        // The heightMode is either UNSPECIFIED or AT_MOST, and
-                        // this child is only laid out using excess space. Measure
-                        // using WRAP_CONTENT so that we can find out the view's
-                        // optimal height. We'll restore the original height of 0
-                        // after measurement.
-                        lp.height = View.LayoutParams.WRAP_CONTENT;
-                    }
+                int childHeight = child.getMeasuredHeight();
 
-                    // Determine how big this child would like to be. If this or
-                    // previous children have given a weight, then we allow it to
-                    // use all available space (and we will shrink things later
-                    // if needed).
-                    int usedHeight = totalWeight == 0 ? mTotalLength : 0;
-                    measureChildBeforeLayout(child, i, widthMeasureSpec, 0,
-                            heightMeasureSpec, usedHeight);
-
-                    int childHeight = child.getMeasuredHeight();
-                    if (useExcessSpace)
-                    {
-                        // Restore the original height and record how much space
-                        // we've allocated to excess-only children so that we can
-                        // match the behavior of EXACTLY measurement.
-                        lp.height = 0;
-                        consumedExcessSpace += childHeight;
-                    }
-
-                    int totalLength = mTotalLength;
-                    mTotalLength = Math.Max(totalLength, totalLength + childHeight + lp.topMargin +
-                           lp.bottomMargin + getNextLocationOffset(child));
-
-                    if (useLargestChild)
-                    {
-                        largestChildHeight = Math.Max(childHeight, largestChildHeight);
-                    }
-                }
+                int totalLength = mTotalLength;
+                mTotalLength = Math.Max(totalLength, totalLength + childHeight + lp.topMargin +
+                        lp.bottomMargin + getNextLocationOffset(child));
 
                 /**
                  * If applicable, compute the additional offset to the child's baseline
@@ -837,17 +704,6 @@ namespace AndroidUI.Widgets
                 if (baselineChildIndex >= 0 && baselineChildIndex == i + 1)
                 {
                     mBaselineChildTop = mTotalLength;
-                }
-
-                // if we are trying to use a child index for our baseline, the above
-                // book keeping only works if there are no children above it with
-                // weight.  fail fast to aid the developer.
-                if (i < baselineChildIndex && lp.weight > 0)
-                {
-                    throw new Exception("A child of LinearLayout with index "
-                            + "less than mBaselineAlignedChildIndex has weight > 0, which "
-                            + "won't work.  Either remove the weight, or don't set "
-                            + "mBaselineAlignedChildIndex.");
                 }
 
                 bool matchWidthLocally = false;
@@ -867,20 +723,8 @@ namespace AndroidUI.Widgets
                 childState = combineMeasuredStates(childState, child.getMeasuredState());
 
                 allFillParent = allFillParent && lp.width == View.LayoutParams.MATCH_PARENT;
-                if (lp.weight > 0)
-                {
-                    /*
-                     * Widths of weighted Views are bogus if we end up
-                     * remeasuring, so keep them separate.
-                     */
-                    weightedMaxWidth = Math.Max(weightedMaxWidth,
-                            matchWidthLocally ? margin : measuredWidth);
-                }
-                else
-                {
-                    alternativeMaxWidth = Math.Max(alternativeMaxWidth,
-                            matchWidthLocally ? margin : measuredWidth);
-                }
+                alternativeMaxWidth = Math.Max(alternativeMaxWidth,
+                        matchWidthLocally ? margin : measuredWidth);
 
                 i += getChildrenSkipCount(child, i);
             }
@@ -888,35 +732,6 @@ namespace AndroidUI.Widgets
             if (nonSkippedChildCount > 0 && hasDividerBeforeChildAt(count))
             {
                 mTotalLength += mDividerHeight;
-            }
-
-            if (useLargestChild &&
-                    (heightMode == MeasureSpec.AT_MOST || heightMode == MeasureSpec.UNSPECIFIED))
-            {
-                mTotalLength = 0;
-
-                for (int i = 0; i < count; ++i)
-                {
-                    View child = getVirtualChildAt(i);
-                    if (child == null)
-                    {
-                        mTotalLength += measureNullChild(i);
-                        continue;
-                    }
-
-                    if (child.getVisibility() == GONE)
-                    {
-                        i += getChildrenSkipCount(child, i);
-                        continue;
-                    }
-
-                    LayoutParams lp = (LayoutParams)
-                            child.getLayoutParams();
-                    // Account for negative margins
-                    int totalLength = mTotalLength;
-                    mTotalLength = Math.Max(totalLength, totalLength + largestChildHeight +
-                            lp.topMargin + lp.bottomMargin + getNextLocationOffset(child));
-                }
             }
 
             // Add in our padding
@@ -933,117 +748,6 @@ namespace AndroidUI.Widgets
             // Either expand children with weight to take up available space or
             // shrink them if they extend beyond our current bounds. If we skipped
             // measurement on any children, we need to measure them now.
-            int remainingExcess = heightSize - mTotalLength
-                    + (mAllowInconsistentMeasurement ? 0 : consumedExcessSpace);
-            if (skippedMeasure
-                    || (sRemeasureWeightedChildren || remainingExcess != 0) && totalWeight > 0.0f)
-            {
-                float remainingWeightSum = mWeightSum > 0.0f ? mWeightSum : totalWeight;
-
-                mTotalLength = 0;
-
-                for (int i = 0; i < count; ++i)
-                {
-                    View child = getVirtualChildAt(i);
-                    if (child == null || child.getVisibility() == GONE)
-                    {
-                        continue;
-                    }
-
-                    LayoutParams lp = (LayoutParams)child.getLayoutParams();
-                    float childWeight = lp.weight;
-                    if (childWeight > 0)
-                    {
-                        int share = (int)(childWeight * remainingExcess / remainingWeightSum);
-                        remainingExcess -= share;
-                        remainingWeightSum -= childWeight;
-
-                        int childHeight;
-                        if (mUseLargestChild && heightMode != MeasureSpec.EXACTLY)
-                        {
-                            childHeight = largestChildHeight;
-                        }
-                        else if (lp.height == 0 && (!mAllowInconsistentMeasurement
-                              || heightMode == MeasureSpec.EXACTLY))
-                        {
-                            // This child needs to be laid out from scratch using
-                            // only its share of excess space.
-                            childHeight = share;
-                        }
-                        else
-                        {
-                            // This child had some intrinsic height to which we
-                            // need to add its share of excess space.
-                            childHeight = child.getMeasuredHeight() + share;
-                        }
-
-                        int childHeightMeasureSpec = MeasureSpec.makeMeasureSpec(
-                                Math.Max(0, childHeight), MeasureSpec.EXACTLY);
-                        int childWidthMeasureSpec = getChildMeasureSpec(this, child, true, widthMeasureSpec,
-                                mPaddingLeft + mPaddingRight + lp.leftMargin + lp.rightMargin,
-                                lp.width);
-                        child.measure(childWidthMeasureSpec, childHeightMeasureSpec);
-
-                        // Child may now not fit in vertical dimension.
-                        childState = combineMeasuredStates(childState,
-                            (int)((uint)child.getMeasuredState() & MEASURED_STATE_MASK >> MEASURED_HEIGHT_STATE_SHIFT)
-                        );
-                    }
-
-                    int margin = lp.leftMargin + lp.rightMargin;
-                    int measuredWidth = child.getMeasuredWidth() + margin;
-                    maxWidth = Math.Max(maxWidth, measuredWidth);
-
-                    bool matchWidthLocally = widthMode != MeasureSpec.EXACTLY &&
-                            lp.width == View.LayoutParams.MATCH_PARENT;
-
-                    alternativeMaxWidth = Math.Max(alternativeMaxWidth,
-                            matchWidthLocally ? margin : measuredWidth);
-
-                    allFillParent = allFillParent && lp.width == View.LayoutParams.MATCH_PARENT;
-
-                    int totalLength = mTotalLength;
-                    mTotalLength = Math.Max(totalLength, totalLength + child.getMeasuredHeight() +
-                            lp.topMargin + lp.bottomMargin + getNextLocationOffset(child));
-                }
-
-                // Add in our padding
-                mTotalLength += mPaddingTop + mPaddingBottom;
-                // TODO: Should we recompute the heightSpec based on the new total length?
-            }
-            else
-            {
-                alternativeMaxWidth = Math.Max(alternativeMaxWidth,
-                                               weightedMaxWidth);
-
-
-                // We have no limit, so make all weighted views as tall as the largest child.
-                // Children will have already been measured once.
-                if (useLargestChild && heightMode != MeasureSpec.EXACTLY)
-                {
-                    for (int i = 0; i < count; i++)
-                    {
-                        View child = getVirtualChildAt(i);
-                        if (child == null || child.getVisibility() == GONE)
-                        {
-                            continue;
-                        }
-
-                        LayoutParams lp =
-                                (LayoutParams)child.getLayoutParams();
-
-                        float childExtra = lp.weight;
-                        if (childExtra > 0)
-                        {
-                            child.measure(
-                                    MeasureSpec.makeMeasureSpec(child.getMeasuredWidth(),
-                                            MeasureSpec.EXACTLY),
-                                    MeasureSpec.makeMeasureSpec(largestChildHeight,
-                                            MeasureSpec.EXACTLY));
-                        }
-                    }
-                }
-            }
 
             if (!allFillParent && widthMode != MeasureSpec.EXACTLY)
             {
@@ -1074,7 +778,7 @@ namespace AndroidUI.Widgets
                 View child = getVirtualChildAt(i);
                 if (child != null && child.getVisibility() != GONE)
                 {
-                    LayoutParams lp = (LayoutParams)child.getLayoutParams();
+                    MarginLayoutParams lp = (MarginLayoutParams)child.getLayoutParams();
 
                     if (lp.width == View.LayoutParams.MATCH_PARENT)
                     {
@@ -1092,7 +796,7 @@ namespace AndroidUI.Widgets
         }
 
         /**
-         * Measures the children when the orientation of this LinearLayout is set
+         * Measures the children when the orientation of this ListView is set
          * to {@link #HORIZONTAL}.
          *
          * @param widthMeasureSpec Horizontal space requirements as imposed by the parent.
@@ -1118,7 +822,6 @@ namespace AndroidUI.Widgets
             int heightMode = MeasureSpec.getMode(heightMeasureSpec);
 
             bool matchHeight = false;
-            bool skippedMeasure = false;
 
             if (mMaxAscent == null || mMaxDescent == null)
             {
@@ -1136,8 +839,6 @@ namespace AndroidUI.Widgets
             bool useLargestChild = mUseLargestChild;
 
             bool isExactly = widthMode == MeasureSpec.EXACTLY;
-
-            int largestChildWidth = int.MinValue;
             int usedExcessSpace = 0;
 
             int nonSkippedChildCount = 0;
@@ -1164,91 +865,27 @@ namespace AndroidUI.Widgets
                     mTotalLength += mDividerWidth;
                 }
 
-                LayoutParams lp = (LayoutParams)child.getLayoutParams();
+                MarginLayoutParams lp = (MarginLayoutParams)child.getLayoutParams();
 
-                totalWeight += lp.weight;
+                // Determine how big this child would like to be. If this or
+                // previous children have given a weight, then we allow it to
+                // use all available space (and we will shrink things later
+                // if needed).
+                int usedWidth = totalWeight == 0 ? mTotalLength : 0;
+                measureChildBeforeLayout(child, i, widthMeasureSpec, usedWidth,
+                        heightMeasureSpec, 0);
 
-                bool useExcessSpace = lp.width == 0 && lp.weight > 0;
-                if (widthMode == MeasureSpec.EXACTLY && useExcessSpace)
+                int childWidth = child.getMeasuredWidth();
+                if (isExactly)
                 {
-                    // Optimization: don't bother measuring children who are only
-                    // laid out using excess space. These views will get measured
-                    // later if we have space to distribute.
-                    if (isExactly)
-                    {
-                        mTotalLength += lp.leftMargin + lp.rightMargin;
-                    }
-                    else
-                    {
-                        int totalLength = mTotalLength;
-                        mTotalLength = Math.Max(totalLength, totalLength +
-                                lp.leftMargin + lp.rightMargin);
-                    }
-
-                    // Baseline alignment requires to measure widgets to obtain the
-                    // baseline offset (in particular for TextViews). The following
-                    // defeats the optimization mentioned above. Allow the child to
-                    // use as much space as it wants because we can shrink things
-                    // later (and re-measure).
-                    if (baselineAligned)
-                    {
-                        int freeWidthSpec = MeasureSpec.makeSafeMeasureSpec(
-                                MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.UNSPECIFIED);
-                        int freeHeightSpec = MeasureSpec.makeSafeMeasureSpec(
-                                MeasureSpec.getSize(heightMeasureSpec), MeasureSpec.UNSPECIFIED);
-                        child.measure(freeWidthSpec, freeHeightSpec);
-                    }
-                    else
-                    {
-                        skippedMeasure = true;
-                    }
+                    mTotalLength += childWidth + lp.leftMargin + lp.rightMargin
+                            + getNextLocationOffset(child);
                 }
                 else
                 {
-                    if (useExcessSpace)
-                    {
-                        // The widthMode is either UNSPECIFIED or AT_MOST, and
-                        // this child is only laid out using excess space. Measure
-                        // using WRAP_CONTENT so that we can find out the view's
-                        // optimal width. We'll restore the original width of 0
-                        // after measurement.
-                        lp.width = View.LayoutParams.WRAP_CONTENT;
-                    }
-
-                    // Determine how big this child would like to be. If this or
-                    // previous children have given a weight, then we allow it to
-                    // use all available space (and we will shrink things later
-                    // if needed).
-                    int usedWidth = totalWeight == 0 ? mTotalLength : 0;
-                    measureChildBeforeLayout(child, i, widthMeasureSpec, usedWidth,
-                            heightMeasureSpec, 0);
-
-                    int childWidth = child.getMeasuredWidth();
-                    if (useExcessSpace)
-                    {
-                        // Restore the original width and record how much space
-                        // we've allocated to excess-only children so that we can
-                        // match the behavior of EXACTLY measurement.
-                        lp.width = 0;
-                        usedExcessSpace += childWidth;
-                    }
-
-                    if (isExactly)
-                    {
-                        mTotalLength += childWidth + lp.leftMargin + lp.rightMargin
-                                + getNextLocationOffset(child);
-                    }
-                    else
-                    {
-                        int totalLength = mTotalLength;
-                        mTotalLength = Math.Max(totalLength, totalLength + childWidth + lp.leftMargin
-                                + lp.rightMargin + getNextLocationOffset(child));
-                    }
-
-                    if (useLargestChild)
-                    {
-                        largestChildWidth = Math.Max(childWidth, largestChildWidth);
-                    }
+                    int totalLength = mTotalLength;
+                    mTotalLength = Math.Max(totalLength, totalLength + childWidth + lp.leftMargin
+                            + lp.rightMargin + getNextLocationOffset(child));
                 }
 
                 bool matchHeightLocally = false;
@@ -1265,40 +902,11 @@ namespace AndroidUI.Widgets
                 int childHeight = child.getMeasuredHeight() + margin;
                 childState = combineMeasuredStates(childState, child.getMeasuredState());
 
-                if (baselineAligned)
-                {
-                    int childBaseline = child.getBaseline();
-                    if (childBaseline != -1)
-                    {
-                        // Translates the child's vertical gravity into an index
-                        // in the range 0..VERTICAL_GRAVITY_COUNT
-                        int gravity = (lp.gravity < 0 ? mGravity : lp.gravity)
-                                & Gravity.VERTICAL_GRAVITY_MASK;
-                        int index = (gravity >> Gravity.AXIS_Y_SHIFT
-                                & ~Gravity.AXIS_SPECIFIED) >> 1;
-
-                        maxAscent[index] = Math.Max(maxAscent[index], childBaseline);
-                        maxDescent[index] = Math.Max(maxDescent[index], childHeight - childBaseline);
-                    }
-                }
-
                 maxHeight = Math.Max(maxHeight, childHeight);
 
                 allFillParent = allFillParent && lp.height == View.LayoutParams.MATCH_PARENT;
-                if (lp.weight > 0)
-                {
-                    /*
-                     * Heights of weighted Views are bogus if we end up
-                     * remeasuring, so keep them separate.
-                     */
-                    weightedMaxHeight = Math.Max(weightedMaxHeight,
-                            matchHeightLocally ? margin : childHeight);
-                }
-                else
-                {
-                    alternativeMaxHeight = Math.Max(alternativeMaxHeight,
-                            matchHeightLocally ? margin : childHeight);
-                }
+                alternativeMaxHeight = Math.Max(alternativeMaxHeight,
+                        matchHeightLocally ? margin : childHeight);
 
                 i += getChildrenSkipCount(child, i);
             }
@@ -1324,42 +932,6 @@ namespace AndroidUI.Widgets
                 maxHeight = Math.Max(maxHeight, ascent + descent);
             }
 
-            if (useLargestChild &&
-                    (widthMode == MeasureSpec.AT_MOST || widthMode == MeasureSpec.UNSPECIFIED))
-            {
-                mTotalLength = 0;
-
-                for (int i = 0; i < count; ++i)
-                {
-                    View child = getVirtualChildAt(i);
-                    if (child == null)
-                    {
-                        mTotalLength += measureNullChild(i);
-                        continue;
-                    }
-
-                    if (child.getVisibility() == GONE)
-                    {
-                        i += getChildrenSkipCount(child, i);
-                        continue;
-                    }
-
-                    LayoutParams lp = (LayoutParams)
-                            child.getLayoutParams();
-                    if (isExactly)
-                    {
-                        mTotalLength += largestChildWidth + lp.leftMargin + lp.rightMargin +
-                                getNextLocationOffset(child);
-                    }
-                    else
-                    {
-                        int totalLength = mTotalLength;
-                        mTotalLength = Math.Max(totalLength, totalLength + largestChildWidth +
-                                lp.leftMargin + lp.rightMargin + getNextLocationOffset(child));
-                    }
-                }
-            }
-
             // Add in our padding
             mTotalLength += mPaddingLeft + mPaddingRight;
 
@@ -1371,161 +943,6 @@ namespace AndroidUI.Widgets
             // Reconcile our calculated size with the widthMeasureSpec
             int widthSizeAndState = resolveSizeAndState(widthSize, widthMeasureSpec, 0);
             widthSize = widthSizeAndState & MEASURED_SIZE_MASK;
-
-            // Either expand children with weight to take up available space or
-            // shrink them if they extend beyond our current bounds. If we skipped
-            // measurement on any children, we need to measure them now.
-            int remainingExcess = widthSize - mTotalLength
-                    + (mAllowInconsistentMeasurement ? 0 : usedExcessSpace);
-            if (skippedMeasure
-                    || (sRemeasureWeightedChildren || remainingExcess != 0) && totalWeight > 0.0f)
-            {
-                float remainingWeightSum = mWeightSum > 0.0f ? mWeightSum : totalWeight;
-
-                maxAscent[0] = maxAscent[1] = maxAscent[2] = maxAscent[3] = -1;
-                maxDescent[0] = maxDescent[1] = maxDescent[2] = maxDescent[3] = -1;
-                maxHeight = -1;
-
-                mTotalLength = 0;
-
-                for (int i = 0; i < count; ++i)
-                {
-                    View child = getVirtualChildAt(i);
-                    if (child == null || child.getVisibility() == GONE)
-                    {
-                        continue;
-                    }
-
-                    LayoutParams lp = (LayoutParams)child.getLayoutParams();
-                    float childWeight = lp.weight;
-                    if (childWeight > 0)
-                    {
-                        int share = (int)(childWeight * remainingExcess / remainingWeightSum);
-                        remainingExcess -= share;
-                        remainingWeightSum -= childWeight;
-
-                        int childWidth;
-                        if (mUseLargestChild && widthMode != MeasureSpec.EXACTLY)
-                        {
-                            childWidth = largestChildWidth;
-                        }
-                        else if (lp.width == 0 && (!mAllowInconsistentMeasurement
-                              || widthMode == MeasureSpec.EXACTLY))
-                        {
-                            // This child needs to be laid out from scratch using
-                            // only its share of excess space.
-                            childWidth = share;
-                        }
-                        else
-                        {
-                            // This child had some intrinsic width to which we
-                            // need to add its share of excess space.
-                            childWidth = child.getMeasuredWidth() + share;
-                        }
-
-                        int childWidthMeasureSpec = MeasureSpec.makeMeasureSpec(
-                                Math.Max(0, childWidth), MeasureSpec.EXACTLY);
-                        int childHeightMeasureSpec = getChildMeasureSpec(this, child, false, heightMeasureSpec,
-                                mPaddingTop + mPaddingBottom + lp.topMargin + lp.bottomMargin,
-                                lp.height);
-                        child.measure(childWidthMeasureSpec, childHeightMeasureSpec);
-
-                        // Child may now not fit in horizontal dimension.
-                        childState = combineMeasuredStates(childState,
-                                (int)((uint)child.getMeasuredState() & MEASURED_STATE_MASK));
-                    }
-
-                    if (isExactly)
-                    {
-                        mTotalLength += child.getMeasuredWidth() + lp.leftMargin + lp.rightMargin +
-                                getNextLocationOffset(child);
-                    }
-                    else
-                    {
-                        int totalLength = mTotalLength;
-                        mTotalLength = Math.Max(totalLength, totalLength + child.getMeasuredWidth() +
-                                lp.leftMargin + lp.rightMargin + getNextLocationOffset(child));
-                    }
-
-                    bool matchHeightLocally = heightMode != MeasureSpec.EXACTLY &&
-                            lp.height == View.LayoutParams.MATCH_PARENT;
-
-                    int margin = lp.topMargin + lp.bottomMargin;
-                    int childHeight = child.getMeasuredHeight() + margin;
-                    maxHeight = Math.Max(maxHeight, childHeight);
-                    alternativeMaxHeight = Math.Max(alternativeMaxHeight,
-                            matchHeightLocally ? margin : childHeight);
-
-                    allFillParent = allFillParent && lp.height == View.LayoutParams.MATCH_PARENT;
-
-                    if (baselineAligned)
-                    {
-                        int childBaseline = child.getBaseline();
-                        if (childBaseline != -1)
-                        {
-                            // Translates the child's vertical gravity into an index in the range 0..2
-                            int gravity = (lp.gravity < 0 ? mGravity : lp.gravity)
-                                    & Gravity.VERTICAL_GRAVITY_MASK;
-                            int index = (gravity >> Gravity.AXIS_Y_SHIFT
-                                    & ~Gravity.AXIS_SPECIFIED) >> 1;
-
-                            maxAscent[index] = Math.Max(maxAscent[index], childBaseline);
-                            maxDescent[index] = Math.Max(maxDescent[index],
-                                    childHeight - childBaseline);
-                        }
-                    }
-                }
-
-                // Add in our padding
-                mTotalLength += mPaddingLeft + mPaddingRight;
-                // TODO: Should we update widthSize with the new total length?
-
-                // Check mMaxAscent[INDEX_TOP] first because it maps to Gravity.TOP,
-                // the most common case
-                if (maxAscent[INDEX_TOP] != -1 ||
-                        maxAscent[INDEX_CENTER_VERTICAL] != -1 ||
-                        maxAscent[INDEX_BOTTOM] != -1 ||
-                        maxAscent[INDEX_FILL] != -1)
-                {
-                    int ascent = Math.Max(maxAscent[INDEX_FILL],
-                            Math.Max(maxAscent[INDEX_CENTER_VERTICAL],
-                            Math.Max(maxAscent[INDEX_TOP], maxAscent[INDEX_BOTTOM])));
-                    int descent = Math.Max(maxDescent[INDEX_FILL],
-                            Math.Max(maxDescent[INDEX_CENTER_VERTICAL],
-                            Math.Max(maxDescent[INDEX_TOP], maxDescent[INDEX_BOTTOM])));
-                    maxHeight = Math.Max(maxHeight, ascent + descent);
-                }
-            }
-            else
-            {
-                alternativeMaxHeight = Math.Max(alternativeMaxHeight, weightedMaxHeight);
-
-                // We have no limit, so make all weighted views as wide as the largest child.
-                // Children will have already been measured once.
-                if (useLargestChild && widthMode != MeasureSpec.EXACTLY)
-                {
-                    for (int i = 0; i < count; i++)
-                    {
-                        View child = getVirtualChildAt(i);
-                        if (child == null || child.getVisibility() == GONE)
-                        {
-                            continue;
-                        }
-
-                        LayoutParams lp =
-                                (LayoutParams)child.getLayoutParams();
-
-                        float childExtra = lp.weight;
-                        if (childExtra > 0)
-                        {
-                            child.measure(
-                                    MeasureSpec.makeMeasureSpec(largestChildWidth, MeasureSpec.EXACTLY),
-                                    MeasureSpec.makeMeasureSpec(child.getMeasuredHeight(),
-                                            MeasureSpec.EXACTLY));
-                        }
-                    }
-                }
-            }
 
             if (!allFillParent && heightMode != MeasureSpec.EXACTLY)
             {
@@ -1559,7 +976,7 @@ namespace AndroidUI.Widgets
                 View child = getVirtualChildAt(i);
                 if (child != null && child.getVisibility() != GONE)
                 {
-                    LayoutParams lp = (LayoutParams)child.getLayoutParams();
+                    MarginLayoutParams lp = (MarginLayoutParams)child.getLayoutParams();
 
                     if (lp.height == View.LayoutParams.MATCH_PARENT)
                     {
@@ -1622,6 +1039,95 @@ namespace AndroidUI.Widgets
                     heightMeasureSpec, totalHeight);
         }
 
+        protected override void measureChildWithMargins(View child, int parentWidthMeasureSpec, int widthUsed,
+                                               int parentHeightMeasureSpec, int heightUsed)
+        {
+            MarginLayoutParams childLayoutParams = (MarginLayoutParams)child.getLayoutParams();
+
+            int widthPadding = mPaddingLeft + mPaddingRight + childLayoutParams.leftMargin + childLayoutParams.rightMargin;
+            int heightPadding = mPaddingTop + mPaddingBottom + childLayoutParams.topMargin + childLayoutParams.bottomMargin;
+
+            int usedTotalW = widthPadding + widthUsed;
+            int usedTotalH = heightPadding + heightUsed;
+
+            int width = MeasureSpec.getSize(parentWidthMeasureSpec);
+            int height = MeasureSpec.getSize(parentHeightMeasureSpec);
+
+            int this_spec_w;
+            int this_spec_h;
+            if (mOrientation == OrientationMode.VERTICAL)
+            {
+                switch (childLayoutParams.width)
+                {
+                    case View.LayoutParams.MATCH_PARENT:
+                        // child wants to be our size
+                        this_spec_w = MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY);
+                        break;
+                    case View.LayoutParams.WRAP_CONTENT:
+                        // child wants to be its own size, but it cant be bigger than us
+                        this_spec_w = MeasureSpec.makeMeasureSpec(width, MeasureSpec.AT_MOST);
+                        break;
+                    default:
+                        // child wants to be exact size, but it cant be bigger than us
+                        this_spec_w = MeasureSpec.makeMeasureSpec(width, MeasureSpec.AT_MOST);
+                        break;
+                }
+                switch (childLayoutParams.height)
+                {
+                    case View.LayoutParams.MATCH_PARENT:
+                        // child wants to be our size
+                        this_spec_h = MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY);
+                        break;
+                    case View.LayoutParams.WRAP_CONTENT:
+                        // child wants to be its own size
+                        this_spec_h = MeasureSpec.makeMeasureSpec(height, MeasureSpec.UNSPECIFIED);
+                        break;
+                    default:
+                        // child wants to be exact size
+                        this_spec_h = MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY);
+                        break;
+                }
+                this_spec_w = getChildMeasureSpec(this, child, true, this_spec_w, widthPadding, childLayoutParams.width);
+                this_spec_h = getChildMeasureSpec(this, child, false, this_spec_h, heightPadding, childLayoutParams.height);
+            }
+            else
+            {
+                switch (childLayoutParams.width)
+                {
+                    case View.LayoutParams.MATCH_PARENT:
+                        // child wants to be our size
+                        this_spec_w = MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY);
+                        break;
+                    case View.LayoutParams.WRAP_CONTENT:
+                        // child wants to be its own size
+                        this_spec_w = MeasureSpec.makeMeasureSpec(width, MeasureSpec.UNSPECIFIED);
+                        break;
+                    default:
+                        // child wants to be exact size
+                        this_spec_w = MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY);
+                        break;
+                }
+                switch (childLayoutParams.height)
+                {
+                    case View.LayoutParams.MATCH_PARENT:
+                        // child wants to be our size
+                        this_spec_h = MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY);
+                        break;
+                    case View.LayoutParams.WRAP_CONTENT:
+                        // child wants to be its own size, but it cant be bigger than us
+                        this_spec_h = MeasureSpec.makeMeasureSpec(height, MeasureSpec.AT_MOST);
+                        break;
+                    default:
+                        // child wants to be exact size, but it cant be bigger than us
+                        this_spec_h = MeasureSpec.makeMeasureSpec(height, MeasureSpec.AT_MOST);
+                        break;
+                }
+                this_spec_w = getChildMeasureSpec(this, child, true, this_spec_w, widthPadding, childLayoutParams.width);
+                this_spec_h = getChildMeasureSpec(this, child, false, this_spec_h, heightPadding, childLayoutParams.height);
+            }
+            child.measure(this_spec_w, this_spec_h);
+        }
+
         /**
          * <p>Return the location offset of the specified child. This can be used
          * by subclasses to change the location of a given widget.</p>
@@ -1661,7 +1167,7 @@ namespace AndroidUI.Widgets
 
         /**
          * Position the children during a layout pass if the orientation of this
-         * LinearLayout is set to {@link #VERTICAL}.
+         * ListView is set to {@link #VERTICAL}.
          *
          * @see #getOrientation()
          * @see #setOrientation(int)
@@ -1720,14 +1226,10 @@ namespace AndroidUI.Widgets
                     int childWidth = child.getMeasuredWidth();
                     int childHeight = child.getMeasuredHeight();
 
-                    LayoutParams lp =
-                            (LayoutParams)child.getLayoutParams();
+                    MarginLayoutParams lp =
+                            (MarginLayoutParams)child.getLayoutParams();
 
-                    int gravity = lp.gravity;
-                    if (gravity < 0)
-                    {
-                        gravity = minorGravity;
-                    }
+                    int gravity = minorGravity;
                     int layoutDirection = getLayoutDirection();
                     int absoluteGravity = Gravity.getAbsoluteGravity(gravity, layoutDirection);
                     switch (absoluteGravity & Gravity.HORIZONTAL_GRAVITY_MASK)
@@ -1777,7 +1279,7 @@ namespace AndroidUI.Widgets
 
         /**
          * Position the children during a layout pass if the orientation of this
-         * LinearLayout is set to {@link #HORIZONTAL}.
+         * ListView is set to {@link #HORIZONTAL}.
          *
          * @see #getOrientation()
          * @see #setOrientation(int)
@@ -1854,19 +1356,15 @@ namespace AndroidUI.Widgets
                     int childHeight = child.getMeasuredHeight();
                     int childBaseline = -1;
 
-                    LayoutParams lp =
-                            (LayoutParams)child.getLayoutParams();
+                    MarginLayoutParams lp =
+                            (MarginLayoutParams)child.getLayoutParams();
 
                     if (baselineAligned && lp.height != View.LayoutParams.MATCH_PARENT)
                     {
                         childBaseline = child.getBaseline();
                     }
 
-                    int gravity = lp.gravity;
-                    if (gravity < 0)
-                    {
-                        gravity = minorGravity;
-                    }
+                    int gravity = minorGravity;
 
                     switch (gravity & Gravity.VERTICAL_GRAVITY_MASK)
                     {
@@ -1933,7 +1431,7 @@ namespace AndroidUI.Widgets
          * @param orientation Pass {@link #HORIZONTAL} or {@link #VERTICAL}. Default
          * value is {@link #HORIZONTAL}.
          *
-         * @attr ref android.R.styleable#LinearLayout_orientation
+         * @attr ref android.R.styleable#ListView_orientation
          */
         public void setOrientation(OrientationMode orientation)
         {
@@ -1943,12 +1441,6 @@ namespace AndroidUI.Widgets
                 requestLayout();
             }
         }
-
-        public enum OrientationMode
-        {
-            HORIZONTAL = 0,
-            VERTICAL = 1
-        };
 
         /**
          * Returns the current orientation.
@@ -1968,7 +1460,7 @@ namespace AndroidUI.Widgets
          *
          * @param gravity See {@link android.view.Gravity}
          *
-         * @attr ref android.R.styleable#LinearLayout_gravity
+         * @attr ref android.R.styleable#ListView_gravity
          */
         public void setGravity(int gravity)
         {
@@ -2021,9 +1513,9 @@ namespace AndroidUI.Widgets
         }
 
         override
-        public LayoutParams generateLayoutParams()
+        public MarginLayoutParams generateLayoutParams()
         {
-            return new LayoutParams();
+            return new MarginLayoutParams();
         }
 
         /**
@@ -2034,126 +1526,92 @@ namespace AndroidUI.Widgets
          * {@link #HORIZONTAL}, the width is set to {@link LayoutParams#WRAP_CONTENT}
          * and the height to {@link LayoutParams#WRAP_CONTENT}.
          */
-        protected override View.LayoutParams generateDefaultLayoutParams()
+        protected override View.MarginLayoutParams generateDefaultLayoutParams()
         {
             if (mOrientation == OrientationMode.HORIZONTAL)
             {
-                return new LayoutParams(View.LayoutParams.WRAP_CONTENT, View.LayoutParams.WRAP_CONTENT);
+                return new MarginLayoutParams(View.LayoutParams.WRAP_CONTENT, View.LayoutParams.WRAP_CONTENT);
             }
             else if (mOrientation == OrientationMode.VERTICAL)
             {
-                return new LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.WRAP_CONTENT);
+                return new MarginLayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.WRAP_CONTENT);
             }
             return null;
         }
 
-        protected override View.LayoutParams generateLayoutParams(View.LayoutParams lp)
+        protected override View.MarginLayoutParams generateLayoutParams(View.LayoutParams lp)
         {
             if (sPreserveMarginParamsInLayoutParamConversion)
             {
                 if (lp is LayoutParams)
                 {
-                    return new LayoutParams((LayoutParams)lp);
+                    return new MarginLayoutParams(lp);
                 }
                 else if (lp is MarginLayoutParams)
                 {
-                    return new LayoutParams((MarginLayoutParams)lp);
+                    return (MarginLayoutParams)lp;
                 }
             }
-            return new LayoutParams(lp);
+            return new MarginLayoutParams(lp);
         }
 
 
         // Override to allow type-checking of LayoutParams.
         protected override bool checkLayoutParams(View.LayoutParams p)
         {
-            return p is LayoutParams;
+            return p is MarginLayoutParams;
         }
 
-        /**
-         * Per-child layout information associated with ViewLinearLayout.
-         *
-         * @attr ref android.R.styleable#LinearLayout_Layout_layout_weight
-         * @attr ref android.R.styleable#LinearLayout_Layout_layout_gravity
-         */
-        public new class LayoutParams : MarginLayoutParams
+        public ScrollViewHostInstance ScrollHostGetInstance()
         {
-            /**
-             * Indicates how much of the extra space in the LinearLayout will be
-             * allocated to the view associated with these LayoutParams. Specify
-             * 0 if the view should not be stretched. Otherwise the extra pixels
-             * will be pro-rated among all views whose weight is greater than 0.
-             */
-            public float weight;
+            return host;
+        }
 
-            /**
-             * Gravity for the view associated with these LayoutParams.
-             *
-             * @see android.view.Gravity
-             */
-            public int gravity = -1;
+        public void ScrollHostOnSetWillDraw(bool smoothScroll)
+        {
+            setWillDraw(isShowingDividers() || smoothScroll);
+        }
 
-            /**
-             * {@inheritDoc}
-             */
-            public LayoutParams() : base()
+        public void ScrollHostOnCancelled()
+        {
+        }
+
+        public bool ScrollHostHasChildrenToScroll()
+        {
+            return mChildrenCount != 0;
+        }
+
+        public int ScrollHostGetMeasuredWidth()
+        {
+            return getMeasuredWidth();
+        }
+
+        public int ScrollHostGetMeasuredHeight()
+        {
+            return getMeasuredHeight();
+        }
+
+        public int ScrollHostGetChildTotalMeasuredWidth()
+        {
+            if (mOrientation == OrientationMode.VERTICAL)
             {
-                weight = 0;
+                return getMeasuredWidth();
             }
-
-            /**
-             * {@inheritDoc}
-             */
-            public LayoutParams(int width, int height) : base(width, height)
+            else
             {
-                weight = 0;
+                return mTotalLength;
             }
+        }
 
-            /**
-             * Creates a new set of layout parameters with the specified width, height
-             * and weight.
-             *
-             * @param width the width, either {@link #MATCH_PARENT},
-             *        {@link #WRAP_CONTENT} or a fixed size in pixels
-             * @param height the height, either {@link #MATCH_PARENT},
-             *        {@link #WRAP_CONTENT} or a fixed size in pixels
-             * @param weight the weight
-             */
-            public LayoutParams(int width, int height, float weight) : base(width, height)
+        public int ScrollHostGetChildTotalMeasuredHeight()
+        {
+            if (mOrientation == OrientationMode.HORIZONTAL)
             {
-                this.weight = weight;
+                return getMeasuredHeight();
             }
-
-            /**
-             * {@inheritDoc}
-             */
-            public LayoutParams(View.LayoutParams p) : base(p)
+            else
             {
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public LayoutParams(MarginLayoutParams source) : base(source)
-            {
-            }
-
-            /**
-             * Copy constructor. Clones the width, height, margin values, weight,
-             * and gravity of the source.
-             *
-             * @param source The layout params to copy from.
-             */
-            public LayoutParams(LayoutParams source) : base(source)
-            {
-                weight = source.weight;
-                gravity = source.gravity;
-            }
-
-            internal override string debug(string output)
-            {
-                return output + "LinearLayout.LayoutParams={width=" + sizeToString(width) +
-                        ", height=" + sizeToString(height) + " weight=" + weight + "}";
+                return mTotalLength;
             }
         }
     }

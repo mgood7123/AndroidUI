@@ -637,7 +637,7 @@ namespace AndroidUI.Widgets
                 listItem = v;
             }
             // Search the children for the list item
-            int childCount = getChildCount();
+            int childCount = mChildrenCount;
             for (int i = 0; i < childCount; i++)
             {
                 if (getChildAt(i) == listItem)
@@ -669,7 +669,7 @@ namespace AndroidUI.Widgets
          */
         public int getLastVisiblePosition()
         {
-            return mFirstPosition + getChildCount() - 1;
+            return mFirstPosition + mChildrenCount - 1;
         }
 
         /**
@@ -1357,7 +1357,7 @@ namespace AndroidUI.Widgets
          */
         void rememberSyncState()
         {
-            if (getChildCount() > 0)
+            if (mChildrenCount > 0)
             {
                 mNeedSync = true;
                 mSyncHeight = mLayoutHeight;

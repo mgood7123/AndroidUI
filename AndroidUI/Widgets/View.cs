@@ -3262,7 +3262,7 @@ namespace AndroidUI.Widgets
             int viewWidth = getDefaultSize(getSuggestedMinimumWidth(), widthMeasureSpec);
             int viewHeight = getDefaultSize(getSuggestedMinimumHeight(), heightMeasureSpec);
 
-            int count = getChildCount();
+            int count = mChildrenCount;
             if (count > 0)
             {
                 int maxHeight = 0;
@@ -7009,7 +7009,7 @@ namespace AndroidUI.Widgets
                 mLayoutParams.resolveLayoutDirection(getLayoutDirection());
             }
 
-            int count = getChildCount();
+            int count = mChildrenCount;
             for (int i = 0; i < count; i++)
             {
                 View child = getChildAt(i);
@@ -7032,7 +7032,7 @@ namespace AndroidUI.Widgets
          */
         protected virtual void onLayout(bool changed, int l, int t, int r, int b)
         {
-            int count = getChildCount();
+            int count = mChildrenCount;
 
             for (int i = 0; i < count; i++)
             {
@@ -11000,7 +11000,7 @@ namespace AndroidUI.Widgets
             setLayoutMode(LAYOUT_MODE_UNDEFINED, false);
 
             // apply recursively
-            for (int i = 0, N = getChildCount(); i < N; i++)
+            for (int i = 0, N = mChildrenCount; i < N; i++)
             {
                 getChildAt(i).invalidateInheritedLayoutMode(layoutModeOfRoot);
             }
@@ -11678,10 +11678,10 @@ namespace AndroidUI.Widgets
         }
 
         // Child views of this View
-        private View[] mChildren;
+        internal View[] mChildren;
         // Number of valid children in the mChildren array, the rest should be null or not
         // considered as children
-        private int mChildrenCount;
+        internal int mChildrenCount;
 
         internal const int ARRAY_INITIAL_CAPACITY = 12;
         internal const int ARRAY_CAPACITY_INCREMENT = 12;
@@ -12501,7 +12501,7 @@ namespace AndroidUI.Widgets
             }
             else
             {
-                child.mLayoutParams = layout_params;
+                child.setLayoutParams(layout_params);
             }
 
             if (index < 0)
@@ -12852,7 +12852,7 @@ namespace AndroidUI.Widgets
          */
         internal void onDebugDrawMargins(SKCanvas canvas, SKPaint paint)
         {
-            for (int i = 0; i < getChildCount(); i++)
+            for (int i = 0; i < mChildrenCount; i++)
             {
                 View c = getChildAt(i);
                 c.mLayoutParams.onDebugDraw(c, canvas, paint);
@@ -12902,7 +12902,7 @@ namespace AndroidUI.Widgets
                 paint.ColorF = SKColors.Red;
                 paint.Style = SKPaintStyle.Stroke;
 
-                for (int i = 0; i < getChildCount(); i++)
+                for (int i = 0; i < mChildrenCount; i++)
                 {
                     View c = getChildAt(i);
                     if (c.getVisibility() != GONE)
@@ -12933,7 +12933,7 @@ namespace AndroidUI.Widgets
 
                 int lineLength = dipsToPixels(DEBUG_CORNERS_SIZE_DIP);
                 int lineWidth = dipsToPixels(1);
-                for (int i = 0; i < getChildCount(); i++)
+                for (int i = 0; i < mChildrenCount; i++)
                 {
                     View c = getChildAt(i);
                     if (c.getVisibility() != GONE)
@@ -13206,7 +13206,7 @@ namespace AndroidUI.Widgets
          */
         public int getChildDrawingOrder(int drawingPosition)
         {
-            return getChildDrawingOrder(getChildCount(), drawingPosition);
+            return getChildDrawingOrder(mChildrenCount, drawingPosition);
         }
 
         private bool hasChildWithZ()
@@ -14303,7 +14303,7 @@ namespace AndroidUI.Widgets
             output = debugIndent(depth);
             output += "children={";
 
-            int childCount = getChildCount();
+            int childCount = mChildrenCount;
 
             if (childCount > 0)
             {
@@ -14689,7 +14689,7 @@ namespace AndroidUI.Widgets
             mPrivateFlags2 |= PFLAG2_DRAWABLE_RESOLVED;
             onResolveDrawables(layoutDirection);
 
-            int count = getChildCount();
+            int count = mChildrenCount;
             for (int i = 0; i < count; i++)
             {
                 View child = getChildAt(i);
@@ -14728,7 +14728,7 @@ namespace AndroidUI.Widgets
         {
             resetResolvedDrawablesInternal();
 
-            int count = getChildCount();
+            int count = mChildrenCount;
             for (int i = 0; i < count; i++)
             {
                 View child = getChildAt(i);
@@ -15466,7 +15466,7 @@ namespace AndroidUI.Widgets
             }
 
             int need = 0;
-            int n = getChildCount();
+            int n = mChildrenCount;
             for (int i = 0; i < n; i++)
             {
                 int[] childState = getChildAt(i).getDrawableState();

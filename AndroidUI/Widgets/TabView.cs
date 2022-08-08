@@ -27,7 +27,7 @@ namespace AndroidUI.Widgets
 
         public TabView()
         {
-            setOrientation(HORIZONTAL);
+            setOrientation(OrientationMode.HORIZONTAL);
             InitTabView();
         }
 
@@ -56,7 +56,7 @@ namespace AndroidUI.Widgets
             tabContainer = new();
             tabContent = new();
 
-            tabs.setOrientation(VERTICAL);
+            tabs.setOrientation(OrientationMode.VERTICAL);
 
             tabContainer.SmoothScroll = true;
 
