@@ -30,46 +30,9 @@ namespace AndroidUI.Widgets
          */
         public const int SHOW_DIVIDER_END = 4;
 
-
-        /**
-         * Whether the children of this layout are baseline aligned.  Only applicable
-         * if {@link #mOrientation} is horizontal.
-         */
-        private bool mBaselineAligned = true;
-
-        /**
-         * If this layout is part of another layout that is baseline aligned,
-         * use the child at this index as the baseline.
-         *
-         * Note: this is orthogonal to {@link #mBaselineAligned}, which is concerned
-         * with whether the children of this layout are baseline aligned.
-         */
-        private int mBaselineAlignedChildIndex = -1;
-
-        /**
-         * The additional offset to the child's baseline.
-         * We'll calculate the baseline of this layout as we measure vertically; for
-         * horizontal linear layouts, the offset of 0 is appropriate.
-         */
-        private int mBaselineChildTop = 0;
-
         private OrientationMode mOrientation;
 
-        private int mGravity = Gravity.START | Gravity.TOP;
-
         private int mTotalLength;
-
-        private bool mUseLargestChild;
-
-        private int[] mMaxAscent;
-        private int[] mMaxDescent;
-
-        private const int VERTICAL_GRAVITY_COUNT = 4;
-
-        private const int INDEX_CENTER_VERTICAL = 0;
-        private const int INDEX_TOP = 1;
-        private const int INDEX_BOTTOM = 2;
-        private const int INDEX_FILL = 3;
 
         private Drawable mDivider;
         private int mDividerWidth;
@@ -77,23 +40,15 @@ namespace AndroidUI.Widgets
         private int mShowDividers;
         private int mDividerPadding;
 
-        //private int mLayoutDirection = View.LAYOUT_DIRECTION_UNDEFINED;
-
         public ListView() : base()
         {
             host = new(this);
 
+            mLayoutDirection = View.LAYOUT_DIRECTION_UNDEFINED;
+
             SmoothScroll = true;
 
             setOrientation(OrientationMode.VERTICAL);
-
-            setGravity(0);
-
-            setBaselineAligned(true);
-
-            mBaselineAlignedChildIndex = -1;
-
-            mUseLargestChild = false;
 
             mShowDividers = SHOW_DIVIDER_NONE;
             mDividerPadding = 0;
@@ -390,159 +345,16 @@ namespace AndroidUI.Widgets
 
         void drawHorizontalDivider(SKCanvas canvas, int top)
         {
-            //mDivider.setBounds(getPaddingLeft() + mDividerPadding, top,
-            //getWidth() - getPaddingRight() - mDividerPadding, top + mDividerHeight);
-            //mDivider.draw(canvas);
+            mDivider.setBounds(getPaddingLeft() + mDividerPadding, top,
+            getWidth() - getPaddingRight() - mDividerPadding, top + mDividerHeight);
+            mDivider.draw(canvas);
         }
 
         void drawVerticalDivider(SKCanvas canvas, int left)
         {
-            //mDivider.setBounds(left, getPaddingTop() + mDividerPadding,
-            //left + mDividerWidth, getHeight() - getPaddingBottom() - mDividerPadding);
-            //mDivider.draw(canvas);
-        }
-
-        /**
-         * <p>Indicates whether widgets contained within this layout are aligned
-         * on their baseline or not.</p>
-         *
-         * @return true when widgets are baseline-aligned, false otherwise
-         */
-        public bool isBaselineAligned()
-        {
-            return mBaselineAligned;
-        }
-
-        /**
-         * <p>Defines whether widgets contained in this layout are
-         * baseline-aligned or not.</p>
-         *
-         * @param baselineAligned true to align widgets on their baseline,
-         *         false otherwise
-         *
-         * @attr ref android.R.styleable#ListView_baselineAligned
-         */
-        public void setBaselineAligned(bool baselineAligned)
-        {
-            mBaselineAligned = baselineAligned;
-        }
-
-        /**
-         * When true, all children with a weight will be considered having
-         * the minimum size of the largest child. If false, all children are
-         * measured normally.
-         *
-         * @return True to measure children with a weight using the minimum
-         *         size of the largest child, false otherwise.
-         *
-         * @attr ref android.R.styleable#ListView_measureWithLargestChild
-         */
-        public bool isMeasureWithLargestChildEnabled()
-        {
-            return mUseLargestChild;
-        }
-
-        /**
-         * When set to true, all children with a weight will be considered having
-         * the minimum size of the largest child. If false, all children are
-         * measured normally.
-         *
-         * Disabled by default.
-         *
-         * @param enabled True to measure children with a weight using the
-         *        minimum size of the largest child, false otherwise.
-         *
-         * @attr ref android.R.styleable#ListView_measureWithLargestChild
-         */
-        public void setMeasureWithLargestChildEnabled(bool enabled)
-        {
-            mUseLargestChild = enabled;
-        }
-
-        public override int getBaseline()
-        {
-            if (mBaselineAlignedChildIndex < 0)
-            {
-                return base.getBaseline();
-            }
-
-            if (mChildrenCount <= mBaselineAlignedChildIndex)
-            {
-                throw new Exception("mBaselineAlignedChildIndex of ListView "
-                        + "set to an index that is out of bounds.");
-            }
-
-            View child = getChildAt(mBaselineAlignedChildIndex);
-            int childBaseline = child.getBaseline();
-
-            if (childBaseline == -1)
-            {
-                if (mBaselineAlignedChildIndex == 0)
-                {
-                    // this is just the default case, safe to return -1
-                    return -1;
-                }
-                // the user picked an index that points to something that doesn't
-                // know how to calculate its baseline.
-                throw new Exception("mBaselineAlignedChildIndex of ListView "
-                        + "points to a View that doesn't know how to get its baseline.");
-            }
-
-            // TODO: This should try to take into account the virtual offsets
-            // (See getNextLocationOffset and getLocationOffset)
-            // We should add to childTop:
-            // sum([getNextLocationOffset(getChildAt(i)) / i < mBaselineAlignedChildIndex])
-            // and also add:
-            // getLocationOffset(child)
-            int childTop = mBaselineChildTop;
-
-            if (mOrientation == OrientationMode.VERTICAL)
-            {
-                int majorGravity = mGravity & Gravity.VERTICAL_GRAVITY_MASK;
-                if (majorGravity != Gravity.TOP)
-                {
-                    switch (majorGravity)
-                    {
-                        case Gravity.BOTTOM:
-                            childTop = mBottom - mTop - mPaddingBottom - mTotalLength;
-                            break;
-
-                        case Gravity.CENTER_VERTICAL:
-                            childTop += (mBottom - mTop - mPaddingTop - mPaddingBottom -
-                                    mTotalLength) / 2;
-                            break;
-                    }
-                }
-            }
-
-            MarginLayoutParams lp = (MarginLayoutParams)child.getLayoutParams();
-            return childTop + lp.topMargin + childBaseline;
-        }
-
-        /**
-         * @return The index of the child that will be used if this layout is
-         *   part of a larger layout that is baseline aligned, or -1 if none has
-         *   been set.
-         */
-        public int getBaselineAlignedChildIndex()
-        {
-            return mBaselineAlignedChildIndex;
-        }
-
-        /**
-         * @param i The index of the child that will be used if this layout is
-         *          part of a larger layout that is baseline aligned.
-         *
-         * @attr ref android.R.styleable#ListView_baselineAlignedChildIndex
-         */
-        public void setBaselineAlignedChildIndex(int i)
-        {
-            if (i < 0 || i >= mChildrenCount)
-            {
-                throw new Exception("base aligned child index out "
-                        + "of range (0, " + mChildrenCount + ")");
-            }
-            mBaselineAlignedChildIndex = i;
+            mDivider.setBounds(left, getPaddingTop() + mDividerPadding,
+            left + mDividerWidth, getHeight() - getPaddingBottom() - mDividerPadding);
+            mDivider.draw(canvas);
         }
 
         /**
@@ -656,7 +468,6 @@ namespace AndroidUI.Widgets
 
             bool matchWidth = false;
 
-            int baselineChildIndex = mBaselineAlignedChildIndex;
             int nonSkippedChildCount = 0;
 
             // See how tall everyone is. Also remember max width.
@@ -696,15 +507,6 @@ namespace AndroidUI.Widgets
                 int totalLength = mTotalLength;
                 mTotalLength = Math.Max(totalLength, totalLength + childHeight + lp.topMargin +
                         lp.bottomMargin + getNextLocationOffset(child));
-
-                /**
-                 * If applicable, compute the additional offset to the child's baseline
-                 * we'll need later when asked {@link #getBaseline}.
-                 */
-                if (baselineChildIndex >= 0 && baselineChildIndex == i + 1)
-                {
-                    mBaselineChildTop = mTotalLength;
-                }
 
                 bool matchWidthLocally = false;
                 if (widthMode != MeasureSpec.EXACTLY && lp.width == View.LayoutParams.MATCH_PARENT)
@@ -823,21 +625,6 @@ namespace AndroidUI.Widgets
 
             bool matchHeight = false;
 
-            if (mMaxAscent == null || mMaxDescent == null)
-            {
-                mMaxAscent = new int[VERTICAL_GRAVITY_COUNT];
-                mMaxDescent = new int[VERTICAL_GRAVITY_COUNT];
-            }
-
-            int[] maxAscent = mMaxAscent;
-            int[] maxDescent = mMaxDescent;
-
-            maxAscent[0] = maxAscent[1] = maxAscent[2] = maxAscent[3] = -1;
-            maxDescent[0] = maxDescent[1] = maxDescent[2] = maxDescent[3] = -1;
-
-            bool baselineAligned = mBaselineAligned;
-            bool useLargestChild = mUseLargestChild;
-
             bool isExactly = widthMode == MeasureSpec.EXACTLY;
             int usedExcessSpace = 0;
 
@@ -914,22 +701,6 @@ namespace AndroidUI.Widgets
             if (nonSkippedChildCount > 0 && hasDividerBeforeChildAt(count))
             {
                 mTotalLength += mDividerWidth;
-            }
-
-            // Check mMaxAscent[INDEX_TOP] first because it maps to Gravity.TOP,
-            // the most common case
-            if (maxAscent[INDEX_TOP] != -1 ||
-                    maxAscent[INDEX_CENTER_VERTICAL] != -1 ||
-                    maxAscent[INDEX_BOTTOM] != -1 ||
-                    maxAscent[INDEX_FILL] != -1)
-            {
-                int ascent = Math.Max(maxAscent[INDEX_FILL],
-                        Math.Max(maxAscent[INDEX_CENTER_VERTICAL],
-                        Math.Max(maxAscent[INDEX_TOP], maxAscent[INDEX_BOTTOM])));
-                int descent = Math.Max(maxDescent[INDEX_FILL],
-                        Math.Max(maxDescent[INDEX_CENTER_VERTICAL],
-                        Math.Max(maxDescent[INDEX_TOP], maxDescent[INDEX_BOTTOM])));
-                maxHeight = Math.Max(maxHeight, ascent + descent);
             }
 
             // Add in our padding
@@ -1181,7 +952,7 @@ namespace AndroidUI.Widgets
         {
             int paddingLeft = mPaddingLeft;
 
-            int childTop;
+            int childTop = 0;
             int childLeft;
 
             // Where right end of child should go
@@ -1192,27 +963,6 @@ namespace AndroidUI.Widgets
             int childSpace = width - paddingLeft - mPaddingRight;
 
             int count = getVirtualChildCount();
-
-            int majorGravity = mGravity & Gravity.VERTICAL_GRAVITY_MASK;
-            int minorGravity = mGravity & Gravity.RELATIVE_HORIZONTAL_GRAVITY_MASK;
-
-            switch (majorGravity)
-            {
-                case Gravity.BOTTOM:
-                    // mTotalLength contains the padding already
-                    childTop = mPaddingTop + bottom - top - mTotalLength;
-                    break;
-
-                // mTotalLength contains the padding already
-                case Gravity.CENTER_VERTICAL:
-                    childTop = mPaddingTop + (bottom - top - mTotalLength) / 2;
-                    break;
-
-                case Gravity.TOP:
-                default:
-                    childTop = mPaddingTop;
-                    break;
-            }
 
             for (int i = 0; i < count; i++)
             {
@@ -1229,26 +979,18 @@ namespace AndroidUI.Widgets
                     MarginLayoutParams lp =
                             (MarginLayoutParams)child.getLayoutParams();
 
-                    int gravity = minorGravity;
                     int layoutDirection = getLayoutDirection();
-                    int absoluteGravity = Gravity.getAbsoluteGravity(gravity, layoutDirection);
-                    switch (absoluteGravity & Gravity.HORIZONTAL_GRAVITY_MASK)
+                    switch (layoutDirection)
                     {
-                        case Gravity.CENTER_HORIZONTAL:
-                            childLeft = paddingLeft + (childSpace - childWidth) / 2
-                                    + lp.leftMargin - lp.rightMargin;
-                            break;
-
-                        case Gravity.RIGHT:
+                        case LAYOUT_DIRECTION_RTL:
                             childLeft = childRight - childWidth - lp.rightMargin;
                             break;
 
-                        case Gravity.LEFT:
+                        case LAYOUT_DIRECTION_LTR:
                         default:
                             childLeft = paddingLeft + lp.leftMargin;
                             break;
                     }
-
                     if (hasDividerBeforeChildAt(i))
                     {
                         childTop += mDividerHeight;
@@ -1306,28 +1048,15 @@ namespace AndroidUI.Widgets
 
             int count = getVirtualChildCount();
 
-            int majorGravity = mGravity & Gravity.RELATIVE_HORIZONTAL_GRAVITY_MASK;
-            int minorGravity = mGravity & Gravity.VERTICAL_GRAVITY_MASK;
-
-            bool baselineAligned = mBaselineAligned;
-
-            int[] maxAscent = mMaxAscent;
-            int[] maxDescent = mMaxDescent;
-
             int layoutDirection = getLayoutDirection();
-            switch (Gravity.getAbsoluteGravity(majorGravity, layoutDirection))
+            switch (layoutDirection)
             {
-                case Gravity.RIGHT:
+                case LAYOUT_DIRECTION_RTL:
                     // mTotalLength contains the padding already
                     childLeft = mPaddingLeft + right - left - mTotalLength;
                     break;
 
-                case Gravity.CENTER_HORIZONTAL:
-                    // mTotalLength contains the padding already
-                    childLeft = mPaddingLeft + (right - left - mTotalLength) / 2;
-                    break;
-
-                case Gravity.LEFT:
+                case LAYOUT_DIRECTION_LTR:
                 default:
                     childLeft = mPaddingLeft;
                     break;
@@ -1359,51 +1088,7 @@ namespace AndroidUI.Widgets
                     MarginLayoutParams lp =
                             (MarginLayoutParams)child.getLayoutParams();
 
-                    if (baselineAligned && lp.height != View.LayoutParams.MATCH_PARENT)
-                    {
-                        childBaseline = child.getBaseline();
-                    }
-
-                    int gravity = minorGravity;
-
-                    switch (gravity & Gravity.VERTICAL_GRAVITY_MASK)
-                    {
-                        case Gravity.TOP:
-                            childTop = paddingTop + lp.topMargin;
-                            if (childBaseline != -1)
-                            {
-                                childTop += maxAscent[INDEX_TOP] - childBaseline;
-                            }
-                            break;
-
-                        case Gravity.CENTER_VERTICAL:
-                            // Removed support for baseline alignment when layout_gravity or
-                            // gravity == center_vertical. See bug #1038483.
-                            // Keep the code around if we need to re-enable this feature
-                            // if (childBaseline != -1) {
-                            //     // Align baselines vertically only if the child is smaller than us
-                            //     if (childSpace - childHeight > 0) {
-                            //         childTop = paddingTop + (childSpace / 2) - childBaseline;
-                            //     } else {
-                            //         childTop = paddingTop + (childSpace - childHeight) / 2;
-                            //     }
-                            // } else {
-                            childTop = paddingTop + (childSpace - childHeight) / 2
-                                    + lp.topMargin - lp.bottomMargin;
-                            break;
-
-                        case Gravity.BOTTOM:
-                            childTop = childBottom - childHeight - lp.bottomMargin;
-                            if (childBaseline != -1)
-                            {
-                                int descent = child.getMeasuredHeight() - childBaseline;
-                                childTop -= maxDescent[INDEX_BOTTOM] - descent;
-                            }
-                            break;
-                        default:
-                            childTop = paddingTop;
-                            break;
-                    }
+                    childTop = paddingTop + lp.topMargin;
 
                     if (hasDividerBeforeChildAt(childIndex))
                     {
@@ -1450,66 +1135,6 @@ namespace AndroidUI.Widgets
         public OrientationMode getOrientation()
         {
             return mOrientation;
-        }
-
-        /**
-         * Describes how the child views are positioned. Defaults to GRAVITY_TOP. If
-         * this layout has a VERTICAL orientation, this controls where all the child
-         * views are placed if there is extra vertical space. If this layout has a
-         *  HORIZONTAL orientation, this controls the alignment of the children.
-         *
-         * @param gravity See {@link android.view.Gravity}
-         *
-         * @attr ref android.R.styleable#ListView_gravity
-         */
-        public void setGravity(int gravity)
-        {
-            if (mGravity != gravity)
-            {
-                if ((gravity & Gravity.RELATIVE_HORIZONTAL_GRAVITY_MASK) == 0)
-                {
-                    gravity |= Gravity.START;
-                }
-
-                if ((gravity & Gravity.VERTICAL_GRAVITY_MASK) == 0)
-                {
-                    gravity |= Gravity.TOP;
-                }
-
-                mGravity = gravity;
-                requestLayout();
-            }
-        }
-
-        /**
-         * Returns the current gravity. See {@link android.view.Gravity}
-         *
-         * @return the current gravity.
-         * @see #setGravity
-         */
-        public int getGravity()
-        {
-            return mGravity;
-        }
-
-        public void setHorizontalGravity(int horizontalGravity)
-        {
-            int gravity = horizontalGravity & Gravity.RELATIVE_HORIZONTAL_GRAVITY_MASK;
-            if ((mGravity & Gravity.RELATIVE_HORIZONTAL_GRAVITY_MASK) != gravity)
-            {
-                mGravity = mGravity & ~Gravity.RELATIVE_HORIZONTAL_GRAVITY_MASK | gravity;
-                requestLayout();
-            }
-        }
-
-        public void setVerticalGravity(int verticalGravity)
-        {
-            int gravity = verticalGravity & Gravity.VERTICAL_GRAVITY_MASK;
-            if ((mGravity & Gravity.VERTICAL_GRAVITY_MASK) != gravity)
-            {
-                mGravity = mGravity & ~Gravity.VERTICAL_GRAVITY_MASK | gravity;
-                requestLayout();
-            }
         }
 
         override
