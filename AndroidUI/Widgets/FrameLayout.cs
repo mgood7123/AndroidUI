@@ -357,7 +357,7 @@ namespace AndroidUI.Widgets
         override
         public LayoutParams generateLayoutParams()
         {
-            return new FrameLayout.LayoutParams();
+            return new LayoutParams();
         }
 
         override
@@ -397,7 +397,7 @@ namespace AndroidUI.Widgets
          *
          * @attr ref android.R.styleable#FrameLayout_Layout_layout_gravity
          */
-        public new class LayoutParams : View.MarginLayoutParams
+        public new class LayoutParams : MarginLayoutParams
         {
             /**
              * Value for {@link #gravity} indicating that a gravity has not been
@@ -444,7 +444,7 @@ namespace AndroidUI.Widgets
             {
             }
 
-            public LayoutParams(View.MarginLayoutParams source) : base(source)
+            public LayoutParams(MarginLayoutParams source) : base(source)
             {
             }
 

@@ -324,7 +324,7 @@ namespace AndroidUI.Execution
         /** @hide */
         internal static Handler getMain(Context context)
         {
-            return context.storage.GetOrCreate<Handler>(StorageKeys.MAIN_THREAD_HANDLER, () => new Handler(Looper.getMainLooper(context))).Value;
+            return context.storage.GetOrCreate(StorageKeys.MAIN_THREAD_HANDLER, () => new Handler(Looper.getMainLooper(context))).Value;
         }
 
         /** @hide */

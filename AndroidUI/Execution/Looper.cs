@@ -109,7 +109,7 @@ namespace AndroidUI.Execution
                 throw new Exception("Only one Looper may be created per thread");
             }
             Looper l = new(context, quitAllowed);
-            context.storage.SetOrCreate<Looper>(StorageKeys.LOOPER, l, () => l, thread);
+            context.storage.SetOrCreate(StorageKeys.LOOPER, l, () => l, thread);
         }
 
         /**
@@ -144,7 +144,7 @@ namespace AndroidUI.Execution
          */
         internal static void setObserver(Context context, Observer observer)
         {
-            context.storage.SetOrCreate<Observer>(StorageKeys.LOOPER_OBSERVER, (ValueHolder<Observer>)observer, () => observer);
+            context.storage.SetOrCreate(StorageKeys.LOOPER_OBSERVER, (ValueHolder<Observer>)observer, () => observer);
         }
 
         static void LogEnter(TextWriter logging, string msg)

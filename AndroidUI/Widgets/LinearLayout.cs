@@ -2013,7 +2013,7 @@ namespace AndroidUI.Widgets
         override
         public LayoutParams generateLayoutParams()
         {
-            return new LinearLayout.LayoutParams();
+            return new LayoutParams();
         }
 
         /**

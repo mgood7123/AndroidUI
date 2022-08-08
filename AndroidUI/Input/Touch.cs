@@ -6,7 +6,7 @@ namespace AndroidUI.Input
     public partial class Touch
     {
 
-        Utils.LogTag Log;
+        LogTag Log;
         public Touch()
         {
             Log = new(this);

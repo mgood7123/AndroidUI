@@ -1,6 +1,5 @@
 ﻿using AndroidUI.Applications;
 using AndroidUI.Execution;
-using AndroidUI.Utils;
 using AndroidUITestFramework;
 
 namespace AndroidUITest

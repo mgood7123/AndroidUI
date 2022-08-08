@@ -16,7 +16,6 @@
 
 using SkiaSharp;
 using System.Text;
-using System.Text.Unicode;
 
 namespace AndroidUI.Graphics
 {

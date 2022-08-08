@@ -42,7 +42,7 @@ namespace AndroidUI.Widgets
                 tabContent.removeAllViews();
                 tabContent.addView((View)v.getTag(), MATCH_PARENT_W__MATCH_PARENT_H);
             });
-            tabs.addView(a, new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.WRAP_CONTENT));
+            tabs.addView(a, new LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.WRAP_CONTENT));
         }
 
         public void addTab(string title, RunnableWithReturn<View> builder)
@@ -62,8 +62,8 @@ namespace AndroidUI.Widgets
 
             tabContainer.addView(tabs);
 
-            addView(tabContainer, new LinearLayout.LayoutParams(View.LayoutParams.WRAP_CONTENT, View.LayoutParams.MATCH_PARENT));
-            addView(tabContent, new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.MATCH_PARENT, 1));
+            addView(tabContainer, new LayoutParams(View.LayoutParams.WRAP_CONTENT, View.LayoutParams.MATCH_PARENT));
+            addView(tabContent, new LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.MATCH_PARENT, 1));
             tabContainer.setZ(1);
             tabContainer.setBackgroundColor(Color.BLACK);
         }
