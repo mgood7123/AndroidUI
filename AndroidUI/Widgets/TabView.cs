@@ -21,7 +21,7 @@ namespace AndroidUI.Widgets
 {
     public class TabView : LinearLayout
     {
-        FlywheelScrollView tabContainer;
+        ScrollView tabContainer;
         LinearLayout tabs;
         FrameLayout tabContent;
 

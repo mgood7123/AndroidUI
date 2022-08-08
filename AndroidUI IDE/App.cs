@@ -128,8 +128,8 @@ namespace AndroidUI.IDE
             var projects = getProjects("C:\\Users\\small\\source\\repos");
 
             LinearLayout linearLayout = new();
-            FlywheelScrollView ProjectContent = new();
-            FlywheelScrollView ConsoleOutput = new();
+            ScrollView ProjectContent = new();
+            ScrollView ConsoleOutput = new();
 
             Topten_RichTextKit_TextView ConsoleOutputTextView = new();
             LinearLayout projectsList = new();
@@ -216,7 +216,7 @@ namespace AndroidUI.IDE
             SetContentView(linearLayout);
         }
 
-        private void setOnClickBuildProject(FlywheelScrollView ConsoleOutput, Topten_RichTextKit_TextView ConsoleOutputTextView, string proj, Topten_RichTextKit_TextView button)
+        private void setOnClickBuildProject(ScrollView ConsoleOutput, Topten_RichTextKit_TextView ConsoleOutputTextView, string proj, Topten_RichTextKit_TextView button)
         {
             button.setOnClickListener(v =>
             {

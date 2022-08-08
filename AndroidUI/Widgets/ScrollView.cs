@@ -10,7 +10,7 @@ using System.Diagnostics;
 
 namespace AndroidUI.Widgets
 {
-    public class FlywheelScrollView : FrameLayout, Utils.Widgets.ScrollHost
+    public class ScrollView : FrameLayout, Utils.Widgets.ScrollHost
     {
         Utils.Widgets.ScrollViewHostInstance host;
 
@@ -82,7 +82,7 @@ namespace AndroidUI.Widgets
 
         public bool LimitScrollingToChildViewBounds { get => host.limitScrollingToViewBounds; set => host.limitScrollingToViewBounds = value; }
 
-        public FlywheelScrollView() : base()
+        public ScrollView() : base()
         {
             host = new(this);
 

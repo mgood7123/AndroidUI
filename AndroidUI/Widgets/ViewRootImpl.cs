@@ -1685,7 +1685,7 @@ namespace AndroidUI.Widgets
             optionsPage.addView(CreateSettingsRow("ViewRootImpl: Debug Input Resize", "Enabled", "Disabled", () => DEBUG_INPUT_RESIZE, value => DEBUG_INPUT_RESIZE = value));
             optionsPage.addView(CreateSettingsRow("ViewRootImpl: Debug Blast", "Enabled", "Disabled", () => DEBUG_BLAST, value => DEBUG_BLAST = value));
 
-            FlywheelScrollView sv = new FlywheelScrollView();
+            ScrollView sv = new ScrollView();
             sv.addView(optionsPage, View.MATCH_PARENT_W__WRAP_CONTENT_H);
             options_page = sv;
 

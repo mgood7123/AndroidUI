@@ -264,7 +264,7 @@ namespace AndroidUI_Application_Windows
                 var bm = BitmapFactory.decodeFile("C:/Users/small/Pictures/Screenshot 2022-05-19 034147.jpeg");
                 image.setImageBitmap(bm);
 
-                var s = new FlywheelScrollView();
+                var s = new ScrollView();
                 s.SmoothScroll = false;
                 s.LimitScrollingToChildViewBounds = false;
                 s.addView(image);
@@ -292,7 +292,7 @@ namespace AndroidUI_Application_Windows
                 image.setImageBitmap(bm);
                 image.setScaleType(ImageView.ScaleType.MATRIX);
 
-                var scrollView = new FlywheelScrollView();
+                var scrollView = new ScrollView();
                 scrollView.ShowDebugText = true;
                 scrollView.SmoothScroll = true;
                 scrollView.addView(image);
@@ -305,7 +305,7 @@ namespace AndroidUI_Application_Windows
                 image.setImageBitmap(bm);
                 image.setScaleType(ImageView.ScaleType.MATRIX);
 
-                var s = new FlywheelScrollView();
+                var s = new ScrollView();
                 s.ShowDebugText = true;
                 s.SmoothScroll = true;
                 s.LimitScrollingToChildViewBounds = false;
@@ -352,7 +352,7 @@ namespace AndroidUI_Application_Windows
             });
             tabView.addTab("Scrolling 3 (large, clickable)", () =>
             {
-                FlywheelScrollView scrollView = new();
+                ScrollView scrollView = new();
                 scrollView.ShowDebugText = true;
                 scrollView.SmoothScroll = true;
 
@@ -372,7 +372,7 @@ namespace AndroidUI_Application_Windows
             });
             tabView.addTab("Scrolling 3 (large, non-clickable)", () =>
             {
-                FlywheelScrollView scrollView = new();
+                ScrollView scrollView = new();
                 scrollView.ShowDebugText = true;
                 scrollView.SmoothScroll = true;
 
@@ -385,7 +385,7 @@ namespace AndroidUI_Application_Windows
 
             tabView.addTab("Scrolling 3 (large, HORIZONTAL)", () =>
             {
-                FlywheelScrollView scrollView = new();
+                ScrollView scrollView = new();
                 scrollView.ShowDebugText = true;
                 scrollView.SmoothScroll = true;
                 scrollView.LimitScrollingToChildViewBounds = true;
@@ -399,7 +399,7 @@ namespace AndroidUI_Application_Windows
 
             tabView.addTab("Scrolling 3 (large, VERTICAL)", () =>
             {
-                FlywheelScrollView scrollView = new();
+                ScrollView scrollView = new();
                 scrollView.ShowDebugText = true;
                 scrollView.SmoothScroll = true;
                 scrollView.LimitScrollingToChildViewBounds = true;
@@ -491,7 +491,7 @@ namespace AndroidUI_Application_Windows
 
             tabView.addTab("Scrolling Buttons", () =>
             {
-                FlywheelScrollView scrollView = new();
+                ScrollView scrollView = new();
                 scrollView.ShowDebugText = true;
                 scrollView.SmoothScroll = true;
                 scrollView.LimitScrollingToChildViewBounds = true;
