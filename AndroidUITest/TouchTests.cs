@@ -195,7 +195,7 @@ namespace AndroidUITest
                         touch.addTouch(0, 5, 5, 0, 0);
                         touch.removeTouch(0, 6, 6, 1, 1);
                         var touchData = touch.getTouchAtCurrentIndex();
-                        expectTouchDataDidMove(touchData, "removed first", 0, 6, 6, 1, 1, 1, 1, Touch.State.TOUCH_UP);
+                        expectTouchDataDidNotMove(touchData, "removed first", 0, 6, 6, 1, 1, 1, 1, Touch.State.TOUCH_UP);
                     }
                 }
 
@@ -267,6 +267,8 @@ namespace AndroidUITest
                         touch.addTouch(1, 3, 3, 3, 3);
                         expectContainerUsed(touch, "added first", 1, "one", 2, "two", 1, "one");
                         touch.moveTouch(0, 6, 6, 1, 1);
+                        expectContainerUsed(touch, "moved first after added second", 1, "One", 2, "two", 1, "One");
+                        touch.moveTouch(0, 5, 5, 1, 1);
                         expectContainerUsed(touch, "moved first after added second", 0, "zero", 2, "two", 0, "zero");
                         touch.moveTouch(1, 68, 68, 81, 81);
                         expectContainerUsed(touch, "moved first", 1, "one", 2, "two", 1, "one");
@@ -328,7 +330,7 @@ namespace AndroidUITest
                         touch.addTouch(1, 15, 15, 10, 10);
                         touch.removeTouch(0, 6, 6, 1, 1);
                         var touchData = touch.getTouchAt(0);
-                        expectTouchDataDidMove(touchData, "removed first", 0, 6, 6, 1, 1, 1, 1, Touch.State.TOUCH_UP);
+                        expectTouchDataDidNotMove(touchData, "removed first", 0, 6, 6, 1, 1, 1, 1, Touch.State.TOUCH_UP);
                     }
                 }
 

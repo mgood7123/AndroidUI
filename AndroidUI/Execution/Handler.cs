@@ -88,9 +88,9 @@ namespace AndroidUI.Execution
 
         public class ActionCallback : Callback
         {
-            Func<Message, bool> func;
+            RunnableWithReturn<Message, bool> func;
 
-            public ActionCallback(Func<Message, bool> func)
+            public ActionCallback(RunnableWithReturn<Message, bool> func)
             {
                 ArgumentNullException.ThrowIfNull(func, nameof(func));
                 this.func = func;
@@ -632,7 +632,7 @@ namespace AndroidUI.Execution
 
             if (Looper.myLooper(mLooper.context) == mLooper)
             {
-                r.run();
+                r.Invoke();
                 return true;
             }
 
@@ -1002,7 +1002,7 @@ namespace AndroidUI.Execution
 
         private static void handleCallback(Message message)
         {
-            message.callback.run();
+            message.callback.Invoke();
         }
 
         Looper mLooper;
@@ -1011,35 +1011,36 @@ namespace AndroidUI.Execution
         bool mAsynchronous;
         IMessenger mMessenger;
 
-        private class BlockingRunnable : Runnable
+        private class BlockingRunnable
         {
             private Runnable mTask;
             private bool mDone;
             private readonly object LOCK = new();
+            Runnable runnable;
 
             public BlockingRunnable(Runnable task)
             {
                 mTask = task;
-            }
-
-            override public void run()
-            {
-                try
+                runnable = () =>
                 {
-                    mTask.run();
-                }
-                finally
-                {
-                    lock (LOCK) {
-                        mDone = true;
-                        LOCK.NotifyAll();
+                    try
+                    {
+                        mTask.Invoke();
                     }
-                }
+                    finally
+                    {
+                        lock (LOCK)
+                        {
+                            mDone = true;
+                            LOCK.NotifyAll();
+                        }
+                    }
+                };
             }
 
             public bool postAndWait(Handler handler, long timeout)
             {
-                if (!handler.post(this))
+                if (!handler.post(runnable))
                 {
                     return false;
                 }

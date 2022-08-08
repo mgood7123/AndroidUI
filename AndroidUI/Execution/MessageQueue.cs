@@ -369,7 +369,7 @@ namespace AndroidUI.Execution
 
             int pendingIdleHandlerCount = -1; // -1 only during first iteration
             int nextPollTimeoutMillis = 0;
-            for (; ; )
+            for(;;)
             {
                 if (nextPollTimeoutMillis != 0)
                 {
@@ -513,7 +513,7 @@ namespace AndroidUI.Execution
 
             int pendingIdleHandlerCount = -1; // -1 only during first iteration
             int nextPollTimeoutMillis = 0;
-            for (; ; )
+            for(;;)
             {
                 if (nextPollTimeoutMillis != 0)
                 {
@@ -810,7 +810,7 @@ namespace AndroidUI.Execution
                     // and the message is the earliest asynchronous message in the queue.
                     needWake = mBlocked && p.target == null && msg.isAsynchronous();
                     Message prev;
-                    for (; ; )
+                    for(;;)
                     {
                         prev = p;
                         p = p.next;
@@ -1225,7 +1225,7 @@ namespace AndroidUI.Execution
                 else
                 {
                     Message n;
-                    for (; ; )
+                    for(;;)
                     {
                         n = p.next;
                         if (n == null)

@@ -38,7 +38,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ApplicationHost-Windows", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AndroidUI-Application-Windows", "AndroidUI-Application-Windows\AndroidUI-Application-Windows.csproj", "{FD29028D-1992-4C6E-BAA7-74FC33CA859C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AndroidUI.ResourcePacker", "AndroidUI.ResourcePacker\AndroidUI.ResourcePacker.csproj", "{FF213CBC-2365-4B38-9FD2-7E8C16D01EB3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AndroidUI.ResourcePacker", "AndroidUI.ResourcePacker\AndroidUI.ResourcePacker.csproj", "{FF213CBC-2365-4B38-9FD2-7E8C16D01EB3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AndroidUI IDE", "AndroidUI IDE\AndroidUI IDE.csproj", "{FC6170ED-1A06-4E2D-86FB-DA842CC820E9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -264,6 +266,26 @@ Global
 		{FF213CBC-2365-4B38-9FD2-7E8C16D01EB3}.Release|x64.Build.0 = Release|Any CPU
 		{FF213CBC-2365-4B38-9FD2-7E8C16D01EB3}.Release|x86.ActiveCfg = Release|Any CPU
 		{FF213CBC-2365-4B38-9FD2-7E8C16D01EB3}.Release|x86.Build.0 = Release|Any CPU
+		{FC6170ED-1A06-4E2D-86FB-DA842CC820E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FC6170ED-1A06-4E2D-86FB-DA842CC820E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FC6170ED-1A06-4E2D-86FB-DA842CC820E9}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{FC6170ED-1A06-4E2D-86FB-DA842CC820E9}.Debug|ARM.Build.0 = Debug|Any CPU
+		{FC6170ED-1A06-4E2D-86FB-DA842CC820E9}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{FC6170ED-1A06-4E2D-86FB-DA842CC820E9}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{FC6170ED-1A06-4E2D-86FB-DA842CC820E9}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{FC6170ED-1A06-4E2D-86FB-DA842CC820E9}.Debug|x64.Build.0 = Debug|Any CPU
+		{FC6170ED-1A06-4E2D-86FB-DA842CC820E9}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{FC6170ED-1A06-4E2D-86FB-DA842CC820E9}.Debug|x86.Build.0 = Debug|Any CPU
+		{FC6170ED-1A06-4E2D-86FB-DA842CC820E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FC6170ED-1A06-4E2D-86FB-DA842CC820E9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FC6170ED-1A06-4E2D-86FB-DA842CC820E9}.Release|ARM.ActiveCfg = Release|Any CPU
+		{FC6170ED-1A06-4E2D-86FB-DA842CC820E9}.Release|ARM.Build.0 = Release|Any CPU
+		{FC6170ED-1A06-4E2D-86FB-DA842CC820E9}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{FC6170ED-1A06-4E2D-86FB-DA842CC820E9}.Release|ARM64.Build.0 = Release|Any CPU
+		{FC6170ED-1A06-4E2D-86FB-DA842CC820E9}.Release|x64.ActiveCfg = Release|Any CPU
+		{FC6170ED-1A06-4E2D-86FB-DA842CC820E9}.Release|x64.Build.0 = Release|Any CPU
+		{FC6170ED-1A06-4E2D-86FB-DA842CC820E9}.Release|x86.ActiveCfg = Release|Any CPU
+		{FC6170ED-1A06-4E2D-86FB-DA842CC820E9}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

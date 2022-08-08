@@ -21,7 +21,7 @@ namespace AndroidUI.Utils
 {
     public class LogTag
     {
-        string DEFAULT_TAG = "DEFAULT_TAG";
+        object DEFAULT_TAG = "DEFAULT_TAG";
 
         public LogTag()
         {
@@ -40,7 +40,7 @@ namespace AndroidUI.Utils
             }
             else
             {
-                DEFAULT_TAG = obj_or_string.GetType().Name;
+                DEFAULT_TAG = obj_or_string;
             }
         }
 
@@ -54,17 +54,17 @@ namespace AndroidUI.Utils
             v(msg, append_new_line);
         }
 
-        public void v(string message) => Log.log_internal(DEFAULT_TAG, message);
-        public void i(string message) => Log.log_internal(DEFAULT_TAG, message);
-        public void d(string message) => Log.log_internal(DEFAULT_TAG, message);
-        public void w(string message) => Log.log_internal(DEFAULT_TAG, message);
-        public void e(string message) => Log.log_internal(DEFAULT_TAG, message);
+        public void v(string message) => Log.log_internal(DEFAULT_TAG.ToString(), message);
+        public void i(string message) => Log.log_internal(DEFAULT_TAG.ToString(), message);
+        public void d(string message) => Log.log_internal(DEFAULT_TAG.ToString(), message);
+        public void w(string message) => Log.log_internal(DEFAULT_TAG.ToString(), message);
+        public void e(string message) => Log.log_internal(DEFAULT_TAG.ToString(), message);
 
-        public void v(string message, bool append_new_line) => Log.log_internal(DEFAULT_TAG, message, append_new_line);
-        public void i(string message, bool append_new_line) => Log.log_internal(DEFAULT_TAG, message, append_new_line);
-        public void d(string message, bool append_new_line) => Log.log_internal(DEFAULT_TAG, message, append_new_line);
-        public void w(string message, bool append_new_line) => Log.log_internal(DEFAULT_TAG, message, append_new_line);
-        public void e(string message, bool append_new_line) => Log.log_internal(DEFAULT_TAG, message, append_new_line);
+        public void v(string message, bool append_new_line) => Log.log_internal(DEFAULT_TAG.ToString(), message, append_new_line);
+        public void i(string message, bool append_new_line) => Log.log_internal(DEFAULT_TAG.ToString(), message, append_new_line);
+        public void d(string message, bool append_new_line) => Log.log_internal(DEFAULT_TAG.ToString(), message, append_new_line);
+        public void w(string message, bool append_new_line) => Log.log_internal(DEFAULT_TAG.ToString(), message, append_new_line);
+        public void e(string message, bool append_new_line) => Log.log_internal(DEFAULT_TAG.ToString(), message, append_new_line);
 
 
         public void v(string tag, string message) => Log.log_internal(tag, message);
@@ -865,7 +865,7 @@ namespace AndroidUI.Utils
         TextWriter textWriter;
         int index;
         int previousIndex;
-        public Func<string> NewLine;
+        public RunnableWithReturn<string> NewLine;
         private static object LOCK = new();
 
         public NewLineDetector(TextWriter textWriter, string from)

@@ -176,10 +176,10 @@ namespace AndroidUI.AnimationFramework.Animator
                     callback.doAnimationFrame(frameTime);
                     if (mCommitCallbacks.Contains(callback))
                     {
-                        getProvider().postCommitCallback(Runnable.Create(() =>
+                        getProvider().postCommitCallback(() =>
                         {
                             commitAnimationFrame(callback, getProvider().getFrameTime());
-                        }));
+                        });
                     }
                 }
             }

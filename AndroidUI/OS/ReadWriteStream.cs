@@ -1,17 +1,86 @@
 ﻿namespace AndroidUI.OS
 {
+
     /// <summary>
     /// a ReadWrite stream that supports both reading from and writing to
     /// <para>
     /// does not take ownership of the given stream unless `owns` is set to `true`
     /// </para>
     /// </summary>
-    class ReadWriteStream : Stream
+    public class ReadWriteStream : Stream
     {
         private readonly Stream innerStream;
         private long readPosition;
         private long writePosition;
         bool owns;
+
+        /// <summary>
+        /// the default implementation is <code>return stream.Read(buffer, offset, count);</code>
+        /// </summary>
+        /// <returns></returns>
+        protected virtual int OnRead(Stream stream, byte[] buffer, int offset, int count)
+        {
+            return stream.Read(buffer, offset, count);
+        }
+
+        /// <summary>
+        /// the default implementation is <code>return stream.Read(buffer);</code>
+        /// </summary>
+        /// <returns></returns>
+        protected virtual int OnRead(Stream stream, Span<byte> buffer)
+        {
+            return stream.Read(buffer);
+        }
+
+        /// <summary>
+        /// the default implementation is <code>return stream.ReadByte();</code>
+        /// </summary>
+        /// <returns></returns>
+        protected virtual int OnReadByte(Stream stream)
+        {
+            return stream.ReadByte();
+        }
+
+        /// <summary>
+        /// the default implementation is <code>stream.Write(buffer, offset, count);</code>
+        /// </summary>
+        protected virtual void OnWrite(Stream stream, byte[] buffer, int offset, int count)
+        {
+            stream.Write(buffer, offset, count);
+        }
+
+        /// <summary>
+        /// the default implementation is <code>stream.Write(buffer);</code>
+        /// </summary>
+        protected virtual void OnWrite(Stream stream, ReadOnlySpan<byte> buffer)
+        {
+            stream.Write(buffer);
+        }
+
+        /// <summary>
+        /// the default implementation is <code>stream.WriteByte(value);</code>
+        /// </summary>
+        protected virtual void OnWriteByte(Stream stream, byte value)
+        {
+            stream.WriteByte(value);
+        }
+
+        /// <summary>
+        /// the default implementation is
+        /// <code>
+        /// byte[] buffer = new byte[bufferSize];
+        /// int read;
+        /// while ((read = Read(buffer, 0, buffer.Length)) != 0)
+        ///     destination.Write(buffer, 0, read);
+        /// </code>
+        /// </summary>
+        protected virtual void OnCopyTo(Stream destination, int bufferSize)
+        {
+            byte[] buffer = new byte[bufferSize];
+            int read;
+            while ((read = Read(buffer, 0, buffer.Length)) != 0)
+                destination.Write(buffer, 0, read);
+        }
 
         public ReadWriteStream(Stream stream, bool owns = false)
         {
@@ -28,11 +97,11 @@
             }
         }
 
-        public override bool CanRead { get { return true; } }
+        public sealed override bool CanRead { get { return true; } }
 
-        public override bool CanSeek { get { return false; } }
+        public sealed override bool CanSeek { get { return false; } }
 
-        public override bool CanWrite { get { return true; } }
+        public sealed override bool CanWrite { get { return true; } }
 
         public override void Flush()
         {
@@ -53,7 +122,7 @@
             }
         }
 
-        public override long Position
+        public sealed override long Position
         {
             get { throw new NotSupportedException(); }
             set { throw new NotSupportedException(); }
@@ -145,37 +214,36 @@
             }
         }
 
-        public override int Read(byte[] buffer, int offset, int count)
+        public sealed override int Read(byte[] buffer, int offset, int count)
         {
             lock (innerStream)
             {
                 innerStream.Position = readPosition;
-                int red = innerStream.Read(buffer, offset, count);
+                int bytes = OnRead(innerStream, buffer, offset, count);
+                readPosition = innerStream.Position;
+                return bytes;
+            }
+        }
+
+        public sealed override int Read(Span<byte> buffer)
+        {
+            lock (innerStream)
+            {
+                innerStream.Position = readPosition;
+                int red = OnRead(innerStream, buffer);
                 readPosition = innerStream.Position;
 
                 return red;
             }
         }
 
-        public override int Read(Span<byte> buffer)
+
+        public sealed override int ReadByte()
         {
             lock (innerStream)
             {
                 innerStream.Position = readPosition;
-                int red = innerStream.Read(buffer);
-                readPosition = innerStream.Position;
-
-                return red;
-            }
-        }
-
-
-        public override int ReadByte()
-        {
-            lock (innerStream)
-            {
-                innerStream.Position = readPosition;
-                int red = innerStream.ReadByte();
+                int red = OnReadByte(innerStream);
                 readPosition = innerStream.Position;
 
                 return red;
@@ -189,45 +257,45 @@
 
         public override void SetLength(long value)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
-        public override void Write(byte[] buffer, int offset, int count)
+        public sealed override void Write(byte[] buffer, int offset, int count)
         {
             lock (innerStream)
             {
                 innerStream.Position = writePosition;
-                innerStream.Write(buffer, offset, count);
+                OnWrite(innerStream, buffer, offset, count);
                 writePosition = innerStream.Position;
             }
         }
 
-        public override void Write(ReadOnlySpan<byte> buffer)
+        public sealed override void Write(ReadOnlySpan<byte> buffer)
         {
             lock (innerStream)
             {
                 innerStream.Position = writePosition;
-                innerStream.Write(buffer);
+                OnWrite(innerStream, buffer);
                 writePosition = innerStream.Position;
             }
         }
 
-        public override void WriteByte(byte value)
+        public sealed override void WriteByte(byte value)
         {
             lock (innerStream)
             {
                 innerStream.Position = writePosition;
-                innerStream.WriteByte(value);
+                OnWriteByte(innerStream, value);
                 writePosition = innerStream.Position;
             }
         }
 
-        public override void CopyTo(Stream destination, int bufferSize)
+        public sealed override void CopyTo(Stream destination, int bufferSize)
         {
             lock (innerStream)
             {
                 innerStream.Position = readPosition;
-                innerStream.CopyTo(destination, bufferSize);
+                OnCopyTo(destination, bufferSize);
                 readPosition = innerStream.Position;
             }
         }

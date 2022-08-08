@@ -72,7 +72,7 @@ namespace AndroidUI.Utils.Widgets
          */
         private bool mNotifyOnChange = true;
 
-        Func<Topten_RichTextKit_TextView> creator;
+        RunnableWithReturn<Topten_RichTextKit_TextView> creator;
 
         /**
          * Constructor. This constructor will result in the underlying data collection being
@@ -81,12 +81,12 @@ namespace AndroidUI.Utils.Widgets
          * @param creator The creator to use to create text views.
          * @param objects The objects to represent in the ListView.
          */
-        public ArrayAdapter(Func<Topten_RichTextKit_TextView> creator, params T[] objects)
+        public ArrayAdapter(RunnableWithReturn<Topten_RichTextKit_TextView> creator, params T[] objects)
             : this(creator, objects.ToList())
         {
         }
 
-        public ArrayAdapter(Func<Topten_RichTextKit_TextView> creator, List<T> objects)
+        public ArrayAdapter(RunnableWithReturn<Topten_RichTextKit_TextView> creator, List<T> objects)
         {
             mObjects = objects;
             this.creator = creator;

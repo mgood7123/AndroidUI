@@ -9,6 +9,7 @@ using AndroidUI.Graphics.Drawables;
 using AndroidUI.Input;
 using AndroidUI.Utils;
 using AndroidUI.Utils.Input;
+using AndroidUI.Utils.Skia;
 using AndroidUI.Utils.Widgets;
 using AndroidUI.Widgets;
 using SkiaSharp;
@@ -342,26 +343,7 @@ namespace AndroidUI_Application_Windows
 
                 return linearLayout;
             });
-            tabView.addTab("Scrolling 3", () =>
-            {
-                FlywheelScrollView scrollView = new();
-                scrollView.ShowDebugText = true;
-
-                ColorView colorView = new ColorView();
-                colorView.setOnClickListener(v =>
-                {
-                    colorView.Color = new SKColor(
-                        (byte)Random.Shared.Next(255),
-                        (byte)Random.Shared.Next(255),
-                        (byte)Random.Shared.Next(255)
-                    );
-                });
-
-                scrollView.addView(colorView);
-
-                return scrollView;
-            });
-            tabView.addTab("Scrolling 4 (large, clickable)", () =>
+            tabView.addTab("Scrolling 3 (large, clickable)", () =>
             {
                 FlywheelScrollView scrollView = new();
                 scrollView.ShowDebugText = true;
@@ -383,7 +365,7 @@ namespace AndroidUI_Application_Windows
 
                 return scrollView;
             });
-            tabView.addTab("Scrolling 4 (large, non-clickable)", () =>
+            tabView.addTab("Scrolling 3 (large, non-clickable)", () =>
             {
                 FlywheelScrollView scrollView = new();
                 scrollView.ShowDebugText = true;
@@ -398,7 +380,7 @@ namespace AndroidUI_Application_Windows
                 return scrollView;
             });
 
-            tabView.addTab("Scrolling 4 (large, HORIZONTAL)", () =>
+            tabView.addTab("Scrolling 3 (large, HORIZONTAL)", () =>
             {
                 FlywheelScrollView scrollView = new();
                 scrollView.ShowDebugText = true;
@@ -414,7 +396,7 @@ namespace AndroidUI_Application_Windows
                 return scrollView;
             });
 
-            tabView.addTab("Scrolling 4 (large, VERTICAL)", () =>
+            tabView.addTab("Scrolling 3 (large, VERTICAL)", () =>
             {
                 FlywheelScrollView scrollView = new();
                 scrollView.ShowDebugText = true;
@@ -428,6 +410,127 @@ namespace AndroidUI_Application_Windows
 
                 return scrollView;
             });
+
+            tabView.addTab("Gravity", () =>
+            {
+                FrameLayout frame = new();
+                frame.addView(
+                    new Topten_RichTextKit_TextView("Left|Top"),
+                    new FrameLayout.LayoutParams(
+                        View.LayoutParams.WRAP_CONTENT,
+                        View.LayoutParams.WRAP_CONTENT,
+                        Gravity.LEFT | Gravity.TOP
+                    )
+                );
+                frame.addView(
+                    new Topten_RichTextKit_TextView("Top|Center"),
+                    new FrameLayout.LayoutParams(
+                        View.LayoutParams.WRAP_CONTENT,
+                        View.LayoutParams.WRAP_CONTENT,
+                        Gravity.TOP | Gravity.CENTER
+                    )
+                );
+                frame.addView(
+                    new Topten_RichTextKit_TextView("Top|Right"),
+                    new FrameLayout.LayoutParams(
+                        View.LayoutParams.WRAP_CONTENT,
+                        View.LayoutParams.WRAP_CONTENT,
+                        Gravity.TOP | Gravity.RIGHT
+                    )
+                );
+                frame.addView(
+                    new Topten_RichTextKit_TextView("Right|Center"),
+                    new FrameLayout.LayoutParams(
+                        View.LayoutParams.WRAP_CONTENT,
+                        View.LayoutParams.WRAP_CONTENT,
+                        Gravity.RIGHT | Gravity.CENTER
+                    )
+                );
+                frame.addView(
+                    new Topten_RichTextKit_TextView("Right|Bottom"),
+                    new FrameLayout.LayoutParams(
+                        View.LayoutParams.WRAP_CONTENT,
+                        View.LayoutParams.WRAP_CONTENT,
+                        Gravity.RIGHT | Gravity.BOTTOM
+                    )
+                );
+                frame.addView(
+                    new Topten_RichTextKit_TextView("Bottom|Center"),
+                    new FrameLayout.LayoutParams(
+                        View.LayoutParams.WRAP_CONTENT,
+                        View.LayoutParams.WRAP_CONTENT,
+                        Gravity.BOTTOM | Gravity.CENTER
+                    )
+                );
+                frame.addView(
+                    new Topten_RichTextKit_TextView("Bottom|Left"),
+                    new FrameLayout.LayoutParams(
+                        View.LayoutParams.WRAP_CONTENT,
+                        View.LayoutParams.WRAP_CONTENT,
+                        Gravity.BOTTOM | Gravity.LEFT
+                    )
+                );
+                frame.addView(
+                    new Topten_RichTextKit_TextView("Left|Center"),
+                    new FrameLayout.LayoutParams(
+                        View.LayoutParams.WRAP_CONTENT,
+                        View.LayoutParams.WRAP_CONTENT,
+                        Gravity.LEFT | Gravity.CENTER
+                    )
+                );
+                frame.addView(
+                    new Topten_RichTextKit_TextView("Center"),
+                    new FrameLayout.LayoutParams(
+                        View.LayoutParams.WRAP_CONTENT,
+                        View.LayoutParams.WRAP_CONTENT,
+                        Gravity.CENTER
+                    )
+                );
+                return frame;
+            });
+
+            tabView.addTab("Scrolling Buttons", () =>
+            {
+                FlywheelScrollView scrollView = new();
+                scrollView.ShowDebugText = true;
+                scrollView.SmoothScroll = true;
+                scrollView.LimitScrollingToChildViewBounds = true;
+
+                int number = 0;
+
+                void AddButton(View parent)
+                {
+                    var n = number++;
+                    var button = new Topten_RichTextKit_TextView("Button " + n, 24, SkiaSharp.SKColors.Black);
+
+                    FrameLayout frame = new();
+                    frame.addView(
+                        button,
+                        new FrameLayout.LayoutParams(
+                            View.LayoutParams.WRAP_CONTENT,
+                            View.LayoutParams.WRAP_CONTENT,
+                            Gravity.CENTER
+                        )
+                    );
+                    frame.setBackgroundColor((int)(uint)AndroidUI.Utils.Const.Constants.color_code_LineageOS);
+                    frame.setOnClickListener(v => v.Log.d("Clicked button " + n));
+                    frame.setTagRecursively(button.getText());
+                    parent.addView(frame, MATCH_PARENT_W__WRAP_CONTENT_H);
+                }
+
+                LinearLayout list = new();
+                list.setOrientation(LinearLayout.VERTICAL);
+
+                for (int i = 0; i < 50; i++)
+                {
+                    AddButton(list);
+                }
+
+                scrollView.addView(list, MATCH_PARENT_W__WRAP_CONTENT_H);
+
+                return scrollView;
+            });
+
             SetContentView(tabView);
         }
     }

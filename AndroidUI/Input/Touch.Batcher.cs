@@ -8,6 +8,7 @@ namespace AndroidUI.Input
     {
         internal class Batcher
         {
+            internal static bool DEBUG;
             internal Queue<Data> events = new();
             internal long batchTime = 0;
             internal long pumpTime = 0;
@@ -43,12 +44,12 @@ namespace AndroidUI.Input
 
                 if (c != 0 && (force_pump || (pumpTime - batchTime) >= batch_time_ms))
                 {
-                    if (touch.debug) Console.WriteLine("batch time : " + batchTime);
-                    if (touch.debug) Console.WriteLine("pump time  : " + pumpTime);
+                    if (DEBUG) Console.WriteLine("batch time : " + batchTime);
+                    if (DEBUG) Console.WriteLine("pump time  : " + pumpTime);
 
                     string s = c == 1 ? "" : "s";
 
-                    if (touch.debug) Console.WriteLine("batched " + c + " event" + s);
+                    if (DEBUG) Console.WriteLine("batched " + c + " event" + s);
                     if (System.Diagnostics.Debugger.IsAttached)
                     {
                         touch.batching = true;
@@ -90,7 +91,7 @@ namespace AndroidUI.Input
                             throw e;
                         }
                     }
-                    if (touch.debug) Console.WriteLine("processed " + c + " queued event" + s);
+                    if (DEBUG) Console.WriteLine("processed " + c + " queued event" + s);
                     handled = true;
                 }
                 pumpActive = false;
@@ -109,10 +110,10 @@ namespace AndroidUI.Input
                 pumpTime = currentTimeMillis();
                 if (c != 0)
                 {
-                    if (touch.debug) Console.WriteLine("batch time : " + batchTime);
-                    if (touch.debug) Console.WriteLine("pump time  : " + pumpTime);
+                    if (DEBUG) Console.WriteLine("batch time : " + batchTime);
+                    if (DEBUG) Console.WriteLine("pump time  : " + pumpTime);
                     events.Clear();
-                    if (touch.debug) Console.WriteLine("cleared " + c + " queued events");
+                    if (DEBUG) Console.WriteLine("cleared " + c + " queued events");
                 }
                 pumpActive = false;
             }

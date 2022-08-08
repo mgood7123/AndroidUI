@@ -252,7 +252,7 @@ namespace AndroidUI.AnimationFramework.Animator
         internal ViewPropertyAnimator(View view)
         {
             mAnimatorEventListener = new AnimatorEventListener(this);
-            mAnimationStarter = Runnable.Create(() => startAnimation());
+            mAnimationStarter = () => startAnimation();
             mView = view;
             view.ensureTransformationInfo();
         }
@@ -823,20 +823,19 @@ namespace AndroidUI.AnimationFramework.Animator
          */
         public ViewPropertyAnimator withLayer()
         {
-            mPendingSetupAction = Runnable.Create(() =>
+            mPendingSetupAction = () =>
             {
                 //mView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
                 //if (mView.isAttachedToWindow())
                 //{
                 //    mView.buildLayer();
                 //}
-            });
+            };
             //int currentLayerType = mView.getLayerType();
-            mPendingCleanupAction = Runnable.Create(() =>
-                {
-                    //mView.setLayerType(currentLayerType, null);
-                }
-            );
+            mPendingCleanupAction = () =>
+            {
+                //mView.setLayerType(currentLayerType, null);
+            };
             if (mAnimatorSetupMap == null)
             {
                 mAnimatorSetupMap = new Dictionary<Animator, Runnable>();
@@ -1154,19 +1153,19 @@ namespace AndroidUI.AnimationFramework.Animator
             {
                 if (self.mAnimatorSetupMap != null)
                 {
-                    Runnable r = self.mAnimatorSetupMap.GetValueOrDefault(animation, null); ;
+                    Runnable r = self.mAnimatorSetupMap.GetValueOrDefault(animation, null);
                     if (r != null)
                     {
-                        r.run();
+                        r.Invoke();
                     }
                     self.mAnimatorSetupMap.Remove(animation);
                 }
                 if (self.mAnimatorOnStartMap != null)
                 {
-                    Runnable r = self.mAnimatorOnStartMap.GetValueOrDefault(animation, null); ;
+                    Runnable r = self.mAnimatorOnStartMap.GetValueOrDefault(animation, null);
                     if (r != null)
                     {
-                        r.run();
+                        r.Invoke();
                     }
                     self.mAnimatorOnStartMap.Remove(animation);
                 }
@@ -1204,7 +1203,7 @@ namespace AndroidUI.AnimationFramework.Animator
                     Runnable r = self.mAnimatorCleanupMap.GetValueOrDefault(animation, null);
                     if (r != null)
                     {
-                        r.run();
+                        r.Invoke();
                     }
                     self.mAnimatorCleanupMap.Remove(animation);
                 }
@@ -1217,7 +1216,7 @@ namespace AndroidUI.AnimationFramework.Animator
                     Runnable r = self.mAnimatorOnEndMap.GetValueOrDefault(animation, null);
                     if (r != null)
                     {
-                        r.run();
+                        r.Invoke();
                     }
                     self.mAnimatorOnEndMap.Remove(animation);
                 }

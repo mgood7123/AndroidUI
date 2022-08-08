@@ -7,7 +7,7 @@ namespace AndroidUI.Input
         public void removeTouch(Data touchData)
         {
             tryForcePump(State.TOUCH_UP);
-            if (debug) Console.WriteLine("removing touch with identity: " + touchData.identity);
+            if (DEBUG) Console.WriteLine("removing touch with identity: " + touchData.identity);
             bool found = false;
             for (int i = 0; i < maxSupportedTouches; i++)
             {
@@ -25,8 +25,12 @@ namespace AndroidUI.Input
                             // touch up must always be preceeded by a move event if the location has moved
                             if (previous.location.x != touchData.location.x || previous.location.y != touchData.location.y)
                             {
+                                touchData.state = State.TOUCH_MOVE;
                                 moveTouch(touchData);
+
+                                previous = touchContainer.touch;
                                 touchData.timestamp = NanoTime.currentTimeMillis();
+                                touchData.state = State.TOUCH_UP;
                             }
 
                             touchData.location_moved = false;
@@ -41,7 +45,7 @@ namespace AndroidUI.Input
                         touchContainer.touch.timestamp_TOUCH_UP = touchData.timestamp;
                         touchContainer.touch.timestamp_TOUCH_CANCELLED = previous.timestamp_TOUCH_CANCELLED;
                         index = i;
-                        if (debug) Console.WriteLine("TOUCH_UP: INDEX: " + i);
+                        if (DEBUG) Console.WriteLine("TOUCH_UP: INDEX: " + i);
                     }
                 }
             }

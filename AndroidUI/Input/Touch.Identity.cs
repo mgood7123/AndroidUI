@@ -1,4 +1,6 @@
-﻿namespace AndroidUI.Input
+﻿using AndroidUI.Utils;
+
+namespace AndroidUI.Input
 {
     public partial class Touch
     {
@@ -45,7 +47,7 @@
                 return Equals(obj is Identity identity ? identity : new Identity(obj));
             }
 
-            bool floating_point_type_value_equals<T>(ref object a, ref object b, Func<T, bool> isNaN, Func<T, bool> isInfinity)
+            bool floating_point_type_value_equals<T>(ref object a, ref object b, RunnableWithReturn<T, bool> isNaN, RunnableWithReturn<T, bool> isInfinity)
             {
                 T va = (T)a;
                 T vb = (T)b;

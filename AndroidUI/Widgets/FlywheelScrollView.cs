@@ -13,6 +13,7 @@ namespace AndroidUI.Widgets
         Flywheel flywheel = new();
 
         bool showDebugText;
+        bool mIsBeingDragged = false;
 
         bool first_draw = true;
         bool text_set;
@@ -20,6 +21,11 @@ namespace AndroidUI.Widgets
         bool was_down;
         private bool smoothScroll;
         bool limitScrollingToViewBounds = true;
+        private bool autoScroll;
+        private int lastY;
+
+        bool has_been_dragged;
+        bool has_been_autoscrolled;
 
         public bool SmoothScroll
         {
@@ -47,6 +53,8 @@ namespace AndroidUI.Widgets
             }
         }
 
+        public bool AutoScroll { get => autoScroll; set => autoScroll = value; }
+
         public FlywheelScrollView() : base()
         {
             addView(text, MATCH_PARENT_W__MATCH_PARENT_H);
@@ -54,16 +62,14 @@ namespace AndroidUI.Widgets
             text.setText("FlywheelScrollView");
             var c = new Graphics.Drawables.ColorDrawable(Graphics.Color.GRAY);
             c.setAlpha((0.25f).ToColorByte());
-            post(new Utils.Runnable.ActionRunnable(() => text.setBackground(c)));
+            text.setBackground(c);
             ShowDebugText = false;
             SmoothScroll = false;
         }
 
-        bool mIsBeingDragged = false;
-
         public override bool onInterceptTouchEvent(Touch ev)
         {
-            if (DBG) Log.d("INTERCEPT TOUCH");
+            if (DEBUG) Log.d("INTERCEPT TOUCH");
             /*
              * This method JUST determines whether we want to intercept the motion.
              * If we return true, onMotionEvent will be called and we do the actual
@@ -79,7 +85,7 @@ namespace AndroidUI.Widgets
             var state = data.state;
             if ((state == Touch.State.TOUCH_MOVE) && (mIsBeingDragged))
             {
-                if (DBG) Log.d("INTERCEPT TOUCH MOVE ALREADY DRAGGING");
+                if (DEBUG) Log.d("INTERCEPT TOUCH MOVE ALREADY DRAGGING");
                 flywheel.AquireLock();
                 last_time_previous = last_time_current;
                 last_time_current = data.timestamp;
@@ -119,7 +125,7 @@ namespace AndroidUI.Widgets
 
             if (base.onInterceptTouchEvent(ev))
             {
-                if (DBG) Log.d("INTERCEPT TOUCH BASE");
+                if (DEBUG) Log.d("INTERCEPT TOUCH BASE");
                 return true;
             }
 
@@ -128,7 +134,7 @@ namespace AndroidUI.Widgets
              */
             if (getChildCount() == 1)
             {
-                if (DBG) Log.d("INTERCEPT TOUCH NO CHILD");
+                if (DEBUG) Log.d("INTERCEPT TOUCH NO CHILD");
                 return false;
             }
 
@@ -147,14 +153,14 @@ namespace AndroidUI.Widgets
                     RESULT r = NeedsClamp(child, ref x, ref y);
                     if (r == RESULT.CLAMP_XY)
                     {
-                        if (DBG) Log.d("INTERCEPT TOUCH CANNOT SCROLL");
+                        if (DEBUG) Log.d("INTERCEPT TOUCH CANNOT SCROLL");
                         // if we get here, we cannot scroll in either X or Y
                         // in other words, we are larger than our child
                         // and we are not allowed to scroll past our child
                         return false;
                     }
                 }
-                if (DBG) Log.d("INTERCEPT TOUCH CAN SCROLL");
+                if (DEBUG) Log.d("INTERCEPT TOUCH CAN SCROLL");
                 // if we get here, we can scroll in either X or Y
                 // in other words, our child is larger than us
                 // or we are allowed to scroll past our child
@@ -169,7 +175,7 @@ namespace AndroidUI.Widgets
                 switch (state)
                 {
                     case Touch.State.TOUCH_DOWN:
-                        if (DBG) Log.d("INTERCEPT TOUCH DOWN");
+                        if (DEBUG) Log.d("INTERCEPT TOUCH DOWN");
                         ResetButKeepPosition(data.timestamp);
                         flywheel.AddMovement(data.timestamp, data.location.x, data.location.y);
                         was_down = true;
@@ -177,7 +183,7 @@ namespace AndroidUI.Widgets
                         mIsBeingDragged = flywheel.Spinning;
                         break;
                     case Touch.State.TOUCH_CANCELLED:
-                        if (DBG) Log.d("INTERCEPT TOUCH CANCELLED");
+                        if (DEBUG) Log.d("INTERCEPT TOUCH CANCELLED");
                         ResetButKeepPosition(0);
                         was_down = false;
                         if (mIsBeingDragged)
@@ -187,16 +193,23 @@ namespace AndroidUI.Widgets
                             return true;
                         }
                         mIsBeingDragged = false;
+                        if (showDebugText)
+                        {
+                            text.invalidate();
+                        }
                         break;
                     case Touch.State.TOUCH_UP:
+                            // do not intercept up
                         {
-                            if (DBG) Log.d("INTERCEPT TOUCH UP");
+                            if (DEBUG) Log.d("INTERCEPT TOUCH UP");
                             last_time_previous = last_time_current;
                             last_time_current = data.timestamp;
                             time = last_time_previous == 0 ? 0 : (last_time_current - last_time_previous);
                             if (smoothScroll && !was_down && time <= THRESH_HOLD)
                             {
                                 mIsBeingDragged = true;
+                                has_been_dragged = true;
+                                has_been_autoscrolled = false;
                                 int x2 = -flywheel.Position.X.toPixel();
                                 int y2 = -flywheel.Position.Y.toPixel();
                                 RESULT r2 = NeedsClamp(child, ref x2, ref y2);
@@ -230,11 +243,15 @@ namespace AndroidUI.Widgets
                                 }
                                 mIsBeingDragged = false;
                             }
+                            if (showDebugText)
+                            {
+                                text.invalidate();
+                            }
                         }
                         break;
                     case Touch.State.TOUCH_MOVE:
                         {
-                            if (DBG) Log.d("INTERCEPT TOUCH MOVE");
+                            if (DEBUG) Log.d("INTERCEPT TOUCH MOVE");
                             /*
                              * mIsBeingDragged == false, otherwise the shortcut would have caught it. Check
                              * whether the user has moved far enough from their original down touch.
@@ -250,6 +267,8 @@ namespace AndroidUI.Widgets
                             {
                                 was_down = false;
                                 mIsBeingDragged = true;
+                                has_been_dragged = true;
+                                has_been_autoscrolled = false;
                                 flywheel.AddMovement(last_time_current, x_, y_);
                                 int x2 = -flywheel.Position.X.toPixel();
                                 int y2 = -flywheel.Position.Y.toPixel();
@@ -284,7 +303,7 @@ namespace AndroidUI.Widgets
                 }
                 flywheel.ReleaseLock();
             }
-            if (DBG) Log.d("INTERCEPT TOUCH IS BEING DRAGGED: " + mIsBeingDragged);
+            if (DEBUG) Log.d("INTERCEPT TOUCH IS BEING DRAGGED: " + mIsBeingDragged);
             return mIsBeingDragged;
         }
 
@@ -543,18 +562,128 @@ namespace AndroidUI.Widgets
 
                 // remeasure child according to its layout params
 
-                LayoutParams lp = (LayoutParams)child.getLayoutParams();
+                LayoutParams childLayoutParams = (LayoutParams)child.getLayoutParams();
 
 
-                widthPadding = mPaddingLeft + mPaddingRight + lp.leftMargin + lp.rightMargin;
-                heightPadding = mPaddingTop + mPaddingBottom + lp.topMargin + lp.bottomMargin;
+                widthPadding = mPaddingLeft + mPaddingRight + childLayoutParams.leftMargin + childLayoutParams.rightMargin;
+                heightPadding = mPaddingTop + mPaddingBottom + childLayoutParams.topMargin + childLayoutParams.bottomMargin;
 
-                int widthMeasureSpec1 = getChildMeasureSpec(MeasureSpec.withMode(widthMeasureSpec, MeasureSpec.UNSPECIFIED), widthPadding, lp.width);
-                int heightMeasureSpec1 = getChildMeasureSpec(MeasureSpec.withMode(heightMeasureSpec, MeasureSpec.UNSPECIFIED), heightPadding, lp.height);
+                if (DEBUG_MEASURE_CHILD) Log.d("RE-MEASURING CHILD TO RESPECT THEIR LAYOUT PARAMETERS");
+                int this_spec_w;
+                switch (childLayoutParams.width)
+                {
+                    case View.LayoutParams.MATCH_PARENT:
+                        // child wants to be our size
+                        this_spec_w = MeasureSpec.makeMeasureSpec(getMeasuredWidth(), MeasureSpec.EXACTLY);
+                        break;
+                    case View.LayoutParams.WRAP_CONTENT:
+                        // child wants to be its own size
+                        this_spec_w = MeasureSpec.makeMeasureSpec(getMeasuredWidth(), MeasureSpec.UNSPECIFIED);
+                        break;
+                    default:
+                        // child wants to be exact size
+                        this_spec_w = MeasureSpec.makeMeasureSpec(getMeasuredWidth(), MeasureSpec.EXACTLY);
+                        break;
+                }
+                int this_spec_h;
+                switch (childLayoutParams.height)
+                {
+                    case View.LayoutParams.MATCH_PARENT:
+                        // child wants to be our size
+                        this_spec_h = MeasureSpec.makeMeasureSpec(getMeasuredHeight(), MeasureSpec.EXACTLY);
+                        break;
+                    case View.LayoutParams.WRAP_CONTENT:
+                        // child wants to be its own size
+                        this_spec_h = MeasureSpec.makeMeasureSpec(getMeasuredHeight(), MeasureSpec.UNSPECIFIED);
+                        break;
+                    default:
+                        // child wants to be exact size
+                        this_spec_h = MeasureSpec.makeMeasureSpec(getMeasuredHeight(), MeasureSpec.EXACTLY);
+                        break;
+                }
+                int widthMeasureSpec1 = getChildMeasureSpec(this, child, true, this_spec_w, widthPadding, childLayoutParams.width);
+                int heightMeasureSpec1 = getChildMeasureSpec(this, child, false, this_spec_h, heightPadding, childLayoutParams.height);
                 child.measure(
                     widthMeasureSpec1,
                     heightMeasureSpec1
                 );
+                if (DEBUG_MEASURE_CHILD) Log.d("RE-MEASURED CHILD");
+
+                if (AutoScroll)
+                {
+                    if (DEBUG) Log.d("Auto-scrolling");
+                    flywheel.AquireLock();
+                    var scrollX = child.mScrollX;
+                    var scrollY = child.mScrollY;
+
+                    int x_ = 1;
+                    int y_ = 1;
+                    RESULT r = NeedsClamp(child, ref x_, ref y_);
+                    if (r == RESULT.CLAMP_XY || r == RESULT.CLAMP_Y)
+                    {
+                        // we cannot scroll down
+                    }
+                    else
+                    {
+
+                        var x = child.getMeasuredWidth() - getMeasuredHeight();
+                        int y = child.getMeasuredHeight() - getMeasuredHeight();
+
+                        if (child.mScrollY == lastY || lastY == 0)
+                        {
+                            Log.d("lastY: " + lastY);
+                            Log.d("child.mScrollY: " + child.mScrollY);
+
+                            int y1 = flywheel.Position.Y.toPixel();
+                            Log.d("Auto-scrolling before add movement: " + y1);
+
+                            if (has_been_dragged)
+                            {
+                                Log.d("the user manually scrolled to this point");
+                                if (mScrollX == lastY)
+                                {
+                                    has_been_dragged = false;
+                                    has_been_autoscrolled = false;
+                                }
+                            }
+                            else
+                            {
+                                Log.d("the user did not manually scroll to this point");
+                                lastY = y;
+                                flywheel.AddMovement(0, -flywheel.Position.X, 0);
+                                flywheel.AddMovement(0, -flywheel.Position.X, -y);
+                                int x2 = -flywheel.Position.X.toPixel();
+                                int y2 = -flywheel.Position.Y.toPixel();
+                                Log.d("Auto-scrolling before clamp: " + y2);
+                                r = NeedsClamp(child, ref x2, ref y2);
+                                Log.d("Auto-scrolling after clamp:  " + y2);
+                                if (r != RESULT.OK)
+                                {
+                                    flywheel.Position = new(-x2, -y2);
+                                    if (r == RESULT.CLAMP_X)
+                                    {
+                                        flywheel.Velocity = new(0, flywheel.Velocity.Y);
+                                    }
+                                    else if (r == RESULT.CLAMP_Y)
+                                    {
+                                        flywheel.Velocity = new(flywheel.Velocity.X, 0);
+                                    }
+                                    else if (r == RESULT.CLAMP_XY)
+                                    {
+                                        flywheel.Velocity = System.Numerics.Vector2.Zero;
+                                    }
+                                }
+                                Log.d("Auto-scrolling to " + y2);
+                                child.scrollTo(scrollX, y2);
+                                has_been_dragged = false;
+                                has_been_autoscrolled = true;
+                            }
+                        }
+
+                        ShowDebugText = true;
+                    }
+                    flywheel.ReleaseLock();
+                }
 
                 //int desiredWidth = getMeasuredWidth() - widthPadding;
                 //int desiredHeight = getMeasuredHeight() - heightPadding;

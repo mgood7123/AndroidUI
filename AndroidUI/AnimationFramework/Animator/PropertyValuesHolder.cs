@@ -1632,7 +1632,7 @@ namespace AndroidUI.AnimationFramework.Animator
                 // addition to start/end values defined for animators. Another case where such
                 // intermediate values are defined is when animator has a path to animate along. In
                 // these cases, a data source is needed to capture these intermediate values.
-                Func<float, object> func = fraction => mKeyframes.getValue(fraction);
+                RunnableWithReturn<float, object> func = fraction => mKeyframes.getValue(fraction);
                 values.dataSource = func;
             }
             else
@@ -2112,7 +2112,7 @@ namespace AndroidUI.AnimationFramework.Animator
             public Type type;
             public object startValue;
             public object endValue;
-            public Func<float, object> dataSource = null;
+            public RunnableWithReturn<float, object> dataSource = null;
             public string toString()
             {
                 return "property name: " + propertyName + ", type: " + type + ", startValue: "

@@ -969,7 +969,7 @@ namespace AndroidUI.Widgets
 
                         int childHeightMeasureSpec = MeasureSpec.makeMeasureSpec(
                                 Math.Max(0, childHeight), MeasureSpec.EXACTLY);
-                        int childWidthMeasureSpec = getChildMeasureSpec(widthMeasureSpec,
+                        int childWidthMeasureSpec = getChildMeasureSpec(this, child, true, widthMeasureSpec,
                                 mPaddingLeft + mPaddingRight + lp.leftMargin + lp.rightMargin,
                                 lp.width);
                         child.measure(childWidthMeasureSpec, childHeightMeasureSpec);
@@ -1415,7 +1415,7 @@ namespace AndroidUI.Widgets
 
                         int childWidthMeasureSpec = MeasureSpec.makeMeasureSpec(
                                 Math.Max(0, childWidth), MeasureSpec.EXACTLY);
-                        int childHeightMeasureSpec = getChildMeasureSpec(heightMeasureSpec,
+                        int childHeightMeasureSpec = getChildMeasureSpec(this, child, false, heightMeasureSpec,
                                 mPaddingTop + mPaddingBottom + lp.topMargin + lp.bottomMargin,
                                 lp.height);
                         child.measure(childWidthMeasureSpec, childHeightMeasureSpec);

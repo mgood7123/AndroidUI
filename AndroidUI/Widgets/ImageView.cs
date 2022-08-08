@@ -356,21 +356,17 @@ namespace AndroidUI.Widgets
             return mDrawable;
         }
 
-        private class ImageDrawableCallback : Runnable
+        private class ImageDrawableCallback
         {
             ImageView outer;
             private readonly Drawable drawable;
+            Runnable runnable;
 
             public ImageDrawableCallback(ImageView outer, Drawable drawable)
             {
                 this.drawable = drawable;
                 this.outer = outer;
-            }
-
-            override
-                    public void run()
-            {
-                outer.setImageDrawable(drawable);
+                runnable = () => outer.setImageDrawable(drawable);
             }
         }
 

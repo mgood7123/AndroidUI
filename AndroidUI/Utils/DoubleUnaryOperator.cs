@@ -29,7 +29,7 @@ namespace AndroidUI.Utils
      */
     public class DoubleUnaryOperator : UnaryOperator<double>
     {
-        public DoubleUnaryOperator(Func<double, double> a) : base(a)
+        public DoubleUnaryOperator(RunnableWithReturn<double, double> a) : base(a)
         {
         }
 

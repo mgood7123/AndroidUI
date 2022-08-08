@@ -25,7 +25,7 @@ namespace AndroidUI.Execution
      *
      * @hide Exposed for test framework only.
      */
-    internal class HandlerActionQueue
+    public class HandlerActionQueue
     {
         private object LOCK = new();
         private HandlerAction[] mActions;

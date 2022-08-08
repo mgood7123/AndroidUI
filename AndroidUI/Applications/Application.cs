@@ -27,6 +27,11 @@ namespace AndroidUI.Applications
     {
         internal Context context;
 
+        public HandlerActionQueue getRunQueue()
+        {
+            return getViewRootImpl()?.getRunQueue();
+        }
+
         public Context Context => context;
 
         Handler handler;
@@ -327,10 +332,10 @@ namespace AndroidUI.Applications
 
             public class ActionFrameCallback : FrameCallback
             {
-                Action<FrameCallback, object, long> action;
+                Runnable<FrameCallback, object, long> action;
                 object data;
 
-                public ActionFrameCallback(object data, Action<FrameCallback, object, long> action)
+                public ActionFrameCallback(object data, Runnable<FrameCallback, object, long> action)
                 {
                     this.action = action;
                     this.data = data;
@@ -342,7 +347,7 @@ namespace AndroidUI.Applications
                 }
             }
 
-            public static FrameCallback Create(object data, Action<FrameCallback, object, long> value)
+            public static FrameCallback Create(object data, Runnable<FrameCallback, object, long> value)
             {
                 return new ActionFrameCallback(data, value);
             }

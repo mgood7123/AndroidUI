@@ -1,19 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		
+
 		<!-- change this to `Exe` if you want the Application Output (Log) to show -->
 		<!-- change this to `WinExe` if you want the Application Output (Log) to be hidden -->
 		<OutputType>Exe</OutputType>
-		
+
 		<!-- you can change these or add other stuff here -->
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 
-		
+
 		<!-- it is NOT recommended to change these unless you know what you are doing -->
-		<StartupObject>AndroidUI_Application_Windows.Program</StartupObject>
-		<RootNamespace>AndroidUI_Application_Windows</RootNamespace>
+		<StartupObject>AndroidUI.IDE.Program</StartupObject>
+		<RootNamespace>AndroidUI.IDE</RootNamespace>
 
 		<!-- do not touch these -->
 		<TargetFramework>net6.0-windows</TargetFramework>
@@ -38,19 +38,19 @@
 	<Target Name="ForceReGenerateOnRebuild" AfterTargets="CoreClean">
 		<Delete Files="$(RootFolder)\Resources.generated.cs" />
 	</Target>
-	
+
 	<ItemGroup>
 
 		<!-- all of the below without needing to copy for each build -->
 		<ProjectReference Include="..\ApplicationHost-Windows\ApplicationHost-Windows.csproj" />
-		
+
 		<!-- do not touch these -->
 		<!--
 		<Reference Include="$(RootFolder)\prebuilt\debug\AndroidUI\AndroidUI.dll" />
 		<Reference Include="$(RootFolder)\prebuilt\debug\AndroidUI\ApplicationHost-Windows.dll" />
 		-->
 		<PackageReference Include="AndroidUI.Native.Nuget" Version="0.0.114" />
-		
+
 		<!-- do not touch these
 		
 			these are a special version of SkiaSharp that have
@@ -73,6 +73,6 @@
 		<PackageReference Include="System.IO.Pipelines" Version="7.0.0-preview.4.22229.4" />
 		<PackageReference Include="Topten.RichTextKit" Version="0.4.151" />
 		-->
-	
+
 	</ItemGroup>
 </Project>

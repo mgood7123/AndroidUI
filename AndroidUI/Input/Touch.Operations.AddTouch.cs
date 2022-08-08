@@ -7,7 +7,7 @@ namespace AndroidUI.Input
         public void addTouch(Data touchData)
         {
             tryForcePump(State.TOUCH_DOWN);
-            if (debug) Console.WriteLine("adding touch with identity: " + touchData.identity);
+            if (DEBUG) Console.WriteLine("adding touch with identity: " + touchData.identity);
             bool found = false;
             for (int i = 0; i < maxSupportedTouches; i++)
             {
@@ -24,7 +24,7 @@ namespace AndroidUI.Input
                     touchContainer.used = true;
                     touchCount++;
                     index = i;
-                    if (debug) Console.WriteLine("TOUCH_DOWN: INDEX: " + i);
+                    if (DEBUG) Console.WriteLine("TOUCH_DOWN: INDEX: " + i);
                 }
                 else if ((!found && !touchContainer.used))
                 {
@@ -36,7 +36,7 @@ namespace AndroidUI.Input
                     touchContainer.used = true;
                     touchCount++;
                     index = i;
-                    if (debug) Console.WriteLine("TOUCH_DOWN: INDEX: " + i);
+                    if (DEBUG) Console.WriteLine("TOUCH_DOWN: INDEX: " + i);
                 }
             }
             if (!found)

@@ -37,7 +37,7 @@ namespace AndroidUI.Input
                 }
             }
             index = 0;
-            if (debug) Console.WriteLine("TOUCH_CANCEL: INDEX: " + 0);
+            if (DEBUG) Console.WriteLine("TOUCH_CANCEL: INDEX: " + 0);
             touchCount = 0;
             onTouch.Invoke(this);
         }
@@ -45,7 +45,7 @@ namespace AndroidUI.Input
         public void cancelTouch(Data touchData)
         {
             tryForcePump();
-            if (debug) Console.WriteLine("cancelling touch");
+            if (DEBUG) Console.WriteLine("cancelling touch");
             bool found = false;
             for (int i = 0; i < maxSupportedTouches; i++)
             {
@@ -66,8 +66,12 @@ namespace AndroidUI.Input
                             // touch cancel must always be preceeded by a move event if the location has moved
                             if (previous.location.x != touchData.location.x || previous.location.y != touchData.location.y)
                             {
+                                touchData.state = State.TOUCH_MOVE;
                                 moveTouch(touchData);
+
+                                previous = touchContainer.touch;
                                 touchData.timestamp = NanoTime.currentTimeMillis();
+                                touchData.state = State.TOUCH_CANCELLED;
                             }
 
                             touchData.location_moved = false;
@@ -82,7 +86,7 @@ namespace AndroidUI.Input
                         touchContainer.touch.timestamp_TOUCH_CANCELLED = touchData.timestamp;
                         touchContainer.used = false;
                         index = i;
-                        if (debug) Console.WriteLine("TOUCH_CANCEL: INDEX: " + i);
+                        if (DEBUG) Console.WriteLine("TOUCH_CANCEL: INDEX: " + i);
                     }
                     else
                     {

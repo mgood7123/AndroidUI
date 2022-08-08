@@ -728,9 +728,9 @@ namespace AndroidUI.Utils.Graphics
 
         private class ContrastCalculator
         {
-            Func<int, int, int, double> func;
+            RunnableWithReturn<int, int, int, double> func;
 
-            public ContrastCalculator(Func<int, int, int, double> func)
+            public ContrastCalculator(RunnableWithReturn<int, int, int, double> func)
             {
                 this.func = func;
             }

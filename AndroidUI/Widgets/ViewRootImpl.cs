@@ -38,11 +38,12 @@ namespace AndroidUI.Widgets
             doTraversal(canvas);
         }
 
-        private static bool DBG = false;
+        private static bool DEBUG = false;
         private static bool DEBUG_LAYOUT = false;
         private static bool DEBUG_ORIENTATION = false;
         private static bool DEBUG_INPUT_RESIZE = false;
         private static bool DEBUG_DRAW = false;
+        private static bool DEBUG_DRAW_TIME = false;
         private static bool DEBUG_FPS = false;
         private static bool DEBUG_BLAST = false;
 
@@ -213,7 +214,7 @@ namespace AndroidUI.Widgets
          */
         private bool ensureTouchModeLocally(bool inTouchMode)
         {
-            if (DBG) Log.v("touchmode", "ensureTouchModeLocally(" + inTouchMode + "), current "
+            if (DEBUG) Log.v("touchmode", "ensureTouchModeLocally(" + inTouchMode + "), current "
                     + "touch mode is " + context.mAttachInfo.mInTouchMode);
 
             if (context.mAttachInfo.mInTouchMode == inTouchMode) return false;
@@ -400,7 +401,7 @@ namespace AndroidUI.Widgets
                 }
             }
 
-            if (DBG)
+            if (DEBUG)
             {
                 Console.WriteLine("======================================");
                 Console.WriteLine("performTraversals -- after measure");
@@ -427,7 +428,7 @@ namespace AndroidUI.Widgets
         {
             View host = mView;
 
-            if (DBG)
+            if (DEBUG)
             {
                 Console.WriteLine("======================================");
                 Console.WriteLine("performTraversals");
@@ -1115,7 +1116,7 @@ namespace AndroidUI.Widgets
                 //    }
                 //}
 
-                if (DBG)
+                if (DEBUG)
                 {
                     Console.WriteLine("======================================");
                     Console.WriteLine("performTraversals -- after setFrame");
@@ -1341,21 +1342,56 @@ namespace AndroidUI.Widgets
         internal bool mAppVisible = false;
         List<LayoutTransition> mPendingTransitions;
 
-        internal sealed class InvalidateOnAnimationRunnable : Runnable
+        internal sealed class InvalidateOnAnimationRunnable
         {
 
             private bool mPosted;
             readonly object LOCK = new();
             private List<View> mViews = new();
-            private readonly List<View.AttachInfo.InvalidateInfo> mViewRects =
-                    new();
+            private readonly List<View.AttachInfo.InvalidateInfo> mViewRects = new();
             private View[] mTempViews;
             private View.AttachInfo.InvalidateInfo[] mTempViewRects;
             ViewRootImpl impl;
+            Runnable run;
 
             public InvalidateOnAnimationRunnable(ViewRootImpl impl)
             {
                 this.impl = impl;
+                run = () => {
+                    int viewCount;
+                    int viewRectCount;
+                    lock (LOCK)
+                    {
+                        mPosted = false;
+
+                        viewCount = mViews.Count;
+                        if (viewCount != 0)
+                        {
+                            mTempViews = mViews.ToArray();
+                            mViews.Clear();
+                        }
+
+                        viewRectCount = mViewRects.Count;
+                        if (viewRectCount != 0)
+                        {
+                            mTempViewRects = mViewRects.ToArray();
+                            mViewRects.Clear();
+                        }
+                    }
+
+                    for (int i = 0; i < viewCount; i++)
+                    {
+                        mTempViews[i].invalidate();
+                        mTempViews[i] = null;
+                    }
+
+                    for (int i = 0; i < viewRectCount; i++)
+                    {
+                        View.AttachInfo.InvalidateInfo info = mTempViewRects[i];
+                        info.target.invalidate(info.left, info.top, info.right, info.bottom);
+                        info.recycle();
+                    }
+                };
             }
 
             public void addView(View view)
@@ -1395,48 +1431,11 @@ namespace AndroidUI.Widgets
                     if (mPosted && mViews.Count == 0 && mViewRects.Count == 0)
                     {
                         // no cheographer
-                        impl.mHandler.removeCallbacks(this, View.CALLBACK_ANIMATION);
+                        impl.mHandler.removeCallbacks(run, View.CALLBACK_ANIMATION);
 
                         //mChoreographer.removeCallbacks(Choreographer.CALLBACK_ANIMATION, this, null);
                         mPosted = false;
                     }
-                }
-            }
-
-            override public void run()
-            {
-                int viewCount;
-                int viewRectCount;
-                lock (LOCK)
-                {
-                    mPosted = false;
-
-                    viewCount = mViews.Count;
-                    if (viewCount != 0)
-                    {
-                        mTempViews = mViews.ToArray();
-                        mViews.Clear();
-                    }
-
-                    viewRectCount = mViewRects.Count;
-                    if (viewRectCount != 0)
-                    {
-                        mTempViewRects = mViewRects.ToArray();
-                        mViewRects.Clear();
-                    }
-                }
-
-                for (int i = 0; i < viewCount; i++)
-                {
-                    mTempViews[i].invalidate();
-                    mTempViews[i] = null;
-                }
-
-                for (int i = 0; i < viewRectCount; i++)
-                {
-                    View.AttachInfo.InvalidateInfo info = mTempViewRects[i];
-                    info.target.invalidate(info.left, info.top, info.right, info.bottom);
-                    info.recycle();
                 }
             }
 
@@ -1445,7 +1444,7 @@ namespace AndroidUI.Widgets
                 if (!mPosted)
                 {
                     // no cheographer
-                    impl.mHandler.post(this, View.CALLBACK_ANIMATION);
+                    impl.mHandler.post(run, View.CALLBACK_ANIMATION);
 
                     //mChoreographer.postCallback(Choreographer.CALLBACK_ANIMATION, this, null);
                     mPosted = true;
@@ -1621,10 +1620,15 @@ namespace AndroidUI.Widgets
             holder.addView(holderApp, View.MATCH_PARENT_W__MATCH_PARENT_H);
             mView.addView(holder, View.MATCH_PARENT_W__MATCH_PARENT_H);
 
-            LinearLayout CreateSettingsRow(string title, string enabledText, string disabledText, Func<bool> GetValue, Action<bool> SetValue)
+            LinearLayout CreateSettingsRow(string title, string enabledText, string disabledText, RunnableWithReturn<bool> GetValue, Runnable<bool> SetValue)
             {
                 LinearLayout row = new();
+
                 row.setOrientation(LinearLayout.HORIZONTAL);
+
+                var lp = new View.LayoutParams(MATCH_PARENT, WRAP_CONTENT);
+                row.setLayoutParams(lp);
+
                 var titleView = new Topten_RichTextKit_TextView();
                 var valueView = new Topten_RichTextKit_TextView();
 
@@ -1639,8 +1643,15 @@ namespace AndroidUI.Widgets
                 valueView.setText(value ? enabledText : disabledText);
                 valueView.setTextColor(value ? Color.GREEN : Color.RED);
 
-                row.addView(titleView, new LinearLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT, 1));
-                row.addView(valueView, new LinearLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT, 1));
+                LinearLayout.LayoutParams layout_params = new LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT, 1);
+                layout_params.gravity = Gravity.CENTER;
+
+                row.addView(titleView, layout_params);
+
+                LinearLayout.LayoutParams layout_params1 = new LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT, 2);
+                layout_params1.gravity = Gravity.CENTER;
+
+                row.addView(valueView, layout_params1);
 
                 row.setOnClickListener(v =>
                 {
@@ -1655,49 +1666,31 @@ namespace AndroidUI.Widgets
             }
 
             LinearLayout optionsPage = new LinearLayout();
-            optionsPage.addView(CreateSettingsRow("Show Layout Bounds", "Enabled", "Disabled", () => context.mAttachInfo.mDebugLayout, value =>
-            {
-                lock (context.mAttachInfo)
-                {
-                    context.mAttachInfo.mDebugLayout = value;
-                }
-            }));
-            optionsPage.addView(CreateSettingsRow("View: Debug", "Enabled", "Disabled", () => View.DBG, value => View.DBG = value));
-            optionsPage.addView(CreateSettingsRow("ViewRootImpl: Debug", "Enabled", "Disabled", () => DBG, value => getRunQueue().post(new Runnable.ActionRunnable(() => DBG = value))));
+            optionsPage.addView(CreateSettingsRow("Show Layout Bounds", "Enabled", "Disabled", () => context.mAttachInfo.mDebugLayout, value => { lock (context.mAttachInfo) { context.mAttachInfo.mDebugLayout = value; } }));
+            optionsPage.addView(CreateSettingsRow("Skia: Allocation Logging (expensive)", "Enabled", "Disabled", () => SkiaSharp.SKNativeObject.LOG_ALLOCATIONS, value => SKNativeObject.LOG_ALLOCATIONS = value));
+            optionsPage.addView(CreateSettingsRow("Touch: Debug", "Enabled", "Disabled", () => Touch.DEBUG, value => Touch.DEBUG = value));
+            optionsPage.addView(CreateSettingsRow("Touch: Debug - show TOUCH_MOVE events\n(requires [Touch: Debug] to be Enabled) (can flood)", "Enabled", "Disabled", () => Touch.PRINT_MOVED, value => Touch.PRINT_MOVED = value).setTagRecursively("TOUCH DEBUG"));
+            optionsPage.addView(CreateSettingsRow("Touch Batcher: Debug", "Enabled", "Disabled", () => Touch.Batcher.DEBUG, value => Touch.Batcher.DEBUG = value));
+            optionsPage.addView(CreateSettingsRow("View: Debug", "Enabled", "Disabled", () => View.DEBUG, value => View.DEBUG = value));
+            optionsPage.addView(CreateSettingsRow("View: Debug View Allocation", "Enabled", "Disabled", () => View.DEBUG_VIEW_ALLOCATION, value => View.DEBUG_VIEW_ALLOCATION = value));
+            optionsPage.addView(CreateSettingsRow("View: Debug Measure Child", "Enabled", "Disabled", () => View.DEBUG_MEASURE_CHILD, value => View.DEBUG_MEASURE_CHILD = value));
+            optionsPage.addView(CreateSettingsRow("View: Debug Invalidation", "Enabled", "Disabled", () => View.DEBUG_INVALIDATION, value => View.DEBUG_INVALIDATION = value));
+            optionsPage.addView(CreateSettingsRow("View: Debug View Tracking", "Enabled", "Disabled", () => View.DEBUG_VIEW_TRACKING, value => View.DEBUG_VIEW_TRACKING = value));
+            optionsPage.addView(CreateSettingsRow("ViewRootImpl: Debug (expensive)", "Enabled", "Disabled", () => DEBUG, value => getRunQueue().post(() => DEBUG = value)));
             optionsPage.addView(CreateSettingsRow("ViewRootImpl: Debug FPS", "Enabled", "Disabled", () => DEBUG_FPS, value => DEBUG_FPS = value));
             optionsPage.addView(CreateSettingsRow("ViewRootImpl: Debug Layout", "Enabled", "Disabled", () => DEBUG_LAYOUT, value => DEBUG_LAYOUT = value));
             optionsPage.addView(CreateSettingsRow("ViewRootImpl: Debug Draw", "Enabled", "Disabled", () => DEBUG_DRAW, value => DEBUG_DRAW = value));
+            optionsPage.addView(CreateSettingsRow("ViewRootImpl: Debug Draw Time", "Enabled", "Disabled", () => DEBUG_DRAW_TIME, value => DEBUG_DRAW_TIME = value));
             optionsPage.addView(CreateSettingsRow("ViewRootImpl: Debug Orientation", "Enabled", "Disabled", () => DEBUG_ORIENTATION, value => DEBUG_ORIENTATION = value));
             optionsPage.addView(CreateSettingsRow("ViewRootImpl: Debug Input Resize", "Enabled", "Disabled", () => DEBUG_INPUT_RESIZE, value => DEBUG_INPUT_RESIZE = value));
             optionsPage.addView(CreateSettingsRow("ViewRootImpl: Debug Blast", "Enabled", "Disabled", () => DEBUG_BLAST, value => DEBUG_BLAST = value));
-            options_page = optionsPage;
 
-            Runnable.ActionRunnable setBackground1 = new Runnable.ActionRunnable();
-            Runnable.ActionRunnable setBackground2 = new Runnable.ActionRunnable();
-            setBackground1.action = () =>
-            {
-                if (options.Context == null)
-                {
-                    getRunQueue().post(setBackground1);
-                }
-                else
-                {
-                    options.setBackgroundColor(Color.GRAY);
-                }
-            };
-            setBackground2.action = () =>
-            {
-                if (options_page.Context == null)
-                {
-                    getRunQueue().post(setBackground2);
-                }
-                else
-                {
-                    options_page.setBackgroundColor(Color.BLACK);
-                }
-            };
-            getRunQueue().post(setBackground1);
-            getRunQueue().post(setBackground2);
+            FlywheelScrollView sv = new FlywheelScrollView();
+            sv.addView(optionsPage, View.MATCH_PARENT_W__WRAP_CONTENT_H);
+            options_page = sv;
+
+            options.setBackgroundColor(Color.GRAY);
+            options_page.setBackgroundColor(Color.BLACK);
         }
 
         public void DestroyHandler()
@@ -1987,8 +1980,8 @@ namespace AndroidUI.Widgets
                         for (int i = 0; i < numValidRequests; ++i)
                         {
                             View view = validLayoutRequesters.ElementAt(i);
-                            Console.WriteLine(mTag, "requestLayout() improperly called by " + view +
-                                    " during layout: running second layout pass");
+                            Console.WriteLine(mTag, "requestLayout() improperly called by \"" + view +
+                                    "\" during layout: running second layout pass");
                             view.requestLayout();
                         }
                         measureHierarchy(host, null, null,
@@ -2005,7 +1998,7 @@ namespace AndroidUI.Widgets
                         {
                             List<View> finalRequesters = validLayoutRequesters;
                             // Post second-pass requests to the next frame
-                            getRunQueue().post(new Runnable.ActionRunnable(() =>
+                            getRunQueue().post(() =>
                             {
                                 int numValidRequests = finalRequesters.Count;
                                 for (int i = 0; i < numValidRequests; ++i)
@@ -2015,7 +2008,7 @@ namespace AndroidUI.Widgets
                                             " during second layout pass: posting in next frame");
                                     view.requestLayout();
                                 }
-                            }));
+                            });
                         }
                     }
                 }
@@ -2066,7 +2059,7 @@ namespace AndroidUI.Widgets
                             {
                                 List<View> finalRequesters = validLayoutRequesters;
                                 // Post second-pass requests to the next frame
-                                getRunQueue().post(new Runnable.ActionRunnable(() =>
+                                getRunQueue().post(() =>
                                 {
                                     int numValidRequests = finalRequesters.Count;
                                     for (int i = 0; i < numValidRequests; ++i)
@@ -2076,7 +2069,7 @@ namespace AndroidUI.Widgets
                                                 " during second layout pass: posting in next frame");
                                         view.requestLayout();
                                     }
-                                }));
+                                });
                             }
                         }
                     }
@@ -2697,37 +2690,13 @@ namespace AndroidUI.Widgets
 
                 if (System.Diagnostics.Debugger.IsAttached)
                 {
-                    mView.invalidate();
-
-                    if (DBG)
-                    {
-                        long s = NanoTime.currentTimeMillis();
-                        performTraversals(canvas);
-                        long e = NanoTime.currentTimeMillis();
-                        Log.d(TAG, "performed traversal in " + (e - s) + " milliseconds");
-                    }
-                    else
-                    {
-                        performTraversals(canvas);
-                    }
+                    DO_TRAVERSAL_INTERNAL(canvas);
                 }
                 else
                 {
                     try
                     {
-                        mView.invalidate();
-
-                        if (DBG)
-                        {
-                            long s = NanoTime.currentTimeMillis();
-                            performTraversals(canvas);
-                            long e = NanoTime.currentTimeMillis();
-                            Log.d(TAG, "performed traversal in " + (e - s) + " milliseconds");
-                        }
-                        else
-                        {
-                            performTraversals(canvas);
-                        }
+                        DO_TRAVERSAL_INTERNAL(canvas);
                     }
                     catch (Exception e)
                     {
@@ -2743,6 +2712,24 @@ namespace AndroidUI.Widgets
             }
         }
 
+        private void DO_TRAVERSAL_INTERNAL(SKCanvas canvas)
+        {
+            if (DEBUG_DRAW_TIME)
+            {
+                long s = NanoTime.currentTimeMillis();
+                performTraversals(canvas);
+                long e = NanoTime.currentTimeMillis();
+                Log.d(TAG, "performed traversal in " + (e - s) + " milliseconds");
+            }
+            else
+            {
+                performTraversals(canvas);
+            }
+
+            // invalidate AFTER traversal to ensure invalidation flag is added back
+            mView.invalidate();
+        }
+
         public void invalidate()
         {
             mDirty.set(0, 0, mWidth, mHeight);
@@ -2750,9 +2737,10 @@ namespace AndroidUI.Widgets
             {
                 scheduleTraversals();
             }
-
-            // just in case
-            //context.application.invalidate();
+            else
+            {
+                Log.d(TAG, "skip traversal scheduling because we are going to draw soon");
+            }
         }
 
         /**
@@ -2863,7 +2851,7 @@ namespace AndroidUI.Widgets
         }
 
 
-        HandlerActionQueue getRunQueue()
+        internal HandlerActionQueue getRunQueue()
         {
             var s = sRunQueues;
             HandlerActionQueue rq = s.Value;

@@ -1014,10 +1014,10 @@ namespace AndroidUI.Utils.Widgets
             private readonly List<View> mIsConnectedTo = new();
             private readonly Dictionary<View, View> mHeadsOfChains = new();
             private readonly Dictionary<View, int> mOriginalOrdinal = new();
-            private readonly Func<View, View, View> mNextFocusGetter;
+            private readonly RunnableWithReturn<View, View, View> mNextFocusGetter;
             private View mRoot;
 
-            public UserSpecifiedFocusComparator(Func<View, View, View> nextFocusGetter)
+            public UserSpecifiedFocusComparator(RunnableWithReturn<View, View, View> nextFocusGetter)
             {
                 mNextFocusGetter = nextFocusGetter;
             }

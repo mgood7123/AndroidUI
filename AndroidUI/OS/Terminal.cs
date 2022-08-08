@@ -115,6 +115,8 @@ namespace AndroidUI.OS
 
             public abstract void OnWaitForExit();
 
+            public abstract bool HasExited();
+
             public IProcessPackage WaitForExit()
             {
                 OnWaitForExit();
@@ -211,11 +213,20 @@ namespace AndroidUI.OS
                 }
             }
 
-            protected abstract IProcessPackage CreatePackage(string commandline);
+            protected abstract IProcessPackage CreatePackage(Stream outputRedirectionStream, string commandline);
 
             public IProcessPackage Run(string commandline, string newLineConversionTargetForSendInput = null)
             {
-                var package = CreatePackage(commandline);
+                return Run(null, commandline, newLineConversionTargetForSendInput);
+            }
+
+            public IProcessPackage Run(Stream outputRedirectionStream, string commandline, string newLineConversionTargetForSendInput = null)
+            {
+                if (outputRedirectionStream == null)
+                {
+                    outputRedirectionStream = new ReadWriteStream(new MemoryStream(), true);
+                }
+                var package = CreatePackage(outputRedirectionStream, commandline);
                 if (newLineConversionTargetForSendInput != null)
                 {
                     package.SetNewLineConversionTargetForSendInput(newLineConversionTargetForSendInput);

@@ -15,6 +15,8 @@
  */
 
 using SkiaSharp;
+using System.Text;
+using System.Text.Unicode;
 
 namespace AndroidUI.Graphics
 {
@@ -32,14 +34,14 @@ namespace AndroidUI.Graphics
             base.DisposeNative();
         }
 
-        public override unsafe bool ReadChunk(string tag, void* data, IntPtr length)
-        {
-            return false;
-        }
-
-        public override unsafe bool ReadChunk(void* tag, void* data, IntPtr length)
+        protected override bool ReadChunk(string tag, IntPtr data, IntPtr length)
         {
             // NPatch
+            int byteCount = Encoding.UTF8.GetByteCount(tag);
+            byte[] bytes = new byte[checked(byteCount + 1)];
+            int written = Encoding.UTF8.GetBytes(tag, bytes);
+            bytes[written] = 0;
+            fixed (byte* tagPtr = bytes)
             fixed (void** mPatch = &this.mPatch)
             fixed (nuint* mPatchSize = &this.mPatchSize)
             fixed (bool* mHasInsets = &this.mHasInsets)
@@ -50,7 +52,7 @@ namespace AndroidUI.Graphics
             {
                 return Native.Additional.SkNinePatchGlue_ReadChunk(
                     // ReadChunk
-                    tag, data, length,
+                    tagPtr, (void*)data, length,
                     // NPatch
                     mPatch, mPatchSize, mHasInsets,
                     &mOpticalInsets, &mOutlineInsets,

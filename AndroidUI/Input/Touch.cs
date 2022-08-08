@@ -1,4 +1,5 @@
-﻿using AndroidUI.Utils.Lists;
+﻿using AndroidUI.Utils;
+using AndroidUI.Utils.Lists;
 
 namespace AndroidUI.Input
 {
@@ -9,7 +10,7 @@ namespace AndroidUI.Input
         public Touch()
         {
             Log = new(this);
-            if (Widgets.View.DBG) Log.d("new Touch()");
+            if (Widgets.View.DEBUG) Log.d("new Touch()");
         }
 
         public enum State
@@ -21,7 +22,7 @@ namespace AndroidUI.Input
             TOUCH_CANCELLED
         };
 
-        public Action<Touch> onTouch = do_nothing;
+        public Runnable<Touch> onTouch = do_nothing;
 
         private static void do_nothing(Touch t)
         {
@@ -38,8 +39,8 @@ namespace AndroidUI.Input
         internal int touchCount = 0;
         internal int index = 0;
 
-        public bool debug;
-        public bool printMoved;
+        public static bool DEBUG;
+        public static bool PRINT_MOVED;
         public bool throw_on_error;
 
         public Data getTouchAt(int index)

@@ -59,10 +59,10 @@ namespace AndroidUITest
                 t.Join(1000);
                 Console.WriteLine("joined for 1 second");
                 Console.WriteLine("posting a runnable...");
-                h.post(Runnable.Create(() => Console.WriteLine("POSTED")));
+                h.post(() => Console.WriteLine("POSTED"));
                 Console.WriteLine("posted a runnable");
                 Console.WriteLine("posting another runnable...");
-                h.post(Runnable.Create(() => Console.WriteLine("POSTED 2")));
+                h.post(() => Console.WriteLine("POSTED 2"));
                 Console.WriteLine("posted another runnable");
                 Console.WriteLine("joining for 1 second...");
                 t.Join(1000);
@@ -107,7 +107,7 @@ namespace AndroidUITest
                     Console.WriteLine("finished looping");
 
                     Console.WriteLine("posting a runnable...");
-                    h.post(Runnable.Create(() => Console.WriteLine("POSTED")));
+                    h.post(() => Console.WriteLine("POSTED"));
                     Console.WriteLine("posted a runnable");
 
                     Console.WriteLine("looping UI");
@@ -115,9 +115,9 @@ namespace AndroidUITest
                     Console.WriteLine("finished looping");
 
                     Console.WriteLine("posting runnables...");
-                    h.post(Runnable.Create(() => Console.WriteLine("POSTED")));
-                    h.post(Runnable.Create(() => Console.WriteLine("POSTED")));
-                    h.post(Runnable.Create(() => Console.WriteLine("POSTED")));
+                    h.post(() => Console.WriteLine("POSTED"));
+                    h.post(() => Console.WriteLine("POSTED"));
+                    h.post(() => Console.WriteLine("POSTED"));
                     Console.WriteLine("posted runnables");
 
                     Console.WriteLine("looping UI");

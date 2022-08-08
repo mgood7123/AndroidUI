@@ -204,7 +204,7 @@ namespace AndroidUI.Widgets
                     }
                     else
                     {
-                        childWidthMeasureSpec = getChildMeasureSpec(widthMeasureSpec,
+                        childWidthMeasureSpec = getChildMeasureSpec(this, child, true, widthMeasureSpec,
                                 getPaddingLeftWithForeground() + getPaddingRightWithForeground() +
                                 lp.leftMargin + lp.rightMargin,
                                 lp.width);
@@ -221,7 +221,7 @@ namespace AndroidUI.Widgets
                     }
                     else
                     {
-                        childHeightMeasureSpec = getChildMeasureSpec(heightMeasureSpec,
+                        childHeightMeasureSpec = getChildMeasureSpec(this, child, false, heightMeasureSpec,
                                 getPaddingTopWithForeground() + getPaddingBottomWithForeground() +
                                 lp.topMargin + lp.bottomMargin,
                                 lp.height);

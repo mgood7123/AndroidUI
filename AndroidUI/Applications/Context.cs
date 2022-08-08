@@ -39,7 +39,7 @@ namespace AndroidUI.Applications
                 public object NullObj => null_object;
                 private readonly object LOCK = new();
 
-                internal void SetValue<T>(string key, ref object value, Func<T> default_value_creator, Thread thread)
+                internal void SetValue<T>(string key, ref object value, RunnableWithReturn<T> default_value_creator, Thread thread)
                 {
                     Item item_;
                     lock (LOCK)
@@ -100,7 +100,7 @@ namespace AndroidUI.Applications
                     return ref null_object;
                 }
 
-                internal ref object GetOrSetValue<T>(string key, Func<T> default_value_creator, Thread thread)
+                internal ref object GetOrSetValue<T>(string key, RunnableWithReturn<T> default_value_creator, Thread thread)
                 {
                     Item item_;
                     lock (LOCK)
@@ -158,7 +158,7 @@ namespace AndroidUI.Applications
             /// and then stored if it's key does not exist.
             /// <br></br> all further retrievals return a reference to the value type, avoiding a copy
             /// </summary>
-            public ValueHolder<T> GetOrCreate<T>(string key, Func<T> default_value_creator, Thread thread = null)
+            public ValueHolder<T> GetOrCreate<T>(string key, RunnableWithReturn<T> default_value_creator, Thread thread = null)
             {
                 return (ValueHolder<T>)map.GetOrSetValue(key, default_value_creator, thread);
             }
@@ -173,7 +173,7 @@ namespace AndroidUI.Applications
             /// and then stored if it's key does not exist.
             /// <br></br> all further retrievals return a reference to the value type, avoiding a copy
             /// </summary>
-            public void SetOrCreate<T>(string key, ValueHolder<T> value, Func<T> default_value_creator, Thread thread = null)
+            public void SetOrCreate<T>(string key, ValueHolder<T> value, RunnableWithReturn<T> default_value_creator, Thread thread = null)
             {
                 object holder = value;
                 map.SetValue(key, ref holder, default_value_creator, thread);

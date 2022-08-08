@@ -1,4 +1,5 @@
-﻿using Microsoft.Win32.SafeHandles;
+﻿using AndroidUI.Utils;
+using Microsoft.Win32.SafeHandles;
 using static AndroidUI.OS.Terminal.Windows.Native.ConsoleApi;
 using static AndroidUI.OS.Terminal.Windows.ProcessAPI;
 using static AndroidUI.OS.Terminal.Windows.Psuedo;
@@ -81,7 +82,7 @@ namespace AndroidUI.OS
                     bool alive;
                     Task stdinTask, stdoutTask;
 
-                    ReadWriteStream memory;
+                    Stream memory;
                     private readonly object LOCK = new();
 
                     protected override void OnDispose()
@@ -98,7 +99,7 @@ namespace AndroidUI.OS
                         ITerminal parent,
                         bool needsInput,
                         bool redirectInput,
-                        bool redirectOutput,
+                        bool redirectOutput, Stream outputRedirectionStream,
                         Stream terminalOutput,
                         PseudoConsolePipe inputPipe,
                         PseudoConsolePipe outputPipe, string command
@@ -107,14 +108,16 @@ namespace AndroidUI.OS
                         if (redirectOutput)
                         {
                             terminalOutput.Dispose();
-                            memory = new(new MemoryStream(), true);
+                            memory = outputRedirectionStream;
                             this.terminalOutput = memory;
                         }
                         else
                         {
+                            outputRedirectionStream.Dispose();
                             this.terminalOutput = terminalOutput;
                         }
 
+                        Log.d("TERM", "output is being sent to: " + this.terminalOutput.GetType().FullName);
                         alive = true;
 
                         this.inputPipe = inputPipe;
@@ -140,7 +143,7 @@ namespace AndroidUI.OS
                             DisposeResources(process, pseudoConsole, outputPipe, inputPipe);
                             if (!redirectOutput)
                             {
-                                terminalOutput.Dispose();
+                                this.terminalOutput.Dispose();
                             }
                         });
 
@@ -259,35 +262,49 @@ namespace AndroidUI.OS
                         pseudoConsoleOutput.Dispose();
                     }
 
+                    public override bool HasExited()
+                    {
+                        if (process == null) return true;
+                        if (!alive) return true;
+                        using var p = WaitForExit(process);
+                        if (!p.WaitOne(Utils.Const.Constants.THREAD_LOOP_SLEEP_TIME)) return false;
+                        DoExit();
+                        return true;
+                    }
+
                     /// <summary>
                     /// disposes resources when exited
                     /// </summary>
                     public override void OnWaitForExit()
                     {
+                        // we cannot lock here because we must wait for stdin
                         if (process != null && alive)
                         {
-                            WaitForExit(process).WaitOne(Timeout.Infinite);
-                            Native.ProcessApi.GetExitCodeProcess(process.ProcessInfo.hProcess, out var exitCode);
-                            SetProcessExitCode(exitCode);
-                            lock (LOCK)
-                            {
-                                alive = false;
-                            }
-                            stdinTask.Wait();
-                            DisposeResources(process, pseudoConsole, outputPipe, inputPipe);
-                            if (!redirectOutput)
-                            {
-                                terminalOutput.Dispose();
-                            }
-                            stdoutTask.Wait();
-
-                            process = null;
-                            pseudoConsole = null;
-                            outputPipe = null;
-                            inputPipe = null;
-                            stdinTask = null;
-                            stdoutTask = null;
+                            using var p = WaitForExit(process);
+                            p.WaitOne(Timeout.Infinite);
+                            DoExit();
                         }
+                    }
+
+                    private void DoExit()
+                    {
+                        Native.ProcessApi.GetExitCodeProcess(process.ProcessInfo.hProcess, out var exitCode);
+                        SetProcessExitCode(exitCode);
+                        alive = false;
+                        stdinTask.Wait();
+                        DisposeResources(process, pseudoConsole, outputPipe, inputPipe);
+                        if (!redirectOutput)
+                        {
+                            terminalOutput.Dispose();
+                        }
+                        stdoutTask.Wait();
+
+                        process = null;
+                        pseudoConsole = null;
+                        outputPipe = null;
+                        inputPipe = null;
+                        stdinTask = null;
+                        stdoutTask = null;
                     }
 
                     /// <summary>
@@ -348,12 +365,12 @@ namespace AndroidUI.OS
                 /// https://docs.microsoft.com/en-us/windows/console/creating-a-pseudoconsole-session#creating-the-pseudoconsole
                 /// </summary>
                 /// <param name="command">the command to run, e.g. cmd.exe</param>
-                protected override IProcessPackage CreatePackage(string command)
+                protected override IProcessPackage CreatePackage(Stream outputRedirectionStream, string command)
                 {
                     return new ProcessPackage(
                         this,
                         NeedsInput, RedirectInput, RedirectOutput,
-                        Console.OpenStandardOutput(),
+                        outputRedirectionStream, Console.OpenStandardOutput(),
                         new PseudoConsolePipe(), new PseudoConsolePipe(),
                         command
                     );

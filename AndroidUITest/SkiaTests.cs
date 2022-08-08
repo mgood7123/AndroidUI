@@ -17,16 +17,21 @@ namespace AndroidUITest
                 }
                 class Reader : SKPngChunkReader
                 {
-                    public override unsafe bool ReadChunk(string tag, void* data, IntPtr length)
+                    public virtual bool OnReadChunk(string tag, IntPtr data, IntPtr length)
                     {
                         Console.WriteLine("READ CHUNK");
                         return true;
+                    }
+
+                    protected override bool ReadChunk(string tag, IntPtr data, IntPtr length)
+                    {
+                        return OnReadChunk(tag, data, length);
                     }
                 }
                 public override void Run(TestGroup nullableInstance)
                 {
                     Reader r = new();
-                    Tools.ExpectTrue(r.ReadChunk("tag", IntPtr.Zero, IntPtr.Zero), "failed to read chunk");
+                    Tools.ExpectTrue(r.OnReadChunk("tag", IntPtr.Zero, IntPtr.Zero), "failed to read chunk");
                 }
             }
         }
@@ -462,7 +467,7 @@ namespace AndroidUITest
                     Tools.ExpectEqual(AndroidUI.Graphics.Color.toSKColor(AndroidUI.Graphics.Color.CYAN).ToString(), "#ff00ffff");
                     Tools.ExpectEqual(AndroidUI.Graphics.Color.CYAN.ToSKColorF().ToString(), "#ff00ffff");
                     Tools.ExpectEqual(AndroidUI.Graphics.Color.CYAN.ToSKColor().ToString(), "#ff00ffff");
-                    Tools.ExpectEqual(AndroidUI.Graphics.Color.CYAN.ToSKColorF().ToString(), "#ff00ffff"); ;
+                    Tools.ExpectEqual(AndroidUI.Graphics.Color.CYAN.ToSKColorF().ToString(), "#ff00ffff");
                     Tools.ExpectEqual(AndroidUI.Graphics.Color.CYAN.ToSKColorF().ToSKColor().ToString(), "#ff00ffff");
                     Tools.ExpectEqual(AndroidUI.Graphics.Color.CYAN.ToSKColor().ToSKColorF().ToString(), "#ff00ffff");
                     Tools.ExpectEqual(AndroidUI.Graphics.Color.CYAN.ToSKColorF().ToSKColor().ToSKColorF().ToString(), "#ff00ffff");

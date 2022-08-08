@@ -42,6 +42,12 @@ namespace AndroidUI.Widgets
     public class View : ViewParent, Drawable.Callback
     {
 
+        public static bool DEBUG = false;
+        internal static bool DEBUG_INVALIDATION = false;
+        internal static bool DEBUG_MEASURE_CHILD = false;
+        internal static bool DEBUG_VIEW_TRACKING = false;
+        internal static bool DEBUG_VIEW_ALLOCATION = false;
+
         // TODO: implement view protection: internalize added views, invisible to user but visible to us
 
         public void onDescendantUnbufferedRequested()
@@ -72,10 +78,16 @@ namespace AndroidUI.Widgets
 
         public View()
         {
-            logtag = new(GetType().Name);
+            logtag = new(this);
+            if (DEBUG_VIEW_ALLOCATION) Log.d("ALLOCATED");
             sparePaint = new();
             sparePaint.setColor(Graphics.Color.WHITE);
             initView();
+        }
+
+        ~View()
+        {
+            if (DEBUG_VIEW_ALLOCATION) Log.d("DEALLOCATED");
         }
 
         bool wasShowingLayoutBounds;
@@ -288,7 +300,7 @@ namespace AndroidUI.Widgets
                 return measureSpec & ~MODE_MASK;
             }
 
-            static int adjust(int measureSpec, int delta)
+            static int adjust(View view, int measureSpec, int delta)
             {
                 int mode = getMode(measureSpec);
                 int size = getSize(measureSpec);
@@ -300,7 +312,7 @@ namespace AndroidUI.Widgets
                 size += delta;
                 if (size < 0)
                 {
-                    Console.WriteLine("MeasureSpec.adjust: new size would be negative! (" + size +
+                    view.Log.d("MeasureSpec.adjust: new size would be negative! (" + size +
                             ") spec: " + ToString(measureSpec) + " delta: " + delta);
                     size = 0;
                 }
@@ -2859,7 +2871,7 @@ namespace AndroidUI.Widgets
 
         protected void setMeasuredDimension(int measuredWidth, int measuredHeight)
         {
-            if (DBG) Log.d("setMeasuredDimension: " + measuredWidth + ", " + measuredHeight);
+            if (DEBUG_MEASURE_CHILD) Log.d("setMeasuredDimension: " + measuredWidth + ", " + measuredHeight);
             mMeasuredWidth = measuredWidth;
             mMeasuredHeight = measuredHeight;
 
@@ -3092,9 +3104,9 @@ namespace AndroidUI.Widgets
         {
             LayoutParams lp = child.mLayoutParams;
 
-            int childWidthMeasureSpec = getChildMeasureSpec(parentWidthMeasureSpec,
+            int childWidthMeasureSpec = getChildMeasureSpec(this, child, true, parentWidthMeasureSpec,
                     mPaddingLeft + mPaddingRight, lp.width);
-            int childHeightMeasureSpec = getChildMeasureSpec(parentHeightMeasureSpec,
+            int childHeightMeasureSpec = getChildMeasureSpec(this, child, false, parentHeightMeasureSpec,
                     mPaddingTop + mPaddingBottom, lp.height);
 
             child.measure(childWidthMeasureSpec, childHeightMeasureSpec);
@@ -3120,10 +3132,10 @@ namespace AndroidUI.Widgets
         {
             MarginLayoutParams lp = (MarginLayoutParams)child.getLayoutParams();
 
-            int childWidthMeasureSpec = getChildMeasureSpec(parentWidthMeasureSpec,
+            int childWidthMeasureSpec = getChildMeasureSpec(this, child, true, parentWidthMeasureSpec,
                     mPaddingLeft + mPaddingRight + lp.leftMargin + lp.rightMargin
                             + widthUsed, lp.width);
-            int childHeightMeasureSpec = getChildMeasureSpec(parentHeightMeasureSpec,
+            int childHeightMeasureSpec = getChildMeasureSpec(this, child, false, parentHeightMeasureSpec,
                     mPaddingTop + mPaddingBottom + lp.topMargin + lp.bottomMargin
                             + heightUsed, lp.height);
 
@@ -3149,7 +3161,7 @@ namespace AndroidUI.Widgets
          *        dimension
          * @return a MeasureSpec integer for the child
          */
-        public static int getChildMeasureSpec(int spec, int padding, int childDimension)
+        public static int getChildMeasureSpec(View parent, View child, bool is_width, int spec, int padding, int childDimension)
         {
             int specMode = MeasureSpec.getMode(spec);
             int specSize = MeasureSpec.getSize(spec);
@@ -3159,25 +3171,30 @@ namespace AndroidUI.Widgets
             int resultSize = 0;
             int resultMode = 0;
 
+            string dim = is_width ? "Width " : "Height";
+
             switch (specMode)
             {
                 // Parent has imposed an exact size on us
                 case MeasureSpec.EXACTLY:
+                    if (DEBUG_MEASURE_CHILD) child.Log.d("MeasureSpec (" + dim + "): Parent (" + parent + ") has imposed an exact size on us");
                     if (childDimension >= 0)
                     {
+                        if (DEBUG_MEASURE_CHILD) child.Log.d("MeasureSpec (" + dim + "): Child wants a specific size... So be it");
                         resultSize = childDimension;
                         resultMode = MeasureSpec.EXACTLY;
                     }
                     else if (childDimension == MATCH_PARENT)
                     {
                         // Child wants to be our size. So be it.
+                        if (DEBUG_MEASURE_CHILD) child.Log.d("MeasureSpec (" + dim + "): Child wants to be our size. So be it");
                         resultSize = size;
                         resultMode = MeasureSpec.EXACTLY;
                     }
                     else if (childDimension == WRAP_CONTENT)
                     {
-                        // Child wants to determine its own size. It can't be
-                        // bigger than us.
+                        // Child wants to determine its own size. It can't be bigger than us.
+                        if (DEBUG_MEASURE_CHILD) child.Log.d("MeasureSpec (" + dim + "): Child wants to determine its own size. It can't be bigger than us");
                         resultSize = size;
                         resultMode = MeasureSpec.AT_MOST;
                     }
@@ -3185,9 +3202,11 @@ namespace AndroidUI.Widgets
 
                 // Parent has imposed a maximum size on us
                 case MeasureSpec.AT_MOST:
+                    if (DEBUG_MEASURE_CHILD) child.Log.d("MeasureSpec (" + dim + "): Parent (" + parent + ") has imposed a maximum size on us");
                     if (childDimension >= 0)
                     {
                         // Child wants a specific size... so be it
+                        if (DEBUG_MEASURE_CHILD) child.Log.d("MeasureSpec (" + dim + "): Child wants a specific size... so be it");
                         resultSize = childDimension;
                         resultMode = MeasureSpec.EXACTLY;
                     }
@@ -3195,13 +3214,14 @@ namespace AndroidUI.Widgets
                     {
                         // Child wants to be our size, but our size is not fixed.
                         // Constrain child to not be bigger than us.
+                        if (DEBUG_MEASURE_CHILD) child.Log.d("MeasureSpec (" + dim + "): Child wants to be our size, but our size is not fixed. Constrain child to not be bigger than us");
                         resultSize = size;
                         resultMode = MeasureSpec.AT_MOST;
                     }
                     else if (childDimension == WRAP_CONTENT)
                     {
-                        // Child wants to determine its own size. It can't be
-                        // bigger than us.
+                        // Child wants to determine its own size. It can't be bigger than us.
+                        if (DEBUG_MEASURE_CHILD) child.Log.d("MeasureSpec (" + dim + "): Child wants to determine its own size. It can't be bigger than us");
                         resultSize = size;
                         resultMode = MeasureSpec.AT_MOST;
                     }
@@ -3209,23 +3229,25 @@ namespace AndroidUI.Widgets
 
                 // Parent asked to see how big we want to be
                 case MeasureSpec.UNSPECIFIED:
+                    if (DEBUG_MEASURE_CHILD) child.Log.d("MeasureSpec (" + dim + "): Parent (" + parent + ") has asked to see how big we want to be");
                     if (childDimension >= 0)
                     {
                         // Child wants a specific size... let them have it
+                        if (DEBUG_MEASURE_CHILD) child.Log.d("MeasureSpec (" + dim + "): Child wants a specific size... let them have it");
                         resultSize = childDimension;
                         resultMode = MeasureSpec.EXACTLY;
                     }
                     else if (childDimension == MATCH_PARENT)
                     {
-                        // Child wants to be our size... find out how big it should
-                        // be
+                        // Child wants to be our size... find out how big it should be
+                        if (DEBUG_MEASURE_CHILD) child.Log.d("MeasureSpec (" + dim + "): Child wants to be our size... find out how big it should");
                         resultSize = sUseZeroUnspecifiedMeasureSpec ? 0 : size;
                         resultMode = MeasureSpec.UNSPECIFIED;
                     }
                     else if (childDimension == WRAP_CONTENT)
                     {
-                        // Child wants to determine its own size.... find out how
-                        // big it should be
+                        // Child wants to determine its own size... find out how big it should be
+                        if (DEBUG_MEASURE_CHILD) child.Log.d("MeasureSpec (" + dim + "): Child wants to determine its own size... find out how big it should");
                         resultSize = sUseZeroUnspecifiedMeasureSpec ? 0 : size;
                         resultMode = MeasureSpec.UNSPECIFIED;
                     }
@@ -3494,7 +3516,7 @@ namespace AndroidUI.Widgets
             return true;
         }
 
-        private sealed class CheckForLongPress : Runnable
+        private sealed class CheckForLongPress
         {
             private int mOriginalWindowAttachCount;
             private float mX;
@@ -3503,21 +3525,22 @@ namespace AndroidUI.Widgets
 
             View outer;
 
+            internal Runnable runnable;
+
             public CheckForLongPress(View outer)
             {
                 this.outer = outer;
-            }
-
-            public override void run()
-            {
-                if ((mOriginalPressedState == outer.isPressed()) && (outer.mParent != null)
-                        && mOriginalWindowAttachCount == outer.mWindowAttachCount)
-                {
-                    if (outer.performLongClick(mX, mY))
+                runnable = () => {
+                    if ((mOriginalPressedState == outer.isPressed()) && (outer.mParent != null)
+                            && mOriginalWindowAttachCount == outer.mWindowAttachCount)
                     {
-                        outer.mHasPerformedLongPress = true;
+                        outer.Log.d("RUNNABLE: checking for pending long tap at location: " + Touch.Data.Position.ToString(mX, mY));
+                        if (outer.performLongClick(mX, mY))
+                        {
+                            outer.mHasPerformedLongPress = true;
+                        }
                     }
-                }
+                };
             }
 
             public void setAnchor(float x, float y)
@@ -3537,61 +3560,45 @@ namespace AndroidUI.Widgets
             }
         }
 
-        private sealed class CheckForTap : Runnable
+        private sealed class CheckForTap
         {
             public float x;
             public float y;
 
             View outer;
 
+            internal Runnable runnable;
+
             public CheckForTap(View outer)
             {
                 this.outer = outer;
-            }
-
-            public override void run()
-            {
-                outer.mPrivateFlags &= ~View.PFLAG_PREPRESSED;
-                outer.setPressed(true, x, y);
-                long delay = ViewConfiguration.getLongPressTimeout() - ViewConfiguration.getTapTimeout();
-                outer.checkForLongClick(delay, x, y);
-            }
-        }
-
-        private sealed class PerformClick : Runnable
-        {
-            View outer;
-
-            public PerformClick(View outer)
-            {
-                this.outer = outer;
-            }
-
-            public override void run()
-            {
-                outer.performClickInternal();
-            }
-        }
-        class UnsetPressedState : Runnable
-        {
-
-            View outer;
-
-            public UnsetPressedState(View outer)
-            {
-                this.outer = outer;
-            }
-
-            public override void run()
-            {
-                outer.setPressed(false);
+                runnable = () =>
+                {
+                    outer.mPrivateFlags &= ~View.PFLAG_PREPRESSED;
+                    outer.setPressed(true, x, y);
+                    long delay = ViewConfiguration.getLongPressTimeout() - ViewConfiguration.getTapTimeout();
+                    outer.checkForLongClick(delay, x, y);
+                };
             }
         }
 
         private CheckForLongPress mPendingCheckForLongPress;
         private CheckForTap mPendingCheckForTap;
-        private PerformClick mPerformClick;
-        private UnsetPressedState mUnsetPressedState;
+        private Runnable mPerformClick;
+        private Runnable mUnsetPressedState;
+
+        void CreatePerformClick()
+        {
+            mPerformClick = () =>
+            {
+                performClickInternal();
+            };
+        }
+
+        void CreateUnsetPressedState()
+        {
+            mUnsetPressedState = () => setPressed(false);
+        }
 
         /**
          * Remove the longpress detection timer.
@@ -3600,7 +3607,7 @@ namespace AndroidUI.Widgets
         {
             if (mPendingCheckForLongPress != null)
             {
-                removeCallbacks(mPendingCheckForLongPress);
+                removeCallbacks(mPendingCheckForLongPress.runnable);
             }
         }
 
@@ -3619,7 +3626,7 @@ namespace AndroidUI.Widgets
             {
                 return false;
             }
-            return attachInfo.mHandler.hasCallbacks(mPendingCheckForLongPress);
+            return attachInfo.mHandler.hasCallbacks(mPendingCheckForLongPress.runnable);
         }
 
         /**
@@ -3653,7 +3660,7 @@ namespace AndroidUI.Widgets
             if (mPendingCheckForTap != null)
             {
                 mPrivateFlags &= ~PFLAG_PREPRESSED;
-                removeCallbacks(mPendingCheckForTap);
+                removeCallbacks(mPendingCheckForTap.runnable);
             }
         }
 
@@ -3695,9 +3702,9 @@ namespace AndroidUI.Widgets
          */
         void unFocus(View focused)
         {
-            if (DBG)
+            if (DEBUG)
             {
-                Console.WriteLine(this + " unFocus()");
+                Log.d("unfocus: " + focused);
             }
 
             if (mFocused == null)
@@ -4653,9 +4660,9 @@ namespace AndroidUI.Widgets
          */
         public void clearFocus()
         {
-            if (DBG)
+            if (DEBUG)
             {
-                Console.WriteLine(this + " clearFocus()");
+                Log.d("cleared focus");
             }
 
             bool refocus = !isInTouchMode();
@@ -5179,7 +5186,7 @@ namespace AndroidUI.Widgets
             View result = root.findViewByPredicateInsideOut<View>(start, mMatchIdPredicate);
             if (result == null)
             {
-                Console.WriteLine("couldn't find view with id " + id);
+                Log.d("couldn't find view with id " + id);
             }
             return result;
         }
@@ -5233,7 +5240,7 @@ namespace AndroidUI.Widgets
                View start, Predicate<View> predicate) where T : View
         {
             View childToSkip = null;
-            for (; ; )
+            for (;;)
             {
                 T view = start.findViewByPredicateTraversal<T>(predicate, childToSkip);
                 if (view != null || start == this)
@@ -5381,7 +5388,7 @@ namespace AndroidUI.Widgets
                 return requestFocusNoSearch(direction, previouslyFocusedRect);
             }
 
-            if (DBG)
+            if (DEBUG)
             {
                 Log.d("ViewGroup.requestFocus direction=" + direction);
             }
@@ -5514,9 +5521,9 @@ namespace AndroidUI.Widgets
          */
         void handleFocusGainInternal(int direction, Rect previouslyFocusedRect)
         {
-            if (DBG)
+            if (DEBUG)
             {
-                Console.WriteLine(this + " requestFocus()");
+                Log.d("gain focus");
             }
 
             if ((mPrivateFlags & PFLAG_FOCUSED) == 0)
@@ -6303,6 +6310,7 @@ namespace AndroidUI.Widgets
 
         private static void AddInvalidatedFlag(View p)
         {
+            if (DEBUG_INVALIDATION) p.Log.d("ADD_INVALIDATED_FLAG");
             uint f = (uint)p.mPrivateFlags;
             f |= PFLAG_INVALIDATED;
             p.mPrivateFlags = (int)f;
@@ -6310,6 +6318,7 @@ namespace AndroidUI.Widgets
 
         private static void RemoveInvalidatedFlag(View p)
         {
+            if (DEBUG_INVALIDATION) p.Log.d("DEL_INVALIDATED_FLAG");
             uint f = (uint)p.mPrivateFlags;
             f &= ~PFLAG_INVALIDATED;
             p.mPrivateFlags = (int)f;
@@ -6591,61 +6600,65 @@ namespace AndroidUI.Widgets
         void invalidateInternal(int l, int t, int r, int b, bool invalidateCache,
                 bool fullInvalidate)
         {
-            //if (mGhostView != null)
-            //{
-            //mGhostView.invalidate(true);
-            //return;
-            //}
-
-            if (skipInvalidate())
+            RunOnUIThread(() =>
             {
-                return;
-            }
+                //if (mGhostView != null)
+                //{
+                //mGhostView.invalidate(true);
+                //return;
+                //}
 
-            // Reset content capture caches
-            //mPrivateFlags4 &= ~PFLAG4_CONTENT_CAPTURE_IMPORTANCE_MASK;
-            //mContentCaptureSessionCached = false;
-
-            if (
-                    (mPrivateFlags & (PFLAG_DRAWN | PFLAG_HAS_BOUNDS)) == (PFLAG_DRAWN | PFLAG_HAS_BOUNDS)
-                    || invalidateCache && (mPrivateFlags & PFLAG_DRAWING_CACHE_VALID) == PFLAG_DRAWING_CACHE_VALID
-                    || (mPrivateFlags & PFLAG_INVALIDATED) != PFLAG_INVALIDATED
-                    || fullInvalidate && isOpaque() != mLastIsOpaque)
-            {
-                if (fullInvalidate)
+                if (skipInvalidate())
                 {
-                    mLastIsOpaque = isOpaque();
-                    mPrivateFlags &= ~PFLAG_DRAWN;
+                    return;
                 }
 
-                mPrivateFlags |= PFLAG_DIRTY;
+                // Reset content capture caches
+                //mPrivateFlags4 &= ~PFLAG4_CONTENT_CAPTURE_IMPORTANCE_MASK;
+                //mContentCaptureSessionCached = false;
 
-                if (invalidateCache)
+                if (
+                        (mPrivateFlags & (PFLAG_DRAWN | PFLAG_HAS_BOUNDS)) == (PFLAG_DRAWN | PFLAG_HAS_BOUNDS)
+                        || (invalidateCache && (mPrivateFlags & PFLAG_DRAWING_CACHE_VALID) == PFLAG_DRAWING_CACHE_VALID)
+                        || (mPrivateFlags & PFLAG_INVALIDATED) != PFLAG_INVALIDATED
+                        || (fullInvalidate && isOpaque() != mLastIsOpaque)
+                )
                 {
-                    AddInvalidatedFlag(this);
-                    mPrivateFlags &= ~PFLAG_DRAWING_CACHE_VALID;
-                }
-
-                // Propagate the damage rectangle to the parent view.
-                AttachInfo ai = mAttachInfo;
-                ViewParent p = mParent;
-                if (p != null && ai != null && l < r && t < b)
-                {
-                    Rect damage = ai.mTmpInvalRect;
-                    damage.set(l, t, r, b);
-                    p.invalidateChild(this, damage);
-                }
-
-                // Damage the entire projection receiver, if necessary.
-                if (mBackground != null && mBackground.isProjected())
-                {
-                    View receiver = getProjectionReceiver();
-                    if (receiver != null)
+                    if (fullInvalidate)
                     {
-                        receiver.damageInParent();
+                        mLastIsOpaque = isOpaque();
+                        mPrivateFlags &= ~PFLAG_DRAWN;
+                    }
+
+                    mPrivateFlags |= PFLAG_DIRTY;
+
+                    if (invalidateCache)
+                    {
+                        AddInvalidatedFlag(this);
+                        mPrivateFlags &= ~PFLAG_DRAWING_CACHE_VALID;
+                    }
+
+                    // Propagate the damage rectangle to the parent view.
+                    AttachInfo ai = mAttachInfo;
+                    ViewParent p = mParent;
+                    if (p != null && ai != null && l < r && t < b)
+                    {
+                        Rect damage = ai.mTmpInvalRect;
+                        damage.set(l, t, r, b);
+                        p.invalidateChild(this, damage);
+                    }
+
+                    // Damage the entire projection receiver, if necessary.
+                    if (mBackground != null && mBackground.isProjected())
+                    {
+                        View receiver = getProjectionReceiver();
+                        if (receiver != null)
+                        {
+                            receiver.damageInParent();
+                        }
                     }
                 }
-            }
+            });
         }
 
         /**
@@ -7226,7 +7239,7 @@ namespace AndroidUI.Widgets
          * is supported. This avoids keeping too many unused fields in most
          * instances of View.</p>
          */
-        private class ScrollabilityCache : Runnable
+        private class ScrollabilityCache
         {
             LogTag Log;
             /**
@@ -7289,6 +7302,8 @@ namespace AndroidUI.Widgets
 
             public float mScrollBarDraggingPos = 0;
 
+            Runnable runnable;
+
             public ScrollabilityCache(ViewConfiguration configuration, View host)
             {
                 Log = host.Log;
@@ -7311,6 +7326,33 @@ namespace AndroidUI.Widgets
                 paint.Shader = shader;
                 paint.BlendMode = SKBlendMode.DstOut;
                 this.host = host;
+                runnable = () =>
+                {
+                    long now = AnimationUtils.currentAnimationTimeMillis(host.Context);
+                    Log.d("SCOLLABILITY", "run");
+                    if (now >= fadeStartTime)
+                    {
+                        // the animation fades the scrollbars out by changing
+                        // the opacity (alpha) from fully opaque to fully
+                        // transparent
+                        int nextFrame = (int)now;
+                        int framesCount = 0;
+
+                        //Interpolator interpolator = scrollBarInterpolator;
+
+                        // Start opaque
+                        //interpolator.setKeyFrame(framesCount++, nextFrame, OPAQUE);
+
+                        // End transparent
+                        nextFrame += scrollBarFadeDuration;
+                        //interpolator.setKeyFrame(framesCount, nextFrame, TRANSPARENT);
+
+                        state = FADING;
+
+                        // Kick off the fade animation
+                        host.invalidate(true);
+                    }
+                };
             }
 
             public void setFadeColor(int color)
@@ -7342,34 +7384,6 @@ namespace AndroidUI.Widgets
                         paint.Shader = shader;
                         paint.BlendMode = SKBlendMode.DstOut;
                     }
-                }
-            }
-
-            public override void run()
-            {
-                long now = AnimationUtils.currentAnimationTimeMillis(host.Context);
-                Log.d("SCOLLABILITY", "run");
-                if (now >= fadeStartTime)
-                {
-                    // the animation fades the scrollbars out by changing
-                    // the opacity (alpha) from fully opaque to fully
-                    // transparent
-                    int nextFrame = (int)now;
-                    int framesCount = 0;
-
-                    //Interpolator interpolator = scrollBarInterpolator;
-
-                    // Start opaque
-                    //interpolator.setKeyFrame(framesCount++, nextFrame, OPAQUE);
-
-                    // End transparent
-                    nextFrame += scrollBarFadeDuration;
-                    //interpolator.setKeyFrame(framesCount, nextFrame, TRANSPARENT);
-
-                    state = FADING;
-
-                    // Kick off the fade animation
-                    host.invalidate(true);
                 }
             }
         }
@@ -7968,7 +7982,7 @@ namespace AndroidUI.Widgets
                 // we're done...
                 return;
             }
-            Console.WriteLine("EDGE FADING IS NOT SUPPORTED");
+            Log.d("EDGE FADING IS NOT SUPPORTED");
 
             /*
              * Here we do the full fledged routine...
@@ -8293,7 +8307,7 @@ namespace AndroidUI.Widgets
          *
          * @return the queue of runnables for this view
          */
-        private Execution.HandlerActionQueue getRunQueue()
+        protected Execution.HandlerActionQueue getRunQueue()
         {
             if (mRunQueue == null)
             {
@@ -8451,7 +8465,7 @@ namespace AndroidUI.Widgets
          * Register a callback to be invoked when a touch event is sent to this view.
          * @param l the touch listener to attach to this view
          */
-        public void setOnTouchListener(Func<View, Touch, bool> l)
+        public void setOnTouchListener(RunnableWithReturn<View, Touch, bool> l)
         {
             getListenerInfo().mOnTouchListener = new RunnableOnTouchListener(l);
         }
@@ -8769,15 +8783,15 @@ namespace AndroidUI.Widgets
             while (target != null)
             {
                 TouchTarget next = target.next;
-                Console.WriteLine("Testing if [" + pointerIdBits + "] is present in touch target pointer bits [" + target.pointerIdBits + "]");
+                Log.d("Testing if [" + pointerIdBits + "] is present in touch target pointer bits [" + target.pointerIdBits + "]");
                 if ((target.pointerIdBits & pointerIdBits) != BitwiseList<object>.ZERO)
                 {
-                    Console.WriteLine("Removing [" + pointerIdBits + "] from touch target pointer bits");
+                    Log.d("Removing [" + pointerIdBits + "] from touch target pointer bits");
                     target.pointerIdBits &= ~new BitwiseList<object>(pointerIdBits);
-                    Console.WriteLine("Removed [" + pointerIdBits + "] from touch target pointer bits [" + target.pointerIdBits + "]");
+                    Log.d("Removed [" + pointerIdBits + "] from touch target pointer bits [" + target.pointerIdBits + "]");
                     if (target.pointerIdBits == BitwiseList<object>.ZERO)
                     {
-                        Console.WriteLine("touch target pointer has no more bits");
+                        Log.d("touch target pointer has no more bits");
                         if (predecessor == null)
                         {
                             mFirstTouchTarget = next;
@@ -8962,8 +8976,7 @@ namespace AndroidUI.Widgets
         {
             // Check for interception.
             bool intercepted;
-            if (currentState != Touch.State.TOUCH_DOWN && currentTouchCount != 1
-                && trackedViews.Count == 0)
+            if (currentState != Touch.State.TOUCH_DOWN && currentTouchCount != 1 && trackedViews.Count == 0)
             {
                 // There are no touch targets and this action is not an initial down
                 // so this view group continues to intercept touches.
@@ -9000,413 +9013,403 @@ namespace AndroidUI.Widgets
 
                 bool intercepted = intercepting = stealed_touch__Tracking(ev, currentTouchCount, currentData, currentState);
                 bool cancelled = resetCancelNextUpFlag(this) || currentState == Touch.State.TOUCH_CANCELLED;
-
-                View found = null;
-
-                if (!intercepting)
+                if (intercepted)
                 {
-                    // If the event is targeting accessibility focus we give it to the
-                    // view that has accessibility focus and if it does not handle it
-                    // we clear the flag and dispatch the event to all children as usual.
-                    // We are looking up the accessibility focused host to avoid keeping
-                    // state since these events are very rare.
-                    View childWithAccessibilityFocus = null;
-
-                    // touch down/up is ALWAYS sent sequentially
-                    Touch.Data down_event = null;
-                    View down_event_view = null;
-                    Touch down_event_touch = null;
-
-                    if (currentState == Touch.State.TOUCH_DOWN)
-                    {
-
-                        float x = 0;
-                        float y = 0;
-
-                        if (currentData.hasLocation)
-                        {
-                            x = currentData.location.x;
-                            y = currentData.location.y;
-                        }
-                        else
-                        {
-                            bool found_ = false;
-                            foreach ((View View, Touch Touch) pair in trackedViews)
-                            {
-                                var it = pair.Touch.getIterator();
-                                while (it.hasNext())
-                                {
-                                    Touch.Data touchData = it.next();
-                                    if (touchData.hasLocation)
-                                    {
-                                        found_ = true;
-                                        x = touchData.location.x;
-                                        y = touchData.location.y;
-                                        break;
-                                    }
-                                }
-                                if (found_) break;
-                            }
-                            if (!found_)
-                            {
-                                throw new Exception("could not obtain a valid cursor position");
-                            }
-                        }
-
-                        int childrenCount = mChildrenCount;
-                        if (childrenCount != 0)
-                        {
-
-                            // Find a child that can receive the event.
-                            // Scan children from front to back.
-                            ArrayList<View> preorderedList = buildTouchDispatchChildList();
-                            bool customOrder = preorderedList == null
-                                    && isChildrenDrawingOrderEnabled();
-                            View[] children = mChildren;
-                            for (int i = childrenCount - 1; i >= 0; i--)
-                            {
-                                int childIndex = getAndVerifyPreorderedIndex(
-                                        childrenCount, i, customOrder);
-                                View child = getAndVerifyPreorderedView(
-                                        preorderedList, children, childIndex);
-
-                                // If there is a view that has accessibility focus we want it
-                                // to get the event first and if not handled we will perform a
-                                // normal dispatch. We may do a double iteration but this is
-                                // safer given the timeframe.
-                                if (childWithAccessibilityFocus != null)
-                                {
-                                    if (childWithAccessibilityFocus != child)
-                                    {
-                                        continue;
-                                    }
-                                    childWithAccessibilityFocus = null;
-                                    i = childrenCount - 1;
-                                }
-
-                                if (!child.canReceivePointerEvents()
-                                        || !isTransformedTouchPointInView(x, y, child, null))
-                                {
-                                    //ev.setTargetAccessibilityFocus(false);
-                                    continue;
-                                }
-
-                                if (trackedViews.Count != 0)
-                                {
-                                    foreach ((View View, Touch Touch) pair in trackedViews)
-                                    {
-                                        if (pair.View == child)
-                                        {
-                                            found = child;
-
-                                            bool exists = false;
-
-                                            // check if touch exists
-                                            var it2 = pair.Touch.getIterator();
-                                            while (it2.hasNext())
-                                            {
-                                                if (it2.next().identity == currentData.identity)
-                                                {
-                                                    exists = true;
-                                                    break;
-                                                }
-                                            }
-
-                                            // store copy of touch data if it doesnt exist
-                                            if (!exists)
-                                            {
-                                                if (DBG) Log.d("touch with identity " + currentData.identity + " does not exist, adding to view at " + Touch.Data.Position.ToString(child.getX(), child.getY()));
-                                                down_event = (Touch.Data)currentData.Clone();
-                                                down_event_view = pair.View;
-                                                down_event_touch = pair.Touch;
-                                            }
-                                            else
-                                            {
-                                                if (DBG) Log.d("touch with identity " + currentData.identity + " exists in view at " + Touch.Data.Position.ToString(child.getX(), child.getY()) + ", skipping");
-                                            }
-                                            break;
-                                        }
-                                    }
-                                }
-
-                                if (trackedViews.Count == 0 || found == null)
-                                {
-                                    if (DBG) Log.d("tracking view at " + Touch.Data.Position.ToString(child.getX(), child.getY()));
-
-                                    (View View, Touch Touch) pair = new(child, new Touch());
-                                    pair.Touch.MaxSupportedTouches = ev.MaxSupportedTouches;
-
-                                    // store copy of touch data
-                                    down_event = (Touch.Data)currentData.Clone();
-                                    down_event_view = pair.View;
-                                    down_event_touch = pair.Touch;
-                                    found = pair.View;
-                                    trackedViews.Add(pair);
-                                    child.onConfigureTouch(pair.Touch);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            // no children
-                            if (trackedViews.Count == 0 || found == null)
-                            {
-                                if (DBG) Log.d("tracking view at " + Touch.Data.Position.ToString(getX(), getY()));
-
-                                (View View, Touch Touch) pair = new(this, new Touch());
-                                pair.Touch.MaxSupportedTouches = ev.MaxSupportedTouches;
-
-                                // store copy of touch data
-                                down_event = (Touch.Data)currentData.Clone();
-                                down_event_view = pair.View;
-                                down_event_touch = pair.Touch;
-                                found = pair.View;
-                                trackedViews.Add(pair);
-                                onConfigureTouch(pair.Touch);
-                            }
-                        }
-                    }
-
-                    List<(View View, Touch Touch)> views_to_untrack = new();
-
-                    // for each view, update the associated touch pointer
-                    foreach ((View View, Touch Touch) pair in trackedViews)
-                    {
-                        bool matches = false;
-                        bool needs_move = false;
-                        bool needs_up = false;
-                        bool lastUp = false;
-
-                        // touch up/down are guaranteed to always be sent as separate events
-                        List<Touch.Data> pointer_ups = new();
-
-                        // check if we match any associated touch pointers
-                        if (down_event_touch == pair.Touch)
-                        {
-                            matches = true;
-                        }
-                        var it = pair.Touch.getIterator();
-                        while (it.hasNext())
-                        {
-                            Touch.Data touchData = it.next();
-
-                            // check against available touch pointers
-                            var it2 = ev.getIterator();
-                            while (it2.hasNext())
-                            {
-                                Touch.Data touchData2 = it2.next();
-
-                                // if touch matches view's associated touch
-                                if (touchData2.identity == touchData.identity)
-                                {
-                                    matches = true;
-
-                                    // update touch data
-                                    if (touchData2.state == Touch.State.TOUCH_MOVE)
-                                    {
-                                        if (!pair.Touch.DontBatchOnTouchUpOrTouchCancel || (touchData2.batchSource != Touch.State.TOUCH_UP && touchData2.batchSource != Touch.State.TOUCH_CANCELLED))
-                                        {
-                                            ev.copyHistory(pair.Touch, touchData.identity);
-                                            pair.Touch.moveTouch((Touch.Data)touchData2.Clone());
-                                            needs_move = true;
-                                        }
-                                    }
-
-                                    // handle touch up
-                                    if (touchData2.state == Touch.State.TOUCH_UP)
-                                    {
-                                        pointer_ups.Add((Touch.Data)touchData2.Clone());
-                                    }
-                                }
-                            }
-                        }
-
-                        // skip this view if no touches match this view
-                        // can this ever happen?
-                        if (!matches)
-                        {
-                            Log.d("DOES NOT MATCH! THIS MIGHT BE A BUG!");
-                            continue;
-                        }
-
-                        // issue move if needed
-                        if (needs_move)
-                        {
-                            // issue touch event
-                            if (pair.View.mChildrenCount == 0)
-                            {
-                                if (pair.View.onTouch(pair.Touch))
-                                {
-                                    handled = true;
-                                }
-                            }
-                            else
-                            {
-                                float offsetX = mScrollX - pair.View.mLeft;
-                                float offsetY = mScrollY - pair.View.mTop;
-                                pair.Touch.offsetLocation(offsetX, offsetY);
-                                var h = pair.View.dispatchTouchEvent__Tracking(pair.Touch);
-                                pair.Touch.offsetLocation(-offsetX, -offsetY);
-                                if (!h)
-                                {
-                                    if (pair.View.onTouch(pair.Touch))
-                                    {
-                                        handled = true;
-                                    }
-                                }
-                                else
-                                {
-                                    handled = true;
-                                }
-                            }
-                        }
-
-                        // issue pointer up event after pointer move
-                        if (pointer_ups.Count > 1)
-                        {
-                            throw new Exception("pointer ups is greater than 1, THIS SHOULD NOT HAPPEN!!!");
-                        }
-
-                        foreach (Touch.Data touchUp in pointer_ups)
-                        {
-                            pair.Touch.removeTouch(touchUp);
-
-                            // if touch count is 1, the last touch has gone up
-                            lastUp = pair.Touch.getTouchCount() == 1;
-
-                            // issue touch event
-                            if (pair.View.mChildrenCount == 0)
-                            {
-                                if (pair.View.onTouch(pair.Touch))
-                                {
-                                    handled = true;
-                                }
-                            }
-                            else
-                            {
-                                float offsetX = mScrollX - pair.View.mLeft;
-                                float offsetY = mScrollY - pair.View.mTop;
-                                pair.Touch.offsetLocation(offsetX, offsetY);
-                                var h = pair.View.dispatchTouchEvent__Tracking(pair.Touch);
-                                pair.Touch.offsetLocation(-offsetX, -offsetY);
-                                if (!h)
-                                {
-                                    if (pair.View.onTouch(pair.Touch))
-                                    {
-                                        handled = true;
-                                    }
-                                }
-                                else
-                                {
-                                    handled = true;
-                                }
-                            }
-                        }
-
-                        // issue pointer down event after pointer up
-                        // pointer down will always be in a different view
-                        if (down_event != null)
-                        {
-                            down_event_touch.addTouch(down_event);
-
-                            // issue touch event
-                            if (pair.View.mChildrenCount == 0)
-                            {
-                                if (down_event_view.onTouch(down_event_touch))
-                                {
-                                    handled = true;
-                                }
-                            }
-                            else
-                            {
-                                float offsetX = mScrollX - down_event_view.mLeft;
-                                float offsetY = mScrollY - down_event_view.mTop;
-                                down_event_touch.offsetLocation(offsetX, offsetY);
-                                var h = down_event_view.dispatchTouchEvent__Tracking(down_event_touch);
-                                down_event_touch.offsetLocation(-offsetX, -offsetY);
-                                if (!h)
-                                {
-                                    if (down_event_view.onTouch(down_event_touch))
-                                    {
-                                        handled = true;
-                                    }
-                                }
-                                else
-                                {
-                                    handled = true;
-                                }
-                                down_event_touch.offsetLocation(-offsetX, -offsetY);
-                            }
-
-                            down_event = null;
-                            down_event_view = null;
-                            down_event_touch = null;
-                        }
-
-                        // issue cancellation as last event
-
-                        if (cancelled || resetCancelNextUpFlag(pair.View) || intercepted)
-                        {
-                            pair.Touch.cancelTouch();
-                            lastUp = true;
-                            if (pair.View.mChildrenCount == 0)
-                            {
-                                if (pair.View.onTouch(pair.Touch))
-                                {
-                                    handled = true;
-                                }
-                            }
-                            else
-                            {
-                                float offsetX = mScrollX - pair.View.mLeft;
-                                float offsetY = mScrollY - pair.View.mTop;
-                                pair.Touch.offsetLocation(offsetX, offsetY);
-                                var h = pair.View.dispatchTouchEvent__Tracking(pair.Touch);
-                                pair.Touch.offsetLocation(-offsetX, -offsetY);
-                                if (!h)
-                                {
-                                    if (pair.View.onTouch(pair.Touch))
-                                    {
-                                        handled = true;
-                                    }
-                                }
-                                else
-                                {
-                                    handled = true;
-                                }
-                            }
-                        }
-
-                        // if the last touch has gone up, untrack the view
-                        if (lastUp)
-                        {
-                            if (DBG) Log.d("untracking view at " + Touch.Data.Position.ToString(pair.View.getX(), pair.View.getY()));
-                            views_to_untrack.Add(pair);
-                        }
-                    }
-
-                    // untrack views that need to be untracked
-                    foreach ((View View, Touch Touch) pair in views_to_untrack)
-                    {
-                        // TrackingData has no internal allocation
-                        // it is safe to delete primary allocation
-                        trackedViews.Remove(pair);
-                    }
+                    if (DEBUG_VIEW_TRACKING) Log.d("target view (" + this + ") INTERCEPTED the touch event");
                 }
                 else
                 {
-                    // intercept all following events
-                    if (dispatchTouchEvent_(ev))
-                    {
-                        handled = true;
-                    }
-                    if (cancelled || currentState == Touch.State.TOUCH_UP)
-                    {
-                        intercepting = false;
-                    }
+                    if (DEBUG_VIEW_TRACKING) Log.d("target view (" + this + ") did not INTERCEPT the touch event");
+                }
+
+                View found = null;
+
+                // If the event is targeting accessibility focus we give it to the
+                // view that has accessibility focus and if it does not handle it
+                // we clear the flag and dispatch the event to all children as usual.
+                // We are looking up the accessibility focused host to avoid keeping
+                // state since these events are very rare.
+                View childWithAccessibilityFocus = null;
+
+                // touch down/up is ALWAYS sent sequentially
+                Touch.Data down_event = null;
+                View down_event_view = null;
+                Touch down_event_touch = null;
+
+                if (currentState == Touch.State.TOUCH_DOWN)
+                {
+                    // track the child view if we have children
+                    // otherwise track the current view
+
+                    float x = 0;
+                    float y = 0;
+
+                    tracking__obtain_touch_location(currentData, ref x, ref y);
+                    trackView(ev, intercepted, currentData, ref found, ref childWithAccessibilityFocus, ref down_event, ref down_event_view, ref down_event_touch, x, y);
+                }
+
+                List<(View View, Touch Touch)> views_to_untrack = new();
+
+                tracking__update_touch_pointers_and_dispatch_touches(ev, intercepted, this, ref handled, cancelled, ref down_event, ref down_event_view, ref down_event_touch, views_to_untrack);
+
+                // untrack views that need to be untracked
+                foreach ((View View, Touch Touch) pair in views_to_untrack)
+                {
+                    // TrackingData has no internal allocation
+                    // it is safe to delete primary allocation
+                    trackedViews.Remove(pair);
+                }
+
+                if (cancelled || currentState == Touch.State.TOUCH_UP && trackedViews.Count == 0)
+                {
+                    intercepting = false;
                 }
             }
             return handled;
+        }
+
+        private void tracking__update_touch_pointers_and_dispatch_touches(Touch ev, bool intercepted, View view_being_intercepted, ref bool handled, bool cancelled, ref Touch.Data down_event, ref View down_event_view, ref Touch down_event_touch, List<(View View, Touch Touch)> views_to_untrack)
+        {
+            // for each view, update the associated touch pointer
+            foreach ((View View, Touch Touch) pair in trackedViews)
+            {
+                if (intercepted)
+                {
+                    // if intercepted, cancel the target view
+                    if (pair.View != view_being_intercepted)
+                    {
+                        if (DEBUG_VIEW_TRACKING) Log.d("target view (" + view_being_intercepted + ") has intercepted, cancelling touch for tracked view: " + pair.View);
+                        pair.Touch.cancelTouch();
+                        tracking__issue_touch_event(ref handled, false, pair.View, pair.Touch, pair);
+                        untrackView(views_to_untrack, pair);
+                        continue;
+                    }
+                }
+
+                bool matches = false;
+                bool needs_move = false;
+                bool needs_up = false;
+                bool lastUp = false;
+
+                // touch up/down are guaranteed to always be sent as separate events
+                List<Touch.Data> pointer_ups = new();
+
+                tracking__check_if_there_are_matching_pointers(ev, down_event_touch, pair, ref matches, ref needs_move, pointer_ups);
+
+                // skip this view if no touches match this view
+                // can this ever happen?
+                if (!matches)
+                {
+                    Log.d("DOES NOT MATCH! THIS MIGHT BE A BUG!");
+                    continue;
+                }
+
+                tracking__issue_move_if_needed(ref handled, intercepted, pair, needs_move);
+
+                // issue pointer up event after pointer move
+                tracking__issue_up_event_after_move_event_if_needed(ref handled, intercepted, pair, ref lastUp, pointer_ups);
+
+                tracking__issue_down_event_after_up_event_if_needed(ref handled, intercepted, ref down_event, ref down_event_view, ref down_event_touch, pair);
+
+                tracking__issue_cancel_event_if_needed(ref handled, intercepted, cancelled, pair, ref lastUp);
+
+                // if the last touch has gone up, untrack the view
+                if (lastUp)
+                {
+                    untrackView(views_to_untrack, pair);
+                }
+            }
+        }
+
+        private void tracking__issue_touch_event(ref bool handled, bool intercepted, View target_view, Touch touch_event, (View View, Touch Touch) pair)
+        {
+            if (intercepted || pair.View.mChildrenCount == 0)
+            {
+                bool h = target_view.dispatchTouchEvent_(touch_event);
+                if (DEBUG_VIEW_TRACKING) Log.d("target view (" + target_view + ") dispatchTouchEvent_ returned " + h);
+                if (h)
+                {
+                    handled = true;
+                }
+            }
+            else
+            {
+                float offsetX = mScrollX - target_view.mLeft;
+                float offsetY = mScrollY - target_view.mTop;
+                touch_event.offsetLocation(offsetX, offsetY);
+                var h = target_view.dispatchTouchEvent__Tracking(touch_event);
+                touch_event.offsetLocation(-offsetX, -offsetY);
+                if (DEBUG_VIEW_TRACKING) Log.d("target view (" + target_view + ") dispatchTouchEvent__Tracking returned " + h);
+                if (h)
+                {
+                    handled = true;
+                }
+                else
+                {
+                    bool h2 = target_view.dispatchTouchEvent_(touch_event);
+                    if (DEBUG_VIEW_TRACKING) Log.d("target view (" + target_view + ") dispatchTouchEvent_ returned " + h2);
+                    if (h2)
+                    {
+                        handled = true;
+                    }
+                }
+            }
+        }
+
+        private void tracking__issue_cancel_event_if_needed(ref bool handled, bool intercepted, bool cancelled, (View View, Touch Touch) pair, ref bool lastUp)
+        {
+            if (cancelled || resetCancelNextUpFlag(pair.View))
+            {
+                pair.Touch.cancelTouch();
+                lastUp = true;
+                tracking__issue_touch_event(ref handled, intercepted, pair.View, pair.Touch, pair);
+            }
+        }
+
+        private void tracking__issue_down_event_after_up_event_if_needed(ref bool handled, bool intercepted, ref Touch.Data down_event, ref View down_event_view, ref Touch down_event_touch, (View View, Touch Touch) pair)
+        {
+            // pointer down will always be in a different view
+            if (down_event != null)
+            {
+                down_event_touch.addTouch(down_event);
+
+                // issue touch event
+                tracking__issue_touch_event(ref handled, intercepted, down_event_view, down_event_touch, pair);
+
+                down_event = null;
+                down_event_view = null;
+                down_event_touch = null;
+            }
+        }
+
+        private void tracking__issue_up_event_after_move_event_if_needed(ref bool handled, bool intercepted, (View View, Touch Touch) pair, ref bool lastUp, List<Touch.Data> pointer_ups)
+        {
+            if (pointer_ups.Count > 1)
+            {
+                throw new Exception("pointer ups is greater than 1, THIS SHOULD NOT HAPPEN!!!");
+            }
+
+            foreach (Touch.Data touchUp in pointer_ups)
+            {
+                pair.Touch.removeTouch(touchUp);
+
+                // if touch count is 1, the last touch has gone up
+                lastUp = pair.Touch.getTouchCount() == 1;
+
+                tracking__issue_touch_event(ref handled, intercepted, pair.View, pair.Touch, pair);
+            }
+        }
+
+        private void tracking__issue_move_if_needed(ref bool handled, bool intercepted, (View View, Touch Touch) pair, bool needs_move)
+        {
+            if (needs_move)
+            {
+                tracking__issue_touch_event(ref handled, intercepted, pair.View, pair.Touch, pair);
+            }
+        }
+
+        private static void tracking__check_if_there_are_matching_pointers(Touch ev, Touch down_event_touch, (View View, Touch Touch) pair, ref bool matches, ref bool needs_move, List<Touch.Data> pointer_ups)
+        {
+            // check if we match any associated touch pointers
+            if (down_event_touch == pair.Touch)
+            {
+                matches = true;
+            }
+            var it = pair.Touch.getIterator();
+            while (it.hasNext())
+            {
+                Touch.Data touchData = it.next();
+
+                // check against available touch pointers
+                var it2 = ev.getIterator();
+                while (it2.hasNext())
+                {
+                    Touch.Data touchData2 = it2.next();
+
+                    // if touch matches view's associated touch
+                    if (touchData2.identity == touchData.identity)
+                    {
+                        matches = true;
+
+                        // update touch data
+                        if (touchData2.state == Touch.State.TOUCH_MOVE)
+                        {
+                            if (!pair.Touch.DontBatchOnTouchUpOrTouchCancel || (touchData2.batchSource != Touch.State.TOUCH_UP && touchData2.batchSource != Touch.State.TOUCH_CANCELLED))
+                            {
+                                ev.copyHistory(pair.Touch, touchData.identity);
+                                pair.Touch.moveTouch((Touch.Data)touchData2.Clone());
+                                needs_move = true;
+                            }
+                        }
+
+                        // handle touch up
+                        if (touchData2.state == Touch.State.TOUCH_UP)
+                        {
+                            pointer_ups.Add((Touch.Data)touchData2.Clone());
+                        }
+                    }
+                }
+            }
+        }
+
+        private void trackView(Touch ev, bool intercepted, Touch.Data currentData, ref View found, ref View childWithAccessibilityFocus, ref Touch.Data down_event, ref View down_event_view, ref Touch down_event_touch, float x, float y)
+        {
+            int childrenCount = mChildrenCount;
+            if (intercepted || childrenCount == 0)
+            {
+                // no children
+                if (trackedViews.Count == 0 || found == null)
+                {
+                    if (DEBUG_VIEW_TRACKING) Log.d("tracking view at " + Touch.Data.Position.ToString(getX(), getY()));
+
+                    (View View, Touch Touch) pair = new(this, new Touch());
+                    pair.Touch.MaxSupportedTouches = ev.MaxSupportedTouches;
+
+                    // store copy of touch data
+                    down_event = (Touch.Data)currentData.Clone();
+                    down_event_view = pair.View;
+                    down_event_touch = pair.Touch;
+                    found = pair.View;
+                    trackedViews.Add(pair);
+                    onConfigureTouch(pair.Touch);
+                }
+            }
+            else
+            {
+                // Find a child that can receive the event.
+                // Scan children from front to back.
+                ArrayList<View> preorderedList = buildTouchDispatchChildList();
+                bool customOrder = preorderedList == null
+                        && isChildrenDrawingOrderEnabled();
+                View[] children = mChildren;
+                for (int i = childrenCount - 1; i >= 0; i--)
+                {
+                    int childIndex = getAndVerifyPreorderedIndex(
+                            childrenCount, i, customOrder);
+                    View child = getAndVerifyPreorderedView(
+                            preorderedList, children, childIndex);
+
+                    // If there is a view that has accessibility focus we want it
+                    // to get the event first and if not handled we will perform a
+                    // normal dispatch. We may do a double iteration but this is
+                    // safer given the timeframe.
+                    if (childWithAccessibilityFocus != null)
+                    {
+                        if (childWithAccessibilityFocus != child)
+                        {
+                            continue;
+                        }
+                        childWithAccessibilityFocus = null;
+                        i = childrenCount - 1;
+                    }
+
+                    if (!child.canReceivePointerEvents()
+                            || !isTransformedTouchPointInView(x, y, child, null))
+                    {
+                        //ev.setTargetAccessibilityFocus(false);
+                        continue;
+                    }
+
+                    if (trackedViews.Count != 0)
+                    {
+                        foreach ((View View, Touch Touch) pair in trackedViews)
+                        {
+                            if (pair.View == child)
+                            {
+                                found = child;
+
+                                bool exists = false;
+
+                                // check if touch exists
+                                var it2 = pair.Touch.getIterator();
+                                while (it2.hasNext())
+                                {
+                                    if (it2.next().identity == currentData.identity)
+                                    {
+                                        exists = true;
+                                        break;
+                                    }
+                                }
+
+                                // store copy of touch data if it doesnt exist
+                                if (!exists)
+                                {
+                                    if (DEBUG_VIEW_TRACKING) Log.d("touch with identity " + currentData.identity + " does not exist, adding to view at " + Touch.Data.Position.ToString(child.getX(), child.getY()));
+                                    down_event = (Touch.Data)currentData.Clone();
+                                    down_event_view = pair.View;
+                                    down_event_touch = pair.Touch;
+                                }
+                                else
+                                {
+                                    if (DEBUG_VIEW_TRACKING) Log.d("touch with identity " + currentData.identity + " exists in view at " + Touch.Data.Position.ToString(child.getX(), child.getY()) + ", skipping");
+                                }
+                                break;
+                            }
+                        }
+                    }
+
+                    if (trackedViews.Count == 0 || found == null)
+                    {
+                        if (DEBUG_VIEW_TRACKING) Log.d("tracking view at " + Touch.Data.Position.ToString(child.getX(), child.getY()));
+
+                        (View View, Touch Touch) pair = new(child, new Touch());
+                        pair.Touch.MaxSupportedTouches = ev.MaxSupportedTouches;
+
+                        // store copy of touch data
+                        down_event = (Touch.Data)currentData.Clone();
+                        down_event_view = pair.View;
+                        down_event_touch = pair.Touch;
+                        found = pair.View;
+                        trackedViews.Add(pair);
+                        child.onConfigureTouch(pair.Touch);
+                    }
+                }
+            }
+        }
+
+        private void untrackView(List<(View View, Touch Touch)> views_to_untrack, (View View, Touch Touch) pair)
+        {
+            if (DEBUG_VIEW_TRACKING) Log.d("untracking view at " + Touch.Data.Position.ToString(pair.View.getX(), pair.View.getY()));
+            views_to_untrack.Add(pair);
+        }
+
+        private void tracking__obtain_touch_location(Touch.Data currentData, ref float x, ref float y)
+        {
+            if (currentData.hasLocation)
+            {
+                x = currentData.location.x;
+                y = currentData.location.y;
+            }
+            else
+            {
+                // TODO: is this sufficent for emulated multi-touch points?
+                bool found_ = false;
+                foreach ((View View, Touch Touch) pair in trackedViews)
+                {
+                    var it = pair.Touch.getIterator();
+                    while (it.hasNext())
+                    {
+                        Touch.Data touchData = it.next();
+                        if (touchData.hasLocation)
+                        {
+                            found_ = true;
+                            x = touchData.location.x;
+                            y = touchData.location.y;
+                            break;
+                        }
+                    }
+                    if (found_) break;
+                }
+                if (!found_)
+                {
+                    throw new Exception("could not obtain a valid cursor position");
+                }
+            }
+        }
+
+        public override string ToString()
+        {
+            return GetType().Name + (mTag == null ? "" : " (Tag: " + mTag + ")");
         }
 
         public bool dispatchTouchEvent(Touch ev)
@@ -9422,7 +9425,7 @@ namespace AndroidUI.Widgets
                 int currentTouchCount = ev.getTouchCount();
                 Touch.Data currentData = ev.getTouchAtCurrentIndex();
                 Touch.State currentState = currentData.state;
-                Console.WriteLine(this + ", identity begin: " + currentData.identity);
+                Log.d(this + ", identity begin: " + currentData.identity);
 
                 // Handle an initial down.
                 if (currentState == Touch.State.TOUCH_DOWN && currentTouchCount == 1)
@@ -9494,9 +9497,9 @@ namespace AndroidUI.Widgets
 
                         // Clean up earlier touch targets for this pointer id in case they
                         // have become out of sync.
-                        Console.WriteLine("Removing [" + idBitsToAssign + "] from touch targets");
+                        Log.d("Removing [" + idBitsToAssign + "] from touch targets");
                         removePointersFromTouchTargets(idBitsToAssign);
-                        Console.WriteLine("Removed [" + idBitsToAssign + "] from touch targets");
+                        Log.d("Removed [" + idBitsToAssign + "] from touch targets");
 
                         int childrenCount = mChildrenCount;
                         if (newTouchTarget == null && childrenCount != 0)
@@ -9632,7 +9635,7 @@ namespace AndroidUI.Widgets
                                 if (predecessor == null)
                                 {
                                     mFirstTouchTarget = next;
-                                    if (DBG) Log.d("dispatchTouchEvent mFirstTouchTarget: " + stringOrNull(mFirstTouchTarget));
+                                    if (DEBUG_VIEW_TRACKING) Log.d("dispatchTouchEvent mFirstTouchTarget: " + stringOrNull(mFirstTouchTarget));
                                 }
                                 else
                                 {
@@ -9645,7 +9648,7 @@ namespace AndroidUI.Widgets
                         }
                         predecessor = target;
                         target = next;
-                        if (DBG) Log.d("dispatchTouchEvent target: " + stringOrNull(target));
+                        if (DEBUG_VIEW_TRACKING) Log.d("dispatchTouchEvent target: " + stringOrNull(target));
                     }
                 }
 
@@ -9654,7 +9657,7 @@ namespace AndroidUI.Widgets
                 {
                     if (currentTouchCount == 1 || cancelled)
                     {
-                        if (DBG) Log.d("dispatchTouchEvent reset touch state");
+                        if (DEBUG_VIEW_TRACKING) Log.d("dispatchTouchEvent reset touch state");
                         resetTouchState();
                     }
                     else if (split)
@@ -9662,7 +9665,7 @@ namespace AndroidUI.Widgets
                         removePointersFromTouchTargets(currentData.identity);
                     }
                 }
-                Console.WriteLine(this + ", identity end: " + currentData.identity);
+                if (DEBUG_VIEW_TRACKING) Log.d(this + ", identity end: " + currentData.identity);
             }
 
             //if (!handled && mInputEventConsistencyVerifier != null)
@@ -9732,10 +9735,11 @@ namespace AndroidUI.Widgets
                 {
                     mPendingCheckForLongPress = new CheckForLongPress(this);
                 }
+                Log.d("checking for pending long tap at location: " + Touch.Data.Position.ToString(x, y));
                 mPendingCheckForLongPress.setAnchor(x, y);
                 mPendingCheckForLongPress.rememberWindowAttachCount();
                 mPendingCheckForLongPress.rememberPressedState();
-                postDelayed(mPendingCheckForLongPress, delay);
+                postDelayed(mPendingCheckForLongPress.runnable, delay);
             }
         }
 
@@ -9758,7 +9762,7 @@ namespace AndroidUI.Widgets
           */
         public virtual bool onTouch(Touch touch)
         {
-            if (DBG) Console.WriteLine("onTouch from " + this);
+            if (DEBUG_VIEW_TRACKING) Log.d("onTouch from " + this);
             var t = touch.getTouchAtCurrentIndex();
             float x = 0.0f;
             float y = 0.0f;
@@ -9782,11 +9786,13 @@ namespace AndroidUI.Widgets
                 mPrivateFlags3 &= ~PFLAG3_FINGER_DOWN;
                 // A disabled view that is clickable still consumes the touch
                 // events, it just doesn't respond to them.
+                if (DEBUG_VIEW_TRACKING) Log.d("consumed OnTouch event");
                 return clickable;
             }
 
             if (mTouchDelegate != null) {
                 if (mTouchDelegate.onTouch(touch)) {
+                    if (DEBUG_VIEW_TRACKING) Log.d("consumed OnTouch event");
                     return true;
                 }
             }
@@ -9841,7 +9847,7 @@ namespace AndroidUI.Widgets
                                         // of the view update before click actions start.
                                         if (mPerformClick == null)
                                         {
-                                            mPerformClick = new PerformClick(this);
+                                            CreatePerformClick();
                                         }
                                         if (!post(mPerformClick))
                                         {
@@ -9852,7 +9858,7 @@ namespace AndroidUI.Widgets
 
                                 if (mUnsetPressedState == null)
                                 {
-                                    mUnsetPressedState = new UnsetPressedState(this);
+                                    CreateUnsetPressedState();
                                 }
 
                                 if (prepressed)
@@ -9863,7 +9869,7 @@ namespace AndroidUI.Widgets
                                 else if (!post(mUnsetPressedState))
                                 {
                                     // If the post failed, unpress right now
-                                    mUnsetPressedState.run();
+                                    mUnsetPressedState.Invoke();
                                 }
 
                                 removeTapCallback();
@@ -9903,9 +9909,10 @@ namespace AndroidUI.Widgets
                                 {
                                     mPendingCheckForTap = new CheckForTap(this);
                                 }
+                                Log.d("checking for pending tap at location: " + t.location);
                                 mPendingCheckForTap.x = t.location.x;
                                 mPendingCheckForTap.y = t.location.y;
-                                postDelayed(mPendingCheckForTap, ViewConfiguration.getTapTimeout());
+                                postDelayed(mPendingCheckForTap.runnable, ViewConfiguration.getTapTimeout());
                             }
                             else
                             {
@@ -9992,8 +9999,10 @@ namespace AndroidUI.Widgets
                         }
                 }
 
+                if (DEBUG_VIEW_TRACKING) Log.d("consumed OnTouch event");
                 return true;
             }
+            if (DEBUG_VIEW_TRACKING) Log.d("did not consume OnTouch event, but it might be consumed by someone else");
             return false;
         }
 
@@ -12473,7 +12482,7 @@ namespace AndroidUI.Widgets
             if (child.mParent != null)
             {
                 throw new Exception("The specified child already has a parent. " +
-                        "You must call removeView() on the child's parent first.");
+                        "You must call removeView() on the child's parent first.\nchild: " + child + "\nparent: " + child.mParent);
             }
 
             if (mTransition != null)
@@ -14001,8 +14010,7 @@ namespace AndroidUI.Widgets
                 // next frame is drawn because one extra invalidate() is caused by
                 // drawChild() after the animation is over
                 mGroupFlags |= FLAG_NOTIFY_ANIMATION_LISTENER;
-                Runnable end = new Runnable.ActionRunnable(() => notifyAnimationListener());
-                post(end);
+                post(() => notifyAnimationListener());
             }
         }
 
@@ -14013,11 +14021,10 @@ namespace AndroidUI.Widgets
 
             if (mAnimationListener != null)
             {
-                Runnable end = new Runnable.ActionRunnable(() =>
+                post(() =>
                 {
                     mAnimationListener.onAnimationEnd(mLayoutAnimationController.getAnimation());
                 });
-                post(end);
             }
 
             invalidate(true);
@@ -14059,12 +14066,34 @@ namespace AndroidUI.Widgets
          * @see #getTag()
          * @see #setTag(int, Object)
          */
-        public void setTag(object tag)
+        public View setTag(object tag)
         {
             mTag = tag;
+            return this;
         }
 
-        public static bool DBG = false;
+        /**
+         * Sets the tag associated with this view and all children. A tag can be used to mark
+         * a view in its hierarchy and does not have to be unique within the
+         * hierarchy. Tags can also be used to store data within a view without
+         * resorting to another data structure.
+         *
+         * @param tag an Object to tag the view with
+         *
+         * @see #getTag()
+         * @see #setTag(int, Object)
+         */
+        public View setTagRecursively(object tag)
+        {
+            mTag = tag;
+            View[] children = mChildren;
+            int count = mChildrenCount;
+            for (int i = 0; i < count; i++)
+            {
+                children[i].setTagRecursively(tag);
+            }
+            return this;
+        }
 
         /**
          * The logging tag used by this class with android.util.Log.
@@ -14351,33 +14380,52 @@ namespace AndroidUI.Widgets
          */
         virtual public void requestLayout()
         {
-            if (mMeasureCache != null) mMeasureCache.clear();
-
-            if (mAttachInfo != null && mAttachInfo.mViewRequestingLayout == null)
+            RunOnUIThread(() =>
             {
-                // Only trigger request-during-layout logic if this is the view requesting it,
-                // not the views in its parent hierarchy
-                ViewRootImpl viewRoot = getViewRootImpl();
-                if (viewRoot != null && viewRoot.isInLayout())
+                if (mMeasureCache != null) mMeasureCache.clear();
+
+                if (mAttachInfo != null && mAttachInfo.mViewRequestingLayout == null)
                 {
-                    if (!viewRoot.requestLayoutDuringLayout(this))
+                    // Only trigger request-during-layout logic if this is the view requesting it,
+                    // not the views in its parent hierarchy
+                    ViewRootImpl viewRoot = getViewRootImpl();
+                    if (viewRoot != null && viewRoot.isInLayout())
                     {
-                        return;
+                        if (!viewRoot.requestLayoutDuringLayout(this))
+                        {
+                            return;
+                        }
                     }
+                    mAttachInfo.mViewRequestingLayout = this;
                 }
-                mAttachInfo.mViewRequestingLayout = this;
-            }
 
-            mPrivateFlags |= PFLAG_FORCE_LAYOUT;
-            AddInvalidatedFlag(this);
+                mPrivateFlags |= PFLAG_FORCE_LAYOUT;
+                AddInvalidatedFlag(this);
 
-            if (mParent != null && !mParent.isLayoutRequested())
+                if (mParent != null && !mParent.isLayoutRequested())
+                {
+                    mParent.requestLayout();
+                }
+                if (mAttachInfo != null && mAttachInfo.mViewRequestingLayout == this)
+                {
+                    mAttachInfo.mViewRequestingLayout = null;
+                }
+            });
+        }
+
+        public void RunOnUIThread(Runnable runnable)
+        {
+            if (Context == null)
             {
-                mParent.requestLayout();
+                getRunQueue().post(runnable);
             }
-            if (mAttachInfo != null && mAttachInfo.mViewRequestingLayout == this)
+            else if (Context.application.Looper.isCurrentThread())
             {
-                mAttachInfo.mViewRequestingLayout = null;
+                runnable.Invoke();
+            }
+            else
+            {
+                post(runnable);
             }
         }
 
@@ -14709,7 +14757,10 @@ namespace AndroidUI.Widgets
         public void setBackground(Drawable background)
         {
             //noinspection deprecation
-            setBackgroundDrawable(background);
+            RunOnUIThread(() =>
+            {
+                setBackgroundDrawable(background);
+            });
         }
 
         /**
@@ -14875,14 +14926,17 @@ namespace AndroidUI.Widgets
          */
         public void setBackgroundTintList(ColorStateList tint)
         {
-            if (mBackgroundTint == null)
+            RunOnUIThread(() =>
             {
-                mBackgroundTint = new TintInfo();
-            }
-            mBackgroundTint.mTintList = tint;
-            mBackgroundTint.mHasTintList = true;
+                if (mBackgroundTint == null)
+                {
+                    mBackgroundTint = new TintInfo();
+                }
+                mBackgroundTint.mTintList = tint;
+                mBackgroundTint.mHasTintList = true;
 
-            applyBackgroundTint();
+                applyBackgroundTint();
+            });
         }
 
         /**
@@ -14910,13 +14964,16 @@ namespace AndroidUI.Widgets
          */
         public void setBackgroundTintMode(PorterDuff.Mode tintMode)
         {
-            BlendMode mode = null;
-            if (tintMode != null)
+            RunOnUIThread(() =>
             {
-                mode = BlendMode.fromValue(tintMode.nativeInt);
-            }
+                BlendMode mode = null;
+                if (tintMode != null)
+                {
+                    mode = BlendMode.fromValue(tintMode.nativeInt);
+                }
 
-            setBackgroundTintBlendMode(mode);
+                setBackgroundTintBlendMode(mode);
+            });
         }
 
         /**
@@ -14932,15 +14989,18 @@ namespace AndroidUI.Widgets
          */
         public void setBackgroundTintBlendMode(BlendMode blendMode)
         {
-            if (mBackgroundTint == null)
+            RunOnUIThread(() =>
             {
-                mBackgroundTint = new TintInfo();
-            }
+                if (mBackgroundTint == null)
+                {
+                    mBackgroundTint = new TintInfo();
+                }
 
-            mBackgroundTint.mBlendMode = blendMode;
-            mBackgroundTint.mHasTintMode = true;
+                mBackgroundTint.mBlendMode = blendMode;
+                mBackgroundTint.mHasTintMode = true;
 
-            applyBackgroundTint();
+                applyBackgroundTint();
+            });
         }
 
         /**
@@ -15041,60 +15101,63 @@ namespace AndroidUI.Widgets
          */
         public void setForeground(Drawable foreground)
         {
-            if (mForegroundInfo == null)
+            RunOnUIThread(() =>
             {
-                if (foreground == null)
+                if (mForegroundInfo == null)
                 {
-                    // Nothing to do.
+                    if (foreground == null)
+                    {
+                        // Nothing to do.
+                        return;
+                    }
+                    mForegroundInfo = new ForegroundInfo();
+                }
+
+                if (foreground == mForegroundInfo.mDrawable)
+                {
+                    // Nothing to do
                     return;
                 }
-                mForegroundInfo = new ForegroundInfo();
-            }
 
-            if (foreground == mForegroundInfo.mDrawable)
-            {
-                // Nothing to do
-                return;
-            }
+                if (mForegroundInfo.mDrawable != null)
+                {
+                    if (isAttachedToWindow())
+                    {
+                        mForegroundInfo.mDrawable.setVisible(false, false);
+                    }
+                    mForegroundInfo.mDrawable.setCallback(null);
+                    unscheduleDrawable(mForegroundInfo.mDrawable);
+                }
 
-            if (mForegroundInfo.mDrawable != null)
-            {
-                if (isAttachedToWindow())
+                mForegroundInfo.mDrawable = foreground;
+                mForegroundInfo.mBoundsChanged = true;
+                if (foreground != null)
                 {
-                    mForegroundInfo.mDrawable.setVisible(false, false);
+                    if ((mPrivateFlags & PFLAG_SKIP_DRAW) != 0)
+                    {
+                        mPrivateFlags &= ~PFLAG_SKIP_DRAW;
+                    }
+                    foreground.setLayoutDirection(getLayoutDirection());
+                    if (foreground.isStateful())
+                    {
+                        foreground.setState(getDrawableState());
+                    }
+                    applyForegroundTint();
+                    if (isAttachedToWindow())
+                    {
+                        foreground.setVisible(getWindowVisibility() == VISIBLE && isShown(), false);
+                    }
+                    // Set callback last, since the view may still be initializing.
+                    foreground.setCallback(this);
                 }
-                mForegroundInfo.mDrawable.setCallback(null);
-                unscheduleDrawable(mForegroundInfo.mDrawable);
-            }
-
-            mForegroundInfo.mDrawable = foreground;
-            mForegroundInfo.mBoundsChanged = true;
-            if (foreground != null)
-            {
-                if ((mPrivateFlags & PFLAG_SKIP_DRAW) != 0)
+                else if ((mViewFlags & WILL_NOT_DRAW) != 0 && mBackground == null
+                        && mDefaultFocusHighlight == null)
                 {
-                    mPrivateFlags &= ~PFLAG_SKIP_DRAW;
+                    mPrivateFlags |= PFLAG_SKIP_DRAW;
                 }
-                foreground.setLayoutDirection(getLayoutDirection());
-                if (foreground.isStateful())
-                {
-                    foreground.setState(getDrawableState());
-                }
-                applyForegroundTint();
-                if (isAttachedToWindow())
-                {
-                    foreground.setVisible(getWindowVisibility() == VISIBLE && isShown(), false);
-                }
-                // Set callback last, since the view may still be initializing.
-                foreground.setCallback(this);
-            }
-            else if ((mViewFlags & WILL_NOT_DRAW) != 0 && mBackground == null
-                    && mDefaultFocusHighlight == null)
-            {
-                mPrivateFlags |= PFLAG_SKIP_DRAW;
-            }
-            requestLayout();
-            invalidate();
+                requestLayout();
+                invalidate();
+            });
         }
 
         /** The default focus highlight.
@@ -15182,18 +15245,21 @@ namespace AndroidUI.Widgets
          */
         public void setForegroundTintList(ColorStateList tint)
         {
-            if (mForegroundInfo == null)
+            RunOnUIThread(() =>
             {
-                mForegroundInfo = new ForegroundInfo();
-            }
-            if (mForegroundInfo.mTintInfo == null)
-            {
-                mForegroundInfo.mTintInfo = new TintInfo();
-            }
-            mForegroundInfo.mTintInfo.mTintList = tint;
-            mForegroundInfo.mTintInfo.mHasTintList = true;
+                if (mForegroundInfo == null)
+                {
+                    mForegroundInfo = new ForegroundInfo();
+                }
+                if (mForegroundInfo.mTintInfo == null)
+                {
+                    mForegroundInfo.mTintInfo = new TintInfo();
+                }
+                mForegroundInfo.mTintInfo.mTintList = tint;
+                mForegroundInfo.mTintInfo.mHasTintList = true;
 
-            applyForegroundTint();
+                applyForegroundTint();
+            });
         }
 
         /**
@@ -15223,12 +15289,15 @@ namespace AndroidUI.Widgets
          */
         public void setForegroundTintMode(PorterDuff.Mode tintMode)
         {
-            BlendMode mode = null;
-            if (tintMode != null)
+            RunOnUIThread(() =>
             {
-                mode = BlendMode.fromValue(tintMode.nativeInt);
-            }
-            setForegroundTintBlendMode(mode);
+                BlendMode mode = null;
+                if (tintMode != null)
+                {
+                    mode = BlendMode.fromValue(tintMode.nativeInt);
+                }
+                setForegroundTintBlendMode(mode);
+            });
         }
 
         /**
@@ -15244,18 +15313,21 @@ namespace AndroidUI.Widgets
          */
         public void setForegroundTintBlendMode(BlendMode blendMode)
         {
-            if (mForegroundInfo == null)
+            RunOnUIThread(() =>
             {
-                mForegroundInfo = new ForegroundInfo();
-            }
-            if (mForegroundInfo.mTintInfo == null)
-            {
-                mForegroundInfo.mTintInfo = new TintInfo();
-            }
-            mForegroundInfo.mTintInfo.mBlendMode = blendMode;
-            mForegroundInfo.mTintInfo.mHasTintMode = true;
+                if (mForegroundInfo == null)
+                {
+                    mForegroundInfo = new ForegroundInfo();
+                }
+                if (mForegroundInfo.mTintInfo == null)
+                {
+                    mForegroundInfo.mTintInfo = new TintInfo();
+                }
+                mForegroundInfo.mTintInfo.mBlendMode = blendMode;
+                mForegroundInfo.mTintInfo.mHasTintMode = true;
 
-            applyForegroundTint();
+                applyForegroundTint();
+            });
         }
 
         /**
@@ -15602,16 +15674,19 @@ namespace AndroidUI.Widgets
          */
         public void setBackgroundColor(int color)
         {
-            if (mBackground is ColorDrawable)
+            RunOnUIThread(() =>
             {
-                ((ColorDrawable)mBackground.mutate()).setColor(color);
-                computeOpaqueFlags();
-                //mBackgroundResource = 0;
-            }
-            else
-            {
-                setBackground(new ColorDrawable(color));
-            }
+                if (mBackground is ColorDrawable)
+                {
+                    ((ColorDrawable)mBackground.mutate()).setColor(color);
+                    computeOpaqueFlags();
+                    //mBackgroundResource = 0;
+                }
+                else
+                {
+                    setBackground(new ColorDrawable(color));
+                }
+            });
         }
 
         private bool mLastIsOpaque;
@@ -16354,7 +16429,7 @@ namespace AndroidUI.Widgets
             // Report visibility changes, which can affect children, to accessibility
             if (alpha == 0 ^ oldAlpha == 0)
             {
-                Console.WriteLine("TODO: visibility might change: alpha = " + alpha + ", oldAlpha = " + oldAlpha);
+                Log.d("TODO: visibility might change: alpha = " + alpha + ", oldAlpha = " + oldAlpha);
                 //notifySubtreeAccessibilityStateChangedIfNeeded();
             }
         }
@@ -16877,9 +16952,9 @@ namespace AndroidUI.Widgets
 
         class RunnableClickListener : OnClickListener
         {
-            Action<View> action;
+            Runnable<View> action;
 
-            public RunnableClickListener(Action<View> action)
+            public RunnableClickListener(Runnable<View> action)
             {
                 this.action = action;
             }
@@ -16889,9 +16964,9 @@ namespace AndroidUI.Widgets
 
         class RunnableLongClickListener : OnLongClickListener
         {
-            Func<View, bool> action;
+            RunnableWithReturn<View, bool> action;
 
-            public RunnableLongClickListener(Func<View, bool> action)
+            public RunnableLongClickListener(RunnableWithReturn<View, bool> action)
             {
                 this.action = action;
             }
@@ -16907,7 +16982,7 @@ namespace AndroidUI.Widgets
          *
          * @see #setClickable(bool)
          */
-        virtual public void setOnClickListener(Action<View> l)
+        virtual public void setOnClickListener(Runnable<View> l)
         {
             if (!isClickable())
             {
@@ -16951,7 +17026,7 @@ namespace AndroidUI.Widgets
          *
          * @see #setLongClickable(bool)
          */
-        virtual public void setOnLongClickListener(Func<View, bool> l)
+        virtual public void setOnLongClickListener(RunnableWithReturn<View, bool> l)
         {
             if (!isLongClickable())
             {
@@ -17153,9 +17228,9 @@ namespace AndroidUI.Widgets
 
         class RunnableOnTouchListener : OnTouchListener
         {
-            Func<View, Touch, bool> action;
+            RunnableWithReturn<View, Touch, bool> action;
 
-            public RunnableOnTouchListener(Func<View, Touch, bool> action)
+            public RunnableOnTouchListener(RunnableWithReturn<View, Touch, bool> action)
             {
                 this.action = action;
             }

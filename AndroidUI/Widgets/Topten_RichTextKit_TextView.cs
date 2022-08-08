@@ -19,13 +19,25 @@ namespace AndroidUI.Widgets
         bool textSizeChanged;
         bool textColorChanged;
 
-        public Topten_RichTextKit_TextView() : base()
+        public Topten_RichTextKit_TextView() : this("Topten_RichTextKit_TextView", 12, SKColors.Aqua)
+        {
+        }
+
+        public Topten_RichTextKit_TextView(string text) : this(text, 12, SKColors.Aqua)
+        {
+        }
+
+        public Topten_RichTextKit_TextView(string text, int textSize) : this(text, textSize, SKColors.Aqua)
+        {
+        }
+
+        public Topten_RichTextKit_TextView(string text, int textSize, SKColor textColor) : base()
         {
             textBlock = new();
             textStyle = new();
-            setText("Topten_RichTextKit_TextView");
-            setTextSize(12);
-            setTextColor(SKColors.Aqua);
+            setText(text);
+            setTextSize(textSize);
+            setTextColor(textColor);
             setWillDraw(true);
         }
 
@@ -179,6 +191,8 @@ namespace AndroidUI.Widgets
                         w = MeasureSpec.getSize(widthMeasureSpec);
                         break;
                 }
+                // we have our width, now restrain our text to it
+                textBlock.MaxWidth = w;
 
                 int h = 0;
                 int heightMode = MeasureSpec.getMode(heightMeasureSpec);
@@ -226,7 +240,8 @@ namespace AndroidUI.Widgets
                 else if (textBlock.LineCount == 1)
                 {
                     textBlock.MaxHeight = textBlock.MeasuredHeight;
-                } else
+                }
+                else
                 {
                     textBlock.MaxHeight = getHeight();
                 }

@@ -30,7 +30,7 @@ namespace AndroidUI.Utils.Lists
             }
         }
 
-        T TryWithReadReturn<T>(Func<T> a, int timeout = -1)
+        T TryWithReadReturn<T>(RunnableWithReturn<T> a, int timeout = -1)
         {
             T result = default;
             try
@@ -58,7 +58,7 @@ namespace AndroidUI.Utils.Lists
             }
         }
 
-        T TryWithWriteReturn<T>(Func<T> a, int timeout = -1)
+        T TryWithWriteReturn<T>(RunnableWithReturn<T> a, int timeout = -1)
         {
             T result = default;
             try

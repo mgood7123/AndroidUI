@@ -5,7 +5,7 @@
     /// </summary>
     public static class GenericMath
     {
-        static T cast1<T, intermediate_T>(Func<intermediate_T, intermediate_T> f, in T a)
+        static T cast1<T, intermediate_T>(RunnableWithReturn<intermediate_T, intermediate_T> f, in T a)
         {
             return Union.ReinterpretCast<intermediate_T, T>(
                 f.Invoke(
@@ -14,7 +14,7 @@
             );
         }
 
-        static T cast2<T, intermediate_T>(Func<intermediate_T, intermediate_T, intermediate_T> f, in T a, in T b)
+        static T cast2<T, intermediate_T>(RunnableWithReturn<intermediate_T, intermediate_T, intermediate_T> f, in T a, in T b)
         {
             return Union.ReinterpretCast<intermediate_T, T>(
                 f.Invoke(
@@ -73,7 +73,7 @@
             }
         }
 
-        static T FloatOrDouble__onlyTakesDouble<T>(Func<double, double> d, T a)
+        static T FloatOrDouble__onlyTakesDouble<T>(RunnableWithReturn<double, double> d, T a)
         {
 
             if (typeof(T) == typeof(float))
@@ -94,7 +94,7 @@
             }
         }
 
-        static T FloatOrDoubleOrDecimal__onlyTakesDoubleOrDecimal<T>(Func<double, double> d, Func<decimal, decimal> dec, T a)
+        static T FloatOrDoubleOrDecimal__onlyTakesDoubleOrDecimal<T>(RunnableWithReturn<double, double> d, RunnableWithReturn<decimal, decimal> dec, T a)
         {
 
             if (typeof(T) == typeof(float))
@@ -119,7 +119,7 @@
             }
         }
 
-        static T FloatOrDoubleOrDecimal<T>(Func<float, float> f, Func<double, double> d, Func<decimal, decimal> dec, T a)
+        static T FloatOrDoubleOrDecimal<T>(RunnableWithReturn<float, float> f, RunnableWithReturn<double, double> d, RunnableWithReturn<decimal, decimal> dec, T a)
         {
 
             if (typeof(T) == typeof(float))
@@ -140,7 +140,7 @@
             }
         }
 
-        static T FloatOrDouble<T>(Func<float, float, float> f, Func<double, double, double> d, T a, T b)
+        static T FloatOrDouble<T>(RunnableWithReturn<float, float, float> f, RunnableWithReturn<double, double, double> d, T a, T b)
         {
 
             if (typeof(T) == typeof(float))
@@ -157,7 +157,7 @@
             }
         }
 
-        static T FloatOrDouble__onlyTakesDouble<T>(Func<double, double, double> d, T a, T b)
+        static T FloatOrDouble__onlyTakesDouble<T>(RunnableWithReturn<double, double, double> d, T a, T b)
         {
 
             if (typeof(T) == typeof(float))
@@ -179,7 +179,7 @@
             }
         }
 
-        static T FloatOrDoubleOrDecimal__onlyTakesDoubleOrDecimal<T>(Func<double, double, double> d, Func<decimal, decimal, decimal> dec, T a, T b)
+        static T FloatOrDoubleOrDecimal__onlyTakesDoubleOrDecimal<T>(RunnableWithReturn<double, double, double> d, RunnableWithReturn<decimal, decimal, decimal> dec, T a, T b)
         {
 
             if (typeof(T) == typeof(float))
@@ -205,7 +205,7 @@
             }
         }
 
-        static T FloatOrDoubleOrDecimal<T>(Func<float, float, float> f, Func<double, double, double> d, Func<decimal, decimal, decimal> dec, T a, T b)
+        static T FloatOrDoubleOrDecimal<T>(RunnableWithReturn<float, float, float> f, RunnableWithReturn<double, double, double> d, RunnableWithReturn<decimal, decimal, decimal> dec, T a, T b)
         {
 
             if (typeof(T) == typeof(float))

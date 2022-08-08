@@ -353,9 +353,9 @@ namespace AndroidUI.AnimationFramework.Animation
         {
             if (mListenerHandler == null)
             {
-                mOnStart = Runnable.Create(() => dispatchAnimationStart());
-                mOnRepeat = Runnable.Create(() => dispatchAnimationRepeat());
-                mOnEnd = Runnable.Create(() => dispatchAnimationEnd());
+                mOnStart = () => dispatchAnimationStart();
+                mOnRepeat = () => dispatchAnimationRepeat();
+                mOnEnd = () => dispatchAnimationEnd();
             };
             mListenerHandler = handler;
         }

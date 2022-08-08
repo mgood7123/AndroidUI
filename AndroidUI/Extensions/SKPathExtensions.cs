@@ -1,4 +1,5 @@
 ﻿using AndroidUI.Skia;
+using AndroidUI.Utils;
 using AndroidUI.Utils.Arrays;
 using SkiaSharp;
 
@@ -246,7 +247,7 @@ namespace AndroidUI.Extensions
 
         // Subdivide a section of the Bezier curve, set the mid-point and the mid-t value.
         // Returns true if further subdivision is necessary as defined by errorSquared.
-        static bool subdividePoints(MemoryPointer<SKPoint> points, Func<float, MemoryPointer<SKPoint>, SKPoint> bezierFunction,
+        static bool subdividePoints(MemoryPointer<SKPoint> points, RunnableWithReturn<float, MemoryPointer<SKPoint>, SKPoint> bezierFunction,
             float t0, in SKPoint p0, float t1, in SKPoint p1,
             out float midT, out SKPoint midPoint, float errorSquared) {
             midT = (t1 + t0) / 2;
@@ -268,7 +269,7 @@ namespace AndroidUI.Extensions
         // doubleCheckDivision forces a second examination between subdivisions to ensure that linear
         // interpolation works.
         static void addBezier(MemoryPointer<SKPoint> points,
-                Func<float, MemoryPointer<SKPoint>, SKPoint> bezierFunction, List<SKPoint> segmentPoints,
+                RunnableWithReturn<float, MemoryPointer<SKPoint>, SKPoint> bezierFunction, List<SKPoint> segmentPoints,
             List<float> lengths, float errorSquared, bool doubleCheckDivision)
         {
             Dictionary<float, SKPoint> tToPoint = new();

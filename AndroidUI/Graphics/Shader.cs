@@ -197,7 +197,7 @@ namespace AndroidUI.Graphics
         {
             if (mNativeInstance != null)
             {
-                mCleaner?.run();
+                mCleaner?.Invoke();
                 mCleaner = null;
                 mNativeInstance.Dispose();
                 mNativeInstance = null;

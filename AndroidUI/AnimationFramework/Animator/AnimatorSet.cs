@@ -1592,7 +1592,7 @@ namespace AndroidUI.AnimationFramework.Animator
             anim.mNodeMap = new Dictionary<Animator, Node>();
             anim.mNodes = new List<Node>(nodeCount);
             anim.mEvents = new List<AnimationEvent>();
-            anim.mAnimationEndListener = new ALA(anim); ;
+            anim.mAnimationEndListener = new ALA(anim);
             anim.mReversing = false;
             anim.mDependencyDirty = true;
 

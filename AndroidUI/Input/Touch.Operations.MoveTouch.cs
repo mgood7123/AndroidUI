@@ -6,7 +6,7 @@ namespace AndroidUI.Input
     {
         public void moveTouch(Data touchData)
         {
-            if (debug && printMoved) Console.WriteLine("moving touch with identity: " + touchData.identity);
+            if (DEBUG && PRINT_MOVED) Console.WriteLine("moving touch with identity: " + touchData.identity);
             bool found = false;
             for (int i = 0; i < maxSupportedTouches; i++)
             {
@@ -30,7 +30,7 @@ namespace AndroidUI.Input
                             }
                             else
                             {
-                                if (debug && printMoved) Console.WriteLine("aborting MoveTouch, touch has not actually moved, identity: " + touchData.identity);
+                                if (DEBUG && PRINT_MOVED) Console.WriteLine("aborting MoveTouch, touch has not actually moved, identity: " + touchData.identity);
                                 return;
                             }
                         }
@@ -49,7 +49,7 @@ namespace AndroidUI.Input
                             history.Add(touchContainer.touch);
                         }
 
-                        if (debug && printMoved) Console.WriteLine("TOUCH_MOVE: INDEX: " + i);
+                        if (DEBUG && PRINT_MOVED) Console.WriteLine("TOUCH_MOVE: INDEX: " + i);
                     }
                 }
             }

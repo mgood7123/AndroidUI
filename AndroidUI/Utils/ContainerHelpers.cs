@@ -20,7 +20,7 @@ namespace AndroidUI.Utils
 {
     class ContainerHelpers
     {
-        static bool floating_point_type_value_equals<T>(ref object a, ref object b, Func<T, bool> isNaN, Func<T, bool> isInfinity)
+        static bool floating_point_type_value_equals<T>(ref object a, ref object b, RunnableWithReturn<T, bool> isNaN, RunnableWithReturn<T, bool> isInfinity)
         {
             T TA = (T)Convert.ChangeType(a, typeof(T), CultureInfo.InvariantCulture);
             T TB = (T)Convert.ChangeType(b, typeof(T), CultureInfo.InvariantCulture);

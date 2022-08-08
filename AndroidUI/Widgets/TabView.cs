@@ -45,7 +45,7 @@ namespace AndroidUI.Widgets
             tabs.addView(a, new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.WRAP_CONTENT));
         }
 
-        public void addTab(string title, Func<View> builder)
+        public void addTab(string title, RunnableWithReturn<View> builder)
         {
             addTab(title, builder.Invoke());
         }
@@ -65,7 +65,7 @@ namespace AndroidUI.Widgets
             addView(tabContainer, new LinearLayout.LayoutParams(View.LayoutParams.WRAP_CONTENT, View.LayoutParams.MATCH_PARENT));
             addView(tabContent, new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.MATCH_PARENT, 1));
             tabContainer.setZ(1);
-            post(new Runnable.ActionRunnable(() => tabContainer.setBackgroundColor(Color.BLACK)));
+            tabContainer.setBackgroundColor(Color.BLACK);
         }
     }
 }

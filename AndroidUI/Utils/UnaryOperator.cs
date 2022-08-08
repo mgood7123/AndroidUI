@@ -36,7 +36,7 @@ namespace AndroidUI.Utils
      */
     public class UnaryOperator<T> : UnaryOperator
     {
-        readonly Func<T, T> a;
+        readonly RunnableWithReturn<T, T> a;
         readonly System.Reflection.ConstructorInfo constructorInfo;
 
         public static UnaryOperator identity()
@@ -46,18 +46,18 @@ namespace AndroidUI.Utils
 
         public static R identity<R>() where R : UnaryOperator<T>
         {
-            return (R)Activator.CreateInstance(typeof(R), new Func<T, T>(v => v));
+            return (R)Activator.CreateInstance(typeof(R), new RunnableWithReturn<T, T>(v => v));
         }
 
-        public static implicit operator UnaryOperator<T>(Func<T, T> func)
+        public static implicit operator UnaryOperator<T>(RunnableWithReturn<T, T> func)
         {
             return new UnaryOperator<T>(func);
         }
 
-        public UnaryOperator(Func<T, T> a)
+        public UnaryOperator(RunnableWithReturn<T, T> a)
         {
             this.a = a ?? throw new ArgumentNullException(nameof(a));
-            constructorInfo = GetType().GetConstructor(new Type[] { typeof(Func<T, T>) });
+            constructorInfo = GetType().GetConstructor(new Type[] { typeof(RunnableWithReturn<T, T>) });
         }
 
         /**
@@ -87,7 +87,7 @@ namespace AndroidUI.Utils
         public UnaryOperator<T> compose(UnaryOperator<T> before)
         {
             if (before == null) throw new ArgumentNullException(nameof(before));
-            return (UnaryOperator<T>)constructorInfo.Invoke(new object[] { new Func<T, T>(v => apply(before.apply(v))) });
+            return (UnaryOperator<T>)constructorInfo.Invoke(new object[] { new RunnableWithReturn<T, T>(v => apply(before.apply(v))) });
         }
 
         /**
@@ -106,7 +106,7 @@ namespace AndroidUI.Utils
         public UnaryOperator<T> andThen(UnaryOperator<T> after)
         {
             if (after == null) throw new ArgumentNullException(nameof(after));
-            return (UnaryOperator<T>)constructorInfo.Invoke(new object[] { new Func<T, T>(v => after.apply(apply(v))) });
+            return (UnaryOperator<T>)constructorInfo.Invoke(new object[] { new RunnableWithReturn<T, T>(v => after.apply(apply(v))) });
         }
     }
 }

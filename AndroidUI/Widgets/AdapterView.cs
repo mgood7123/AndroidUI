@@ -920,35 +920,37 @@ namespace AndroidUI.Widgets
         protected void onDetachedFromWindow()
         {
             base.onDetachedFromWindow();
-            removeCallbacks(mSelectionNotifier);
+            removeCallbacks(mSelectionNotifier?.runnable);
         }
 
-        private class SelectionNotifier : Runnable
+        private class SelectionNotifier
         {
             AdapterView<AdapterType, BaseType> outer;
+            internal Runnable runnable;
+
             public SelectionNotifier(AdapterView<AdapterType, BaseType> outer)
             {
                 this.outer = outer;
-            }
-            public override void run()
-            {
-                outer.mPendingSelectionNotifier = null;
+                runnable = () =>
+                {
+                    outer.mPendingSelectionNotifier = null;
 
-                if (outer.mDataChanged && outer.getViewRootImpl() != null
-                        && outer.getViewRootImpl().isLayoutRequested())
-                {
-                    // Data has changed between when this SelectionNotifier was
-                    // posted and now. Postpone the notification until the next
-                    // layout is complete and we run checkSelectionChanged().
-                    if (outer.getAdapter() != null)
+                    if (outer.mDataChanged && outer.getViewRootImpl() != null
+                            && outer.getViewRootImpl().isLayoutRequested())
                     {
-                        outer.mPendingSelectionNotifier = this;
+                        // Data has changed between when this SelectionNotifier was
+                        // posted and now. Postpone the notification until the next
+                        // layout is complete and we run checkSelectionChanged().
+                        if (outer.getAdapter() != null)
+                        {
+                            outer.mPendingSelectionNotifier = this;
+                        }
                     }
-                }
-                else
-                {
-                    outer.dispatchOnItemSelected();
-                }
+                    else
+                    {
+                        outer.dispatchOnItemSelected();
+                    }
+                };
             }
         }
 
@@ -974,9 +976,9 @@ namespace AndroidUI.Widgets
                     }
                     else
                     {
-                        removeCallbacks(mSelectionNotifier);
+                        removeCallbacks(mSelectionNotifier?.runnable);
                     }
-                    post(mSelectionNotifier);
+                    post(mSelectionNotifier?.runnable);
                 }
                 else
                 {
@@ -1207,7 +1209,7 @@ namespace AndroidUI.Widgets
             // just fired one in selectionChanged() -- run it now.
             if (mPendingSelectionNotifier != null)
             {
-                mPendingSelectionNotifier.run();
+                mPendingSelectionNotifier.runnable.Invoke();
             }
         }
 

@@ -82,7 +82,7 @@ public class Program
 	}
 	
 	class Field {
-		Action<int> action = new Action<int>((i) => {});
+		Runnable<int> action = new Runnable<int>((i) => {});
 		int a_p => 5;
 		ValueType a;
 		const int const_field = 1;
