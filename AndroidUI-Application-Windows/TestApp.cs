@@ -215,25 +215,34 @@ namespace AndroidUI_Application_Windows
             });
             tabView.addTab("Animation", () => 
             {
-                var image = new ColorView(Color.MAGENTA);
+                var color = new ColorView(Color.MAGENTA);
 
-                ObjectAnimator oa = ObjectAnimator.ofInt(Context, image, "x", new int[] { 0, 100 });
-                oa.setRepeatMode(ValueAnimator.REVERSE);
-                oa.setDuration(2200);
+                ObjectAnimator ox = ObjectAnimator.ofInt(Context, color, "x", new int[] { 0, 60 })
+                    .setDuration(1100);
+                ObjectAnimator ox_ = ObjectAnimator.ofInt(Context, color, "x", new int[] { 60, 100 })
+                    .setDuration(400);
+                ObjectAnimator rx = ObjectAnimator.ofInt(Context, color, "x", new int[] { 100, 0 })
+                    .setDuration(1100/2);
 
-                ObjectAnimator ob = ObjectAnimator.ofInt(Context, image, "y", new int[] { 0, 100 });
-                ob.setRepeatMode(ValueAnimator.REVERSE);
-                ob.setDuration(1100);
+                ObjectAnimator oy = ObjectAnimator.ofInt(Context, color, "y", new int[] { 0, 100 })
+                    .setDuration(1100);
+                ObjectAnimator oy_ = ObjectAnimator.ofInt(Context, color, "y", new int[] { 100, 200 })
+                    .setDuration(900);
+                ObjectAnimator ry = ObjectAnimator.ofInt(Context, color, "y", new int[] { 200, 0 })
+                    .setDuration(1100/2);
 
-                ObjectAnimator oc = ObjectAnimator.ofInt(Context, image, "y", new int[] { 100, 200 });
-                oc.setRepeatMode(ValueAnimator.REVERSE);
-                oc.setDuration(1100);
+                AnimatorSet A = new(Context);
+                AnimatorSet B = new(Context);
+                AnimatorSet C = new(Context);
 
-                AnimatorSet s = new(Context);
-                s.play(oa).with(ob).before(oc);
-                s.addListener(new AL());
-                s.start();
-                return image;
+                A.playTogether(ox, oy);
+                B.playTogether(rx, ry);
+                C.playSequentially(A, ox_, oy_, B);
+
+                C.addListener(new AL());
+                C.addViewAttachmentListener(color);
+
+                return color;
             });
             tabView.addTab("Z Ordering", () =>
             {
