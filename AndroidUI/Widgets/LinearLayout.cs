@@ -143,18 +143,14 @@ namespace AndroidUI.Widgets
         //private int mLayoutDirection = View.LAYOUT_DIRECTION_UNDEFINED;
 
         /**
-         * Signals that compatibility bools have been initialized according to
-         * target SDK versions.
-         */
-        private static bool sCompatibilityDone = false;
-
-        /**
          * Behavior change in P; always remeasure weighted children, regardless of excess space.
          */
         private static bool sRemeasureWeightedChildren = true;
 
         public LinearLayout() : base()
         {
+
+            mLayoutDirection = View.LAYOUT_DIRECTION_UNDEFINED;
 
             setOrientation(OrientationMode.VERTICAL);
 
@@ -173,7 +169,6 @@ namespace AndroidUI.Widgets
             setDividerDrawable(null);
 
             mAllowInconsistentMeasurement = false;
-            sCompatibilityDone = true;
         }
 
         /**
@@ -451,16 +446,16 @@ namespace AndroidUI.Widgets
 
         void drawHorizontalDivider(SKCanvas canvas, int top)
         {
-            //mDivider.setBounds(getPaddingLeft() + mDividerPadding, top,
-            //getWidth() - getPaddingRight() - mDividerPadding, top + mDividerHeight);
-            //mDivider.draw(canvas);
+            mDivider.setBounds(getPaddingLeft() + mDividerPadding, top,
+            getWidth() - getPaddingRight() - mDividerPadding, top + mDividerHeight);
+            mDivider.draw(canvas);
         }
 
         void drawVerticalDivider(SKCanvas canvas, int left)
         {
-            //mDivider.setBounds(left, getPaddingTop() + mDividerPadding,
-            //left + mDividerWidth, getHeight() - getPaddingBottom() - mDividerPadding);
-            //mDivider.draw(canvas);
+            mDivider.setBounds(left, getPaddingTop() + mDividerPadding,
+            left + mDividerWidth, getHeight() - getPaddingBottom() - mDividerPadding);
+            mDivider.draw(canvas);
         }
 
         /**
