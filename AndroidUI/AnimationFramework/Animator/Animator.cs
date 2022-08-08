@@ -16,6 +16,7 @@
 
 using AndroidUI.Exceptions;
 using AndroidUI.Utils;
+using AndroidUI.Widgets;
 
 namespace AndroidUI.AnimationFramework.Animator
 {
@@ -693,6 +694,28 @@ namespace AndroidUI.AnimationFramework.Animator
         public virtual void setAllowRunningAsynchronously(bool mayRunAsync)
         {
             // It is up to subclasses to support this, if they can.
+        }
+
+        public virtual void addViewAttachmentListener(View view)
+        {
+            view.addOnAttachStateChangeListener((v, is_attached) =>
+            {
+                if (is_attached)
+                {
+                    if (isStarted())
+                    {
+                        resume();
+                    }
+                    else
+                    {
+                        start();
+                    }
+                }
+                else
+                {
+                    pause();
+                }
+            });
         }
 
         /**
