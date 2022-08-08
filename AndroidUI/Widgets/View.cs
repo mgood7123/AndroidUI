@@ -16904,6 +16904,38 @@ namespace AndroidUI.Widgets
             public void onViewDetachedFromWindow(View v);
         }
 
+        /**
+         * Interface definition for a callback to be invoked when this view is attached
+         * or detached from its window.
+         */
+        public class OnAttachStateChangeListenerRunnable : OnAttachStateChangeListener
+        {
+            Runnable<View, bool> run;
+
+            public OnAttachStateChangeListenerRunnable(Runnable<View, bool> run)
+            {
+                this.run = run;
+            }
+
+            /**
+             * Called when the view is attached to a window.
+             * @param v The view that was attached
+             */
+            public void onViewAttachedToWindow(View v)
+            {
+                run?.Invoke(v, true);
+            }
+
+            /**
+             * Called when the view is detached from a window.
+             * @param v The view that was detached
+             */
+            public void onViewDetachedFromWindow(View v)
+            {
+                run?.Invoke(v, false);
+            }
+        }
+
 
         /**
          * Interface definition for a callback to be invoked when a view is clicked.
@@ -17391,6 +17423,26 @@ namespace AndroidUI.Widgets
                 li.mOnAttachStateChangeListeners = new CopyOnWriteList<OnAttachStateChangeListener>(new ReaderWriterLockSlimInfo());
             }
             li.mOnAttachStateChangeListeners.Add(listener);
+        }
+
+        /**
+         * Add a listener for attach state changes.
+         *
+         * This listener will be called whenever this view is attached or detached
+         * from a window. Remove the listener using
+         * {@link #removeOnAttachStateChangeListener(OnAttachStateChangeListener)}.
+         *
+         * @param listener Listener to attach
+         * @see #removeOnAttachStateChangeListener(OnAttachStateChangeListener)
+         */
+        public void addOnAttachStateChangeListener(Runnable<View, bool> listener__View__IsAttaching)
+        {
+            ListenerInfo li = getListenerInfo();
+            if (li.mOnAttachStateChangeListeners == null)
+            {
+                li.mOnAttachStateChangeListeners = new CopyOnWriteList<OnAttachStateChangeListener>(new ReaderWriterLockSlimInfo());
+            }
+            li.mOnAttachStateChangeListeners.Add(new OnAttachStateChangeListenerRunnable(listener__View__IsAttaching));
         }
 
         /**
