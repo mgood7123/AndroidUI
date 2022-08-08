@@ -23,6 +23,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="..\.editorconfig" Link=".editorconfig" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AndroidUI.Native.Nuget" Version="0.0.114" />
     <PackageReference Include="SkiaSharp" Version="2.88.1-preview.3316" />
     <PackageReference Include="SkiaSharp.HarfBuzz" Version="2.88.1-preview.3223" />
