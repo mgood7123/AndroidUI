@@ -2,3 +2,6 @@
 
 # IDE0066: Convert switch statement to expression
 csharp_style_prefer_switch_expression = false
+
+# CS1591: Missing XML comment for publicly visible type or member
+dotnet_diagnostic.CS1591.severity = warning
