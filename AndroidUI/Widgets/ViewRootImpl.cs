@@ -43,7 +43,7 @@ namespace AndroidUI.Widgets
         private static bool DEBUG_ORIENTATION = false;
         private static bool DEBUG_INPUT_RESIZE = false;
         private static bool DEBUG_DRAW = false;
-        private static bool DEBUG_DRAW_TIME = false;
+        private static bool DEBUG_MEASURE_LAYOUT_DRAW_TIME = false;
         private static bool DEBUG_FPS = false;
         private static bool DEBUG_BLAST = false;
 
@@ -1680,7 +1680,7 @@ namespace AndroidUI.Widgets
             optionsPage.addView(CreateSettingsRow("ViewRootImpl: Debug FPS", "Enabled", "Disabled", () => DEBUG_FPS, value => DEBUG_FPS = value));
             optionsPage.addView(CreateSettingsRow("ViewRootImpl: Debug Layout", "Enabled", "Disabled", () => DEBUG_LAYOUT, value => DEBUG_LAYOUT = value));
             optionsPage.addView(CreateSettingsRow("ViewRootImpl: Debug Draw", "Enabled", "Disabled", () => DEBUG_DRAW, value => DEBUG_DRAW = value));
-            optionsPage.addView(CreateSettingsRow("ViewRootImpl: Debug Draw Time", "Enabled", "Disabled", () => DEBUG_DRAW_TIME, value => DEBUG_DRAW_TIME = value));
+            optionsPage.addView(CreateSettingsRow("ViewRootImpl: Debug Measure/Layout/Draw Time", "Enabled", "Disabled", () => DEBUG_MEASURE_LAYOUT_DRAW_TIME, value => DEBUG_MEASURE_LAYOUT_DRAW_TIME = value));
             optionsPage.addView(CreateSettingsRow("ViewRootImpl: Debug Orientation", "Enabled", "Disabled", () => DEBUG_ORIENTATION, value => DEBUG_ORIENTATION = value));
             optionsPage.addView(CreateSettingsRow("ViewRootImpl: Debug Input Resize", "Enabled", "Disabled", () => DEBUG_INPUT_RESIZE, value => DEBUG_INPUT_RESIZE = value));
             optionsPage.addView(CreateSettingsRow("ViewRootImpl: Debug Blast", "Enabled", "Disabled", () => DEBUG_BLAST, value => DEBUG_BLAST = value));
@@ -2714,7 +2714,7 @@ namespace AndroidUI.Widgets
 
         private void DO_TRAVERSAL_INTERNAL(SKCanvas canvas)
         {
-            if (DEBUG_DRAW_TIME)
+            if (DEBUG_MEASURE_LAYOUT_DRAW_TIME)
             {
                 long s = NanoTime.currentTimeMillis();
                 performTraversals(canvas);
