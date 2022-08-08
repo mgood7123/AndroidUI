@@ -1,20 +1,15 @@
 ﻿using AndroidUI.Extensions;
-using AndroidUI.Graphics;
 using AndroidUI.Input;
-using AndroidUI.Utils;
-using AndroidUI.Utils.Input;
+using AndroidUI.Utils.Widgets;
 using SkiaSharp;
-using static SkiaSharp.HarfBuzz.SKShaper;
-using static System.Net.Mime.MediaTypeNames;
-using System.Diagnostics;
 
 namespace AndroidUI.Widgets
 {
-    public class ScrollView : FrameLayout, Utils.Widgets.ScrollHost
+    public class ScrollView : FrameLayout, ScrollHost
     {
-        Utils.Widgets.ScrollViewHostInstance host;
+        ScrollViewHostInstance host;
 
-        public Utils.Widgets.ScrollViewHostInstance ScrollHostGetInstance() => host;
+        public ScrollViewHostInstance ScrollHostGetInstance() => host;
 
         public void ScrollHostOnSetWillDraw(bool smoothScroll)
         {

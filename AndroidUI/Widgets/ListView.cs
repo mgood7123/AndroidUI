@@ -1526,7 +1526,7 @@ namespace AndroidUI.Widgets
          * {@link #HORIZONTAL}, the width is set to {@link LayoutParams#WRAP_CONTENT}
          * and the height to {@link LayoutParams#WRAP_CONTENT}.
          */
-        protected override View.MarginLayoutParams generateDefaultLayoutParams()
+        protected override MarginLayoutParams generateDefaultLayoutParams()
         {
             if (mOrientation == OrientationMode.HORIZONTAL)
             {
@@ -1539,7 +1539,7 @@ namespace AndroidUI.Widgets
             return null;
         }
 
-        protected override View.MarginLayoutParams generateLayoutParams(View.LayoutParams lp)
+        protected override MarginLayoutParams generateLayoutParams(LayoutParams lp)
         {
             if (sPreserveMarginParamsInLayoutParamConversion)
             {
@@ -1557,7 +1557,7 @@ namespace AndroidUI.Widgets
 
 
         // Override to allow type-checking of LayoutParams.
-        protected override bool checkLayoutParams(View.LayoutParams p)
+        protected override bool checkLayoutParams(LayoutParams p)
         {
             return p is MarginLayoutParams;
         }
