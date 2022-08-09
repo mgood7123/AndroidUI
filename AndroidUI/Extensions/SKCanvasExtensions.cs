@@ -7,6 +7,15 @@ namespace AndroidUI.Extensions
 {
     public static class SKCanvasExtensions
     {
+        /// <summary>
+        /// Disposes a surface created from CreateHardwareCanvas
+        /// <br></br>
+        /// if disposing the canvas, the correct way to dispose the surface is as follows
+        /// <code>
+        /// canvas.DisposeSurface();
+        /// canvas.Dispose();
+        /// </code>
+        /// </summary>
         public static void DisposeSurface(this SKCanvas this_canvas)
         {
             SKSurface s = (SKSurface)this_canvas.ExtensionProperties_GetValue("Surface", null);

@@ -7850,10 +7850,10 @@ namespace AndroidUI.Widgets
                 finally
                 {
                     mRenderNode = pictureRecorder.EndRecording();
+                    canvas.Dispose();
+                    pictureRecorder.Dispose();
                     setDisplayListProperties(mRenderNode);
                 }
-                canvas.Dispose();
-                pictureRecorder.Dispose();
             }
             else
             {
