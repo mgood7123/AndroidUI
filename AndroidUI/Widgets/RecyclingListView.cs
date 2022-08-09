@@ -6,7 +6,7 @@ using static AndroidUI.Widgets.LinearLayout;
 
 namespace AndroidUI.Widgets
 {
-    public class ListView : View, ScrollHost
+    public class RecyclingListView : View, ScrollHost
     {
         ScrollViewHostInstance host;
         public bool AutoScroll { get => host.autoScroll; set => host.autoScroll = value; }
@@ -40,7 +40,7 @@ namespace AndroidUI.Widgets
         private int mShowDividers;
         private int mDividerPadding;
 
-        public ListView() : base()
+        public RecyclingListView() : base()
         {
             host = new(this);
 
@@ -269,6 +269,114 @@ namespace AndroidUI.Widgets
             }
         }
 
+        public class Adapter
+        {
+            internal View parent;
+            public List<View> views = new();
+            internal int start;
+            internal int end;
+        }
+
+        Adapter mAdapter = new();
+
+        public void setAdapter(Adapter adapter)
+        {
+            mAdapter = adapter;
+            if (mAdapter != null)
+            {
+                mAdapter.parent = this;
+            }
+        }
+
+        /**
+         * This method is not supported and throws an NotSupportedException when called.
+         *
+         * @param child Ignored.
+         *
+         * @throws NotSupportedException Every time this method is invoked.
+         */
+        override public void addView(View child)
+        {
+            throw new NotSupportedException("addView(View) is not supported in AdapterView");
+        }
+
+        /**
+         * This method is not supported and throws an NotSupportedException when called.
+         *
+         * @param child Ignored.
+         * @param index Ignored.
+         *
+         * @throws NotSupportedException Every time this method is invoked.
+         */
+        override public void addView(View child, int index)
+        {
+            throw new NotSupportedException("addView(View, int) is not supported in AdapterView");
+        }
+
+        /**
+         * This method is not supported and throws an NotSupportedException when called.
+         *
+         * @param child Ignored.
+         * @param params Ignored.
+         *
+         * @throws NotSupportedException Every time this method is invoked.
+         */
+        override public void addView(View child, LayoutParams unused)
+        {
+            throw new NotSupportedException("addView(View, LayoutParams) "
+                    + "is not supported in AdapterView");
+        }
+
+        /**
+         * This method is not supported and throws an NotSupportedException when called.
+         *
+         * @param child Ignored.
+         * @param index Ignored.
+         * @param params Ignored.
+         *
+         * @throws NotSupportedException Every time this method is invoked.
+         */
+        override public void addView(View child, int index, LayoutParams unused)
+        {
+            throw new NotSupportedException("addView(View, int, LayoutParams) "
+                    + "is not supported in AdapterView");
+        }
+
+        /**
+         * This method is not supported and throws an NotSupportedException when called.
+         *
+         * @param child Ignored.
+         *
+         * @throws NotSupportedException Every time this method is invoked.
+         */
+        override public void removeView(View child)
+        {
+            throw new NotSupportedException("removeView(View) is not supported in AdapterView");
+        }
+
+        /**
+         * This method is not supported and throws an NotSupportedException when called.
+         *
+         * @param index Ignored.
+         *
+         * @throws NotSupportedException Every time this method is invoked.
+         */
+        override public void removeViewAt(int index)
+        {
+            throw new NotSupportedException("removeViewAt(int) is not supported in AdapterView");
+        }
+
+        /**
+         * This method is not supported and throws an NotSupportedException when called.
+         *
+         * @throws NotSupportedException Every time this method is invoked.
+         */
+        override public void removeAllViews()
+        {
+            throw new NotSupportedException("removeAllViews() is not supported in AdapterView");
+        }
+
+
         /**
          * Finds the last child that is not gone. The last child will be used as the reference for
          * where the end divider should be drawn.
@@ -428,6 +536,32 @@ namespace AndroidUI.Widgets
         }
 
         /**
+         * Determines where to position dividers between children.
+         *
+         * @param childIndex Index of child to check for preceding divider
+         * @return true if there should be a divider before the child at childIndex
+         * @hide Pending API consideration. Currently only used internally by the system.
+         */
+        protected bool hasDividerBeforeChildAtAdapter(int childIndex)
+        {
+            if (childIndex == mAdapter.views.Count)
+            {
+                // Check whether the end divider should draw.
+                return (mShowDividers & SHOW_DIVIDER_END) != 0;
+            }
+            bool allViewsAreGoneBefore_ = allViewsAreGoneBeforeAdapter(childIndex);
+            if (allViewsAreGoneBefore_)
+            {
+                // This is the first view that's not gone, check if beginning divider is enabled.
+                return (mShowDividers & SHOW_DIVIDER_BEGINNING) != 0;
+            }
+            else
+            {
+                return (mShowDividers & SHOW_DIVIDER_MIDDLE) != 0;
+            }
+        }
+
+        /**
          * Checks whether all (virtual) child views before the given index are gone.
          */
         private bool allViewsAreGoneBefore(int childIndex)
@@ -435,6 +569,22 @@ namespace AndroidUI.Widgets
             for (int i = childIndex - 1; i >= 0; i--)
             {
                 View child = getVirtualChildAt(i);
+                if (child != null && child.getVisibility() != GONE)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        /**
+         * Checks whether all (virtual) child views before the given index are gone.
+         */
+        private bool allViewsAreGoneBeforeAdapter(int childIndex)
+        {
+            for (int i = childIndex - 1; i >= mAdapter.start; i--)
+            {
+                View child = mAdapter.views[i];
                 if (child != null && child.getVisibility() != GONE)
                 {
                     return false;
@@ -462,18 +612,24 @@ namespace AndroidUI.Widgets
             int alternativeMaxWidth = 0;
             bool allFillParent = true;
 
-            int count = getVirtualChildCount();
-
             int widthMode = MeasureSpec.getMode(widthMeasureSpec);
+
+            int height = MeasureSpec.getSize(heightMeasureSpec);
 
             bool matchWidth = false;
 
             int nonSkippedChildCount = 0;
 
+            int adapterCount = mAdapter.views.Count;
+
             // See how tall everyone is. Also remember max width.
-            for (int i = 0; i < count; ++i)
+            for (int i = 0; i < adapterCount; ++i)
             {
-                View child = getVirtualChildAt(i);
+                if (i < mAdapter.start)
+                {
+                    continue;
+                }
+                View child = mAdapter.views[i];
                 if (child == null)
                 {
                     mTotalLength += measureNullChild(i);
@@ -487,12 +643,23 @@ namespace AndroidUI.Widgets
                 }
 
                 nonSkippedChildCount++;
-                if (hasDividerBeforeChildAt(i))
+                if (hasDividerBeforeChildAtAdapter(i))
                 {
                     mTotalLength += mDividerHeight;
                 }
 
                 MarginLayoutParams lp = (MarginLayoutParams)child.getLayoutParams();
+
+                if (lp == null)
+                {
+                    child.mLayoutParams = generateDefaultLayoutParams();
+                    lp = (MarginLayoutParams)child.mLayoutParams;
+                }
+                else if (!checkLayoutParams(lp))
+                {
+                    child.mLayoutParams = generateLayoutParams(lp);
+                    lp = (MarginLayoutParams)child.mLayoutParams;
+                }
 
                 // Determine how big this child would like to be. If this or
                 // previous children have given a weight, then we allow it to
@@ -529,9 +696,15 @@ namespace AndroidUI.Widgets
                         matchWidthLocally ? margin : measuredWidth);
 
                 i += getChildrenSkipCount(child, i);
+
+                if (mTotalLength > height)
+                {
+                    mAdapter.end = i;
+                    break;
+                }
             }
 
-            if (nonSkippedChildCount > 0 && hasDividerBeforeChildAt(count))
+            if (nonSkippedChildCount > 0 && hasDividerBeforeChildAtAdapter(adapterCount))
             {
                 mTotalLength += mDividerHeight;
             }
@@ -562,7 +735,7 @@ namespace AndroidUI.Widgets
 
             if (matchWidth)
             {
-                forceUniformWidth(count, heightMeasureSpec);
+                forceUniformWidthAdapter(heightMeasureSpec);
             }
         }
 
@@ -574,6 +747,33 @@ namespace AndroidUI.Widgets
             for (int i = 0; i < count; ++i)
             {
                 View child = getVirtualChildAt(i);
+                if (child != null && child.getVisibility() != GONE)
+                {
+                    MarginLayoutParams lp = (MarginLayoutParams)child.getLayoutParams();
+
+                    if (lp.width == View.LayoutParams.MATCH_PARENT)
+                    {
+                        // Temporarily force children to reuse their old measured height
+                        // FIXME: this may not be right for something like wrapping text?
+                        int oldHeight = lp.height;
+                        lp.height = child.getMeasuredHeight();
+
+                        // Remeasue with new dimensions
+                        measureChildWithMargins(child, uniformMeasureSpec, 0, heightMeasureSpec, 0);
+                        lp.height = oldHeight;
+                    }
+                }
+            }
+        }
+
+        private void forceUniformWidthAdapter(int heightMeasureSpec)
+        {
+            // Pretend that the linear layout has an exact size.
+            int uniformMeasureSpec = MeasureSpec.makeMeasureSpec(getMeasuredWidth(),
+                    MeasureSpec.EXACTLY);
+            for (int i = mAdapter.start; i <= mAdapter.end; ++i)
+            {
+                View child = mAdapter.views[i];
                 if (child != null && child.getVisibility() != GONE)
                 {
                     MarginLayoutParams lp = (MarginLayoutParams)child.getLayoutParams();
@@ -612,10 +812,10 @@ namespace AndroidUI.Widgets
             int alternativeMaxHeight = 0;
             bool allFillParent = true;
 
-            int count = getVirtualChildCount();
-
             int widthMode = MeasureSpec.getMode(widthMeasureSpec);
             int heightMode = MeasureSpec.getMode(heightMeasureSpec);
+
+            int width = MeasureSpec.getSize(widthMeasureSpec);
 
             bool matchHeight = false;
 
@@ -623,10 +823,16 @@ namespace AndroidUI.Widgets
 
             int nonSkippedChildCount = 0;
 
+            int adapterCount = mAdapter.views.Count;
+
             // See how wide everyone is. Also remember max height.
-            for (int i = 0; i < count; ++i)
+            for (int i = 0; i < adapterCount; ++i)
             {
-                View child = getVirtualChildAt(i);
+                if (i < mAdapter.start)
+                {
+                    continue;
+                }
+                View child = mAdapter.views[i];
                 if (child == null)
                 {
                     mTotalLength += measureNullChild(i);
@@ -640,12 +846,23 @@ namespace AndroidUI.Widgets
                 }
 
                 nonSkippedChildCount++;
-                if (hasDividerBeforeChildAt(i))
+                if (hasDividerBeforeChildAtAdapter(i))
                 {
                     mTotalLength += mDividerWidth;
                 }
 
                 MarginLayoutParams lp = (MarginLayoutParams)child.getLayoutParams();
+
+                if (lp == null)
+                {
+                    child.mLayoutParams = generateDefaultLayoutParams();
+                    lp = (MarginLayoutParams)child.mLayoutParams;
+                }
+                else if (!checkLayoutParams(lp))
+                {
+                    child.mLayoutParams = generateLayoutParams(lp);
+                    lp = (MarginLayoutParams)child.mLayoutParams;
+                }
 
                 // Determine how big this child would like to be. If this or
                 // previous children have given a weight, then we allow it to
@@ -689,9 +906,15 @@ namespace AndroidUI.Widgets
                         matchHeightLocally ? margin : childHeight);
 
                 i += getChildrenSkipCount(child, i);
+
+                if (mTotalLength > width)
+                {
+                    mAdapter.end = i;
+                    break;
+                }
             }
 
-            if (nonSkippedChildCount > 0 && hasDividerBeforeChildAt(count))
+            if (nonSkippedChildCount > 0 && hasDividerBeforeChildAtAdapter(adapterCount))
             {
                 mTotalLength += mDividerWidth;
             }
@@ -706,6 +929,7 @@ namespace AndroidUI.Widgets
 
             // Reconcile our calculated size with the widthMeasureSpec
             int widthSizeAndState = resolveSizeAndState(widthSize, widthMeasureSpec, 0);
+            widthSize = widthSizeAndState & MEASURED_SIZE_MASK;
 
             if (!allFillParent && heightMode != MeasureSpec.EXACTLY)
             {
@@ -723,7 +947,7 @@ namespace AndroidUI.Widgets
 
             if (matchHeight)
             {
-                forceUniformHeight(count, widthMeasureSpec);
+                forceUniformHeightAdapter(widthMeasureSpec);
             }
         }
 
@@ -737,6 +961,35 @@ namespace AndroidUI.Widgets
             for (int i = 0; i < count; ++i)
             {
                 View child = getVirtualChildAt(i);
+                if (child != null && child.getVisibility() != GONE)
+                {
+                    MarginLayoutParams lp = (MarginLayoutParams)child.getLayoutParams();
+
+                    if (lp.height == View.LayoutParams.MATCH_PARENT)
+                    {
+                        // Temporarily force children to reuse their old measured width
+                        // FIXME: this may not be right for something like wrapping text?
+                        int oldWidth = lp.width;
+                        lp.width = child.getMeasuredWidth();
+
+                        // Remeasure with new dimensions
+                        measureChildWithMargins(child, widthMeasureSpec, 0, uniformMeasureSpec, 0);
+                        lp.width = oldWidth;
+                    }
+                }
+            }
+        }
+
+        private void forceUniformHeightAdapter(int widthMeasureSpec)
+        {
+            // Pretend that the linear layout has an exact size. This is the measured height of
+            // ourselves. The measured height should be the max height of the children, changed
+            // to accommodate the heightMeasureSpec from the parent
+            int uniformMeasureSpec = MeasureSpec.makeMeasureSpec(getMeasuredHeight(),
+                    MeasureSpec.EXACTLY);
+            for (int i = mAdapter.start; i <= mAdapter.end; ++i)
+            {
+                View child = mAdapter.views[i];
                 if (child != null && child.getVisibility() != GONE)
                 {
                     MarginLayoutParams lp = (MarginLayoutParams)child.getLayoutParams();
@@ -915,6 +1168,14 @@ namespace AndroidUI.Widgets
 
         protected override void onLayout(bool changed, int l, int t, int r, int b)
         {
+            if (mChildrenCount == 0)
+            {
+                for (int i = mAdapter.start; i <= mAdapter.end; ++i)
+                {
+                    View child = mAdapter.views[i];
+                    addViewInLayout(child, -1, child.mLayoutParams);
+                }
+            }
             if (mOrientation == OrientationMode.VERTICAL)
             {
                 layoutVertical(l, t, r, b);
@@ -922,6 +1183,23 @@ namespace AndroidUI.Widgets
             else
             {
                 layoutHorizontal(l, t, r, b);
+            }
+        }
+
+        protected override void onScrollChanged(int scrollX, int scrollY, int oldScrollX, int oldScrollY)
+        {
+            base.onScrollChanged(scrollX, scrollY, oldScrollX, oldScrollY);
+            if (mOrientation == OrientationMode.VERTICAL)
+            {
+                if (scrollY > oldScrollY)
+                {
+                    // scrolling down
+                    if (scrollY >= getMeasuredHeight())
+                    {
+                        //mAdapter.end++;
+                        //requestLayout();
+                    }
+                }
             }
         }
 

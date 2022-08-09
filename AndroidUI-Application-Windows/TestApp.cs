@@ -501,7 +501,7 @@ namespace AndroidUI_Application_Windows
 
                 for (int i = 0; i < 50; i++)
                 {
-                    AddButton(list, i+1);
+                    AddButton((p, b) => p.addView(b, MATCH_PARENT_W__WRAP_CONTENT_H), list, i +1);
                 }
 
                 scrollView.addView(list, MATCH_PARENT_W__WRAP_CONTENT_H);
@@ -514,7 +514,19 @@ namespace AndroidUI_Application_Windows
                 AndroidUI.Widgets.ListView list = new();
                 for (int i = 0; i < 100; i++)
                 {
-                    AddButton(list, i + 1);
+                    AddButton((p, b) => p.addView(b, MATCH_PARENT_W__WRAP_CONTENT_H), list, i + 1);
+                }
+                return list;
+            });
+
+            tabView.addTab("RecyclingListView Buttons", () =>
+            {
+                RecyclingListView list = new();
+                RecyclingListView.Adapter adapter = new();
+                list.setAdapter(adapter);
+                for (int i = 0; i < 100; i++)
+                {
+                    AddButton((p, b) => p.views.Add(b), adapter, i + 1);
                 }
                 return list;
             });
@@ -522,7 +534,7 @@ namespace AndroidUI_Application_Windows
             SetContentView(tabView);
         }
 
-        void AddButton(View parent, int n)
+        void AddButton<T>(AndroidUI.Utils.Runnable<T, View> runnable, T parent, int n)
         {
             var button = new Topten_RichTextKit_TextView("Button " + n, 24, SkiaSharp.SKColors.Black);
 
@@ -538,7 +550,7 @@ namespace AndroidUI_Application_Windows
             frame.setBackgroundColor((int)(uint)AndroidUI.Utils.Const.Constants.color_code_LineageOS);
             frame.setOnClickListener(v => v.Log.d("Clicked button " + n));
             frame.setTagRecursively(button.getText());
-            parent.addView(frame, MATCH_PARENT_W__WRAP_CONTENT_H);
+            runnable.Invoke(parent, frame);
         }
     }
 }

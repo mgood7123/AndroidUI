@@ -12059,6 +12059,48 @@ namespace AndroidUI.Widgets
         }
 
         /**
+         * Adds a view during layout. This is useful if in your onLayout() method,
+         * you need to add more views (as does the list view for example).
+         *
+         * If index is negative, it means put it at the end of the list.
+         *
+         * @param child the view to add to the group
+         * @param index the index at which the child must be added or -1 to add last
+         * @param params the layout parameters to associate with the child
+         * @return true if the child was added, false otherwise
+         */
+        protected bool addViewInLayout(View child, int index, LayoutParams layout_params)
+        {
+            return addViewInLayout(child, index, layout_params, false);
+        }
+
+        /**
+         * Adds a view during layout. This is useful if in your onLayout() method,
+         * you need to add more views (as does the list view for example).
+         *
+         * If index is negative, it means put it at the end of the list.
+         *
+         * @param child the view to add to the group
+         * @param index the index at which the child must be added or -1 to add last
+         * @param params the layout parameters to associate with the child
+         * @param preventRequestLayout if true, calling this method will not trigger a
+         *        layout request on child
+         * @return true if the child was added, false otherwise
+         */
+        protected bool addViewInLayout(View child, int index, LayoutParams layout_params,
+                bool preventRequestLayout)
+        {
+            if (child == null)
+            {
+                throw new IllegalArgumentException("Cannot add a null child view to a ViewGroup");
+            }
+            child.mParent = null;
+            addViewInner(child, index, layout_params, preventRequestLayout);
+            child.mPrivateFlags = (child.mPrivateFlags & ~PFLAG_DIRTY_MASK) | PFLAG_DRAWN;
+            return true;
+        }
+
+        /**
          * Removes a view during layout. This is useful if in your onLayout() method,
          * you need to remove more views.
          *
@@ -16813,10 +16855,10 @@ namespace AndroidUI.Widgets
          * @param oldl Previous horizontal scroll origin.
          * @param oldt Previous vertical scroll origin.
          */
-        protected void onScrollChanged(int l, int t, int oldl, int oldt)
+        protected virtual void onScrollChanged(int scrollX, int scrollY, int oldScrollX, int oldScrollY)
         {
             //notifySubtreeAccessibilityStateChangedIfNeeded();
-            //postSendViewScrolledAccessibilityEventCallback(l - oldl, t - oldt);
+            //postSendViewScrolledAccessibilityEventCallback(scrollX - oldScrollX, scrollY - oldScrollY);
 
             mBackgroundSizeChanged = true;
             //mDefaultFocusHighlightSizeChanged = true;
@@ -16833,7 +16875,7 @@ namespace AndroidUI.Widgets
 
             if (mListenerInfo != null && mListenerInfo.mOnScrollChangeListener != null)
             {
-                mListenerInfo.mOnScrollChangeListener.onScrollChange(this, l, t, oldl, oldt);
+                mListenerInfo.mOnScrollChangeListener.onScrollChange(this, scrollX, scrollY, oldScrollX, oldScrollY);
             }
         }
 
