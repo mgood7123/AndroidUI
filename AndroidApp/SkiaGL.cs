@@ -37,7 +37,6 @@ namespace AndroidUI.Hosts.Android
 
         protected override void OnPaintSurface(SKPaintGLSurfaceEventArgs e)
         {
-            Log.Debug("ANDROIDUI", "PAINT SURFACE");
             base.OnPaintSurface(e);
             SkiaSharp.GRContext gRContext = GRContext;
             SkiaSharp.GRBackendRenderTarget backendRenderTarget = e.BackendRenderTarget;

@@ -70,6 +70,26 @@ namespace AndroidUI.Hosts.Windows
             // Add the event handler for handling non-UI thread exceptions to the event.
             AppDomain.CurrentDomain.UnhandledException +=
                 new UnhandledExceptionEventHandler(AndroidUI.Hosts.Windows.ApplicationHost.NonUIThreadException);
+
+            SkiaSharp.SKNativeObject.LOG_ALLOCATION_CONSTRUCTOR_ENTER_CALLBACK = stacktrace =>
+            {
+                Console.WriteLine("SKNativeObject() entering from: " + (stacktrace == null ? "<NULL>" : stacktrace));
+            };
+
+            SkiaSharp.SKNativeObject.LOG_ALLOCATION_CONSTRUCTOR_EXIT_CALLBACK = stacktrace =>
+            {
+                Console.WriteLine("SKNativeObject() exiting from stack trace:" + (stacktrace == null ? "<NULL>" : stacktrace));
+            };
+
+            SkiaSharp.SKNativeObject.LOG_ALLOCATION_DESTRUCTOR_ENTER_CALLBACK = stacktrace =>
+            {
+                Console.WriteLine("~SKNativeObject() entering from stack trace:" + (stacktrace == null ? "<NULL>" : stacktrace));
+            };
+
+            SkiaSharp.SKNativeObject.LOG_ALLOCATION_DESTRUCTOR_EXIT_CALLBACK = stacktrace =>
+            {
+                Console.WriteLine("~SKNativeObject() exiting from stack trace:" + (stacktrace == null ? "<NULL>" : stacktrace));
+            };
         }
 
         public static void TryToSwitchToHighestDpi()
