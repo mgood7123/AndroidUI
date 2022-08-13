@@ -1,19 +1,34 @@
 ﻿namespace AndroidUI.Applications
 {
-    public static class DensityManager
+    public class DensityManager
     {
-        // SCREEN DENSITY
-        // default value is 1
-        static double screenDensity = 1.0f;
-        static int screenDpi;
+        private float screenDensity;
+        private int screenDpi;
 
-        public static double ScreenDensity => screenDensity;
-        public static float ScreenDensityAsFloat => (float)screenDensity;
-        public static int ScreenDpi => screenDpi;
+        public float ScreenDensity => screenDensity;
+        public int ScreenDpi => screenDpi;
 
+        public int ConvertDPToPX(int dp, float offset = 0f)
+        {
+            return (int)((dp * ScreenDensity) + offset);
+        }
 
-        // FOR INTERNAL USE
-        internal static void INTERNAL_USE_ONLY____SET_DENSITY(double density, int dpi)
+        public int ConvertPXToDP(int px, float offset = 0f)
+        {
+            return (int)((px / ScreenDensity) - offset);
+        }
+
+        public DensityManager() : this(1.0f, 96)
+        {
+        }
+
+        public DensityManager(float density, int dpi)
+        {
+            screenDensity = density;
+            screenDpi = dpi;
+        }
+
+        internal void Set(float density, int dpi)
         {
             screenDensity = density;
             screenDpi = dpi;

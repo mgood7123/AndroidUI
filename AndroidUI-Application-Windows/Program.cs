@@ -38,7 +38,7 @@
                 new AndroidUI.Hosts.Windows.ApplicationHost(
 
                     // replace this with your own instance of AndroidUI.Applications.Application
-                    new TestApp()
+                    new AndroidUI.Applications.TestApp()
                 )
             );
         }

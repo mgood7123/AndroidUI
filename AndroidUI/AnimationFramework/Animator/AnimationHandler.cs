@@ -63,13 +63,12 @@ namespace AndroidUI.AnimationFramework.Animator
         private Application.FrameCallback mFrameCallback;
 
         // should this be per-thread?
+
+        static Context.ContextVariable<AnimationHandler> sAnimationHandlerLocal = new(StorageKeys.AnimationHandler, context => () => new(context));
+
         static ValueHolder<AnimationHandler> sAnimatorHandler(Context context)
         {
-            if (context == null)
-            {
-                return null;
-            }
-            return context.storage.GetOrCreate<AnimationHandler>(StorageKeys.AnimationHandler, () => new(context));
+            return sAnimationHandlerLocal.Get(context);
         }
 
         private bool mListDirty = false;

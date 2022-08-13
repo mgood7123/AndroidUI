@@ -109,9 +109,9 @@ namespace AndroidUI.Extensions
             return (double)(value / 255.0f);
         }
 
-        public static int dipToPx(this int dip)
+        public static int dipToPx(this int dip, Context context)
         {
-            return (int)(DensityManager.ScreenDensityAsFloat * dip + 0.5f);
+            return context.densityManager.ConvertDPToPX(dip, 0.5f);
         }
 
         /// <summary>

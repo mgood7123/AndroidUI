@@ -19,7 +19,6 @@
 		<TargetFramework>net6.0-windows</TargetFramework>
 		<UseWindowsForms>true</UseWindowsForms>
 		<UseWPF>true</UseWPF>
-		<RestoreSources>..\prebuilt\local-nugets</RestoreSources>
 
 		<RootFolder>$(MSBuildProjectDirectory)</RootFolder>
 	</PropertyGroup>

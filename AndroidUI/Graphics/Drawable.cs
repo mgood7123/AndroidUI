@@ -163,7 +163,7 @@ namespace AndroidUI.Graphics
          *
          * @param canvas The canvas to draw into
          */
-        public abstract void draw(SKCanvas canvas);
+        public abstract void draw(Canvas canvas);
 
         /**
          * Specify a bounding rectangle for the Drawable. This is where the drawable

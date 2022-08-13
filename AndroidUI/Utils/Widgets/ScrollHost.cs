@@ -1,4 +1,6 @@
-﻿namespace AndroidUI.Utils.Widgets
+﻿using AndroidUI.Widgets;
+
+namespace AndroidUI.Utils.Widgets
 {
     public interface ScrollHost
     {
@@ -8,7 +10,13 @@
         public bool ScrollHostHasChildrenToScroll();
         public int ScrollHostGetMeasuredWidth();
         public int ScrollHostGetMeasuredHeight();
-        public int ScrollHostGetChildTotalMeasuredWidth();
-        public int ScrollHostGetChildTotalMeasuredHeight();
+        bool ScrollHostCanScrollLeftOrUp();
+        int ScrollHostGetChildLeft();
+        int ScrollHostGetChildTop();
+        bool ScrollHostCanScrollRightOrDown();
+        int ScrollHostGetChildRight();
+        int ScrollHostGetChildBottom();
+        void ScrollHostTryScrollTo(View target_view, int x, int y);
+        Applications.Context ScrollHostGetContext();
     }
 }

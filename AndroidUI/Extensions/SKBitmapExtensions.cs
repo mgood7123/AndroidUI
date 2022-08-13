@@ -17,7 +17,7 @@ namespace AndroidUI.Extensions
             {
                 bitmap.SetInfo(info);
                 Console.WriteLine("updating info results in a larger storage");
-                // TODO: update pixelmap
+                // TODO: update pixelmap to reflect new info
             }
         }
     }

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+using AndroidUI.Graphics;
+
 namespace AndroidUI.Widgets
 {
     /**
@@ -40,7 +42,7 @@ namespace AndroidUI.Widgets
          * @param canvas an unused parameter.
          */
         override
-        public void draw(SkiaSharp.SKCanvas canvas)
+        public void draw(Canvas canvas)
         {
         }
 

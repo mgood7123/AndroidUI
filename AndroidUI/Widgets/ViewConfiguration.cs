@@ -521,9 +521,10 @@ namespace AndroidUI.Widgets
         //    return configuration;
         //}
 
-        public static ViewConfiguration get(Context context)
+        // not ready yet
+        private static ViewConfiguration get(Context context)
         {
-            int density = (int)(100.0f * DensityManager.ScreenDensityAsFloat);
+            int density = (int)(100.0f * context.densityManager.ScreenDensity);
 
             ViewConfiguration configuration = sConfigurations.get(density);
             if (configuration == null)
@@ -737,6 +738,16 @@ namespace AndroidUI.Widgets
         public static int getTouchSlop()
         {
             return TOUCH_SLOP;
+        }
+
+        /**
+         * @return Distance in dips a touch can wander before we think the user is scrolling
+         *
+         * [Obsolete] Use {@link #getScaledTouchSlop()} instead.
+         */
+        public static int getScaledTouchSlop(Context context)
+        {
+            return context.densityManager.ConvertDPToPX(TOUCH_SLOP);
         }
 
         /**

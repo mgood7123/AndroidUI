@@ -21,6 +21,7 @@ using AndroidUI.Utils.Widgets;
 using AndroidUI.Graphics.Shaders;
 using AndroidUI.Graphics.Filters;
 using AndroidUI.Applications;
+using System.Drawing;
 
 namespace AndroidUI.Graphics.Drawables
 {
@@ -48,6 +49,7 @@ namespace AndroidUI.Graphics.Drawables
      */
     public class BitmapDrawable : Drawable
     {
+        Context context;
         private static readonly int DEFAULT_PAINT_FLAGS =
                 Paint.FILTER_BITMAP_FLAG | Paint.DITHER_FLAG;
 
@@ -58,13 +60,13 @@ namespace AndroidUI.Graphics.Drawables
         private const int TILE_MODE_REPEAT = 1;
         private const int TILE_MODE_MIRROR = 2;
 
-        private static readonly Rect mDstRect = new();   // #updateDstRectAndInsetsIfDirty() sets this
+        private Context.ContextVariable<Rect> mDstRect = new(StorageKeys.BitmapDrawableDstRect, context => () => new());
 
 
         private BitmapState mBitmapState;
         private BlendModeColorFilter mBlendModeFilter;
 
-        private int mTargetDensity = DensityManager.ScreenDpi;
+        private int mTargetDensity;
 
         private bool mDstRectAndInsetsDirty = true;
         private bool mMutated;
@@ -85,9 +87,11 @@ namespace AndroidUI.Graphics.Drawables
          * instead to specify a bitmap to draw with and ensure the correct density is set.
          */
         [Obsolete]
-        public BitmapDrawable()
+        public BitmapDrawable(Context context)
         {
-            init(new BitmapState((Bitmap)null));
+            this.context = context;
+            mTargetDensity = context.densityManager.ScreenDpi;
+            init(new BitmapState(context, (Bitmap)null));
         }
 
         /**
@@ -96,17 +100,21 @@ namespace AndroidUI.Graphics.Drawables
          * that the drawable has correctly set its target density.
          */
         [Obsolete]
-        public BitmapDrawable(Bitmap bitmap)
+        public BitmapDrawable(Context context, Bitmap bitmap)
         {
-            init(new BitmapState(bitmap));
+            this.context = context;
+            mTargetDensity = context.densityManager.ScreenDpi;
+            init(new BitmapState(context, bitmap));
         }
 
         /**
          * Create a drawable by opening a given file path and decoding the bitmap.
          */
-        public BitmapDrawable(string filepath)
+        public BitmapDrawable(Context context, string filepath)
         {
-            Bitmap bitmap = BitmapFactory.decodeFile(filepath);
+            this.context = context;
+            mTargetDensity = context.densityManager.ScreenDpi;
+            Bitmap bitmap = BitmapFactory.decodeFile(context, filepath);
             //try {
             //Stream stream = new StreamReader(filepath);
             //bitmap = ImageDecoder.decodeBitmap(ImageDecoder.createSource(res, stream),
@@ -121,7 +129,7 @@ namespace AndroidUI.Graphics.Drawables
             //}
             //finally
             //{
-            init(new BitmapState(bitmap));
+            init(new BitmapState(context, bitmap));
             if (mBitmapState.mBitmap == null)
             {
                 Log.w("BitmapDrawable", "BitmapDrawable cannot decode " + filepath);
@@ -134,10 +142,12 @@ namespace AndroidUI.Graphics.Drawables
          * [Obsolete] Use {@link #BitmapDrawable(Resources, java.io.InputStream)} to ensure
          * that the drawable has correctly set its target density.
          */
-        public BitmapDrawable(Stream stream)
+        public BitmapDrawable(Context context, Stream stream)
         {
-            Bitmap bitmap = BitmapFactory.decodeStream(stream);
-            init(new BitmapState(bitmap));
+            this.context = context;
+            mTargetDensity = context.densityManager.ScreenDpi;
+            Bitmap bitmap = BitmapFactory.decodeStream(context, stream);
+            init(new BitmapState(context, bitmap));
             if (mBitmapState.mBitmap == null)
             {
                 Log.w("BitmapDrawable", "BitmapDrawable cannot decode " + stream);
@@ -197,9 +207,9 @@ namespace AndroidUI.Graphics.Drawables
          * @see android.graphics.Bitmap#setDensity(int)
          * @see android.graphics.Bitmap#getDensity()
          */
-        public void setTargetDensity(SKCanvas canvas)
+        public void setTargetDensity(Canvas canvas)
         {
-            setTargetDensity(canvas.densityDpi());
+            setTargetDensity(canvas.context, canvas.DensityDPI);
         }
 
         /**
@@ -210,11 +220,11 @@ namespace AndroidUI.Graphics.Drawables
          * @see android.graphics.Bitmap#setDensity(int)
          * @see android.graphics.Bitmap#getDensity()
          */
-        public void setTargetDensity(int density)
+        public void setTargetDensity(Context context, int density)
         {
             if (mTargetDensity != density)
             {
-                mTargetDensity = density == 0 ? DensityManager.ScreenDpi : density;
+                mTargetDensity = density == 0 ? context.densityManager.ScreenDpi : density;
                 if (mBitmapState.mBitmap != null)
                 {
                     computeBitmapSize();
@@ -438,7 +448,7 @@ namespace AndroidUI.Graphics.Drawables
             }
         }
 
-        public override void draw(SKCanvas canvas)
+        public override void draw(Canvas canvas)
         {
             Bitmap bitmap = mBitmapState.mBitmap;
             if (bitmap == null)
@@ -492,17 +502,18 @@ namespace AndroidUI.Graphics.Drawables
             updateDstRectAndInsetsIfDirty();
             Shader shader = paint.getShader();
             bool needMirroring_ = needMirroring();
+            var r = mDstRect.Get(context);
             if (shader == null)
             {
                 if (needMirroring_)
                 {
                     canvas.Save();
                     // Mirror the bitmap
-                    canvas.Translate(mDstRect.right - mDstRect.left, 0);
+                    canvas.Translate(r.Value.right - r.Value.left, 0);
                     canvas.Scale(-1.0f, 1.0f);
                 }
 
-                canvas.DrawBitmap(bitmap, null, mDstRect, paint);
+                canvas.DrawBitmap(bitmap, null, r.Value, paint);
 
                 if (needMirroring_)
                 {
@@ -512,7 +523,7 @@ namespace AndroidUI.Graphics.Drawables
             else
             {
                 updateShaderMatrix(bitmap, paint, shader, needMirroring_);
-                canvas.DrawRect(mDstRect, paint.getNativeInstance());
+                canvas.DrawRect(r.Value, paint.getNativeInstance());
             }
 
             if (clearColorFilter)
@@ -548,7 +559,8 @@ namespace AndroidUI.Graphics.Drawables
 
                 if (needMirroring)
                 {
-                    int dx = mDstRect.right - mDstRect.left;
+                    var r = mDstRect.Get(context);
+                    int dx = r.Value.right - r.Value.left;
                     matrix.TransX = dx;
                     matrix.TransY = 0;
                     matrix.ScaleX = -1;
@@ -585,22 +597,23 @@ namespace AndroidUI.Graphics.Drawables
         {
             if (mDstRectAndInsetsDirty)
             {
+                var r = mDstRect.Get(context);
                 if (mBitmapState.mTileModeX == null && mBitmapState.mTileModeY == null)
                 {
                     Rect bounds = getBounds();
                     int layoutDirection = getLayoutDirection();
                     Gravity.apply(mBitmapState.mGravity, mBitmapWidth, mBitmapHeight,
-                            bounds, mDstRect, layoutDirection);
+                            bounds, r.Value, layoutDirection);
 
-                    int left = mDstRect.left - bounds.left;
-                    int top = mDstRect.top - bounds.top;
-                    int right = bounds.right - mDstRect.right;
-                    int bottom = bounds.bottom - mDstRect.bottom;
+                    int left = r.Value.left - bounds.left;
+                    int top = r.Value.top - bounds.top;
+                    int right = bounds.right - r.Value.right;
+                    int bottom = bounds.bottom - r.Value.bottom;
                     mOpticalInsets = Insets.of(left, top, right, bottom);
                 }
                 else
                 {
-                    copyBounds(mDstRect);
+                    copyBounds(r.Value);
                     mOpticalInsets = Insets.NONE;
                 }
             }
@@ -616,7 +629,8 @@ namespace AndroidUI.Graphics.Drawables
         public override void getOutline(Outline outline)
         {
             updateDstRectAndInsetsIfDirty();
-            outline.setRect(mDstRect);
+            var r = mDstRect.Get(context);
+            outline.setRect(r.Value);
 
             // Only opaque Bitmaps can report a non-0 alpha,
             // since only they are guaranteed to fill their bounds
@@ -818,15 +832,16 @@ namespace AndroidUI.Graphics.Drawables
             internal int mSrcDensityOverride = 0;
 
             // The density at which to render the bitmap.
-            internal int mTargetDensity = DensityManager.ScreenDpi;
+            internal int mTargetDensity;
 
             internal bool mAutoMirrored = false;
 
             internal int mChangingConfigurations;
             internal bool mRebuildShader;
 
-            internal BitmapState(Bitmap bitmap)
+            internal BitmapState(Context context, Bitmap bitmap)
             {
+                mTargetDensity = context.densityManager.ScreenDpi;
                 mBitmap = bitmap;
                 mPaint = new Paint(DEFAULT_PAINT_FLAGS);
             }

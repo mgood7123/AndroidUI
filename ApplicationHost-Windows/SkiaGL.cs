@@ -32,9 +32,9 @@ namespace AndroidUI.Hosts.Windows
 
         void handleDpiChange()
         {
-            int density = DeviceDpi;
-            float dpi = 96 / density;
-            host.setDensity(dpi, density);
+            int dpi = DeviceDpi;
+            float density = dpi / dpi;
+            host.setDensity(density, dpi);
         }
 
         protected override void OnPaintSurface(SKPaintGLSurfaceEventArgs e)

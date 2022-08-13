@@ -20,6 +20,7 @@ using AndroidUI.Utils;
 using AndroidUI.Utils.Widgets;
 using AndroidUI.Widgets;
 using SkiaSharp;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace AndroidUI.Applications
 {
@@ -142,7 +143,7 @@ namespace AndroidUI.Applications
             context.mAttachInfo.mViewRootImpl.handleAppVisibility(isVisible);
         }
 
-        internal void Draw(SKCanvas canvas)
+        internal void Draw(Graphics.Canvas canvas)
         {
             if (looper != null)
             {
@@ -286,9 +287,16 @@ namespace AndroidUI.Applications
             return null;
         }
 
-        public static void SetDensity(float density, int dpi)
+        public void SetDensity(float density, int dpi)
         {
-            DensityManager.INTERNAL_USE_ONLY____SET_DENSITY(density, dpi);
+            var densityChanged = Context.densityManager.ScreenDensity != density;
+            var dpiChanged = Context.densityManager.ScreenDpi != dpi;
+
+            if (densityChanged || dpiChanged)
+            {
+                Context.densityManager.Set(density, dpi);
+                OnScreenDensityChanged();
+            }
         }
 
         public void childDrawableStateChanged(View child)

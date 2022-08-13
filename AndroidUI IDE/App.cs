@@ -8,20 +8,28 @@ namespace AndroidUI.IDE
     {
         Utils.LogTag Log = new("IDE");
 
-        Utils.Lists.ArrayList<string> getProjects(string dir)
+        Utils.Lists.ArrayList<string> getFiles(string dir, string extension)
         {
-            Log.d("searching directory '" + dir + "' for '.csproj' files");
+            Log.d("searching directory '" + dir + "' for '." + extension + "' files");
 
-            var csprojs = Directory.EnumerateFiles(dir, "*.csproj", SearchOption.AllDirectories);
-
-            Utils.Lists.ArrayList<string> projectList = new Utils.Lists.ArrayList<string>();
-            foreach (var s in csprojs)
+            try
             {
-                Log.d("    found: '" + s + "'");
-                projectList.Add(s);
+
+                var csprojs = Directory.EnumerateFiles(dir, "*." + extension, SearchOption.AllDirectories);
+
+                Utils.Lists.ArrayList<string> fileList = new Utils.Lists.ArrayList<string>();
+                foreach (var s in csprojs)
+                {
+                    Log.d("    found: '" + s + "'");
+                    fileList.Add(s);
+                }
+                Log.d("found " + fileList.Count + " files");
+                return fileList;
+            } catch
+            {
+                Log.d("found " + 0 + " files");
+                return null;
             }
-            Log.d("found " + projectList.Count + " projects");
-            return projectList;
         }
 
         void buildProject(string project)
@@ -124,7 +132,8 @@ namespace AndroidUI.IDE
 
         public override void OnCreate()
         {
-            var projects = getProjects("C:\\Users\\small\\source\\repos");
+            const string dir = "C:\\Users\\AndroidUI\\Desktop\\AndroidUI";
+            var projects = getFiles(dir, "csproj");
 
             LinearLayout linearLayout = new();
             ScrollView ProjectContent = new();

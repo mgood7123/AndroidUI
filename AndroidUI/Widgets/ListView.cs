@@ -1,4 +1,5 @@
-﻿using AndroidUI.Graphics;
+﻿using AndroidUI.Applications;
+using AndroidUI.Graphics;
 using AndroidUI.Input;
 using AndroidUI.Utils.Widgets;
 using SkiaSharp;
@@ -208,7 +209,7 @@ namespace AndroidUI.Widgets
             return host.InterceptTouch(this, t => base.onInterceptTouchEvent(t), this, ev);
         }
 
-        protected override void onDraw(SKCanvas canvas)
+        protected override void onDraw(Canvas canvas)
         {
             base.onDraw(canvas);
             host.flywheel.AquireLock();
@@ -230,7 +231,7 @@ namespace AndroidUI.Widgets
             }
         }
 
-        void drawDividersVertical(SKCanvas canvas)
+        void drawDividersVertical(Canvas canvas)
         {
             int count = getVirtualChildCount();
             for (int i = 0; i < count; i++)
@@ -286,7 +287,7 @@ namespace AndroidUI.Widgets
             return null;
         }
 
-        void drawDividersHorizontal(SKCanvas canvas)
+        void drawDividersHorizontal(Canvas canvas)
         {
             int count = getVirtualChildCount();
             bool isLayoutRtl_ = isLayoutRtl();
@@ -343,14 +344,14 @@ namespace AndroidUI.Widgets
             }
         }
 
-        void drawHorizontalDivider(SKCanvas canvas, int top)
+        void drawHorizontalDivider(Canvas canvas, int top)
         {
             mDivider.setBounds(getPaddingLeft() + mDividerPadding, top,
             getWidth() - getPaddingRight() - mDividerPadding, top + mDividerHeight);
             mDivider.draw(canvas);
         }
 
-        void drawVerticalDivider(SKCanvas canvas, int left)
+        void drawVerticalDivider(Canvas canvas, int left)
         {
             mDivider.setBounds(left, getPaddingTop() + mDividerPadding,
             left + mDividerWidth, getHeight() - getPaddingBottom() - mDividerPadding);
@@ -1205,28 +1206,43 @@ namespace AndroidUI.Widgets
             return getMeasuredHeight();
         }
 
-        public int ScrollHostGetChildTotalMeasuredWidth()
+        public bool ScrollHostCanScrollLeftOrUp()
         {
-            if (mOrientation == OrientationMode.VERTICAL)
-            {
-                return getMeasuredWidth();
-            }
-            else
-            {
-                return mTotalLength;
-            }
+            return true;
         }
 
-        public int ScrollHostGetChildTotalMeasuredHeight()
+        public int ScrollHostGetChildLeft()
         {
-            if (mOrientation == OrientationMode.HORIZONTAL)
-            {
-                return getMeasuredHeight();
-            }
-            else
-            {
-                return mTotalLength;
-            }
+            return mChildren[0].getLeft();
+        }
+
+        public int ScrollHostGetChildTop()
+        {
+            return mChildren[0].getTop();
+        }
+
+        public bool ScrollHostCanScrollRightOrDown()
+        {
+            return true;
+        }
+
+        public int ScrollHostGetChildRight()
+        {
+            return mChildren[mChildrenCount - 1].getRight();
+        }
+
+        public int ScrollHostGetChildBottom()
+        {
+            return mChildren[mChildrenCount - 1].getBottom();
+        }
+
+        public void ScrollHostTryScrollTo(View target_view, int x, int y)
+        {
+        }
+
+        public Context ScrollHostGetContext()
+        {
+            return Context;
         }
     }
 }

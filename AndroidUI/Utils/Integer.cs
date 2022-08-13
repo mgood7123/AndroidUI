@@ -7,7 +7,12 @@ namespace AndroidUI.Utils
     // https://sharplab.io/#gist:b2ca424611d820ad8aeb4ad14d763287
     public readonly struct Integer<T> : IEquatable<Integer<T>>, IComparable<Integer<T>> where T : unmanaged
     {
-        readonly T _value;
+        public readonly T value;
+
+        public override string ToString()
+        {
+            return value.ToString();
+        }
 
         public static Integer<T> ConvertFrom<T1>(T1 value)
         {
@@ -20,10 +25,10 @@ namespace AndroidUI.Utils
 
         public T ConvertTo<T>()
         {
-            object obj = Convert.ChangeType(_value, typeof(T));
+            object obj = Convert.ChangeType(value, typeof(T));
 
             return obj == null
-                ? throw new InvalidCastException("could not convert " + _value.GetType().FullName + " to T (" + typeof(T).FullName + ")")
+                ? throw new InvalidCastException("could not convert " + value.GetType().FullName + " to T (" + typeof(T).FullName + ")")
                 : (T)obj;
         }
 
@@ -254,10 +259,10 @@ namespace AndroidUI.Utils
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Equals(T b) => Equals(_value, b);
+        public bool Equals(T b) => Equals(value, b);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Equals(Integer<T> b) => Equals(_value, b._value);
+        public bool Equals(Integer<T> b) => Equals(value, b.value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static bool Equals(T a, T b)
@@ -299,10 +304,10 @@ namespace AndroidUI.Utils
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator ==(Integer<T> a, T b) => InstanceEquals(a._value, b);
+        public static bool operator ==(Integer<T> a, T b) => InstanceEquals(a.value, b);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator ==(Integer<T> a, Integer<T> b) => InstanceEquals(a._value, b._value);
+        public static bool operator ==(Integer<T> a, Integer<T> b) => InstanceEquals(a.value, b.value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static bool InstanceEquals(T a, T b)
@@ -344,10 +349,10 @@ namespace AndroidUI.Utils
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator !=(Integer<T> a, T b) => InstanceNotEquals(a._value, b);
+        public static bool operator !=(Integer<T> a, T b) => InstanceNotEquals(a.value, b);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator !=(Integer<T> a, Integer<T> b) => InstanceNotEquals(a._value, b._value);
+        public static bool operator !=(Integer<T> a, Integer<T> b) => InstanceNotEquals(a.value, b.value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static bool InstanceNotEquals(T a, T b)
@@ -389,7 +394,7 @@ namespace AndroidUI.Utils
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override int GetHashCode() => _value.GetHashCode();
+        public override int GetHashCode() => value.GetHashCode();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static void AssertNumaric()
@@ -400,17 +405,17 @@ namespace AndroidUI.Utils
             }
         }
 
-        public Integer(T value) { AssertNumaric(); _value = value; }
+        public Integer(T value) { AssertNumaric(); this.value = value; }
 
         public static implicit operator Integer<T>(T value) => new(value);
 
-        public static implicit operator T(Integer<T> number) => number._value;
+        public static implicit operator T(Integer<T> number) => number.value;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Integer<T> operator +(Integer<T> a, T b) => Add(a._value, b);
+        public static Integer<T> operator +(Integer<T> a, T b) => Add(a.value, b);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Integer<T> operator +(Integer<T> a, Integer<T> b) => Add(a._value, b._value);
+        public static Integer<T> operator +(Integer<T> a, Integer<T> b) => Add(a.value, b.value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static T Add(T a, T b)
@@ -452,10 +457,10 @@ namespace AndroidUI.Utils
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Integer<T> operator -(Integer<T> a, T b) => Sub(a._value, b);
+        public static Integer<T> operator -(Integer<T> a, T b) => Sub(a.value, b);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Integer<T> operator -(Integer<T> a, Integer<T> b) => Sub(a._value, b._value);
+        public static Integer<T> operator -(Integer<T> a, Integer<T> b) => Sub(a.value, b.value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static T Sub(T a, T b)
@@ -497,10 +502,10 @@ namespace AndroidUI.Utils
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Integer<T> operator *(Integer<T> a, T b) => Mul(a._value, b);
+        public static Integer<T> operator *(Integer<T> a, T b) => Mul(a.value, b);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Integer<T> operator *(Integer<T> a, Integer<T> b) => Mul(a._value, b._value);
+        public static Integer<T> operator *(Integer<T> a, Integer<T> b) => Mul(a.value, b.value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static T Mul(T a, T b)
@@ -542,10 +547,10 @@ namespace AndroidUI.Utils
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Integer<T> operator /(Integer<T> a, T b) => Div(a._value, b);
+        public static Integer<T> operator /(Integer<T> a, T b) => Div(a.value, b);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Integer<T> operator /(Integer<T> a, Integer<T> b) => Div(a._value, b._value);
+        public static Integer<T> operator /(Integer<T> a, Integer<T> b) => Div(a.value, b.value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static T Div(T a, T b)
@@ -587,7 +592,7 @@ namespace AndroidUI.Utils
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Integer<T> operator >>(Integer<T> a, int b) => ShiftRight(a._value, b);
+        public static Integer<T> operator >>(Integer<T> a, int b) => ShiftRight(a.value, b);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static T ShiftRight(T a, int b)
@@ -629,7 +634,7 @@ namespace AndroidUI.Utils
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Integer<T> operator <<(Integer<T> a, int b) => ShiftLeft(a._value, b);
+        public static Integer<T> operator <<(Integer<T> a, int b) => ShiftLeft(a.value, b);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static T ShiftLeft(T a, int b)
@@ -671,16 +676,16 @@ namespace AndroidUI.Utils
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int CompareTo(Integer<T> other) => Comparer<T>.Default.Compare(_value, other._value);
+        public int CompareTo(Integer<T> other) => Comparer<T>.Default.Compare(value, other.value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int CompareTo(T other) => Comparer<T>.Default.Compare(_value, other);
+        public int CompareTo(T other) => Comparer<T>.Default.Compare(value, other);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator <(Integer<T> left, T right) => LessThan(left._value, right);
+        public static bool operator <(Integer<T> left, T right) => LessThan(left.value, right);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator <(Integer<T> left, Integer<T> right) => LessThan(left._value, right._value);
+        public static bool operator <(Integer<T> left, Integer<T> right) => LessThan(left.value, right.value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static bool LessThan(T a, T b)
@@ -722,10 +727,10 @@ namespace AndroidUI.Utils
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator <=(Integer<T> left, T right) => LessThanOrEqualTo(left._value, right);
+        public static bool operator <=(Integer<T> left, T right) => LessThanOrEqualTo(left.value, right);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator <=(Integer<T> left, Integer<T> right) => LessThanOrEqualTo(left._value, right._value);
+        public static bool operator <=(Integer<T> left, Integer<T> right) => LessThanOrEqualTo(left.value, right.value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static bool LessThanOrEqualTo(T a, T b)
@@ -767,10 +772,10 @@ namespace AndroidUI.Utils
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator >(Integer<T> left, T right) => GreaterThan(left._value, right);
+        public static bool operator >(Integer<T> left, T right) => GreaterThan(left.value, right);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator >(Integer<T> left, Integer<T> right) => GreaterThan(left._value, right._value);
+        public static bool operator >(Integer<T> left, Integer<T> right) => GreaterThan(left.value, right.value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static bool GreaterThan(T a, T b)
@@ -812,10 +817,10 @@ namespace AndroidUI.Utils
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator >=(Integer<T> left, T right) => GreaterThanOrEqualTo(left._value, right);
+        public static bool operator >=(Integer<T> left, T right) => GreaterThanOrEqualTo(left.value, right);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator >=(Integer<T> left, Integer<T> right) => GreaterThanOrEqualTo(left._value, right._value);
+        public static bool operator >=(Integer<T> left, Integer<T> right) => GreaterThanOrEqualTo(left.value, right.value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static bool GreaterThanOrEqualTo(T a, T b)

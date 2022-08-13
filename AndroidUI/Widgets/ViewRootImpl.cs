@@ -33,19 +33,19 @@ namespace AndroidUI.Widgets
 
         internal bool hasContent() => mContentParent != null;
 
-        public void draw(SKCanvas canvas)
+        public void draw(Canvas canvas)
         {
             doTraversal(canvas);
         }
 
-        private static bool DEBUG = false;
-        private static bool DEBUG_LAYOUT = false;
-        private static bool DEBUG_ORIENTATION = false;
-        private static bool DEBUG_INPUT_RESIZE = false;
-        private static bool DEBUG_DRAW = false;
-        private static bool DEBUG_MEASURE_LAYOUT_DRAW_TIME = false;
-        private static bool DEBUG_FPS = false;
-        private static bool DEBUG_BLAST = false;
+        public static bool DEBUG = false;
+        public static bool DEBUG_LAYOUT = false;
+        public static bool DEBUG_ORIENTATION = false;
+        public static bool DEBUG_INPUT_RESIZE = false;
+        public static bool DEBUG_DRAW = false;
+        public static bool DEBUG_MEASURE_LAYOUT_DRAW_TIME = false;
+        public static bool DEBUG_FPS = false;
+        public static bool DEBUG_BLAST = false;
 
         private const string TAG = "ViewRootImpl";
         private const string mTag = TAG;
@@ -101,7 +101,7 @@ namespace AndroidUI.Widgets
         {
         }
 
-        Context context;
+        Context Context;
         bool mFirst; // true for the first time the view is added
         private bool mWillDrawSoon;
         private bool mNewSurfaceNeeded;
@@ -215,12 +215,12 @@ namespace AndroidUI.Widgets
         private bool ensureTouchModeLocally(bool inTouchMode)
         {
             if (DEBUG) Log.v("touchmode", "ensureTouchModeLocally(" + inTouchMode + "), current "
-                    + "touch mode is " + context.mAttachInfo.mInTouchMode);
+                    + "touch mode is " + Context.mAttachInfo.mInTouchMode);
 
-            if (context.mAttachInfo.mInTouchMode == inTouchMode) return false;
+            if (Context.mAttachInfo.mInTouchMode == inTouchMode) return false;
 
-            context.mAttachInfo.mInTouchMode = inTouchMode;
-            context.mAttachInfo.mTreeObserver.dispatchOnTouchModeChanged(inTouchMode);
+            Context.mAttachInfo.mInTouchMode = inTouchMode;
+            Context.mAttachInfo.mTreeObserver.dispatchOnTouchModeChanged(inTouchMode);
 
             return inTouchMode ? enterTouchMode() : leaveTouchMode();
         }
@@ -424,7 +424,7 @@ namespace AndroidUI.Widgets
         private bool mTraversalScheduled;
         private bool mIsInTraversal;
 
-        private void performTraversals(SKCanvas canvas)
+        private void performTraversals(Canvas canvas)
         {
             View host = mView;
 
@@ -458,11 +458,11 @@ namespace AndroidUI.Widgets
                 mLayoutRequested = true;
                 desiredWindowWidth = canvasWidth;
                 desiredWindowHeight = canvasHeight;
-                if (context == null)
+                if (Context == null)
                 {
                     throw new Exception("null context");
                 }
-                mView.dispatchAttachedToWindow(context.mAttachInfo, 0);
+                mView.dispatchAttachedToWindow(Context.mAttachInfo, 0);
             }
             else
             {
@@ -480,7 +480,7 @@ namespace AndroidUI.Widgets
 
             if (viewVisibilityChanged)
             {
-                context.mAttachInfo.mWindowVisibility = viewVisibility;
+                Context.mAttachInfo.mWindowVisibility = viewVisibility;
                 host.dispatchWindowVisibilityChanged(viewVisibility);
                 if (viewUserVisibilityChanged)
                 {
@@ -494,7 +494,7 @@ namespace AndroidUI.Widgets
             }
 
             // Execute enqueued actions on every traversal in case a detached view enqueued an action
-            getRunQueue().executeActions(context.mAttachInfo.mHandler);
+            getRunQueue().executeActions(Context.mAttachInfo.mHandler);
 
             bool layoutRequested = mLayoutRequested && (
                 !mStopped ||
@@ -509,7 +509,7 @@ namespace AndroidUI.Widgets
                 {
                     // make sure touch mode code executes by setting cached value
                     // to opposite of the added touch mode.
-                    context.mAttachInfo.mInTouchMode = true; // !mAddedTouchMode;
+                    Context.mAttachInfo.mInTouchMode = true; // !mAddedTouchMode;
                     ensureTouchModeLocally(mAddedTouchMode);
                 }
                 else
@@ -532,9 +532,9 @@ namespace AndroidUI.Widgets
             //    params = lp;
             //}
 
-            if (mFirst || context.mAttachInfo.mViewVisibilityChanged)
+            if (mFirst || Context.mAttachInfo.mViewVisibilityChanged)
             {
-                context.mAttachInfo.mViewVisibilityChanged = false;
+                Context.mAttachInfo.mViewVisibilityChanged = false;
                 //int resizeMode = mSoftInputMode & SOFT_INPUT_MASK_ADJUST;
                 // If we are in auto resize mode, then we need to determine
                 // what mode to use now.
@@ -896,8 +896,8 @@ namespace AndroidUI.Widgets
                 if (DEBUG_ORIENTATION) Log.v(
                         TAG, "Relayout returned: frame=" + frame);
 
-                context.mAttachInfo.mWindowLeft = frame.left;
-                context.mAttachInfo.mWindowTop = frame.top;
+                Context.mAttachInfo.mWindowLeft = frame.left;
+                Context.mAttachInfo.mWindowTop = frame.top;
 
                 // !!FIXME!! This next section handles the case where we did not get the
                 // window size we asked for. We should avoid this by getting a maximum size from
@@ -1072,7 +1072,7 @@ namespace AndroidUI.Widgets
 
             bool didLayout = layoutRequested && (!mStopped || wasReportNextDraw);
             bool triggerGlobalLayoutListener = didLayout
-                    || context.mAttachInfo.mRecomputeGlobalAttributes;
+                    || Context.mAttachInfo.mRecomputeGlobalAttributes;
             if (didLayout)
             {
                 performLayout(
@@ -1142,8 +1142,8 @@ namespace AndroidUI.Widgets
 
             if (triggerGlobalLayoutListener)
             {
-                context.mAttachInfo.mRecomputeGlobalAttributes = false;
-                context.mAttachInfo.mTreeObserver.dispatchOnGlobalLayout();
+                Context.mAttachInfo.mRecomputeGlobalAttributes = false;
+                Context.mAttachInfo.mTreeObserver.dispatchOnGlobalLayout();
             }
 
             if (computesInternalInsets)
@@ -1238,7 +1238,7 @@ namespace AndroidUI.Widgets
             }
 
             bool changedVisibility = (viewVisibilityChanged || mFirst) && isViewVisible;
-            bool hasWindowFocus = context.mAttachInfo.mHasWindowFocus && isViewVisible;
+            bool hasWindowFocus = Context.mAttachInfo.mHasWindowFocus && isViewVisible;
             bool regainedFocus = hasWindowFocus && mLostWindowFocus;
             if (regainedFocus)
             {
@@ -1277,7 +1277,7 @@ namespace AndroidUI.Widgets
                 reportNextDraw();
             }
 
-            bool cancelDraw = context.mAttachInfo.mTreeObserver.dispatchOnPreDraw() || !isViewVisible;
+            bool cancelDraw = Context.mAttachInfo.mTreeObserver.dispatchOnPreDraw() || !isViewVisible;
 
             if (!cancelDraw)
             {
@@ -1574,7 +1574,7 @@ namespace AndroidUI.Widgets
 
         public ViewRootImpl(Context context, Looper looper)
         {
-            this.context = context;
+            this.Context = context;
             mFirst = true;
             mView = new()
             {
@@ -1598,6 +1598,7 @@ namespace AndroidUI.Widgets
             options.addView(optionsText, l);
             optionsText.setTextColor(Color.BLACK);
             optionsText.setText("AndroidUI Options");
+            optionsText.setTextSize(20);
             options.setOnClickListener(v =>
             {
                 if (!optionsIsShowing)
@@ -1619,6 +1620,10 @@ namespace AndroidUI.Widgets
             holder.addView(options, Widgets.View.MATCH_PARENT_W__WRAP_CONTENT_H);
             holder.addView(holderApp, View.MATCH_PARENT_W__MATCH_PARENT_H);
             mView.addView(holder, View.MATCH_PARENT_W__MATCH_PARENT_H);
+
+            mView.setTagRecursively("View Root");
+            options.setTagRecursively("View Root AndroidUI Options");
+            holderApp.setTag("View Root Holder App");
 
             LinearLayout CreateSettingsRow(string title, string enabledText, string disabledText, RunnableWithReturn<bool> GetValue, Runnable<bool> SetValue)
             {
@@ -1662,6 +1667,8 @@ namespace AndroidUI.Widgets
                     invalidate();
                 });
 
+                row.setTagRecursively(title);
+
                 return row;
             }
 
@@ -1686,6 +1693,7 @@ namespace AndroidUI.Widgets
             optionsPage.addView(CreateSettingsRow("ViewRootImpl: Debug Blast", "Enabled", "Disabled", () => DEBUG_BLAST, value => DEBUG_BLAST = value));
 
             ScrollView sv = new ScrollView();
+            sv.SmoothScroll = true;
             sv.addView(optionsPage, View.MATCH_PARENT_W__WRAP_CONTENT_H);
             options_page = sv;
 
@@ -1697,7 +1705,7 @@ namespace AndroidUI.Widgets
         {
             if (mHandler != null)
             {
-                context.mAttachInfo.mHandler = null;
+                Context.mAttachInfo.mHandler = null;
                 mHandler = null;
             }
         }
@@ -1775,7 +1783,7 @@ namespace AndroidUI.Widgets
             mReportNextDraw = true;
         }
 
-        private void performDraw(SKCanvas canvas)
+        private void performDraw(Canvas canvas)
         {
             if (!mReportNextDraw || mView == null)
             {
@@ -1800,7 +1808,7 @@ namespace AndroidUI.Widgets
 
             if (System.Diagnostics.Debugger.IsAttached)
             {
-                bool canUseAsync = draw(canvas, fullRedrawNeeded);
+                bool canUseAsync = drawInternal(canvas, fullRedrawNeeded);
                 //if (usingAsyncReport && !canUseAsync)
                 //{
                 //    context.mAttachInfo.mThreadedRenderer.setFrameCompleteCallback(null);
@@ -1811,7 +1819,7 @@ namespace AndroidUI.Widgets
             {
                 try
                 {
-                    bool canUseAsync = draw(canvas, fullRedrawNeeded);
+                    bool canUseAsync = drawInternal(canvas, fullRedrawNeeded);
                     //if (usingAsyncReport && !canUseAsync)
                     //{
                     //    context.mAttachInfo.mThreadedRenderer.setFrameCompleteCallback(null);
@@ -1828,14 +1836,14 @@ namespace AndroidUI.Widgets
 
             // For whatever reason we didn't create a HardwareRenderer, end any
             // hardware animations that are now dangling
-            if (context.mAttachInfo.mPendingAnimatingRenderNodes != null)
+            if (Context.mAttachInfo.mPendingAnimatingRenderNodes != null)
             {
-                int count = context.mAttachInfo.mPendingAnimatingRenderNodes.Count;
+                int count = Context.mAttachInfo.mPendingAnimatingRenderNodes.Count;
                 for (int i = 0; i < count; i++)
                 {
                     //context.mAttachInfo.mPendingAnimatingRenderNodes.ElementAt(i).endAllAnimators();
                 }
-                context.mAttachInfo.mPendingAnimatingRenderNodes.Clear();
+                Context.mAttachInfo.mPendingAnimatingRenderNodes.Clear();
             }
 
             if (mReportNextDraw)
@@ -2305,7 +2313,7 @@ namespace AndroidUI.Widgets
             return handled;
         }
 
-        private bool draw(SKCanvas canvas, bool fullRedrawNeeded)
+        private bool drawInternal(Canvas canvas, bool fullRedrawNeeded)
         {
             // our surface is always valid
 
@@ -2319,27 +2327,27 @@ namespace AndroidUI.Widgets
             {
                 trackFPS();
             }
-
-            if (!sFirstDrawComplete)
+            var firstDrawComplete = sFirstDrawComplete.Get(Context);
+            if (!firstDrawComplete)
             {
-                var firstdrawHandlers = sFirstDrawHandlers.Value;
-                lock (firstdrawHandlers)
+                var firstdrawHandlers = sFirstDrawHandlers.Get(Context);
+                lock (firstdrawHandlers.Value)
                 {
-                    sFirstDrawComplete.Value = true;
-                    int count = firstdrawHandlers.Count;
+                    firstDrawComplete.Value = true;
+                    int count = firstdrawHandlers.Value.Count;
                     for (int i = 0; i < count; i++)
                     {
-                        mHandler.post(firstdrawHandlers.ElementAt(i));
+                        mHandler.post(firstdrawHandlers.Value.ElementAt(i));
                     }
                 }
             }
 
             scrollToRectOrFocus(null, false);
 
-            if (context.mAttachInfo.mViewScrollChanged)
+            if (Context.mAttachInfo.mViewScrollChanged)
             {
-                context.mAttachInfo.mViewScrollChanged = false;
-                context.mAttachInfo.mTreeObserver.dispatchOnScrollChanged();
+                Context.mAttachInfo.mViewScrollChanged = false;
+                Context.mAttachInfo.mTreeObserver.dispatchOnScrollChanged();
             }
 
             bool animating = false; // mScroller != null && mScroller.computeScrollOffset();
@@ -2361,8 +2369,8 @@ namespace AndroidUI.Widgets
                 //}
             }
 
-            float appScale = context.mAttachInfo.mApplicationScale;
-            bool scalingRequired = context.mAttachInfo.mScalingRequired;
+            float appScale = Context.mAttachInfo.mApplicationScale;
+            bool scalingRequired = Context.mAttachInfo.mScalingRequired;
 
             Rect dirty = mDirty;
             //if (mSurfaceHolder != null)
@@ -2389,7 +2397,7 @@ namespace AndroidUI.Widgets
                         appScale + ", width=" + mWidth + ", height=" + mHeight);
             }
 
-            context.mAttachInfo.mTreeObserver.dispatchOnDraw();
+            Context.mAttachInfo.mTreeObserver.dispatchOnDraw();
 
             int xOffset = -mCanvasOffsetX;
             int yOffset = -mCanvasOffsetY + curScrollY;
@@ -2420,7 +2428,7 @@ namespace AndroidUI.Widgets
                 //}
             }
 
-            context.mAttachInfo.mDrawingTime = NanoTime.currentTimeMillis(); // currentTimeNanos() / NanoTime.NANOS_PER_MS; // mChoreographer.getFrameTimeNanos() / TimeUtils.NANOS_PER_MS;
+            Context.mAttachInfo.mDrawingTime = NanoTime.currentTimeMillis(); // currentTimeNanos() / NanoTime.NANOS_PER_MS; // mChoreographer.getFrameTimeNanos() / TimeUtils.NANOS_PER_MS;
 
             bool useAsyncReport = false;
             if (!dirty.isEmpty() || mIsAnimating || accessibilityFocusDirty
@@ -2470,7 +2478,7 @@ namespace AndroidUI.Widgets
                     useAsyncReport = true;
 
                     //context.mAttachInfo.mThreadedRenderer.
-                    draw(canvas, mView, context.mAttachInfo, this);
+                    drawView(canvas, mView, Context.mAttachInfo, this);
                 }
                 else
                 {
@@ -2526,7 +2534,7 @@ namespace AndroidUI.Widgets
          * @param view The view to draw.
          * @param attachInfo AttachInfo tied to the specified view.
          */
-        void draw(SKCanvas canvas, View view, View.AttachInfo attachInfo,
+        void drawView(Canvas canvas, View view, View.AttachInfo attachInfo,
             object //DrawCallbacks
                 callbacks)
         {
@@ -2567,7 +2575,7 @@ namespace AndroidUI.Widgets
             //}
         }
 
-        private void updateViewTreeDisplayList(SKCanvas drawingCanvas, View view)
+        private void updateViewTreeDisplayList(Canvas drawingCanvas, View view)
         {
             view.mPrivateFlags |= View.PFLAG_DRAWN;
             view.mRecreateDisplayList = (view.mPrivateFlags & View.PFLAG_INVALIDATED) == View.PFLAG_INVALIDATED;
@@ -2582,7 +2590,7 @@ namespace AndroidUI.Widgets
 
         internal List<Application.FrameCallback> mNextRtFrameCallbacks;
 
-        private void updateRootDisplayList(SKCanvas canvas, View view,
+        private void updateRootDisplayList(Canvas canvas, View view,
             object //DrawCallbacks
             callbacks)
         {
@@ -2599,7 +2607,7 @@ namespace AndroidUI.Widgets
                 //setFrameCallback(frame-> {
                 for (int i = 0; i < frameCallbacks.Count; ++i)
                 {
-                    frameCallbacks.ElementAt(i).doFrame(context.mAttachInfo.mDrawingTime);//onFrameDraw(frame);
+                    frameCallbacks.ElementAt(i).doFrame(Context.mAttachInfo.mDrawingTime);//onFrameDraw(frame);
                 }
                 //});
             }
@@ -2654,7 +2662,7 @@ namespace AndroidUI.Widgets
             if (!mTraversalScheduled)
             {
                 mTraversalScheduled = true;
-                context.application.invalidate();
+                Context.application.invalidate();
 
                 //mTraversalBarrier = mHandler.getLooper().getQueue().postSyncBarrier();
                 //mChoreographer.postCallback(
@@ -2675,7 +2683,7 @@ namespace AndroidUI.Widgets
             }
         }
 
-        void doTraversal(SKCanvas canvas)
+        void doTraversal(Canvas canvas)
         {
             if (mTraversalScheduled)
             {
@@ -2712,7 +2720,7 @@ namespace AndroidUI.Widgets
             }
         }
 
-        private void DO_TRAVERSAL_INTERNAL(SKCanvas canvas)
+        private void DO_TRAVERSAL_INTERNAL(Canvas canvas)
         {
             if (DEBUG_MEASURE_LAYOUT_DRAW_TIME)
             {
@@ -2816,44 +2824,13 @@ namespace AndroidUI.Widgets
             // Do nothing.
         }
 
-        ValueHolder<HandlerActionQueue> sRunQueues
-        {
-            get
-            {
-                if (context == null)
-                {
-                    return null;
-                }
-                return context.storage.GetOrCreate<HandlerActionQueue>(StorageKeys.ViewRootImplHandlerActionQueue, () => new());
-            }
-        }
-        ValueHolder<List<Runnable>> sFirstDrawHandlers
-        {
-            get
-            {
-                if (context == null)
-                {
-                    return null;
-                }
-                return context.storage.GetOrCreate<List<Runnable>>(StorageKeys.ViewRootImplFirstDrawHandlers, () => new());
-            }
-        }
-        ValueHolder<bool> sFirstDrawComplete
-        {
-            get
-            {
-                if (context == null)
-                {
-                    return null;
-                }
-                return context.storage.GetOrCreate(StorageKeys.ViewRootImplFirstDrawComplete, () => false);
-            }
-        }
-
+        static Context.ContextVariable<HandlerActionQueue> sRunQueues = new(StorageKeys.ViewRootImplHandlerActionQueue, context => () => new());
+        static Context.ContextVariable<List<Runnable>> sFirstDrawHandlers = new(StorageKeys.ViewRootImplFirstDrawHandlers, context => () => new());
+        static Context.ContextVariable<bool> sFirstDrawComplete = new(StorageKeys.ViewRootImplFirstDrawComplete, context => () => false);
 
         internal HandlerActionQueue getRunQueue()
         {
-            var s = sRunQueues;
+            var s = sRunQueues.Get(Context);
             HandlerActionQueue rq = s.Value;
             if (rq != null)
             {
@@ -2920,7 +2897,7 @@ namespace AndroidUI.Widgets
                 {
                     dirty.offset(0, -mCurScrollY);
                 }
-                if (context.mAttachInfo.mScalingRequired)
+                if (Context.mAttachInfo.mScalingRequired)
                 {
                     dirty.inset(-1, -1);
                 }
@@ -2939,7 +2916,7 @@ namespace AndroidUI.Widgets
             localDirty.union(dirty.left, dirty.top, dirty.right, dirty.bottom);
             // Intersect with the bounds of the window to skip
             // updates that lie outside of the visible region
-            float appScale = context.mAttachInfo.mApplicationScale;
+            float appScale = Context.mAttachInfo.mApplicationScale;
             bool intersected = localDirty.intersect(0, 0,
                     (int)(mWidth * appScale + 0.5f), (int)(mHeight * appScale + 0.5f));
             if (!intersected)

@@ -9,7 +9,7 @@ namespace AndroidUI.Applications
         public void INTERNAL_ERROR(string error)
         {
             // TODO: display error to screen
-            throw new ApplicationException(error);
+            throw new ApplicationException("INTERNAL ERROR: " + error);
         }
 
         public void OnCreate()
@@ -23,6 +23,7 @@ namespace AndroidUI.Applications
 
         int w, h;
         bool needsSizeChange;
+        Graphics.Canvas canvas;
 
         // TODO: set application state correctly
         public Application Application
@@ -70,19 +71,29 @@ namespace AndroidUI.Applications
                 if (needsSizeChange)
                 {
                     needsSizeChange = false;
-                    surface.Canvas.ExtensionProperties_SetValue("GRContext", graphicsContext);
-                    surface.Canvas.setWidthHeight(w, h);
-                    surface.Canvas.ExtensionProperties_SetValue("Surface", surface);
-                    surface.Canvas.ExtensionProperties_SetValue("HardwareAccelerated", true);
+                    if (canvas != null)
+                    {
+                        canvas.Dispose();
+                        canvas = null;
+                    }
+                    canvas = Graphics.BaseCanvas.CreateHardwareAcceleratedCanvas<Graphics.Canvas>(graphicsContext, surface, w, h);
                     Application.onSizeChanged(r.Width, r.Height);
                 }
-                surface.Canvas.Clear(SKColors.Black);
-                Application.Draw(surface.Canvas);
-                surface.Canvas.Flush();
+                if (canvas != null)
+                {
+                    canvas.Clear(SKColors.Black);
+                    Application.Draw(canvas);
+                    canvas.Flush();
+                }
             }
             else
             {
                 // no application, dispose of canvas
+                if (canvas != null)
+                {
+                    canvas.Dispose();
+                    canvas = null;
+                }
                 surface.Canvas.Clear(SKColors.Black);
             }
         }
@@ -90,6 +101,11 @@ namespace AndroidUI.Applications
         public void onVisibilityChanged(bool isVisible)
         {
             Application?.handleAppVisibility(isVisible);
+        }
+
+        public void SetDensity(float density, int dpi)
+        {
+            Application?.SetDensity(density, dpi);
         }
 
         public void onTouch()

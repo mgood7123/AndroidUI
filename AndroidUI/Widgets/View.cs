@@ -43,10 +43,10 @@ namespace AndroidUI.Widgets
     {
 
         public static bool DEBUG = false;
-        internal static bool DEBUG_INVALIDATION = false;
-        internal static bool DEBUG_MEASURE_CHILD = false;
-        internal static bool DEBUG_VIEW_TRACKING = false;
-        internal static bool DEBUG_VIEW_ALLOCATION = false;
+        public static bool DEBUG_INVALIDATION = false;
+        public static bool DEBUG_MEASURE_CHILD = false;
+        public static bool DEBUG_VIEW_TRACKING = false;
+        public static bool DEBUG_VIEW_ALLOCATION = false;
 
         // TODO: implement view protection: internalize added views, invisible to user but visible to us
 
@@ -816,11 +816,10 @@ namespace AndroidUI.Widgets
          * there is no gaurentee that this will be called when the application
          * is transferred to another display
          * 
-         * the base method automatically invalidates the current view and all children
+         * if subclassed, it is the subclass's responsibility to invalidate the view appropriately
          */
         public virtual void OnScreenDensityChanged()
         {
-            invalidate();
             int count = mChildrenCount;
             View[] children = mChildren;
             for (int i = 0; i < count; i++)
@@ -829,6 +828,9 @@ namespace AndroidUI.Widgets
                 child.OnScreenDensityChanged();
             }
         }
+
+        float lastDensity;
+        int lastDPI;
 
         /**
          * @param info the {@link android.view.View.AttachInfo} to associated with
@@ -924,6 +926,24 @@ namespace AndroidUI.Widgets
             {
                 View view = mTransientViews.ElementAt(i);
                 view.dispatchAttachedToWindow(info, combineVisibility(visibility, view.getVisibility()));
+            }
+
+            bool densityChanged = false;
+            if (lastDensity != mAttachInfo.context.densityManager.ScreenDensity)
+            {
+                lastDensity = mAttachInfo.context.densityManager.ScreenDensity;
+                densityChanged = true;
+            }
+
+            if (lastDPI != mAttachInfo.context.densityManager.ScreenDpi)
+            {
+                lastDPI = mAttachInfo.context.densityManager.ScreenDpi;
+                densityChanged = true;
+            }
+
+            if (densityChanged)
+            {
+                OnScreenDensityChanged();
             }
         }
 
@@ -1546,17 +1566,7 @@ namespace AndroidUI.Widgets
          * be extended in the future to hold our own class with more than just
          * a Rect. :)
          */
-        ValueHolder<Rect> sThreadLocal
-        {
-            get
-            {
-                if (Context == null)
-                {
-                    return null;
-                }
-                return Context.storage.GetOrCreate<Rect>(StorageKeys.ViewTempRect, () => new());
-            }
-        }
+        static Context.ContextVariable<Rect> sThreadLocal = new(StorageKeys.ViewTempRect, context => () => new());
 
         /**
          * Resolves padding depending on layout direction, if applicable, and
@@ -1576,7 +1586,7 @@ namespace AndroidUI.Widgets
                 // If start / end padding are not defined, use the left / right ones.
                 if (mBackground != null && (!mLeftPaddingDefined || !mRightPaddingDefined))
                 {
-                    var v = sThreadLocal;
+                    var v = sThreadLocal.Get(Context);
                     Rect padding = v.Value;
                     if (padding == null)
                     {
@@ -2811,6 +2821,19 @@ namespace AndroidUI.Widgets
             return (int)(a | (uint)b & c);
         }
 
+        /**
+         * Forces this view to be laid out during the next layout pass.
+         * This method does not call requestLayout() or forceLayout()
+         * on the parent.
+         */
+        public void forceLayout()
+        {
+            if (mMeasureCache != null) mMeasureCache.clear();
+
+            mPrivateFlags |= PFLAG_FORCE_LAYOUT;
+            AddInvalidatedFlag(this);
+        }
+
         public void measure(int widthMeasureSpec, int heightMeasureSpec)
         {
             // Suppress sign extension for the low bytes
@@ -3607,6 +3630,7 @@ namespace AndroidUI.Widgets
         {
             if (mPendingCheckForLongPress != null)
             {
+                if (DEBUG_VIEW_TRACKING) Log.d("REMOVE LONG PRESS CALLBACK");
                 removeCallbacks(mPendingCheckForLongPress.runnable);
             }
         }
@@ -3636,6 +3660,7 @@ namespace AndroidUI.Widgets
         {
             if (mPerformClick != null)
             {
+                if (DEBUG_VIEW_TRACKING) Log.d("REMOVE PERFORM CLICK CALLBACK");
                 removeCallbacks(mPerformClick);
             }
         }
@@ -3647,6 +3672,7 @@ namespace AndroidUI.Widgets
         {
             if ((mPrivateFlags & PFLAG_PRESSED) != 0 && mUnsetPressedState != null)
             {
+                if (DEBUG_VIEW_TRACKING) Log.d("REMOVE UNSET PRESS CALLBACK");
                 setPressed(false);
                 removeCallbacks(mUnsetPressedState);
             }
@@ -3659,6 +3685,7 @@ namespace AndroidUI.Widgets
         {
             if (mPendingCheckForTap != null)
             {
+                if (DEBUG_VIEW_TRACKING) Log.d("REMOVE TAP CALLBACK");
                 mPrivateFlags &= ~PFLAG_PREPRESSED;
                 removeCallbacks(mPendingCheckForTap.runnable);
             }
@@ -3670,7 +3697,7 @@ namespace AndroidUI.Widgets
          * at the same place, but you don't want it to come up if they press
          * and then move around enough to cause scrolling.
          */
-        public void cancelLongPress()
+        virtual public void cancelLongPress()
         {
             removeLongPressCallback();
 
@@ -7065,8 +7092,7 @@ namespace AndroidUI.Widgets
 
         int dipsToPixels(int dips)
         {
-            float scale = DensityManager.ScreenDensityAsFloat;
-            return (int)(dips * scale + 0.5f);
+            return Context.densityManager.ConvertDPToPX(dips, 0.5f);
         }
 
         private static readonly SKColor DEBUG_CORNERS_COLOR = new(63, 127, 255);
@@ -7208,7 +7234,7 @@ namespace AndroidUI.Widgets
 
         class ScrollBarDrawable : Drawable
         {
-            public override void draw(SKCanvas canvas)
+            public override void draw(Canvas canvas)
             {
                 throw new NotImplementedException();
             }
@@ -7626,7 +7652,7 @@ namespace AndroidUI.Widgets
             out_.bottom = mScrollY + mBottom - mTop;
         }
 
-        private void debugDrawFocus(SKCanvas canvas)
+        private void debugDrawFocus(Canvas canvas)
         {
             if (isFocused())
             {
@@ -7684,7 +7710,7 @@ namespace AndroidUI.Widgets
          *
          * @hide
          */
-        internal void dispatchGetDisplayList(SKCanvas hardwareCanvas)
+        internal void dispatchGetDisplayList(Canvas hardwareCanvas)
         {
             int count = mChildrenCount;
             View[] children = mChildren;
@@ -7724,7 +7750,7 @@ namespace AndroidUI.Widgets
             }
         }
 
-        private void recreateChildDisplayList(View child, SKCanvas hardwareCanvas)
+        private void recreateChildDisplayList(View child, Canvas hardwareCanvas)
         {
             child.mRecreateDisplayList = (child.mPrivateFlags & PFLAG_INVALIDATED) != 0;
             RemoveInvalidatedFlag(child);
@@ -7736,7 +7762,7 @@ namespace AndroidUI.Widgets
          * Gets the RenderNode for the view, and updates its DisplayList (if needed and supported)
          * @hide
          */
-        internal SKPicture updateDisplayListIfDirty(SKCanvas hardwareCanvas)
+        internal SKPicture updateDisplayListIfDirty(Canvas hardwareCanvas)
         {
             //if (!canHaveDisplayList())
             //{
@@ -7797,11 +7823,8 @@ namespace AndroidUI.Widgets
                 //renderNode.clearStretch();
 
                 if (mRenderNode != null) mRenderNode.Dispose();
-                SKPictureRecorder pictureRecorder = new();
-
-                //SKCanvas canvas = mAttachInfo.mViewRootImpl.drawingCanvas;
-                SKCanvas canvas = pictureRecorder.BeginRecording(new SKRect(0, 0, width, height));
-
+                RecordingCanvas canvas = new(Context);
+                canvas.BeginRecording(width, height);
                 canvas.AdoptHardwareAcceleratedCanvas(hardwareCanvas, width, height);
 
                 try
@@ -7849,9 +7872,8 @@ namespace AndroidUI.Widgets
                 }
                 finally
                 {
-                    mRenderNode = pictureRecorder.EndRecording();
+                    mRenderNode = canvas.EndRecording();
                     canvas.Dispose();
-                    pictureRecorder.Dispose();
                     setDisplayListProperties(mRenderNode);
                 }
             }
@@ -7925,7 +7947,7 @@ namespace AndroidUI.Widgets
          *
          * @param canvas The Canvas to which the View is rendered.
          */
-        virtual public void draw(SKCanvas canvas)
+        virtual public void draw(Canvas canvas)
         {
             int privateFlags = mPrivateFlags;
             mPrivateFlags = privateFlags & ~PFLAG_DIRTY_MASK | PFLAG_DRAWN;
@@ -8195,7 +8217,7 @@ namespace AndroidUI.Widgets
          *
          * @param canvas Canvas on which to draw the background
          */
-        private void drawBackground(SKCanvas canvas)
+        private void drawBackground(Canvas canvas)
         {
             Drawable background = mBackground;
             if (background == null)
@@ -8257,7 +8279,7 @@ namespace AndroidUI.Widgets
          *
          * @param canvas canvas to draw into
          */
-        public void onDrawForeground(SKCanvas canvas)
+        public void onDrawForeground(Canvas canvas)
         {
             //onDrawScrollIndicators(canvas);
             //onDrawScrollBars(canvas);
@@ -8291,7 +8313,7 @@ namespace AndroidUI.Widgets
             }
         }
 
-        protected virtual void onDraw(SKCanvas canvas)
+        protected virtual void onDraw(Canvas canvas)
         {
         }
 
@@ -8390,7 +8412,7 @@ namespace AndroidUI.Widgets
          * @param event The motion event to be dispatched.
          * @return True if the event was handled by the view, false otherwise.
          */
-        internal bool dispatchTouchEvent_(Touch ev)
+        internal bool dispatchTouchEvent__OnTouch(Touch ev)
         {
             // If the event should be handled by accessibility focus first.
             //if (ev.isTargetAccessibilityFocus()) {
@@ -8407,7 +8429,8 @@ namespace AndroidUI.Widgets
             //    mInputEventConsistencyVerifier.onTouch(ev, 0);
             //}
 
-            Touch.State state = ev.getTouchAtCurrentIndex().state;
+            Touch.Data data = ev.getTouchAtCurrentIndex();
+            Touch.State state = data.state;
             if (state == Touch.State.TOUCH_DOWN)
             {
                 // Defensive cleanup for new gesture
@@ -8416,6 +8439,11 @@ namespace AndroidUI.Widgets
 
             if (onFilterTouchEventForSecurity(ev))
             {
+                var rect = new Rect(getLeft(), getTop(), getRight(), getBottom());
+                if (DEBUG_VIEW_TRACKING) Log.d("layout location: " + rect);
+                rect.offset(getScrollX(), getScrollY());
+                if (DEBUG_VIEW_TRACKING) Log.d("layout location with scrolling: " + rect);
+                if (DEBUG_VIEW_TRACKING) Log.d("dispatchTouchEvent__OnTouch called with touch location: " + data.location);
                 //if ((mViewFlags & ENABLED_MASK) == ENABLED) && handleScrollBarDragging(ev))
                 //{
                 //    result = true;
@@ -8671,7 +8699,7 @@ namespace AndroidUI.Widgets
                 data.state = Touch.State.TOUCH_CANCELLED;
                 if (child == null)
                 {
-                    handled = dispatchTouchEvent_(ev);
+                    handled = dispatchTouchEvent__OnTouch(ev);
                 }
                 else
                 {
@@ -8701,7 +8729,7 @@ namespace AndroidUI.Widgets
             {
                 if (child == null)
                 {
-                    handled = dispatchTouchEvent_(ev);
+                    handled = dispatchTouchEvent__OnTouch(ev);
                 }
                 else
                 {
@@ -8723,7 +8751,7 @@ namespace AndroidUI.Widgets
             // Perform any necessary transformations and dispatch.
             if (child == null)
             {
-                handled = dispatchTouchEvent_(transformedEvent);
+                handled = dispatchTouchEvent__OnTouch(transformedEvent);
             }
             else
             {
@@ -9011,15 +9039,21 @@ namespace AndroidUI.Widgets
                 Touch.Data currentData = ev.getTouchAtCurrentIndex();
                 Touch.State currentState = currentData.state;
 
+                var rect = new Rect(getLeft(), getTop(), getRight(), getBottom());
+                if (DEBUG_VIEW_TRACKING) Log.d("layout location: " + rect);
+                rect.offset(getScrollX(), getScrollY());
+                if (DEBUG_VIEW_TRACKING) Log.d("layout location with scrolling: " + rect);
+                if (DEBUG_VIEW_TRACKING) Log.d("dispatchTouchEvent__Tracking called with touch location: " + currentData.location);
+
                 bool intercepted = intercepting = stealed_touch__Tracking(ev, currentTouchCount, currentData, currentState);
                 bool cancelled = resetCancelNextUpFlag(this) || currentState == Touch.State.TOUCH_CANCELLED;
                 if (intercepted)
                 {
-                    if (DEBUG_VIEW_TRACKING) Log.d("target view (" + this + ") INTERCEPTED the touch event");
+                    if (DEBUG_VIEW_TRACKING) Log.d("INTERCEPTED the touch event");
                 }
                 else
                 {
-                    if (DEBUG_VIEW_TRACKING) Log.d("target view (" + this + ") did not INTERCEPT the touch event");
+                    if (DEBUG_VIEW_TRACKING) Log.d("did not INTERCEPT the touch event");
                 }
 
                 View found = null;
@@ -9123,10 +9157,27 @@ namespace AndroidUI.Widgets
 
         private void tracking__issue_touch_event(ref bool handled, bool intercepted, View target_view, Touch touch_event, (View View, Touch Touch) pair)
         {
-            if (intercepted || pair.View.mChildrenCount == 0)
+            if (intercepted)
             {
-                bool h = target_view.dispatchTouchEvent_(touch_event);
-                if (DEBUG_VIEW_TRACKING) Log.d("target view (" + target_view + ") dispatchTouchEvent_ returned " + h);
+                if (DEBUG_VIEW_TRACKING) Log.d((target_view == this ? "(TARGET == THIS) " : "(TARGET != THIS) ") + "(intercepted) calling dispatchTouchEvent__OnTouch");
+                bool h = target_view.dispatchTouchEvent__OnTouch(touch_event);
+                if (DEBUG_VIEW_TRACKING) Log.d((target_view == this ? "(TARGET == THIS) " : "(TARGET != THIS) ") + "(intercepted) target view (" + target_view + ") dispatchTouchEvent_ returned " + h);
+                if (h)
+                {
+                    handled = true;
+                }
+            }
+            else if (target_view.mChildrenCount == 0)
+            {
+                float offsetX = mScrollX - target_view.mLeft;
+                float offsetY = mScrollY - target_view.mTop;
+                if (DEBUG_VIEW_TRACKING) Log.d((target_view == this ? "(TARGET == THIS) " : "(TARGET != THIS) ") + "(target view has zero children) offsetting touch location by: " + Touch.Data.Position.ToString(offsetX, offsetY));
+                touch_event.offsetLocation(offsetX, offsetY);
+                if (DEBUG_VIEW_TRACKING) Log.d((target_view == this ? "(TARGET == THIS) " : "(TARGET != THIS) ") + "(target view has zero children) calling dispatchTouchEvent__OnTouch");
+                bool h = target_view.dispatchTouchEvent__OnTouch(touch_event);
+                if (DEBUG_VIEW_TRACKING) Log.d((target_view == this ? "(TARGET == THIS) " : "(TARGET != THIS) ") + "(target view has zero children) offsetting touch location by: " + Touch.Data.Position.ToString(-offsetX, -offsetY));
+                touch_event.offsetLocation(-offsetX, -offsetY);
+                if (DEBUG_VIEW_TRACKING) Log.d((target_view == this ? "(TARGET == THIS) " : "(TARGET != THIS) ") + "(target view has zero children) target view (" + target_view + ") dispatchTouchEvent_ returned " + h);
                 if (h)
                 {
                     handled = true;
@@ -9136,18 +9187,34 @@ namespace AndroidUI.Widgets
             {
                 float offsetX = mScrollX - target_view.mLeft;
                 float offsetY = mScrollY - target_view.mTop;
+                if (DEBUG_VIEW_TRACKING) Log.d((target_view == this ? "(TARGET == THIS) " : "(TARGET != THIS) ") + "offsetting touch location by: " + Touch.Data.Position.ToString(offsetX, offsetY));
                 touch_event.offsetLocation(offsetX, offsetY);
+                if (DEBUG_VIEW_TRACKING) Log.d((target_view == this ? "(TARGET == THIS) " : "(TARGET != THIS) ") + "calling dispatchTouchEvent__Tracking");
                 var h = target_view.dispatchTouchEvent__Tracking(touch_event);
+                if (DEBUG_VIEW_TRACKING) Log.d((target_view == this ? "(TARGET == THIS) " : "(TARGET != THIS) ") + "offsetting touch location by: " + Touch.Data.Position.ToString(-offsetX, -offsetY));
                 touch_event.offsetLocation(-offsetX, -offsetY);
-                if (DEBUG_VIEW_TRACKING) Log.d("target view (" + target_view + ") dispatchTouchEvent__Tracking returned " + h);
+                if (DEBUG_VIEW_TRACKING) Log.d((target_view == this ? "(TARGET == THIS) " : "(TARGET != THIS) ") + "target view (" + target_view + ") dispatchTouchEvent__Tracking returned " + h);
                 if (h)
                 {
                     handled = true;
                 }
                 else
                 {
-                    bool h2 = target_view.dispatchTouchEvent_(touch_event);
-                    if (DEBUG_VIEW_TRACKING) Log.d("target view (" + target_view + ") dispatchTouchEvent_ returned " + h2);
+                    if (target_view != this)
+                    {
+                        offsetX = mScrollX - target_view.mLeft;
+                        offsetY = mScrollY - target_view.mTop;
+                        if (DEBUG_VIEW_TRACKING) Log.d((target_view == this ? "(TARGET == THIS) " : "(TARGET != THIS) ") + "offsetting touch location by: " + Touch.Data.Position.ToString(offsetX, offsetY));
+                        touch_event.offsetLocation(offsetX, offsetY);
+                    }
+                    if (DEBUG_VIEW_TRACKING) Log.d((target_view == this ? "(TARGET == THIS) " : "(TARGET != THIS) ") + "(dispatchTouchEvent__Tracking was not handled) calling dispatchTouchEvent__OnTouch");
+                    bool h2 = target_view.dispatchTouchEvent__OnTouch(touch_event);
+                    if (target_view != this)
+                    {
+                        if (DEBUG_VIEW_TRACKING) Log.d((target_view == this ? "(TARGET == THIS) " : "(TARGET != THIS) ") + "offsetting touch location by: " + Touch.Data.Position.ToString(-offsetX, -offsetY));
+                        touch_event.offsetLocation(-offsetX, -offsetY);
+                    }
+                    if (DEBUG_VIEW_TRACKING) Log.d((target_view == this ? "(TARGET == THIS) " : "(TARGET != THIS) ") + "target view (" + target_view + ") dispatchTouchEvent_ returned " + h2);
                     if (h2)
                     {
                         handled = true;
@@ -9768,8 +9835,8 @@ namespace AndroidUI.Widgets
             float y = 0.0f;
             if (t.state != Touch.State.TOUCH_CANCELLED)
             {
-                x = t.location.y;
-                y = t.location.x;
+                x = t.location.x;
+                y = t.location.y;
             }
             int viewFlags = mViewFlags;
             var action = t.state;
@@ -9786,13 +9853,13 @@ namespace AndroidUI.Widgets
                 mPrivateFlags3 &= ~PFLAG3_FINGER_DOWN;
                 // A disabled view that is clickable still consumes the touch
                 // events, it just doesn't respond to them.
-                if (DEBUG_VIEW_TRACKING) Log.d("consumed OnTouch event");
+                if (DEBUG_VIEW_TRACKING) Log.d("consumed OnTouch disabled event");
                 return clickable;
             }
 
             if (mTouchDelegate != null) {
                 if (mTouchDelegate.onTouch(touch)) {
-                    if (DEBUG_VIEW_TRACKING) Log.d("consumed OnTouch event");
+                    if (DEBUG_VIEW_TRACKING) Log.d("consumed OnTouch delegate event");
                     return true;
                 }
             }
@@ -9946,8 +10013,9 @@ namespace AndroidUI.Widgets
                             {
                                 drawableHotspotChanged(x, y);
                             }
+                            
+                            int touchSlop = ViewConfiguration.getScaledTouchSlop(Context);
 
-                            int touchSlop = ViewConfiguration.getTouchSlop();
                             //bool ambiguousGesture =
                             //        motionClassification == MotionEvent.CLASSIFICATION_AMBIGUOUS_GESTURE;
                             //if (ambiguousGesture && hasPendingLongPressCallback()) {
@@ -9972,6 +10040,7 @@ namespace AndroidUI.Widgets
                             // Be lenient about moving outside of buttons
                             if (!pointInView(x, y, touchSlop))
                             {
+                                Log.d("TOUCH SLOP DETECTED, CANCELLING CLICK");
                                 // Outside button
                                 // Remove any future long press/tap checks
                                 removeTapCallback();
@@ -10460,7 +10529,7 @@ namespace AndroidUI.Widgets
              *
              * @hide
              */
-            internal virtual void onDebugDraw(View view, SKCanvas canvas, SKPaint paint)
+            internal virtual void onDebugDraw(View view, Canvas canvas, SKPaint paint)
             {
             }
 
@@ -10890,7 +10959,7 @@ namespace AndroidUI.Widgets
             /**
              * @hide
              */
-            internal override void onDebugDraw(View view, SKCanvas canvas, SKPaint paint)
+            internal override void onDebugDraw(View view, Canvas canvas, SKPaint paint)
             {
                 Insets oi = isLayoutModeOptical(view.mParent) ? view.getOpticalInsets() : Insets.NONE;
 
@@ -12837,7 +12906,7 @@ namespace AndroidUI.Widgets
         }
 
 
-        private static void fillRect(SKCanvas canvas, SKPaint paint, int x1, int y1, int x2, int y2)
+        private static void fillRect(Canvas canvas, SKPaint paint, int x1, int y1, int x2, int y2)
         {
             if (x1 != x2 && y1 != y2)
             {
@@ -12849,7 +12918,7 @@ namespace AndroidUI.Widgets
                 {
                     int tmp = y1; y1 = y2; y2 = tmp;
                 }
-                canvas.DrawRectCoords(x1, y1, x2, y2, paint);
+                canvas.DrawRectLTRB(x1, y1, x2, y2, paint);
             }
         }
 
@@ -12858,13 +12927,13 @@ namespace AndroidUI.Widgets
             return x >= 0 ? 1 : -1;
         }
 
-        private static void drawCorner(SKCanvas c, SKPaint paint, int x1, int y1, int dx, int dy, int lw)
+        private static void drawCorner(Canvas c, SKPaint paint, int x1, int y1, int dx, int dy, int lw)
         {
             fillRect(c, paint, x1, y1, x1 + dx, y1 + lw * sign(dy));
             fillRect(c, paint, x1, y1, x1 + lw * sign(dx), y1 + dy);
         }
 
-        private static void drawRectCorners(SKCanvas canvas, int x1, int y1, int x2, int y2, SKPaint paint,
+        private static void drawRectCorners(Canvas canvas, int x1, int y1, int x2, int y2, SKPaint paint,
                 int lineLength, int lineWidth)
         {
             drawCorner(canvas, paint, x1, y1, lineLength, lineLength, lineWidth);
@@ -12873,7 +12942,7 @@ namespace AndroidUI.Widgets
             drawCorner(canvas, paint, x2, y2, -lineLength, -lineLength, lineWidth);
         }
 
-        private static void fillDifference(SKCanvas canvas,
+        private static void fillDifference(Canvas canvas,
                 int x2, int y2, int x3, int y3,
                 int dx1, int dy1, int dx2, int dy2, SKPaint paint)
         {
@@ -12892,7 +12961,7 @@ namespace AndroidUI.Widgets
         /**
          * @hide
          */
-        internal void onDebugDrawMargins(SKCanvas canvas, SKPaint paint)
+        internal void onDebugDrawMargins(Canvas canvas, SKPaint paint)
         {
             for (int i = 0; i < mChildrenCount; i++)
             {
@@ -12901,7 +12970,7 @@ namespace AndroidUI.Widgets
             }
         }
 
-        private static void drawRect(SKCanvas canvas, SKPaint paint, float x1, float y1, float x2, float y2)
+        private static void drawRect(Canvas canvas, SKPaint paint, float x1, float y1, float x2, float y2)
         {
             if (sDebugLines == null)
             {
@@ -12935,7 +13004,7 @@ namespace AndroidUI.Widgets
         /**
          * @hide
          */
-        internal void onDebugDraw(SKCanvas canvas)
+        internal void onDebugDraw(Canvas canvas)
         {
             SKPaint paint = getDebugPaint();
 
@@ -13453,7 +13522,7 @@ namespace AndroidUI.Widgets
          * This is where the View specializes rendering behavior based on layer type,
          * and hardware acceleration.
          */
-        bool draw(SKCanvas canvas, View parent, long drawingTime)
+        bool draw(Canvas canvas, View parent, long drawingTime)
         {
             bool hardwareAcceleratedCanvas = canvas.isHardwareAccelerated();
             /* If an attached view draws to a HW canvas, it may use its RenderNode + DisplayList.
@@ -13894,7 +13963,7 @@ namespace AndroidUI.Widgets
          * @param drawingTime The time at which draw is occurring
          * @return True if an invalidate() was issued
          */
-        protected bool drawChild(SKCanvas canvas, View child, long drawingTime)
+        protected bool drawChild(Canvas canvas, View child, long drawingTime)
         {
             return child.draw(canvas, this, drawingTime);
         }
@@ -13905,7 +13974,7 @@ namespace AndroidUI.Widgets
          * (but after its own view has been drawn).
          * @param canvas the canvas on which to draw the view
          */
-        virtual protected void dispatchDraw(SKCanvas canvas)
+        virtual protected void dispatchDraw(Canvas canvas)
         {
             int childrenCount = mChildrenCount;
             View[] children = mChildren;
@@ -14138,6 +14207,32 @@ namespace AndroidUI.Widgets
         }
 
         /**
+         * Sets the tag (if tag == null) associated with this view and all children. A tag can be used to mark
+         * a view in its hierarchy and does not have to be unique within the
+         * hierarchy. Tags can also be used to store data within a view without
+         * resorting to another data structure.
+         *
+         * @param tag an Object to tag the view with
+         *
+         * @see #getTag()
+         * @see #setTag(int, Object)
+         */
+        public View setTagIfNullRecursively(object tag)
+        {
+            if (mTag == null)
+            {
+                mTag = tag;
+            }
+            View[] children = mChildren;
+            int count = mChildrenCount;
+            for (int i = 0; i < count; i++)
+            {
+                children[i].setTagIfNullRecursively(tag);
+            }
+            return this;
+        }
+
+        /**
          * The logging tag used by this class with android.util.Log.
          */
         protected const string VIEW_LOG_TAG = "View";
@@ -14341,6 +14436,13 @@ namespace AndroidUI.Widgets
             output = debugIndent(depth);
             output += "willDraw=" + willDraw();
             Log.d(VIEW_LOG_TAG, output);
+
+            if (this is Topten_RichTextKit_TextView t)
+            {
+                output = debugIndent(depth);
+                output += "textSize=" + t.getTextSize();
+                Log.d(VIEW_LOG_TAG, output);
+            }
 
             output = debugIndent(depth);
             output += "children={";
@@ -14837,7 +14939,7 @@ namespace AndroidUI.Widgets
 
             if (background != null)
             {
-                var v = sThreadLocal;
+                var v = sThreadLocal.Get(Context);
                 Rect padding = v.Value;
                 if (padding == null)
                 {
@@ -17033,7 +17135,11 @@ namespace AndroidUI.Widgets
                 this.action = action;
             }
 
-            public void onClick(View v) => action?.Invoke(v);
+            public void onClick(View v)
+            {
+                if (DEBUG_VIEW_TRACKING) AndroidUI.Utils.Log.d("ANDROIDUI", "onLongClick");
+                action?.Invoke(v);
+            }
         }
 
         class RunnableLongClickListener : OnLongClickListener
@@ -17045,7 +17151,11 @@ namespace AndroidUI.Widgets
                 this.action = action;
             }
 
-            public bool onLongClick(View v) => action == null ? false : action.Invoke(v);
+            public bool onLongClick(View v)
+            {
+                if (DEBUG_VIEW_TRACKING) AndroidUI.Utils.Log.d("ANDROIDUI", "onLongClick");
+                return action == null ? false : action.Invoke(v);
+            }
         }
 
         /**
@@ -17142,6 +17252,7 @@ namespace AndroidUI.Widgets
             // be interested on.
             //notifyAutofillManagerOnClick();
 
+            if (DEBUG_VIEW_TRACKING) Log.d("CLICKED");
             return performClick();
         }
 

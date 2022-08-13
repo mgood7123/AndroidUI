@@ -1,5 +1,4 @@
 ﻿using AndroidUI.Extensions;
-using System.Numerics;
 
 namespace AndroidUI.Utils.Input
 {
@@ -8,7 +7,7 @@ namespace AndroidUI.Utils.Input
         struct PositionInfo
         {
             public long timestamp;
-            public Vector2 pos;
+            public FloatingPointPair<float> pos;
 
             public PositionInfo(long time, float x, float y)
             {
@@ -24,8 +23,8 @@ namespace AndroidUI.Utils.Input
         class Info : ICloneable
         {
             public Lists.RingBuffer<PositionInfo> pos = new(2);
-            public Vector2 distance, totalDistance, velocity, position;
-            public long startTime, endTime;
+            public FloatingPointPair<float> distance, totalDistance, velocity, position;
+            public long startTime, endTime, timestamp, time_since_last_movement;
             public bool spinning;
 
             public Info Clone()
@@ -39,6 +38,8 @@ namespace AndroidUI.Utils.Input
                 c.position = position;
                 c.startTime = startTime;
                 c.endTime = endTime;
+                c.timestamp = timestamp;
+                c.time_since_last_movement = time_since_last_movement;
                 c.spinning = spinning;
                 return c;
             }
@@ -83,20 +84,23 @@ namespace AndroidUI.Utils.Input
         private float friction = DEFAULT_FRICTION;
         public bool Spinning => current.spinning;
 
-        public Vector2 Distance => current.distance;
-        public Vector2 TotalDistance => current.totalDistance;
-        public Vector2 Velocity
+        public FloatingPointPair<float> Distance => current.distance;
+        public FloatingPointPair<float> TotalDistance => current.totalDistance;
+        public FloatingPointPair<float> Velocity
         {
             get => current.velocity; set
             {
                 current.velocity = value;
-                if (current.velocity == Vector2.Zero)
+                if (current.velocity == FloatingPointPair<float>.Zero)
                 {
                     current.spinning = false;
                 }
             }
         }
-        public Vector2 Position { get => current.position; set => current.position = value; }
+
+        public FloatingPointPair<float> Position { get => current.position; set => current.position = value; }
+
+        public long TimeSinceLastMovement => current.time_since_last_movement;
 
         public long SpinTime => current.pos.Count >= 2 ? (current.endTime - current.startTime) : 0;
 
@@ -108,51 +112,51 @@ namespace AndroidUI.Utils.Input
             if (current.spinning)
             {
                 bool pushed = false;
-                if (current.velocity.X > 0)
+                if (current.velocity.First > 0f)
                 {
                     push();
                     pushed = true;
-                    current.velocity.X -= friction;
-                    if (current.velocity.X < 0)
+                    current.velocity.First -= friction;
+                    if (current.velocity.First < 0f)
                     {
-                        current.velocity.X = 0;
+                        current.velocity.First = 0f;
                     }
                 }
-                else if (current.velocity.X < 0)
+                else if (current.velocity.First < 0f)
                 {
                     push();
                     pushed = true;
-                    current.velocity.X += friction;
-                    if (current.velocity.X > 0)
+                    current.velocity.First += friction;
+                    if (current.velocity.First > 0f)
                     {
-                        current.velocity.X = 0;
+                        current.velocity.First = 0f;
                     }
                 }
 
-                if (current.velocity.Y > 0)
+                if (current.velocity.Second > 0f)
                 {
                     if (!pushed)
                     {
                         push();
                         pushed = true;
                     }
-                    current.velocity.Y -= friction;
-                    if (current.velocity.Y < 0)
+                    current.velocity.Second -= friction;
+                    if (current.velocity.Second < 0f)
                     {
-                        current.velocity.Y = 0;
+                        current.velocity.Second = 0f;
                     }
                 }
-                else if (current.velocity.Y < 0)
+                else if (current.velocity.Second < 0f)
                 {
                     if (!pushed)
                     {
                         push();
                         pushed = true;
                     }
-                    current.velocity.Y += friction;
-                    if (current.velocity.Y > 0)
+                    current.velocity.Second += friction;
+                    if (current.velocity.Second > 0f)
                     {
-                        current.velocity.Y = 0;
+                        current.velocity.Second = 0f;
                     }
                 }
 
@@ -162,7 +166,7 @@ namespace AndroidUI.Utils.Input
                     pushed = true;
                 }
                 current.position += current.velocity;
-                if (current.velocity == Vector2.Zero)
+                if (current.velocity == FloatingPointPair<float>.Zero)
                 {
                     current.spinning = false;
                 }
@@ -181,32 +185,29 @@ namespace AndroidUI.Utils.Input
 
         public void Reset()
         {
-            push();
-            current.pos.Clear();
-            current.distance = Vector2.Zero;
-            current.totalDistance = Vector2.Zero;
-            current.velocity = Vector2.Zero;
-            current.position = Vector2.Zero;
-            current.startTime = 0;
-            current.endTime = 0;
-            current.spinning = false;
+            ResetButKeepPosition();
+            current.position = FloatingPointPair<float>.Zero;
         }
 
         public void ResetButKeepPosition()
         {
             push();
             current.pos.Clear();
-            current.distance = Vector2.Zero;
-            current.totalDistance = Vector2.Zero;
-            current.velocity = Vector2.Zero;
+            current.distance = FloatingPointPair<float>.Zero;
+            current.totalDistance = FloatingPointPair<float>.Zero;
+            current.velocity = FloatingPointPair<float>.Zero;
             current.startTime = 0;
             current.endTime = 0;
+            current.timestamp = 0;
+            current.time_since_last_movement = 0;
             current.spinning = false;
         }
 
         public void AddMovement(long timestamp, float x, float y)
         {
             push();
+            long last_time_previous = current.timestamp;
+            current.timestamp = timestamp;
             if (current.pos.Count == 0)
             {
                 current.startTime = timestamp;
@@ -216,6 +217,7 @@ namespace AndroidUI.Utils.Input
             if (count >= 2)
             {
                 current.endTime = timestamp;
+                current.time_since_last_movement = last_time_previous == 0 ? 0 : (timestamp - last_time_previous);
                 current.distance = current.pos[count - 1].pos - current.pos[0].pos;
                 current.position += current.distance;
                 current.totalDistance += current.distance;

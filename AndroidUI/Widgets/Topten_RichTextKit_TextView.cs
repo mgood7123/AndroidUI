@@ -1,5 +1,6 @@
 ﻿using AndroidUI.Applications;
 using AndroidUI.Extensions;
+using AndroidUI.Graphics;
 using SkiaSharp;
 using Topten.RichTextKit;
 
@@ -61,6 +62,11 @@ namespace AndroidUI.Widgets
             setTextSize(Unit.DeviceIndependantPixels, size);
         }
 
+        public float getTextSize()
+        {
+            return textSize;
+        }
+
         public enum Unit
         {
             Pixels,
@@ -69,31 +75,32 @@ namespace AndroidUI.Widgets
 
         public void setTextSize(Unit unit, float size)
         {
-            textSizeUnit = unit;
-            switch (unit)
+            RunOnUIThread(() =>
             {
-                case Unit.Pixels:
-                    // this can happen when the screen density is 1
-                    if (textSize != size)
-                    {
-                        textSize = size;
-                        textSizeChanged = true;
-                        update();
-                    }
-                    break;
-                case Unit.DeviceIndependantPixels:
-                    {
-                        // this can happen when the screen density is 1
-                        float newSize = size * DensityManager.ScreenDensityAsFloat;
-                        if (textSize != newSize)
+                textSizeUnit = unit;
+                switch (unit)
+                {
+                    case Unit.Pixels:
+                        if (textSize != size)
                         {
-                            textSize = newSize;
+                            textSize = size;
                             textSizeChanged = true;
                             update();
                         }
                         break;
-                    }
-            }
+                    case Unit.DeviceIndependantPixels:
+                        {
+                            float newSize = Context.densityManager.ConvertDPToPX((int)size);
+                            if (textSize != newSize)
+                            {
+                                textSize = newSize;
+                                textSizeChanged = true;
+                                update();
+                            }
+                            break;
+                        }
+                }
+            });
         }
 
         public int length()
@@ -248,20 +255,31 @@ namespace AndroidUI.Widgets
             }
         }
 
-        protected override void onDraw(SKCanvas canvas)
+        protected override void onDraw(Canvas canvas)
         {
             lock (textBlock)
             {
-                textBlock.Paint(canvas);
+                textBlock.Paint(canvas.GetNativeObject());
             }
         }
 
         public override void OnScreenDensityChanged()
         {
-            if (textSizeUnit == Unit.DeviceIndependantPixels)
+            RunOnUIThread(() =>
             {
-
-            }
+                // only update size if our current unit is DeviceIndependantPixels
+                // if our current unit is Pixels then dont bother
+                if (textSizeUnit == Unit.DeviceIndependantPixels)
+                {
+                    // textSize is stored in Unit.Pixels
+                    //
+                    // convert to Unit.DeviceIndependantPixels to pass
+                    // to SetTextSize(Unit.DeviceIndependantPixels, dip);
+                    //
+                    int dip = Context.densityManager.ConvertPXToDP((int)textSize);
+                    setTextSize(Unit.DeviceIndependantPixels, dip);
+                }
+            });
             base.OnScreenDensityChanged();
         }
     }

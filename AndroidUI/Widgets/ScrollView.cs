@@ -1,4 +1,6 @@
-﻿using AndroidUI.Extensions;
+﻿using AndroidUI.Applications;
+using AndroidUI.Extensions;
+using AndroidUI.Graphics;
 using AndroidUI.Input;
 using AndroidUI.Utils.Widgets;
 using SkiaSharp;
@@ -8,46 +10,6 @@ namespace AndroidUI.Widgets
     public class ScrollView : FrameLayout, ScrollHost
     {
         ScrollViewHostInstance host;
-
-        public ScrollViewHostInstance ScrollHostGetInstance() => host;
-
-        public void ScrollHostOnSetWillDraw(bool smoothScroll)
-        {
-            setWillDraw(showDebugText || smoothScroll);
-        }
-
-        public void ScrollHostOnCancelled()
-        {
-            if (showDebugText)
-            {
-                text.invalidate();
-            }
-        }
-
-        public bool ScrollHostHasChildrenToScroll()
-        {
-            return mChildrenCount == 2;
-        }
-
-        public int ScrollHostGetMeasuredWidth()
-        {
-            return getMeasuredWidth();
-        }
-
-        public int ScrollHostGetMeasuredHeight()
-        {
-            return getMeasuredHeight();
-        }
-
-        public int ScrollHostGetChildTotalMeasuredWidth()
-        {
-            return getChildAt(1).getMeasuredWidth();
-        }
-
-        public int ScrollHostGetChildTotalMeasuredHeight()
-        {
-            return getChildAt(1).getMeasuredHeight();
-        }
 
         Topten_RichTextKit_TextView text = new();
 
@@ -101,7 +63,7 @@ namespace AndroidUI.Widgets
             return host.InterceptTouch(this, t => base.onInterceptTouchEvent(t), getChildAt(1), ev);
         }
 
-        protected override void dispatchDraw(SKCanvas canvas)
+        protected override void dispatchDraw(Canvas canvas)
         {
             base.dispatchDraw(canvas);
             if (first_draw)
@@ -127,7 +89,7 @@ namespace AndroidUI.Widgets
             }
         }
 
-        protected override void onDraw(SKCanvas canvas)
+        protected override void onDraw(Canvas canvas)
         {
             base.onDraw(canvas);
             host.flywheel.AquireLock();
@@ -138,19 +100,19 @@ namespace AndroidUI.Widgets
                 s += "  Spinning: " + host.flywheel.Spinning + "\n";
                 s += "  Friction: " + host.flywheel.Friction + "\n";
                 s += "  Distance: \n";
-                s += "    x: " + host.flywheel.Distance.X + " pixels\n";
-                s += "    y: " + host.flywheel.Distance.Y + " pixels\n";
+                s += "    x: " + host.flywheel.Distance.First.value + " pixels\n";
+                s += "    y: " + host.flywheel.Distance.Second.value + " pixels\n";
                 s += "    time: " + host.Time + " ms\n";
                 s += "  Total Distance: \n";
-                s += "    x: " + host.flywheel.TotalDistance.X + " pixels\n";
-                s += "    y: " + host.flywheel.TotalDistance.Y + " pixels\n";
+                s += "    x: " + host.flywheel.TotalDistance.First.value + " pixels\n";
+                s += "    y: " + host.flywheel.TotalDistance.Second.value + " pixels\n";
                 s += "    time: " + host.flywheel.SpinTime + " ms\n";
                 s += "  Velocity: \n";
-                s += "    x: " + host.flywheel.Velocity.X + "\n";
-                s += "    y: " + host.flywheel.Velocity.Y + "\n";
+                s += "    x: " + host.flywheel.Velocity.First.value + "\n";
+                s += "    y: " + host.flywheel.Velocity.Second.value + "\n";
                 s += "  Position: \n";
-                s += "    x: " + host.flywheel.Position.X + " pixels\n";
-                s += "    y: " + host.flywheel.Position.Y + " pixels\n";
+                s += "    x: " + host.flywheel.Position.First.value + " pixels\n";
+                s += "    y: " + host.flywheel.Position.Second.value + " pixels\n";
                 text.setText(s);
                 text_set = true;
             }
@@ -299,6 +261,75 @@ namespace AndroidUI.Widgets
                     MeasureSpec.UNSPECIFIED);
 
             child.measure(childWidthMeasureSpec, childHeightMeasureSpec);
+        }
+
+        public ScrollViewHostInstance ScrollHostGetInstance() => host;
+
+        public void ScrollHostOnSetWillDraw(bool smoothScroll)
+        {
+            setWillDraw(showDebugText || smoothScroll);
+        }
+
+        public void ScrollHostOnCancelled()
+        {
+            if (showDebugText)
+            {
+                text.invalidate();
+            }
+        }
+
+        public bool ScrollHostHasChildrenToScroll()
+        {
+            return mChildrenCount == 2;
+        }
+
+        public int ScrollHostGetMeasuredWidth()
+        {
+            return getMeasuredWidth();
+        }
+
+        public int ScrollHostGetMeasuredHeight()
+        {
+            return getMeasuredHeight();
+        }
+
+        public bool ScrollHostCanScrollLeftOrUp()
+        {
+            return true;
+        }
+
+        public int ScrollHostGetChildLeft()
+        {
+            return mChildren[1].getLeft();
+        }
+
+        public int ScrollHostGetChildTop()
+        {
+            return mChildren[1].getTop();
+        }
+
+        public bool ScrollHostCanScrollRightOrDown()
+        {
+            return true;
+        }
+
+        public int ScrollHostGetChildRight()
+        {
+            return mChildren[1].getRight();
+        }
+
+        public int ScrollHostGetChildBottom()
+        {
+            return mChildren[1].getBottom();
+        }
+
+        public void ScrollHostTryScrollTo(View target_view, int x, int y)
+        {
+        }
+
+        public Context ScrollHostGetContext()
+        {
+            return Context;
         }
     }
 }

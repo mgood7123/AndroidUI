@@ -1,12 +1,14 @@
-﻿using AndroidUI.Graphics;
+﻿using AndroidUI.Applications;
+using AndroidUI.Graphics;
 using AndroidUI.Input;
+using AndroidUI.Utils;
 using AndroidUI.Utils.Widgets;
 using SkiaSharp;
 using static AndroidUI.Widgets.LinearLayout;
 
 namespace AndroidUI.Widgets
 {
-    public class RecyclingListView : View, ScrollHost
+    public class AdapterListView : View, ScrollHost
     {
         ScrollViewHostInstance host;
         public bool AutoScroll { get => host.autoScroll; set => host.autoScroll = value; }
@@ -40,7 +42,7 @@ namespace AndroidUI.Widgets
         private int mShowDividers;
         private int mDividerPadding;
 
-        public RecyclingListView() : base()
+        public AdapterListView() : base()
         {
             host = new(this);
 
@@ -208,7 +210,7 @@ namespace AndroidUI.Widgets
             return host.InterceptTouch(this, t => base.onInterceptTouchEvent(t), this, ev);
         }
 
-        protected override void onDraw(SKCanvas canvas)
+        protected override void onDraw(Canvas canvas)
         {
             base.onDraw(canvas);
             host.flywheel.AquireLock();
@@ -230,7 +232,7 @@ namespace AndroidUI.Widgets
             }
         }
 
-        void drawDividersVertical(SKCanvas canvas)
+        void drawDividersVertical(Canvas canvas)
         {
             int count = getVirtualChildCount();
             for (int i = 0; i < count; i++)
@@ -272,19 +274,34 @@ namespace AndroidUI.Widgets
         public class Adapter
         {
             internal View parent;
-            public List<View> views = new();
+            public List<ValueHolderPair<View, Rect>> views = new();
+            internal int prev_start;
+            internal int prev_end;
             internal int start;
             internal int end;
+            internal int buffer_size;
+            internal int virtual_buffer = 1;
+            internal int visible_items;
+            internal int buffer_items;
+            internal bool invalid = true;
         }
 
+        object adapterLock = new();
         Adapter mAdapter = new();
 
         public void setAdapter(Adapter adapter)
         {
-            mAdapter = adapter;
-            if (mAdapter != null)
+            lock (adapterLock)
             {
-                mAdapter.parent = this;
+                mAdapter = adapter;
+                if (mAdapter != null)
+                {
+                    mAdapter.parent = this;
+                }
+                else
+                {
+                    mAdapter = new();
+                }
             }
         }
 
@@ -394,7 +411,7 @@ namespace AndroidUI.Widgets
             return null;
         }
 
-        void drawDividersHorizontal(SKCanvas canvas)
+        void drawDividersHorizontal(Canvas canvas)
         {
             int count = getVirtualChildCount();
             bool isLayoutRtl_ = isLayoutRtl();
@@ -451,14 +468,14 @@ namespace AndroidUI.Widgets
             }
         }
 
-        void drawHorizontalDivider(SKCanvas canvas, int top)
+        void drawHorizontalDivider(Canvas canvas, int top)
         {
             mDivider.setBounds(getPaddingLeft() + mDividerPadding, top,
             getWidth() - getPaddingRight() - mDividerPadding, top + mDividerHeight);
             mDivider.draw(canvas);
         }
 
-        void drawVerticalDivider(SKCanvas canvas, int left)
+        void drawVerticalDivider(Canvas canvas, int left)
         {
             mDivider.setBounds(left, getPaddingTop() + mDividerPadding,
             left + mDividerWidth, getHeight() - getPaddingBottom() - mDividerPadding);
@@ -495,17 +512,20 @@ namespace AndroidUI.Widgets
 
         protected override void onMeasure(int widthMeasureSpec, int heightMeasureSpec)
         {
-            if (mOrientation == OrientationMode.VERTICAL)
+            lock (adapterLock)
             {
-                measureVertical(widthMeasureSpec, heightMeasureSpec);
-            }
-            else
-            {
-                measureHorizontal(widthMeasureSpec, heightMeasureSpec);
-            }
-            if (AutoScroll)
-            {
-                host.AutoScrollOnMeasure(this, this);
+                if (mOrientation == OrientationMode.VERTICAL)
+                {
+                    measureVertical(widthMeasureSpec, heightMeasureSpec);
+                }
+                else
+                {
+                    measureHorizontal(widthMeasureSpec, heightMeasureSpec);
+                }
+                if (AutoScroll)
+                {
+                    host.AutoScrollOnMeasure(this, this);
+                }
             }
         }
 
@@ -622,6 +642,8 @@ namespace AndroidUI.Widgets
 
             int adapterCount = mAdapter.views.Count;
 
+            mAdapter.visible_items = 0;
+
             // See how tall everyone is. Also remember max width.
             for (int i = 0; i < adapterCount; ++i)
             {
@@ -669,7 +691,16 @@ namespace AndroidUI.Widgets
                 measureChildBeforeLayout(child, i, widthMeasureSpec, 0,
                         heightMeasureSpec, usedHeight);
 
-                int childHeight = child.getMeasuredHeight();
+                Rect childDimens = new(0, 0, child.getMeasuredWidth(), child.getMeasuredHeight());
+                if (i != 0)
+                {
+                    Rect prev = mAdapter.views[i - 1].Second;
+                    childDimens.offset(0, prev.bottom);
+                }
+
+                mAdapter.views[i].Second = childDimens;
+
+                int childHeight = childDimens.height();
 
                 int totalLength = mTotalLength;
                 mTotalLength = Math.Max(totalLength, totalLength + childHeight + lp.topMargin +
@@ -687,7 +718,7 @@ namespace AndroidUI.Widgets
                 }
 
                 int margin = lp.leftMargin + lp.rightMargin;
-                int measuredWidth = child.getMeasuredWidth() + margin;
+                int measuredWidth = childDimens.width() + margin;
                 maxWidth = Math.Max(maxWidth, measuredWidth);
                 childState = combineMeasuredStates(childState, child.getMeasuredState());
 
@@ -697,10 +728,24 @@ namespace AndroidUI.Widgets
 
                 i += getChildrenSkipCount(child, i);
 
+                mAdapter.visible_items++;
                 if (mTotalLength > height)
                 {
-                    mAdapter.end = i;
-                    break;
+                    if (mAdapter.invalid)
+                    {
+                        Log.d("ADAPTER INVALID");
+                        mAdapter.end = mAdapter.visible_items;
+                        mAdapter.invalid = false;
+                        break;
+                    }
+                    else
+                    {
+                        if (mAdapter.end == mAdapter.visible_items)
+                        {
+                            Log.d("ADAPTER VALID, end (" + mAdapter.end + ") == mAdapter.visible_items (" + (mAdapter.visible_items) + ")");
+                            break;
+                        }
+                    }
                 }
             }
 
@@ -1166,14 +1211,153 @@ namespace AndroidUI.Widgets
             return 0;
         }
 
+        public override void requestLayout()
+        {
+            if (!isInLayout)
+            {
+                base.requestLayout();
+            }
+        }
+
+        bool isInLayout;
+
         protected override void onLayout(bool changed, int l, int t, int r, int b)
         {
-            if (mChildrenCount == 0)
+            lock (adapterLock)
             {
-                for (int i = mAdapter.start; i <= mAdapter.end; ++i)
+
+                if (true)
                 {
-                    View child = mAdapter.views[i];
-                    addViewInLayout(child, -1, child.mLayoutParams);
+                    isInLayout = true;
+                    Log.d("LAYOUT mChildrenCount: " + mChildrenCount);
+                    if (mChildrenCount == 0)
+                    {
+                        Log.d("adding views");
+                        for (int i = 0; i < mAdapter.visible_items; i++)
+                        {
+                            var child = mAdapter.views[i];
+                            addViewInLayout(child, -1, generateDefaultLayoutParams());
+                            setChildFrame(
+                                child,
+                                child.Second.left, child.Second.top,
+                                child.Second.width(), child.Second.height()
+                            );
+                        }
+                        mAdapter.prev_end = mAdapter.end;
+                    }
+                    else
+                    {
+                        int diffStart = mAdapter.start - mAdapter.prev_start;
+                        int diffEnd = mAdapter.end - mAdapter.prev_end;
+                        int diffStartInverse = mAdapter.prev_start - mAdapter.start;
+                        int diffEndInverse = mAdapter.prev_end - mAdapter.end;
+
+                        Log.d("diffStart: " + diffStart);
+                        Log.d("diffEnd: " + diffEnd);
+
+                        if (diffStart != 0)
+                        {
+                            if (diffStart > 0)
+                            {
+                                Log.d("removing " + diffStart + " views from top");
+                                for (int i = mAdapter.prev_start; i < mAdapter.start; i++)
+                                {
+                                    var child = mAdapter.views[i];
+                                    removeViewInLayout(child);
+                                }
+                            }
+                            else
+                            {
+                                Log.d("adding " + diffStartInverse + " views to top");
+                                for (int i = mAdapter.start; i < mAdapter.prev_start; i++)
+                                {
+                                    var child = mAdapter.views[i];
+                                    addViewInLayout(child, 0, generateDefaultLayoutParams());
+                                    setChildFrame(
+                                        child,
+                                        child.Second.left, child.Second.top,
+                                        child.Second.width(), child.Second.height()
+                                    );
+                                }
+                            }
+                            mAdapter.prev_start = mAdapter.start;
+                        }
+
+                        if (diffEnd != 0)
+                        {
+                            if (diffEnd > 0)
+                            {
+                                Log.d("adding " + diffEnd + " views to bottom");
+                                for (int i = mAdapter.prev_end; i < mAdapter.end; i++)
+                                {
+                                    var child = mAdapter.views[i];
+                                    addViewInLayout(child, -1, generateDefaultLayoutParams());
+                                    setChildFrame(
+                                        child,
+                                        child.Second.left, child.Second.top,
+                                        child.Second.width(), child.Second.height()
+                                    );
+                                }
+                            }
+                            else
+                            {
+                                Log.d("removing " + diffEndInverse + " views from bottom");
+                                for (int i = mAdapter.end; i < mAdapter.prev_end; i++)
+                                {
+                                    var child = mAdapter.views[i];
+                                    removeViewInLayout(child);
+                                }
+                            }
+                            mAdapter.prev_end = mAdapter.end;
+                        }
+                    }
+                    isInLayout = false;
+                    return;
+                }
+                else
+                {
+                    int diffStart = mAdapter.start - mAdapter.prev_start;
+                    int diffEnd = mAdapter.end - mAdapter.prev_end;
+                    int diffStartInverse = mAdapter.prev_start - mAdapter.start;
+                    int diffEndInverse = mAdapter.prev_end - mAdapter.end;
+
+                    if (diffStart != 0)
+                    {
+                        if (diffStart > 0)
+                        {
+                            Log.d("removing views from " + mAdapter.prev_start + " with a count of " + diffStart);
+                            removeViewsInLayout(mAdapter.prev_start, diffStart);
+                        }
+                        else
+                        {
+                            Log.d("adding views from " + mAdapter.start + " to " + mAdapter.prev_start + " with a count of " + diffStartInverse);
+                            for (int i = mAdapter.start - 1; i >= mAdapter.prev_start; i--)
+                            {
+                                View child = mAdapter.views[i];
+                                addViewInLayout(child, 0, child.mLayoutParams);
+                            }
+                        }
+                    }
+                    if (diffEnd != 0)
+                    {
+                        if (diffEnd < 0)
+                        {
+                            Log.d("removing views from " + mAdapter.end + " with a count of " + diffEndInverse);
+                            removeViewsInLayout(mAdapter.end, diffEndInverse);
+                        }
+                        else
+                        {
+                            if (diffEnd != mChildrenCount)
+                            {
+                                Log.d("adding views from " + mAdapter.prev_end + " to " + mAdapter.end + " with a count of " + diffEnd);
+                                for (int i = mAdapter.prev_end; i < mAdapter.end; i++)
+                                {
+                                    View child = mAdapter.views[i];
+                                    addViewInLayout(child, -1, child.mLayoutParams);
+                                }
+                            }
+                        }
+                    }
                 }
             }
             if (mOrientation == OrientationMode.VERTICAL)
@@ -1183,23 +1367,6 @@ namespace AndroidUI.Widgets
             else
             {
                 layoutHorizontal(l, t, r, b);
-            }
-        }
-
-        protected override void onScrollChanged(int scrollX, int scrollY, int oldScrollX, int oldScrollY)
-        {
-            base.onScrollChanged(scrollX, scrollY, oldScrollX, oldScrollY);
-            if (mOrientation == OrientationMode.VERTICAL)
-            {
-                if (scrollY > oldScrollY)
-                {
-                    // scrolling down
-                    if (scrollY >= getMeasuredHeight())
-                    {
-                        //mAdapter.end++;
-                        //requestLayout();
-                    }
-                }
             }
         }
 
@@ -1483,28 +1650,119 @@ namespace AndroidUI.Widgets
             return getMeasuredHeight();
         }
 
-        public int ScrollHostGetChildTotalMeasuredWidth()
+        public bool ScrollHostCanScrollLeftOrUp()
         {
-            if (mOrientation == OrientationMode.VERTICAL)
-            {
-                return getMeasuredWidth();
-            }
-            else
-            {
-                return mTotalLength;
-            }
+            return true;
         }
 
-        public int ScrollHostGetChildTotalMeasuredHeight()
+        public int ScrollHostGetChildLeft()
         {
-            if (mOrientation == OrientationMode.HORIZONTAL)
+            return mChildren[0].getLeft();
+        }
+
+        public int ScrollHostGetChildTop()
+        {
+            return mChildren[0].getTop();
+        }
+
+        public bool ScrollHostCanScrollRightOrDown()
+        {
+            return true;
+        }
+
+        public int ScrollHostGetChildRight()
+        {
+            return mChildren[mChildrenCount - 1].getRight();
+        }
+
+        public int ScrollHostGetChildBottom()
+        {
+            return mChildren[mChildrenCount - 1].getBottom();
+        }
+
+        public void ScrollHostTryScrollTo(View target_view, int x, int y)
+        {
+            bool changed = false;
+            lock (adapterLock)
             {
-                return getMeasuredHeight();
+                if (mOrientation == OrientationMode.VERTICAL)
+                {
+                    int newTop = y + getTop();
+                    int newBottom = y + getBottom();
+                    int oldY = getScrollY();
+                    View first = mChildren[0];
+                    View last = mChildren[mChildrenCount - 1];
+                    Log.d("first = " + first);
+                    Log.d("last = " + last);
+                    if (y > oldY)
+                    {
+                        // scrolling down
+
+                        int first_item_bottom = first.getBottom();
+                        int last_item_bottom = last.getBottom();
+
+                        if (newTop > first_item_bottom)
+                        {
+                            Log.d("newTop (" + newTop + ") > first_item_bottom (" + first_item_bottom + "), adapter start = " + mAdapter.start + ", adapter end = " + mAdapter.end + ", adapter item count = " + mAdapter.views.Count);
+                            if (mAdapter.start < mAdapter.views.Count && mAdapter.end < mAdapter.views.Count)
+                            {
+                                mAdapter.prev_start = mAdapter.start;
+                                mAdapter.start++;
+                                changed = true;
+                            }
+                        }
+                        if (newBottom > last_item_bottom)
+                        {
+                            Log.d("newBottom (" + newBottom + ") > last_item_bottom (" + last_item_bottom + "), adapter end = " + mAdapter.end + ", adapter item count = " + mAdapter.views.Count);
+                            if (mAdapter.start < mAdapter.views.Count && mAdapter.end < mAdapter.views.Count)
+                            {
+                                mAdapter.prev_end = mAdapter.end;
+                                mAdapter.end++;
+                                changed = true;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // scrolling up
+
+                        int first_item_top = first.getTop();
+                        int last_item_top = last.getTop();
+
+                        if (newBottom < last_item_top)
+                        {
+                            Log.d("newBottom (" + newBottom + ") < last_item_bottom (" + last_item_top + "), adapter end = " + mAdapter.end + ", adapter item count = " + mAdapter.views.Count);
+                            if (mAdapter.start > 0 && mAdapter.end > 0 && mAdapter.end <= mAdapter.views.Count)
+                            {
+                                mAdapter.prev_end = mAdapter.end;
+                                mAdapter.end--;
+                                changed = true;
+                            }
+                        }
+
+                        if (newTop < first_item_top)
+                        {
+                            Log.d("newTop (" + newTop + ") < first_item_top (" + first_item_top + "), adapter start = " + mAdapter.start + ", adapter item count = " + mAdapter.views.Count);
+                            if (mAdapter.start > 0 && mAdapter.end > 0)
+                            {
+                                mAdapter.prev_start = mAdapter.start;
+                                mAdapter.start--;
+                                changed = true;
+                            }
+                        }
+                    }
+                }
+
+                if (changed)
+                {
+                    requestLayout();
+                    invalidate();
+                }
             }
-            else
-            {
-                return mTotalLength;
-            }
+        }
+        public Context ScrollHostGetContext()
+        {
+            return Context;
         }
     }
 }

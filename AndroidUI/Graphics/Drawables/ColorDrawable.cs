@@ -87,7 +87,7 @@ namespace AndroidUI.Graphics.Drawables
             mMutated = false;
         }
 
-        override public void draw(SkiaSharp.SKCanvas canvas)
+        override public void draw(Canvas canvas)
         {
             ColorFilter colorFilter = mPaint.getColorFilter();
             if (mColorState.mUseColor.UnsignedRightShift(24) != 0 || colorFilter != null

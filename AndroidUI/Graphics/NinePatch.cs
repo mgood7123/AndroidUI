@@ -186,9 +186,9 @@ namespace AndroidUI.Graphics
          * @param canvas A container for the current matrix and clip used to draw the NinePatch.
          * @param location Where to draw the NinePatch.
          */
-        public void draw(SKCanvas canvas, RectF location)
+        public void draw(Canvas canvas, RectF location)
         {
-            canvas.DrawPatch(this, location, mPaint.getNativeInstance());
+            canvas.DrawNinePatch(this, location, mPaint.getNativeInstance());
         }
 
         /** 
@@ -197,9 +197,9 @@ namespace AndroidUI.Graphics
          * @param canvas A container for the current matrix and clip used to draw the NinePatch.
          * @param location Where to draw the NinePatch.
          */
-        public void draw(SKCanvas canvas, Rect location)
+        public void draw(Canvas canvas, Rect location)
         {
-            canvas.DrawPatch(this, location, mPaint.getNativeInstance());
+            canvas.DrawNinePatch(this, location, mPaint.getNativeInstance());
         }
 
         /** 
@@ -210,9 +210,9 @@ namespace AndroidUI.Graphics
          * @param location Where to draw the NinePatch.
          * @param paint The Paint to draw through.
          */
-        public void draw(SKCanvas canvas, Rect location, Paint paint)
+        public void draw(Canvas canvas, Rect location, Paint paint)
         {
-            canvas.DrawPatch(this, location, paint.getNativeInstance());
+            canvas.DrawNinePatch(this, location, paint.getNativeInstance());
         }
 
         /**

@@ -1,12 +1,12 @@
-﻿using System.Runtime.InteropServices;
+﻿using AndroidUI.Utils;
+using System.Runtime.InteropServices;
 
 namespace AndroidUI.OS
 {
     public static partial class Terminal
     {
-#pragma warning disable CA1063 // Implement IDisposable Correctly
 
-        public abstract class IProcessPackage : IDisposable
+        public abstract class IProcessPackage : Disposable
         {
             protected readonly ITerminal parent;
             protected readonly bool needsInput;
@@ -128,44 +128,19 @@ namespace AndroidUI.OS
                 processExitCode = code;
             }
 
-            protected virtual void OnDispose() { }
+            protected abstract void OnDestroy();
 
-            private void Dispose(bool disposing)
+            protected sealed override void OnDispose()
             {
-                if (!disposedValue)
+                lock (parent.children)
                 {
-                    if (disposing)
-                    {
-                        // TODO: dispose managed state (managed objects)
-                    }
-
-                    // TODO: free unmanaged resources (unmanaged objects) and override finalizer
-                    // TODO: set large fields to null
-                    disposedValue = true;
-                    lock (parent.children)
-                    {
-                        parent.children.Remove(this);
-                    }
-                    OnDispose();
+                    parent.children.Remove(this);
                 }
-            }
-
-            // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
-            ~IProcessPackage()
-            {
-                // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-                Dispose(disposing: false);
-            }
-
-            public void Dispose()
-            {
-                // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-                Dispose(disposing: true);
-                GC.SuppressFinalize(this);
+                OnDestroy();
             }
         }
 
-        public abstract class ITerminal : IDisposable
+        public abstract class ITerminal : Disposable
         {
             internal Utils.Lists.CopyOnWriteList<IProcessPackage> children = new();
             private bool disposedValue;
@@ -176,7 +151,26 @@ namespace AndroidUI.OS
             public bool RedirectOutput { get; set; }
 
             protected abstract void OnInit();
-            protected abstract void OnDispose();
+            protected abstract void OnDestroy();
+
+            protected sealed override void OnDispose()
+            {
+                lock (terminals)
+                {
+                    lock (children)
+                    {
+                        foreach (var child in children)
+                        {
+                            child.Dispose();
+                        }
+                    }
+                    terminals.Remove(this);
+                    if (terminals.Count == 0)
+                    {
+                        OnDestroy();
+                    }
+                }
+            }
 
             internal void Init()
             {
@@ -187,29 +181,6 @@ namespace AndroidUI.OS
                         OnInit();
                     }
                     terminals.Add(this);
-                }
-            }
-
-            void DisposeInternal()
-            {
-                if (!disposedValue)
-                {
-                    lock (terminals)
-                    {
-                        lock (children)
-                        {
-                            foreach (var child in children)
-                            {
-                                child.Dispose();
-                            }
-                        }
-                        terminals.Remove(this);
-                        if (terminals.Count == 0)
-                        {
-                            OnDispose();
-                        }
-                    }
-                    disposedValue = true;
                 }
             }
 
@@ -244,19 +215,7 @@ namespace AndroidUI.OS
                 children.Add(package);
                 return package;
             }
-
-            ~ITerminal()
-            {
-                DisposeInternal();
-            }
-
-            public void Dispose()
-            {
-                DisposeInternal();
-                GC.SuppressFinalize(this);
-            }
         }
-#pragma warning restore CA1063 // Implement IDisposable Correctly
 
         static Utils.Lists.CopyOnWriteList<ITerminal> terminals = new();
 

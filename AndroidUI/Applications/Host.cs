@@ -19,8 +19,7 @@ namespace AndroidUI.Applications
         public void setDensity(float density, int dpi)
         {
             Log.d(ToString(), "density changed: " + density + ", dpi: " + dpi);
-            Application.SetDensity(density, dpi);
-            application?.OnScreenDensityChanged();
+            application?.SetDensity(density, dpi);
         }
 
         /**

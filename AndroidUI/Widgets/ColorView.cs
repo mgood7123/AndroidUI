@@ -47,7 +47,7 @@ namespace AndroidUI.Widgets
             rect = new(0, 0, w, h);
         }
 
-        protected override void onDraw(SKCanvas canvas)
+        protected override void onDraw(Canvas canvas)
         {
             canvas.DrawRect(rect, paint);
         }

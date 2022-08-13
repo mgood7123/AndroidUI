@@ -30,7 +30,7 @@ namespace AndroidUI.OS
                     EnableVirtualTerminalSequenceProcessing();
                 }
 
-                protected override void OnDispose()
+                protected override void OnDestroy()
                 {
                     RestoreVirtualTerminalSequenceProcessing();
                 }
@@ -85,7 +85,7 @@ namespace AndroidUI.OS
                     Stream memory;
                     private readonly object LOCK = new();
 
-                    protected override void OnDispose()
+                    protected override void OnDestroy()
                     {
                         WaitForExit();
                         if (memory != null)

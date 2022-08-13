@@ -550,18 +550,21 @@ namespace AndroidUI.Widgets
          */
         public void setImageBitmap(Bitmap bm)
         {
-            // Hacky fix to force setImageDrawable to do a full setImageDrawable
-            // instead of doing an object reference comparison
-            mDrawable = null;
-            if (mRecycleableBitmapDrawable == null)
+            RunOnUIThread(() =>
             {
-                mRecycleableBitmapDrawable = new BitmapDrawable(bm);
-            }
-            else
-            {
-                mRecycleableBitmapDrawable.setBitmap(bm);
-            }
-            setImageDrawable(mRecycleableBitmapDrawable);
+                // Hacky fix to force setImageDrawable to do a full setImageDrawable
+                // instead of doing an object reference comparison
+                mDrawable = null;
+                if (mRecycleableBitmapDrawable == null)
+                {
+                    mRecycleableBitmapDrawable = new BitmapDrawable(Context, bm);
+                }
+                else
+                {
+                    mRecycleableBitmapDrawable.setBitmap(bm);
+                }
+                setImageDrawable(mRecycleableBitmapDrawable);
+            });
         }
 
         /**
@@ -1229,7 +1232,7 @@ namespace AndroidUI.Widgets
         }
 
         override
-            protected void onDraw(SKCanvas canvas)
+            protected void onDraw(Canvas canvas)
         {
             base.onDraw(canvas);
 

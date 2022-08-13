@@ -314,7 +314,7 @@ namespace AndroidUI.Widgets
             return mDividerWidth;
         }
 
-        protected override void onDraw(SKCanvas canvas)
+        protected override void onDraw(Canvas canvas)
         {
             if (mDivider == null)
             {
@@ -331,7 +331,7 @@ namespace AndroidUI.Widgets
             }
         }
 
-        void drawDividersVertical(SKCanvas canvas)
+        void drawDividersVertical(Canvas canvas)
         {
             int count = getVirtualChildCount();
             for (int i = 0; i < count; i++)
@@ -387,7 +387,7 @@ namespace AndroidUI.Widgets
             return null;
         }
 
-        void drawDividersHorizontal(SKCanvas canvas)
+        void drawDividersHorizontal(Canvas canvas)
         {
             int count = getVirtualChildCount();
             bool isLayoutRtl_ = isLayoutRtl();
@@ -444,14 +444,14 @@ namespace AndroidUI.Widgets
             }
         }
 
-        void drawHorizontalDivider(SKCanvas canvas, int top)
+        void drawHorizontalDivider(Canvas canvas, int top)
         {
             mDivider.setBounds(getPaddingLeft() + mDividerPadding, top,
             getWidth() - getPaddingRight() - mDividerPadding, top + mDividerHeight);
             mDivider.draw(canvas);
         }
 
-        void drawVerticalDivider(SKCanvas canvas, int left)
+        void drawVerticalDivider(Canvas canvas, int left)
         {
             mDivider.setBounds(left, getPaddingTop() + mDividerPadding,
             left + mDividerWidth, getHeight() - getPaddingBottom() - mDividerPadding);

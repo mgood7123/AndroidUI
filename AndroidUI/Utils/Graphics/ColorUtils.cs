@@ -37,14 +37,7 @@ namespace AndroidUI.Utils.Graphics
         private const int MIN_ALPHA_SEARCH_MAX_ITERATIONS = 10;
         private const int MIN_ALPHA_SEARCH_PRECISION = 1;
 
-        static ValueHolder<double[]> TEMP_ARRAY(Context context)
-        {
-            if (context == null)
-            {
-                return null;
-            }
-            return context.storage.GetOrCreate<double[]>(StorageKeys.ColorUtilsTempArray, null);
-        }
+        static Context.ContextVariable<double[]> TEMP_ARRAY = new(StorageKeys.ColorUtilsTempArray, context => null);
 
         /**
          * Composite two potentially translucent colors over each other and returns the result.
@@ -716,7 +709,7 @@ namespace AndroidUI.Utils.Graphics
 
         private static double[] getTempDouble3Array(Context context)
         {
-            var m = TEMP_ARRAY(context);
+            var m = TEMP_ARRAY.Get(context);
             double[] result = m.Value;
             if (result == null)
             {

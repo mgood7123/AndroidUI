@@ -30,5 +30,6 @@ namespace AndroidUI.Utils
         internal static string AnimationFrameworkAnimationState = "ANDROID_UI_AnimationFrameworkAnimationState";
         internal static string MAIN_THREAD_HANDLER = "ANDROID_UI_MAIN_THREAD_HANDLER";
         internal static string AnimationHandler = "ANDROID_UI_AnimationHandler";
+        internal static string BitmapDrawableDstRect = "ANDROID_UI_BitmapDrawableDstRect";
     }
 }

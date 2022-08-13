@@ -40,13 +40,11 @@ namespace AndroidUI.AnimationFramework.Animation
             internal long lastReportedTimeMillis;
         };
 
+        static Context.ContextVariable<AnimationState> sAnimationStateLocal = new(StorageKeys.AnimationFrameworkAnimationState, context => () => new());
+
         static ValueHolder<AnimationState> sAnimationState(Context context)
         {
-            if (context == null)
-            {
-                return null;
-            }
-            return context.storage.GetOrCreate<AnimationState>(StorageKeys.AnimationFrameworkAnimationState, () => new());
+            return sAnimationStateLocal.Get(context);
         }
 
         /**

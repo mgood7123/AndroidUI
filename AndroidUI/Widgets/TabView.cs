@@ -36,11 +36,12 @@ namespace AndroidUI.Widgets
             Topten_RichTextKit_TextView a = new();
             a.setText(title);
             a.setTextSize(16);
-            a.setTag(content);
+            a.setTag(title);
             a.setOnClickListener(v =>
             {
                 tabContent.removeAllViews();
-                tabContent.addView((View)v.getTag(), MATCH_PARENT_W__MATCH_PARENT_H);
+                tabContent.addView(content, MATCH_PARENT_W__MATCH_PARENT_H);
+                content.setTagIfNullRecursively(title);
             });
             tabs.addView(a, new LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.WRAP_CONTENT));
         }

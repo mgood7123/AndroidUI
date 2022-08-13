@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+using AndroidUI.Applications;
 using AndroidUI.Exceptions;
 using AndroidUI.Utils;
 using AndroidUI.Utils.Arrays;
@@ -512,7 +513,7 @@ namespace AndroidUI.Graphics
          *         is not {@link ColorSpace.Model#RGB RGB}, or if the specified color space's transfer
          *         function is not an {@link ColorSpace.Rgb.TransferParameters ICC parametric curve}
          */
-        public static Bitmap decodeFile(string pathName, Options opts)
+        public static Bitmap decodeFile(Context context, string pathName, Options opts)
         {
             Options.validate(opts);
             Bitmap bm = null;
@@ -520,7 +521,7 @@ namespace AndroidUI.Graphics
             try
             {
                 stream = new FileStream(pathName, FileMode.Open);
-                bm = decodeStream(stream, opts);
+                bm = decodeStream(context, stream, opts);
             }
             catch (Exception e)
             {
@@ -553,9 +554,9 @@ namespace AndroidUI.Graphics
          * @param pathName complete path name for the file to be decoded.
          * @return the resulting decoded bitmap, or null if it could not be decoded.
          */
-        public static Bitmap decodeFile(string pathName)
+        public static Bitmap decodeFile(Context context, string pathName)
         {
-            return decodeFile(pathName, null);
+            return decodeFile(context, pathName, null);
         }
 
         /**
@@ -576,7 +577,7 @@ namespace AndroidUI.Graphics
          *         is not {@link ColorSpace.Model#RGB RGB}, or if the specified color space's transfer
          *         function is not an {@link ColorSpace.Rgb.TransferParameters ICC parametric curve}
          */
-        public static Bitmap decodeByteArray(byte[] data, int offset, int length, Options opts)
+        public static Bitmap decodeByteArray(Context context, byte[] data, int offset, int length, Options opts)
         {
             if ((offset | length) < 0 || data.Length < offset + length)
             {
@@ -588,7 +589,7 @@ namespace AndroidUI.Graphics
 
             try
             {
-                bm = nativeDecodeByteArray(data, offset, length, opts,
+                bm = nativeDecodeByteArray(context, data, offset, length, opts,
                         Options.nativeInBitmap(opts),
                         Options.nativeColorSpace(opts));
 
@@ -596,7 +597,7 @@ namespace AndroidUI.Graphics
                 {
                     throw new IllegalArgumentException("Problem decoding into existing bitmap");
                 }
-                setDensityFromOptions(bm, opts);
+                setDensityFromOptions(context, bm, opts);
             }
             finally
             {
@@ -614,15 +615,15 @@ namespace AndroidUI.Graphics
          * @param length the number of bytes, beginning at offset, to parse
          * @return The decoded bitmap, or null if the image could not be decoded.
          */
-        public static Bitmap decodeByteArray(byte[] data, int offset, int length)
+        public static Bitmap decodeByteArray(Context context, byte[] data, int offset, int length)
         {
-            return decodeByteArray(data, offset, length, null);
+            return decodeByteArray(context, data, offset, length, null);
         }
 
         /**
          * Set the newly decoded bitmap's density based on the Options.
          */
-        private static void setDensityFromOptions(Bitmap outputBitmap, Options opts)
+        private static void setDensityFromOptions(Context context, Bitmap outputBitmap, Options opts)
         {
             if (outputBitmap == null || opts == null) return;
 
@@ -646,7 +647,7 @@ namespace AndroidUI.Graphics
             else if (opts.inBitmap != null)
             {
                 // bitmap was reused, ensure density is reset
-                outputBitmap.setDensity(Bitmap.getDefaultDensity());
+                outputBitmap.setDensity(context.densityManager.ScreenDpi);
             }
         }
 
@@ -678,7 +679,7 @@ namespace AndroidUI.Graphics
          * <code>is.mark(1024)</code> would be called. As of
          * {@link android.os.Build.VERSION_CODES#KITKAT}, this is no longer the case.</p>
          */
-        public static Bitmap decodeStream(Stream stream, out Rect outPadding,
+        public static Bitmap decodeStream(Context context, Stream stream, out Rect outPadding,
             Options opts)
         {
             outPadding = null;
@@ -694,14 +695,14 @@ namespace AndroidUI.Graphics
 
             try
             {
-                bm = decodeStreamInternal(stream, out outPadding, opts);
+                bm = decodeStreamInternal(context, stream, out outPadding, opts);
 
                 if (bm == null && opts != null && opts.inBitmap != null)
                 {
                     throw new IllegalArgumentException("Problem decoding into existing bitmap");
                 }
 
-                setDensityFromOptions(bm, opts);
+                setDensityFromOptions(context, bm, opts);
             }
             finally
             {
@@ -738,7 +739,7 @@ namespace AndroidUI.Graphics
          * <code>is.mark(1024)</code> would be called. As of
          * {@link android.os.Build.VERSION_CODES#KITKAT}, this is no longer the case.</p>
          */
-        public static Bitmap decodeStream(Stream stream, Options opts)
+        public static Bitmap decodeStream(Context context, Stream stream, Options opts)
         {
             // we don't throw in this case, thus allowing the caller to only check
             // the cache, and not force the image to be decoded.
@@ -752,14 +753,14 @@ namespace AndroidUI.Graphics
 
             try
             {
-                bm = decodeStreamInternal(stream, opts);
+                bm = decodeStreamInternal(context, stream, opts);
 
                 if (bm == null && opts != null && opts.inBitmap != null)
                 {
                     throw new IllegalArgumentException("Problem decoding into existing bitmap");
                 }
 
-                setDensityFromOptions(bm, opts);
+                setDensityFromOptions(context, bm, opts);
             }
             finally
             {
@@ -772,7 +773,7 @@ namespace AndroidUI.Graphics
          * Private helper function for decoding an InputStream natively. Buffers the input enough to
          * do a rewind as needed, and supplies temporary storage if necessary. is MUST NOT be null.
          */
-        private static Bitmap decodeStreamInternal(Stream stream,
+        private static Bitmap decodeStreamInternal(Context context, Stream stream,
                 out Rect outPadding, Options opts)
         {
             ArgumentNullException.ThrowIfNull(stream);
@@ -782,7 +783,7 @@ namespace AndroidUI.Graphics
             }
             int tempStorageSize = opts != null && opts.inTempStorageSize > 0 ? opts.inTempStorageSize : DECODE_BUFFER_SIZE;
             int[] padding;
-            Bitmap r = nativeDecodeStream(stream, tempStorageSize, out padding, opts,
+            Bitmap r = nativeDecodeStream(context, stream, tempStorageSize, out padding, opts,
                     Options.nativeInBitmap(opts),
                     Options.nativeColorSpace(opts));
             outPadding = new(padding[0], padding[1], padding[2], padding[3]);
@@ -793,7 +794,7 @@ namespace AndroidUI.Graphics
          * Private helper function for decoding an InputStream natively. Buffers the input enough to
          * do a rewind as needed, and supplies temporary storage if necessary. is MUST NOT be null.
          */
-        private static Bitmap decodeStreamInternal(Stream stream, Options opts)
+        private static Bitmap decodeStreamInternal(Context context, Stream stream, Options opts)
         {
             ArgumentNullException.ThrowIfNull(stream);
             if (!stream.CanRead)
@@ -801,7 +802,7 @@ namespace AndroidUI.Graphics
                 throw new UnauthorizedAccessException("the given stream does not support reading");
             }
             int tempStorageSize = opts != null && opts.inTempStorageSize > 0 ? opts.inTempStorageSize : DECODE_BUFFER_SIZE;
-            return nativeDecodeStream(stream, tempStorageSize, opts,
+            return nativeDecodeStream(context, stream, tempStorageSize, opts,
                     Options.nativeInBitmap(opts),
                     Options.nativeColorSpace(opts));
         }
@@ -816,9 +817,9 @@ namespace AndroidUI.Graphics
          *           bitmap.
          * @return The decoded bitmap, or null if the image data could not be decoded.
          */
-        public static Bitmap decodeStream(Stream stream)
+        public static Bitmap decodeStream(Context context, Stream stream)
         {
-            return decodeStream(stream, null);
+            return decodeStream(context, stream, null);
         }
 
         /**
@@ -840,7 +841,7 @@ namespace AndroidUI.Graphics
          *         is not {@link ColorSpace.Model#RGB RGB}, or if the specified color space's transfer
          *         function is not an {@link ColorSpace.Rgb.TransferParameters ICC parametric curve}
          */
-        public static Bitmap decodeFileDescriptor(Microsoft.Win32.SafeHandles.SafeFileHandle fd, out Rect outPadding, Options opts)
+        public static Bitmap decodeFileDescriptor(Context context, Microsoft.Win32.SafeHandles.SafeFileHandle fd, out Rect outPadding, Options opts)
         {
             Options.validate(opts);
             Bitmap bm;
@@ -850,7 +851,7 @@ namespace AndroidUI.Graphics
                 FileStream fis = new(fd, FileAccess.Read);
                 try
                 {
-                    bm = decodeStreamInternal(fis, out outPadding, opts);
+                    bm = decodeStreamInternal(context, fis, out outPadding, opts);
                 }
                 finally
                 {
@@ -866,7 +867,7 @@ namespace AndroidUI.Graphics
                     throw new IllegalArgumentException("Problem decoding into existing bitmap");
                 }
 
-                setDensityFromOptions(bm, opts);
+                setDensityFromOptions(context, bm, opts);
             }
             finally
             {
@@ -893,7 +894,7 @@ namespace AndroidUI.Graphics
          *         is not {@link ColorSpace.Model#RGB RGB}, or if the specified color space's transfer
          *         function is not an {@link ColorSpace.Rgb.TransferParameters ICC parametric curve}
          */
-        public static Bitmap decodeFileDescriptor(Microsoft.Win32.SafeHandles.SafeFileHandle fd, Options opts)
+        public static Bitmap decodeFileDescriptor(Context context, Microsoft.Win32.SafeHandles.SafeFileHandle fd, Options opts)
         {
             Options.validate(opts);
             Bitmap bm;
@@ -903,7 +904,7 @@ namespace AndroidUI.Graphics
                 FileStream fis = new(fd, FileAccess.Read);
                 try
                 {
-                    bm = decodeStreamInternal(fis, opts);
+                    bm = decodeStreamInternal(context, fis, opts);
                 }
                 finally
                 {
@@ -919,7 +920,7 @@ namespace AndroidUI.Graphics
                     throw new IllegalArgumentException("Problem decoding into existing bitmap");
                 }
 
-                setDensityFromOptions(bm, opts);
+                setDensityFromOptions(context, bm, opts);
             }
             finally
             {
@@ -935,9 +936,9 @@ namespace AndroidUI.Graphics
          * @param fd The file descriptor containing the bitmap data to decode
          * @return the decoded bitmap, or null
          */
-        public static Bitmap decodeFileDescriptor(Microsoft.Win32.SafeHandles.SafeFileHandle fd)
+        public static Bitmap decodeFileDescriptor(Context context, Microsoft.Win32.SafeHandles.SafeFileHandle fd)
         {
-            return decodeFileDescriptor(fd, null);
+            return decodeFileDescriptor(context, fd, null);
         }
 
         static string getMimeType(SKEncodedImageFormat format)
@@ -1175,19 +1176,19 @@ namespace AndroidUI.Graphics
                    needsFineScale(fullSize.Height, decodedSize.Height, sampleSize);
         }
 
-        static Bitmap doDecode(SKStreamRewindable stream, Options options,
+        static Bitmap doDecode(Context context, SKStreamRewindable stream, Options options,
             SKBitmap bitmapHandle, SKColorSpace colorSpaceHandle)
         {
-            return doDecode(stream, false, out var padding, options, bitmapHandle, colorSpaceHandle);
+            return doDecode(context, stream, false, out var padding, options, bitmapHandle, colorSpaceHandle);
         }
 
-        static Bitmap doDecode(SKStreamRewindable stream, out int[] padding, Options options,
+        static Bitmap doDecode(Context context, SKStreamRewindable stream, out int[] padding, Options options,
             SKBitmap bitmapHandle, SKColorSpace colorSpaceHandle)
         {
-            return doDecode(stream, true, out padding, options, bitmapHandle, colorSpaceHandle);
+            return doDecode(context, stream, true, out padding, options, bitmapHandle, colorSpaceHandle);
         }
 
-        private static Bitmap doDecode(SKStreamRewindable stream, bool hasPadding, out int[] padding, Options options,
+        private static Bitmap doDecode(Context context, SKStreamRewindable stream, bool hasPadding, out int[] padding, Options options,
             SKBitmap bitmapHandle, SKColorSpace colorSpaceHandle)
         {
             padding = null;
@@ -1677,11 +1678,11 @@ namespace AndroidUI.Graphics
                 {
                     Console.WriteLine("Failed to allocate a hardware bitmap");
                 }
-                return createBitmap(hardwareBitmap, bitmapCreateFlags, ninePatchChunk, ninePatchInsets, -1, isHardware);
+                return createBitmap(context, hardwareBitmap, bitmapCreateFlags, ninePatchChunk, ninePatchInsets, -1, isHardware);
             }
 
             // now create the java bitmap
-            return createBitmap(defaultAllocator.getStorageObjAndReset(), bitmapCreateFlags, ninePatchChunk, ninePatchInsets, -1, isHardware);
+            return createBitmap(context, defaultAllocator.getStorageObjAndReset(), bitmapCreateFlags, ninePatchChunk, ninePatchInsets, -1, isHardware);
         }
 
         // Assert that bitmap's SkAlphaType is consistent with isPremultiplied.
@@ -1710,13 +1711,13 @@ namespace AndroidUI.Graphics
         }
 
 
-        internal static Bitmap createBitmap(SKBitmap bitmap, BitmapCreateFlags bitmapCreateFlags)
+        internal static Bitmap createBitmap(Context context, SKBitmap bitmap, BitmapCreateFlags bitmapCreateFlags)
         {
-            return createBitmap(bitmap, bitmapCreateFlags, null, null, -1, false);
+            return createBitmap(context, bitmap, bitmapCreateFlags, null, null, -1, false);
         }
 
         internal static Bitmap createBitmap(
-            SKBitmap bitmap, BitmapCreateFlags bitmapCreateFlags,
+            Context context, SKBitmap bitmap, BitmapCreateFlags bitmapCreateFlags,
             byte[] ninePatchChunk, NinePatch.InsetStruct ninePatchInsets,
             int density, bool isHardware
         )
@@ -1734,7 +1735,7 @@ namespace AndroidUI.Graphics
             {
                 bitmap.SetImmutable();
             }
-            return new Bitmap(bitmap, bitmap.Width, bitmap.Height, density, isPremultiplied, ninePatchChunk, ninePatchInsets, isHardware);
+            return new Bitmap(context, bitmap, bitmap.Width, bitmap.Height, density, isPremultiplied, ninePatchChunk, ninePatchInsets, isHardware);
         }
 
         internal static SKBitmap allocateHeapBitmap(SKBitmap bitmap)
@@ -1895,7 +1896,7 @@ namespace AndroidUI.Graphics
             return flags;
         }
 
-        internal static Bitmap Bitmap_creator(int offset, int stride, int width, int height,
+        internal static Bitmap Bitmap_creator(Context context, int offset, int stride, int width, int height,
                                       Bitmap.Config configHandle, bool isMutable,
                                       SKColorSpace colorSpacePtr)
         {
@@ -1928,10 +1929,10 @@ namespace AndroidUI.Graphics
                 return null;
             }
 
-            return createBitmap(nativeBitmap, getPremulBitmapCreateFlags(isMutable));
+            return createBitmap(context, nativeBitmap, getPremulBitmapCreateFlags(isMutable));
         }
 
-        internal static Bitmap Bitmap_creator(SKColor[] jColors,
+        internal static Bitmap Bitmap_creator(Context context, SKColor[] jColors,
                                       int offset, int stride, int width, int height,
                                       Bitmap.Config configHandle, bool isMutable,
                                       SKColorSpace colorSpacePtr)
@@ -1979,10 +1980,10 @@ namespace AndroidUI.Graphics
                 SetPixels(jColors, offset, stride, 0, 0, width, height, bitmap);
             }
 
-            return createBitmap(nativeBitmap, getPremulBitmapCreateFlags(isMutable));
+            return createBitmap(context, nativeBitmap, getPremulBitmapCreateFlags(isMutable));
         }
 
-        internal static Bitmap Bitmap_creator(uint[] jColors,
+        internal static Bitmap Bitmap_creator(Context context, uint[] jColors,
                                       int offset, int stride, int width, int height,
                                       Bitmap.Config configHandle, bool isMutable,
                                       SKColorSpace colorSpacePtr)
@@ -2030,10 +2031,10 @@ namespace AndroidUI.Graphics
                 SetPixels(jColors, offset, stride, 0, 0, width, height, bitmap);
             }
 
-            return createBitmap(nativeBitmap, getPremulBitmapCreateFlags(isMutable));
+            return createBitmap(context, nativeBitmap, getPremulBitmapCreateFlags(isMutable));
         }
 
-        internal static Bitmap Bitmap_creator(int[] jColors,
+        internal static Bitmap Bitmap_creator(Context context, int[] jColors,
                                       int offset, int stride, int width, int height,
                                       Bitmap.Config configHandle, bool isMutable,
                                       SKColorSpace colorSpacePtr)
@@ -2081,28 +2082,30 @@ namespace AndroidUI.Graphics
                 SetPixels(jColors, offset, stride, 0, 0, width, height, bitmap);
             }
 
-            return createBitmap(nativeBitmap, getPremulBitmapCreateFlags(isMutable));
+            return createBitmap(context, nativeBitmap, getPremulBitmapCreateFlags(isMutable));
         }
 
         static Bitmap nativeDecodeStream(
-            Stream stream, int size, Options options, SKBitmap inBitmapHandle, SKColorSpace colorSpaceHandle)
+            Context context, Stream stream, int size, Options options,
+            SKBitmap inBitmapHandle, SKColorSpace colorSpaceHandle
+        )
         {
             using SKFrontBufferedManagedStream a = new(stream, size, false);
             using SKFrontBufferedManagedStream b = new(a, SKCodec.MinBufferedBytesNeeded, false);
-            return doDecode(b, options, inBitmapHandle, colorSpaceHandle);
+            return doDecode(context, b, options, inBitmapHandle, colorSpaceHandle);
         }
 
         static Bitmap nativeDecodeStream(
-            Stream stream, int size, out int[] padding,
+            Context context, Stream stream, int size, out int[] padding,
             Options options, SKBitmap inBitmapHandle, SKColorSpace colorSpaceHandle)
         {
             using SKFrontBufferedManagedStream a = new(stream, size, false);
             using SKFrontBufferedManagedStream b = new(a, SKCodec.MinBufferedBytesNeeded, false);
-            return doDecode(b, out padding, options, inBitmapHandle, colorSpaceHandle);
+            return doDecode(context, b, out padding, options, inBitmapHandle, colorSpaceHandle);
         }
 
         static Bitmap nativeDecodeByteArray(
-            MemoryPointer<byte> byteArray,
+            Context context, MemoryPointer<byte> byteArray,
             int offset, int length,
             Options options, SKBitmap inBitmapHandle, SKColorSpace colorSpaceHandle)
         {
@@ -2115,7 +2118,7 @@ namespace AndroidUI.Graphics
             };
             MemoryStream m = new(bytes, 0, length);
             using SKFrontBufferedManagedStream a = new(m, length, false);
-            return doDecode(a, options, inBitmapHandle, colorSpaceHandle);
+            return doDecode(context, a, options, inBitmapHandle, colorSpaceHandle);
         }
     }
 }

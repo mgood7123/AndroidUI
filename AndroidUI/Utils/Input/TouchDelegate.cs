@@ -88,7 +88,7 @@ namespace AndroidUI.Utils.Input
         {
             mBounds = bounds;
 
-            mSlop = ViewConfiguration.get(delegateView.Context).getScaledTouchSlop();
+            mSlop = ViewConfiguration.getScaledTouchSlop(delegateView.Context);
             mSlopBounds = new Rect(bounds);
             mSlopBounds.inset(-mSlop, -mSlop);
             mDelegateView = delegateView;
