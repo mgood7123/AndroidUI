@@ -2,7 +2,7 @@
 
 namespace AndroidUI.Utils.Arrays
 {
-    public abstract class IMapper<T>
+    public interface IMapper<T>
     {
         public abstract void setValue(int arrayIndex, int fieldIndex, ref T v);
         public abstract void setValue(int arrayIndex, int fieldIndex, T v);
@@ -18,20 +18,19 @@ namespace AndroidUI.Utils.Arrays
     public delegate Type MapperFieldGet<Class, Type>(Class obj, int arrayIndex, int fieldIndex);
     public delegate void MapperFieldSet<Class, Type>(Class obj, int arrayIndex, int fieldIndex, Type value);
 
-    public unsafe class Mapper<C, T> : IMapper<T>, IDisposable where C : class
+    public unsafe class Mapper<C, T> : Disposable, IMapper<T> where C : class
     {
         C obj;
         private int length;
         private int arrayLength;
-        private bool disposedValue;
 
         private event MapperField<C, T> ev;
         private bool hasGetSet;
         private event MapperFieldGet<C, T> get_ev;
         private event MapperFieldSet<C, T> set_ev;
 
-        public override int FieldLength => length;
-        public override int ArrayLength => arrayLength;
+        public int FieldLength => length;
+        public int ArrayLength => arrayLength;
 
         /// <summary>
         /// this exists purely for passing to MapToArray
@@ -74,73 +73,49 @@ namespace AndroidUI.Utils.Arrays
             set_ev = setField ?? throw new ArgumentNullException(nameof(setField));
         }
 
-        public override void SetObject(object obj) => this.obj = (C)obj;
+        public void SetObject(object obj) => this.obj = (C)obj;
 
-        public override void setValue(int arrayIndex, int fieldIndex, ref T v)
+        public void setValue(int arrayIndex, int fieldIndex, ref T v)
         {
             if (hasGetSet) set_ev.Invoke(obj, arrayIndex, fieldIndex, v);
             else ev.Invoke(obj, arrayIndex, fieldIndex) = v;
         }
 
-        public override void setValue(int arrayIndex, int fieldIndex, T v)
+        public void setValue(int arrayIndex, int fieldIndex, T v)
         {
             if (hasGetSet) set_ev.Invoke(obj, arrayIndex, fieldIndex, v);
             else ev.Invoke(obj, arrayIndex, fieldIndex) = v;
         }
 
-        public override T getValue(int arrayIndex, int fieldIndex)
+        public T getValue(int arrayIndex, int fieldIndex)
         {
             if (hasGetSet) return get_ev.Invoke(obj, arrayIndex, fieldIndex);
             else return ev.Invoke(obj, arrayIndex, fieldIndex);
         }
 
-        protected virtual void Dispose(bool disposing)
+        protected override void OnDispose()
         {
-            if (!disposedValue)
+            if (hasGetSet)
             {
-                if (disposing)
+                Delegate[] delegates = get_ev.GetInvocationList();
+                foreach (Delegate @delegate in delegates)
                 {
-                    // TODO: dispose managed state (managed objects)
+                    get_ev -= (MapperFieldGet<C, T>)@delegate;
                 }
-
-                // TODO: free unmanaged resources (unmanaged objects) and override finalizer
-                // TODO: set large fields to null
-                if (hasGetSet)
+                delegates = set_ev.GetInvocationList();
+                foreach (Delegate @delegate in delegates)
                 {
-                    Delegate[] delegates = get_ev.GetInvocationList();
-                    foreach (Delegate @delegate in delegates)
-                    {
-                        get_ev -= (MapperFieldGet<C, T>)@delegate;
-                    }
-                    delegates = set_ev.GetInvocationList();
-                    foreach (Delegate @delegate in delegates)
-                    {
-                        set_ev -= (MapperFieldSet<C, T>)@delegate;
-                    }
+                    set_ev -= (MapperFieldSet<C, T>)@delegate;
                 }
-                else
-                {
-                    Delegate[] delegates = ev.GetInvocationList();
-                    foreach (Delegate @delegate in delegates)
-                    {
-                        ev -= (MapperField<C, T>)@delegate;
-                    }
-                }
-                disposedValue = true;
             }
-        }
-
-        ~Mapper()
-        {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-            Dispose(disposing: false);
-        }
-
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
+            else
+            {
+                Delegate[] delegates = ev.GetInvocationList();
+                foreach (Delegate @delegate in delegates)
+                {
+                    ev -= (MapperField<C, T>)@delegate;
+                }
+            }
         }
     }
 
@@ -185,6 +160,8 @@ namespace AndroidUI.Utils.Arrays
                 {
                     throw new InvalidDataException("all mappers must have the same length");
                 }
+                value = array;
+                length = getMapperArrayLength();
             }
             else
             {
@@ -193,9 +170,9 @@ namespace AndroidUI.Utils.Arrays
                 {
                     throw new InvalidCastException("array of type '" + array_type + "' is not valid for ContiguousArray<" + target_type + ">");
                 }
+                value = array;
+                length = getArrayLength();
             }
-            value = array;
-            length = getArrayLength();
         }
 
         public void AssignFrom(ContiguousArray<T> contiguousArray)
@@ -482,6 +459,17 @@ namespace AndroidUI.Utils.Arrays
             return true;
         }
 
+        int getMapperArrayLength()
+        {
+            int l = 0;
+            foreach (var item in value)
+            {
+                IMapper<T> mapper = (IMapper<T>)item;
+                l += mapper.FieldLength * mapper.ArrayLength;
+            }
+            return l;
+        }
+
         Type getArrayType(Array value)
         {
             var stack = new LinkedList<Array>();
@@ -614,6 +602,23 @@ namespace AndroidUI.Utils.Arrays
         {
             return new ContiguousArray<T>(array);
         }
+
+        public ContiguousArray<R> CastToContiguousArray<R>()
+        {
+            if (isMapper)
+            {
+                throw new Exception("cannot cast mapper");
+            }
+
+            if (typeof(R) == typeof(T)) return new(value);
+
+            ContiguousArray<R> r = new(new R[length]);
+            for (int i = 0; i < length; i++)
+            {
+                r[i] = (R)Convert.ChangeType(this[i], typeof(R));
+            }
+            return r;
+        }
     }
 
     public static class ContiguousArray
@@ -621,6 +626,11 @@ namespace AndroidUI.Utils.Arrays
         public static ContiguousArray<T> ToContiguousArray<T>(this Array a)
         {
             return new ContiguousArray<T>(a);
+        }
+
+        unsafe public static ContiguousArray<T> ToContiguousArray<T>(this IntPtr ptr, int len) where T : unmanaged
+        {
+            return Arrays.AsArray<T>(ptr, len);
         }
     }
 }
