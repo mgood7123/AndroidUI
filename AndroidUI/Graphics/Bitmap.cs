@@ -100,6 +100,7 @@ namespace AndroidUI.Graphics
                 throw new Exception("internal error: native bitmap is null");
             }
 
+            this.context = context;
             mWidth = width;
             mHeight = height;
             mRequestPremultiplied = requestPremultiplied;
