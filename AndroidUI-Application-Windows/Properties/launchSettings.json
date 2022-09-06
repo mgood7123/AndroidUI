@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "AndroidUI-Application-Windows": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}
