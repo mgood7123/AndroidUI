@@ -7,15 +7,11 @@ namespace AndroidUITest
 {
     internal class Skia : TestGroup
     {
-        class PngChunkReader : TestGroup
+        internal class PngChunkReader : TestGroup
         {
-            class _1_test : Test
+            internal class _1_test : Test
             {
-                class I
-                {
-                    public int c = 0;
-                }
-                class Reader : SKPngChunkReader
+                internal class Reader : SKPngChunkReader
                 {
                     public virtual bool OnReadChunk(string tag, IntPtr data, IntPtr length)
                     {
@@ -30,21 +26,21 @@ namespace AndroidUITest
                 }
                 public override void Run(TestGroup nullableInstance)
                 {
-                    Reader r = new();
+                    using Reader r = new();
                     Tools.ExpectTrue(r.OnReadChunk("tag", IntPtr.Zero, IntPtr.Zero), "failed to read chunk");
                 }
             }
         }
 
-        class PixelRef : TestGroup
+        internal class PixelRef : TestGroup
         {
-            class _1_test : Test
+            internal class _1_test : Test
             {
-                class I
+                internal class I
                 {
                     public int c = 0;
                 }
-                class TestListener : SKIDChangeListener
+                internal class TestListener : SKIDChangeListener
                 {
                     public TestListener(I ptr)
                     {
@@ -95,11 +91,11 @@ namespace AndroidUITest
             }
         }
 
-        class IDChangeListener : TestGroup
+        internal class IDChangeListener : TestGroup
         {
-            class Changed : Test
+            internal class Changed : Test
             {
-                class a : SKIDChangeListener
+                internal class a : SKIDChangeListener
                 {
                     public override void Changed()
                     {
@@ -115,7 +111,7 @@ namespace AndroidUITest
             }
         }
 
-        class SKSafeMath : TestGroup
+        internal class SKSafeMath : TestGroup
         {
             public static void test_signed_with_max<T>(bool flip = false) where T : unmanaged
             {
@@ -242,7 +238,7 @@ namespace AndroidUITest
                 }
             }
 
-            class test_int : Test
+            internal class test_int : Test
             {
                 public override void Run(TestGroup nullableInstance)
                 {
@@ -250,7 +246,7 @@ namespace AndroidUITest
                 }
             }
 
-            class test_uint : Test
+            internal class test_uint : Test
             {
                 public override void Run(TestGroup nullableInstance)
                 {
@@ -258,7 +254,7 @@ namespace AndroidUITest
                 }
             }
 
-            class test_long : Test
+            internal class test_long : Test
             {
                 public override void Run(TestGroup nullableInstance)
                 {
@@ -266,7 +262,7 @@ namespace AndroidUITest
                 }
             }
 
-            class test_ulong : Test
+            internal class test_ulong : Test
             {
                 public override void Run(TestGroup nullableInstance)
                 {
@@ -274,7 +270,7 @@ namespace AndroidUITest
                 }
             }
 
-            class test_int_flipped : Test
+            internal class test_int_flipped : Test
             {
                 public override void Run(TestGroup nullableInstance)
                 {
@@ -282,7 +278,7 @@ namespace AndroidUITest
                 }
             }
 
-            class test_uint_flipped : Test
+            internal class test_uint_flipped : Test
             {
                 public override void Run(TestGroup nullableInstance)
                 {
@@ -290,7 +286,7 @@ namespace AndroidUITest
                 }
             }
 
-            class test_long_flipped : Test
+            internal class test_long_flipped : Test
             {
                 public override void Run(TestGroup nullableInstance)
                 {
@@ -298,7 +294,7 @@ namespace AndroidUITest
                 }
             }
 
-            class test_ulong_flipped : Test
+            internal class test_ulong_flipped : Test
             {
                 public override void Run(TestGroup nullableInstance)
                 {
@@ -332,7 +328,7 @@ namespace AndroidUITest
                 }
             }
 
-            class test_int_zero : Test
+            internal class test_int_zero : Test
             {
                 public override void Run(TestGroup nullableInstance)
                 {
@@ -340,7 +336,7 @@ namespace AndroidUITest
                 }
             }
 
-            class test_uint_zero : Test
+            internal class test_uint_zero : Test
             {
                 public override void Run(TestGroup nullableInstance)
                 {
@@ -348,7 +344,7 @@ namespace AndroidUITest
                 }
             }
 
-            class test_long_zero : Test
+            internal class test_long_zero : Test
             {
                 public override void Run(TestGroup nullableInstance)
                 {
@@ -356,7 +352,7 @@ namespace AndroidUITest
                 }
             }
 
-            class test_ulong_zero : Test
+            internal class test_ulong_zero : Test
             {
                 public override void Run(TestGroup nullableInstance)
                 {
@@ -365,9 +361,11 @@ namespace AndroidUITest
             }
         }
 
-        class BitmapTests : TestGroup
+        internal class BitmapTests : TestGroup
         {
-            class Bitmap_T1_012 : Test
+            const string image_path = "K:/DESKTOP_BACKUP/Documents/2021-07-25 22.37.22.jpg";
+
+            internal class Bitmap_T1_012 : Test
             {
                 public override void Run(TestGroup nullableInstance)
                 {
@@ -378,7 +376,7 @@ namespace AndroidUITest
                 }
             }
 
-            class Bitmap_T2_GenerationId : Test
+            internal class Bitmap_T2_GenerationId : Test
             {
                 public override void Run(TestGroup nullableInstance)
                 {
@@ -395,7 +393,7 @@ namespace AndroidUITest
                     Tools.ExpectTrue(bitmap.GenerationId > old);
                 }
             }
-            class Bitmap_T3_ComputeIsOpaque : Test
+            internal class Bitmap_T3_ComputeIsOpaque : Test
             {
                 public override void Run(TestGroup nullableInstance)
                 {
@@ -417,9 +415,9 @@ namespace AndroidUITest
                 }
             }
 
-            class Bitmap_T4_Allocator : Test
+            internal class Bitmap_T4_Allocator : Test
             {
-                class MyAlloc : SKBitmap.Allocator
+                internal class MyAlloc : SKBitmap.Allocator
                 {
                     public override bool AllocPixelRef(SKBitmap bitmap)
                     {
@@ -438,9 +436,9 @@ namespace AndroidUITest
                 }
             }
 
-            class Bitmap_T4_Allocator2 : Test
+            internal class Bitmap_T4_Allocator2 : Test
             {
-                class MyAlloc : SKBitmap.Allocator
+                internal class MyAlloc : SKBitmap.Allocator
                 {
                     public override bool AllocPixelRef(SKBitmap bitmap)
                     {
@@ -459,7 +457,7 @@ namespace AndroidUITest
                 }
             }
 
-            class _5_android__0_test_color_conversion : Test
+            internal class _5_android__0_test_color_conversion : Test
             {
                 public override void Run(TestGroup nullableInstance)
                 {
@@ -588,22 +586,26 @@ namespace AndroidUITest
                 }
             }
 
-            class _5_android__0_test : Test
+            internal class _5_android__0_test_get_color : Test
             {
                 public override void Run(TestGroup nullableInstance)
                 {
-                    Bitmap bm = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
+                    AndroidUI.Applications.Context context = new();
+                    context.densityManager.Set(1, 96);
+                    Bitmap bm = Bitmap.createBitmap(context, 1, 1, Bitmap.Config.ARGB_8888);
                     Tools.ExpectInstanceNotEqual(bm.mNativePtr, null);
                     Tools.ExpectEqual(bm.getColor(0, 0).toArgb(), AndroidUI.Graphics.Color.TRANSPARENT);
                     bm.recycle();
                 }
             }
 
-            class _5_android__1_test : Test
+            internal class _5_android__1_test_set_pixel_get_color : Test
             {
                 public override void Run(TestGroup nullableInstance)
                 {
-                    Bitmap bm = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
+                    AndroidUI.Applications.Context context = new();
+                    context.densityManager.Set(1, 96);
+                    Bitmap bm = Bitmap.createBitmap(context, 1, 1, Bitmap.Config.ARGB_8888);
                     Tools.ExpectInstanceNotEqual(bm.mNativePtr, null);
                     bm.setPixel(0, 0, AndroidUI.Graphics.Color.CYAN);
                     Tools.ExpectNotEqual(bm.getColor(0, 0).toArgb(), AndroidUI.Graphics.Color.TRANSPARENT);
@@ -613,11 +615,13 @@ namespace AndroidUITest
                 }
             }
 
-            class _5_android__2_test : Test
+            internal class _5_android__2_test_set_pixel_get_color_get_pixel_erase_color_get_color_get_pixel : Test
             {
                 public override void Run(TestGroup nullableInstance)
                 {
-                    Bitmap bm = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
+                    AndroidUI.Applications.Context context = new();
+                    context.densityManager.Set(1, 96);
+                    Bitmap bm = Bitmap.createBitmap(context, 1, 1, Bitmap.Config.ARGB_8888);
                     Tools.ExpectInstanceNotEqual(bm.mNativePtr, null);
                     bm.setPixel(0, 0, AndroidUI.Graphics.Color.CYAN);
                     Tools.ExpectNotEqual(bm.getColor(0, 0).toArgb(), AndroidUI.Graphics.Color.TRANSPARENT, "set pixel");
@@ -630,11 +634,13 @@ namespace AndroidUITest
                     bm.recycle();
                 }
             }
-            class _5_android__3_test_bitmap_send_over_pipe : Test
+            internal class _5_android__3_test_bitmap_send_over_pipe : Test
             {
                 public override void Run(TestGroup nullableInstance)
                 {
-                    Bitmap source = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
+                    AndroidUI.Applications.Context context = new();
+                    context.densityManager.Set(1, 96);
+                    Bitmap source = Bitmap.createBitmap(context, 100, 100, Bitmap.Config.ARGB_8888);
                     source.eraseColor(AndroidUI.Graphics.Color.RED);
                     Bitmap result = null;
                     try
@@ -688,7 +694,9 @@ namespace AndroidUITest
                     });
                     Thread readThread = new(() =>
                     {
-                        decodedResult[0] = BitmapFactory.decodeStream(readFd.ToFileInputStream());
+                        AndroidUI.Applications.Context context = new();
+                        context.densityManager.Set(1, 96);
+                        decodedResult[0] = BitmapFactory.decodeStream(context, readFd.ToFileInputStream());
                     });
                     writeThread.Start();
                     readThread.Start();
@@ -719,11 +727,13 @@ namespace AndroidUITest
                     return decodedResult[0];
                 }
             }
-            class _5_android__4_test_copy : Test
+            internal class _5_android__4_test_copy : Test
             {
                 public override void Run(TestGroup nullableInstance)
                 {
-                    Bitmap bm = Bitmap.createBitmap(4, 4, Bitmap.Config.ARGB_8888);
+                    AndroidUI.Applications.Context context = new();
+                    context.densityManager.Set(1, 96);
+                    Bitmap bm = Bitmap.createBitmap(context, 4, 4, Bitmap.Config.ARGB_8888);
                     bm.eraseColor(AndroidUI.Graphics.Color.CYAN);
                     var bm2 = bm.copy(bm.getConfig(), bm.isMutable());
                     Tools.ExpectTrue(bm.sameAs(bm2), "copy is not same");
@@ -732,29 +742,31 @@ namespace AndroidUITest
                 }
             }
 
-            class _5_android__5_test_file : Test
+            internal class _5_android__5_test_file : Test
             {
                 public override void Run(TestGroup nullableInstance)
                 {
-                    const string Filename = "C:/Users/small/Pictures/Screenshot 2022-05-19 034147.jpeg";
+                    const string Filename = image_path;
 
                     SKBitmap bm1 = SKBitmap.Decode(Filename);
                     bm1.Dispose();
 
-                    Bitmap bm2 = BitmapFactory.decodeFile(Filename);
+                    AndroidUI.Applications.Context context = new();
+                    context.densityManager.Set(1, 96);
+                    Bitmap bm2 = BitmapFactory.decodeFile(context, Filename);
                     bm2.recycle();
                     
                     SKBitmap bm3 = SKBitmap.Decode(Filename);
-                    Bitmap bm3_ = new(bm3, bm3.Width, bm3.Height);
+                    Bitmap bm3_ = new(context, bm3, bm3.Width, bm3.Height);
                     bm3_.recycle();
                 }
             }
 
-            class _6_codec_dispose_0_before : Test
+            internal class _6_codec_dispose_0_before : Test
             {
                 public override void Run(TestGroup nullableInstance)
                 {
-                    FileStream stream = new("C:/Users/small/Pictures/Screenshot 2022-05-19 034147.jpeg", FileMode.Open);
+                    FileStream stream = new(image_path, FileMode.Open);
                     SKCodecResult result_;
                     SKCodec c = SKCodec.Create(stream, out result_);
                     var codec = SKAndroidCodec.Create(c);
@@ -763,11 +775,11 @@ namespace AndroidUITest
                 }
             }
 
-            class _6_codec_dispose_1_after : Test
+            internal class _6_codec_dispose_1_after : Test
             {
                 public override void Run(TestGroup nullableInstance)
                 {
-                    FileStream stream = new("C:/Users/small/Pictures/Screenshot 2022-05-19 034147.jpeg", FileMode.Open);
+                    FileStream stream = new(image_path, FileMode.Open);
                     SKCodecResult result_;
                     SKCodec c = SKCodec.Create(stream, out result_);
                     var codec = SKAndroidCodec.Create(c);
@@ -776,7 +788,7 @@ namespace AndroidUITest
                 }
             }
 
-            class _7_allocator1 : Test
+            internal class _7_allocator1 : Test
             {
                 public override void Run(TestGroup nullableInstance)
                 {
@@ -787,7 +799,7 @@ namespace AndroidUITest
                 }
             }
 
-            class _7_allocator2 : Test
+            internal class _7_allocator2 : Test
             {
                 public override void Run(TestGroup nullableInstance)
                 {
@@ -798,7 +810,7 @@ namespace AndroidUITest
                 }
             }
 
-            class _7_allocator3 : Test
+            internal class _7_allocator3 : Test
             {
                 public override void Run(TestGroup nullableInstance)
                 {
@@ -810,7 +822,7 @@ namespace AndroidUITest
                 }
             }
 
-            class _7_allocator4 : Test
+            internal class _7_allocator4 : Test
             {
                 public override void Run(TestGroup nullableInstance)
                 {
@@ -822,7 +834,7 @@ namespace AndroidUITest
                 }
             }
 
-            class _7_allocator5 : Test
+            internal class _7_allocator5 : Test
             {
                 public override void Run(TestGroup nullableInstance)
                 {
@@ -835,7 +847,7 @@ namespace AndroidUITest
                 }
             }
 
-            class _7_allocator6 : Test
+            internal class _7_allocator6 : Test
             {
                 public override void Run(TestGroup nullableInstance)
                 {
@@ -848,7 +860,7 @@ namespace AndroidUITest
                 }
             }
 
-            class _7_allocator7 : Test
+            internal class _7_allocator7 : Test
             {
                 public override void Run(TestGroup nullableInstance)
                 {
@@ -861,7 +873,7 @@ namespace AndroidUITest
                 }
             }
 
-            class _7_allocator8 : Test
+            internal class _7_allocator8 : Test
             {
                 public override void Run(TestGroup nullableInstance)
                 {
@@ -871,7 +883,7 @@ namespace AndroidUITest
                 }
             }
 
-            class _8_pixmap0 : Test
+            internal class _8_pixmap0 : Test
             {
                 public override void Run(TestGroup nullableInstance)
                 {
@@ -896,6 +908,34 @@ namespace AndroidUITest
                     Tools.ExpectEqual(decodingBitmap.Pixels.Length, 0);
 
                     decodingBitmap.Dispose();
+                }
+            }
+            internal class _10_test_png_chunk_reader : Test
+            {
+                internal class Reader : SKPngChunkReader
+                {
+                    public bool r = false;
+
+                    protected override bool ReadChunk(string tag, IntPtr data, IntPtr length)
+                    {
+                        r = true;
+                        Console.WriteLine("READ CHUNK");
+                        return true;
+                    }
+                }
+                public override void Run(TestGroup nullableInstance)
+                {
+                    using Reader r = new();
+                    using FileStream stream = new("C:\\Users\\AndroidUI\\Desktop\\AndroidUI\\AndroidUITest\\png_chunks\\good_itxt.png", FileMode.Open);
+                    SKCodecResult result_;
+                    using SKCodec c = SKCodec.Create(stream, out result_, r);
+                    Tools.ExpectFalse(r.r, "known chunks are not meant to invoke chunk reader");
+
+                    using Reader r2 = new();
+                    using FileStream np = new("K:/Images/9PNG/circle.9.png", FileMode.Open);
+                    SKCodecResult result2_;
+                    using SKCodec c2 = SKCodec.Create(np, out result2_, r2);
+                    Tools.ExpectTrue(r2.r, "unknown chunks are meant to invoke chunk reader");
                 }
             }
         }
