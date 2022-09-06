@@ -259,7 +259,7 @@ namespace AndroidUI.Widgets
         {
             lock (textBlock)
             {
-                textBlock.Paint(canvas.GetNativeObject());
+                textBlock.Paint(canvas);
             }
         }
 
