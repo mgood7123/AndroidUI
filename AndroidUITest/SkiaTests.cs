@@ -910,7 +910,7 @@ namespace AndroidUITest
                     decodingBitmap.Dispose();
                 }
             }
-            internal class _10_test_png_chunk_reader : Test
+            internal class _10_test_9Patch : Test
             {
                 internal class Reader : SKPngChunkReader
                 {
