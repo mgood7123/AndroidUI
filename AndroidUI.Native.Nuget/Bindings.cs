@@ -186,22 +186,22 @@ namespace AndroidUI
         /// <summary>
         /// calls the C api `memcmp`
         /// </summary>
-        public static unsafe void Memcmp(IntPtr buf1, IntPtr buf2, nuint length)
+        public static unsafe int Memcmp(IntPtr buf1, IntPtr buf2, nuint length)
         {
-            Memcmp((void*)buf1, (void*)buf2, length);
+            return Memcmp((void*)buf1, (void*)buf2, length);
         }
 
         /// <summary>
         /// calls the C api `memcmp`, the input buf1 and buf2 arrays are not copied
         /// </summary>
-        public static unsafe void Memcmp<T1, T2>(T1[] buf1, T2[] buf2, nuint length)
+        public static unsafe int Memcmp<T1, T2>(T1[] buf1, T2[] buf2, nuint length)
             where T1 : unmanaged
             where T2 : unmanaged
         {
             fixed (void* bufferA = buf1)
             fixed (void* bufferB = buf2)
             {
-                Memcmp(bufferA, bufferB, length);
+                return Memcmp(bufferA, bufferB, length);
             }
         }
 
