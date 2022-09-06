@@ -199,7 +199,7 @@ namespace AndroidUITest
                 }
             }
 
-            class t : Test
+            class MapperTest : Test
             {
                 public override void Run(TestGroup nullableInstance)
                 {
@@ -217,8 +217,6 @@ namespace AndroidUITest
                     Tools.ExpectEqual(x2.x, 2, "x2 2");
 
                     ValueHolder<XY> x3 = new XY(55, 66);
-                    Tools.ExpectEqual(x3.Value.x, 55, "x3 55");
-                    Tools.ExpectEqual(x3.Value.y, 66, "x3 66");
                     ContiguousArray<int> b = new Mapper<ValueHolder<XY>, int>[1] {
                         new(x3, (obj, arrayIndex, index) => ref index == 0 ? ref obj.Value.x : ref obj.Value.y, 2)
                     };
@@ -228,10 +226,6 @@ namespace AndroidUITest
                     Tools.ExpectEqual(x3.Value.y, 6677, "x3 6677");
 
                     XY[] x4 = new XY[2] { new(55, 66), new(77, 88) };
-                    Tools.ExpectEqual(x4[0].x, 55, "x4 55");
-                    Tools.ExpectEqual(x4[0].y, 66, "x4 66");
-                    Tools.ExpectEqual(x4[1].x, 77, "x4 77");
-                    Tools.ExpectEqual(x4[1].y, 88, "x4 88");
                     ContiguousArray<int> c = new Mapper<XY[], int>[1] {
                         new(x4, (obj, arrayIndex, index) => {
                             if (index == 0)
@@ -249,6 +243,19 @@ namespace AndroidUITest
                     Tools.ExpectEqual(x4[0].y, 6677, "x4 6677");
                     Tools.ExpectEqual(x4[1].x, 7777, "x4 7777");
                     Tools.ExpectEqual(x4[1].y, 8877, "x4 8877");
+
+                    XY[] x5 = new XY[2] { new(55, 66), new(77, 88) };
+                    ContiguousArray<int> c2 = new Mapper<XY[], int>[1] {
+                        new(x5, (obj, arrayIndex, index) => {
+                            return ref obj[arrayIndex].x;
+                        }, 1)
+                    };
+                    c2[0] = 5577;
+                    c2[1] = 6677;
+                    Tools.ExpectEqual(x5[0].x, 5577, "x4 5577");
+                    Tools.ExpectEqual(x5[0].y, 66, "x4 6677");
+                    Tools.ExpectEqual(x5[1].x, 6677, "x4 7777");
+                    Tools.ExpectEqual(x5[1].y, 88, "x4 8877");
                 }
             }
         }

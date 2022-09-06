@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "AndroidUITest": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}
