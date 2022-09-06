@@ -1548,9 +1548,11 @@ namespace AndroidUI.Graphics
                 }
 
                 nuint ninePatchArraySize = peeker.SerializedSize;
-                if (ninePatchArraySize > peeker.PatchSize)
+
+                if (ninePatchArraySize != peeker.PatchSize)
                 {
-                    Console.WriteLine("WARNING: ninePatchArraySize (" + ninePatchArraySize + ") is greater than peeker.PatchSize (" + peeker.PatchSize + ")");
+                    Console.WriteLine("ERROR: ninePatchArraySize (" + ninePatchArraySize + ") is not equal to peeker.PatchSize (" + peeker.PatchSize + ")");
+                    Console.WriteLine("ERROR: will continue loading 9Patch anyway");
                 }
 
                 if (ninePatchArraySize > 0)
