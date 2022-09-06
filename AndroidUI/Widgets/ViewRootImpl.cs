@@ -17,12 +17,15 @@
 using AndroidUI.AnimationFramework.Animator;
 using AndroidUI.Applications;
 using AndroidUI.Execution;
+using AndroidUI.Extensions;
 using AndroidUI.Graphics;
 using AndroidUI.Input;
 using AndroidUI.OS;
 using AndroidUI.Utils;
 using AndroidUI.Utils.Widgets;
 using SkiaSharp;
+using System.Text;
+using Topten.RichTextKit;
 using static AndroidUI.Widgets.View.LayoutParams;
 
 namespace AndroidUI.Widgets
@@ -46,6 +49,12 @@ namespace AndroidUI.Widgets
         public static bool DEBUG_MEASURE_LAYOUT_DRAW_TIME = false;
         public static bool DEBUG_FPS = false;
         public static bool DEBUG_BLAST = false;
+        public static bool OVERDRAW = false;
+        public static bool REPLACE_SKPICTURE_WITH_COMMAND_BUFFER = false;
+        public static bool REENCODE_SKPICTURE_TO_COMMAND_BUFFER = false;
+        public static bool LOG_SERIALIZED_SIZE = false;
+        public static bool LOG_COMMANDS = false;
+        public static bool USE_GPU_FOR_OVERDRAW = true;
 
         private const string TAG = "ViewRootImpl";
         private const string mTag = TAG;
@@ -1596,7 +1605,7 @@ namespace AndroidUI.Widgets
             var l = new FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT);
             l.gravity = Gravity.CENTER;
             options.addView(optionsText, l);
-            optionsText.setTextColor(Color.BLACK);
+            optionsText.setTextColor(SKColors.Lime);
             optionsText.setText("AndroidUI Options");
             optionsText.setTextSize(20);
             options.setOnClickListener(v =>
@@ -1673,8 +1682,17 @@ namespace AndroidUI.Widgets
             }
 
             LinearLayout optionsPage = new LinearLayout();
+            // layout bounds and draw time are most commonly accessed so they go first
             optionsPage.addView(CreateSettingsRow("Show Layout Bounds", "Enabled", "Disabled", () => context.mAttachInfo.mDebugLayout, value => { lock (context.mAttachInfo) { context.mAttachInfo.mDebugLayout = value; } }));
-            optionsPage.addView(CreateSettingsRow("Skia: Allocation Logging (expensive)", "Enabled", "Disabled", () => SkiaSharp.SKNativeObject.LOG_ALLOCATIONS, value => SKNativeObject.LOG_ALLOCATIONS = value));
+            optionsPage.addView(CreateSettingsRow("Log Measure/Layout/Draw Time", "Enabled", "Disabled", () => DEBUG_MEASURE_LAYOUT_DRAW_TIME, value => DEBUG_MEASURE_LAYOUT_DRAW_TIME = value));
+            optionsPage.addView(CreateSettingsRow("Log FPS", "Enabled", "Disabled", () => DEBUG_FPS, value => DEBUG_FPS = value));
+            optionsPage.addView(CreateSettingsRow("Overdraw", "Enabled", "Disabled", () => OVERDRAW, value => { OVERDRAW = value; }));
+            optionsPage.addView(CreateSettingsRow("Use GPU For Overdraw", "Enabled", "Disabled", () => USE_GPU_FOR_OVERDRAW, value => { USE_GPU_FOR_OVERDRAW = value; }));
+            optionsPage.addView(CreateSettingsRow("Replace SKPicture with CommandBuffer (Experimental)", "Enabled", "Disabled", () => REPLACE_SKPICTURE_WITH_COMMAND_BUFFER, value => { REPLACE_SKPICTURE_WITH_COMMAND_BUFFER = value; }));
+            optionsPage.addView(CreateSettingsRow("Re-encode SKPicture to CommandBuffer", "Enabled", "Disabled", () => REENCODE_SKPICTURE_TO_COMMAND_BUFFER, value => { REENCODE_SKPICTURE_TO_COMMAND_BUFFER = value; }));
+            optionsPage.addView(CreateSettingsRow("Log commands", "Enabled", "Disabled", () => LOG_COMMANDS, value => { LOG_COMMANDS = value; }));
+            optionsPage.addView(CreateSettingsRow("Log total serialized recording size", "Enabled", "Disabled", () => LOG_SERIALIZED_SIZE, value => { LOG_SERIALIZED_SIZE = value; }));
+            optionsPage.addView(CreateSettingsRow("Log SKNativeObject Allocations (expensive)", "Enabled", "Disabled", () => SkiaSharp.SKNativeObject.LOG_ALLOCATIONS, value => SKNativeObject.LOG_ALLOCATIONS = value));
             optionsPage.addView(CreateSettingsRow("Touch: Debug", "Enabled", "Disabled", () => Touch.DEBUG, value => Touch.DEBUG = value));
             optionsPage.addView(CreateSettingsRow("Touch: Debug - show TOUCH_MOVE events\n(requires [Touch: Debug] to be Enabled) (can flood)", "Enabled", "Disabled", () => Touch.PRINT_MOVED, value => Touch.PRINT_MOVED = value).setTagRecursively("TOUCH DEBUG"));
             optionsPage.addView(CreateSettingsRow("Touch Batcher: Debug", "Enabled", "Disabled", () => Touch.Batcher.DEBUG, value => Touch.Batcher.DEBUG = value));
@@ -1684,10 +1702,8 @@ namespace AndroidUI.Widgets
             optionsPage.addView(CreateSettingsRow("View: Debug Invalidation", "Enabled", "Disabled", () => View.DEBUG_INVALIDATION, value => View.DEBUG_INVALIDATION = value));
             optionsPage.addView(CreateSettingsRow("View: Debug View Tracking", "Enabled", "Disabled", () => View.DEBUG_VIEW_TRACKING, value => View.DEBUG_VIEW_TRACKING = value));
             optionsPage.addView(CreateSettingsRow("ViewRootImpl: Debug (expensive)", "Enabled", "Disabled", () => DEBUG, value => getRunQueue().post(() => DEBUG = value)));
-            optionsPage.addView(CreateSettingsRow("ViewRootImpl: Debug FPS", "Enabled", "Disabled", () => DEBUG_FPS, value => DEBUG_FPS = value));
             optionsPage.addView(CreateSettingsRow("ViewRootImpl: Debug Layout", "Enabled", "Disabled", () => DEBUG_LAYOUT, value => DEBUG_LAYOUT = value));
             optionsPage.addView(CreateSettingsRow("ViewRootImpl: Debug Draw", "Enabled", "Disabled", () => DEBUG_DRAW, value => DEBUG_DRAW = value));
-            optionsPage.addView(CreateSettingsRow("ViewRootImpl: Debug Measure/Layout/Draw Time", "Enabled", "Disabled", () => DEBUG_MEASURE_LAYOUT_DRAW_TIME, value => DEBUG_MEASURE_LAYOUT_DRAW_TIME = value));
             optionsPage.addView(CreateSettingsRow("ViewRootImpl: Debug Orientation", "Enabled", "Disabled", () => DEBUG_ORIENTATION, value => DEBUG_ORIENTATION = value));
             optionsPage.addView(CreateSettingsRow("ViewRootImpl: Debug Input Resize", "Enabled", "Disabled", () => DEBUG_INPUT_RESIZE, value => DEBUG_INPUT_RESIZE = value));
             optionsPage.addView(CreateSettingsRow("ViewRootImpl: Debug Blast", "Enabled", "Disabled", () => DEBUG_BLAST, value => DEBUG_BLAST = value));
@@ -1699,6 +1715,7 @@ namespace AndroidUI.Widgets
 
             options.setBackgroundColor(Color.GRAY);
             options_page.setBackgroundColor(Color.BLACK);
+            mView.setBackgroundColor(Color.BLACK);
         }
 
         public void DestroyHandler()
@@ -2580,10 +2597,186 @@ namespace AndroidUI.Widgets
             view.mPrivateFlags |= View.PFLAG_DRAWN;
             view.mRecreateDisplayList = (view.mPrivateFlags & View.PFLAG_INVALIDATED) == View.PFLAG_INVALIDATED;
             view.mPrivateFlags &= (int)~View.PFLAG_INVALIDATED;
-            SKPicture displayList = view.updateDisplayListIfDirty(drawingCanvas);
+            View.InternalPicture displayList = view.updateDisplayListIfDirty(drawingCanvas);
             if (displayList != null)
             {
-                drawingCanvas.DrawPicture(displayList, 0, 0);
+                var size = drawingCanvas.BaseLayerSize;
+                int canvas_width = size.Width;
+                int canvas_height = size.Height;
+                if (OVERDRAW)
+                {
+                    // to improve overdraw quality we only apply overdraw to non transparent final output pixels
+                    // this means we need to draw twice, once in full color, another in alpha
+                    // if the full color pixel has an alpha of zero we discard the result
+                    using var sksl = SKRuntimeEffect.Create(
+                        @"
+uniform shader input;
+uniform shader inputAlpha;
+                        
+    // R G B A
+
+half4 main(float2 coords) {
+    half4 color = sample(input, coords);
+    
+    // return zero if alpha is zero
+    if (color.a == 0) {
+        return vec4(0,0,0,0);
+    }
+    int alpha = (int)(sample(inputAlpha, coords).a * 255.0 + 0.5);
+
+    if (alpha <= 2) {
+        // apply greyscale to the overdraw canvas in order to isolate the overdraw colors
+        return half4(vec3((color.r + color.g + color.b) / 3), 1);
+    }
+    if (alpha <= 3) {
+        return half4(0, 0.5, 0.75, 1); // blue
+    }
+    if (alpha <= 4) {
+        return half4(1, 0, 1, 1); // orange
+    }
+    else { // alpha >= 5
+        return half4(1, 0, 0, 1); // red
+    }
+}
+                        ",
+                        out string err
+                    );
+
+                    if (err != null)
+                    {
+                        Log.d("SHADER", "runtime effect compiled with errors: " + err);
+                        return;
+                    }
+
+                    int w = drawingCanvas.BaseLayerSize.Width;
+                    int h = drawingCanvas.BaseLayerSize.Height;
+                    SKImageInfo offscreenInfo = new(w, h);
+                    SKImageInfo offscreenAlphaInfo = new(w, h, SKColorType.Alpha8);
+                    using var offscreenSurface = SKSurface.Create(drawingCanvas.surface.Context, false, offscreenInfo);
+                    using var offscreenAlphaSurface = USE_GPU_FOR_OVERDRAW ? SKSurface.Create(drawingCanvas.surface.Context, false, offscreenAlphaInfo) : SKSurface.Create(offscreenAlphaInfo);
+                    using SKCanvas imageCanvas = offscreenSurface.Canvas;
+                    using var SF = new SKCallbackCanvasForwarder(new SKOverdrawCanvas2(offscreenAlphaSurface.Canvas, false), true, w, h);
+                    using SKNWayCanvas nWayCanvas = new(w, h);
+                    nWayCanvas.AddCanvas(SF);
+                    nWayCanvas.AddCanvas(imageCanvas);
+
+                    if (REPLACE_SKPICTURE_WITH_COMMAND_BUFFER)
+                    {
+                        var canvas = new LoggingCanvas(nWayCanvas, false, LOG_COMMANDS);
+                        displayList.commandBuffer.Playback(canvas);
+                        if (LOG_SERIALIZED_SIZE)
+                        {
+                            Log.d("RECORD", "Command Buffer total serialized size: " + displayList.commandBuffer.mem.Length);
+                        }
+                    }
+                    else
+                    {
+                        SKCanvas recorder = nWayCanvas;
+                        if (REENCODE_SKPICTURE_TO_COMMAND_BUFFER)
+                        {
+                            recorder = new RecordingCanvas2(Context, canvas_width, canvas_height);
+                        }
+                        using SKCallbackCanvasForwarder forwarder = new(new LoggingCanvas(recorder, false, LOG_COMMANDS), true, w, h);
+                        forwarder.DrawPicture(displayList.picture, 0, 0);
+                        forwarder.Flush();
+
+                        if (LOG_SERIALIZED_SIZE)
+                        {
+                            using SKData data_skp = displayList.picture.Serialize();
+                            Log.d("RECORD", "SKPicture total serialized size:      " + data_skp.Size);
+                        }
+
+                        if (REENCODE_SKPICTURE_TO_COMMAND_BUFFER)
+                        {
+                            using RecordingCanvas2.CommandBuffer cmd = ((RecordingCanvas2)recorder).GetCommandBuffer();
+                            cmd.Playback(nWayCanvas);
+                            if (LOG_SERIALIZED_SIZE)
+                            {
+                                Log.d("RECORD", "Command Buffer total serialized size: " + cmd.mem.Length);
+                            }
+                            recorder.Dispose();
+                        }
+                    }
+
+                    nWayCanvas.Flush();
+
+                    using var imageAlpha = offscreenAlphaSurface.Snapshot();
+                    using var image = offscreenSurface.Snapshot();
+                    imageCanvas.Dispose();
+                    SF.Dispose();
+                    offscreenAlphaSurface.Dispose();
+                    offscreenSurface.Dispose();
+                    nWayCanvas.Dispose();
+
+                    var imageAlphaShader = imageAlpha.ToShader();
+                    var imageShader = image.ToShader();
+
+                    SKRuntimeEffectChildren children = new(sksl) {
+                        { "input", imageShader },
+                        { "inputAlpha", imageAlphaShader },
+                    };
+
+                    var ourShader = sksl.ToShader(false, new(sksl), children);
+
+                    sksl.Dispose();
+                    imageAlphaShader.Dispose();
+                    imageShader.Dispose();
+
+                    // we only want to write our paint shader's output pixel to the canvas
+                    // this is the same as if the canvas was cleared before painting the shader
+                    using SKPaint colorPaint = new();
+                    colorPaint.BlendMode = SKBlendMode.Src;
+                    colorPaint.Shader = ourShader;
+                    drawingCanvas.DrawPaint(colorPaint);
+                    ourShader.Dispose();
+                    Log.d(TAG, "DRAWN OVERDRAW");
+                }
+                else
+                {
+                    if (REPLACE_SKPICTURE_WITH_COMMAND_BUFFER)
+                    {
+                        var canvas = new LoggingCanvas(drawingCanvas, false, LOG_COMMANDS);
+                        displayList.commandBuffer.Playback(canvas);
+                        if (LOG_SERIALIZED_SIZE)
+                        {
+                            Log.d("RECORD", "Command Buffer total serialized size: " + displayList.commandBuffer.mem.Length);
+                        }
+                    }
+                    else
+                    {
+                        SKCanvas recorder = null;
+
+                        if (REENCODE_SKPICTURE_TO_COMMAND_BUFFER)
+                        {
+                            recorder = new RecordingCanvas2(Context, canvas_width, canvas_height);
+                        }
+
+                        if (!REENCODE_SKPICTURE_TO_COMMAND_BUFFER)
+                        {
+                            recorder = new LoggingCanvas(drawingCanvas, false, false);
+                        }
+
+                        using SKCallbackCanvasForwarder forwarder = new(new LoggingCanvas(recorder, false, LOG_COMMANDS), true, drawingCanvas.width, drawingCanvas.height);
+                        forwarder.DrawPicture(displayList.picture, 0, 0);
+
+                        if (LOG_SERIALIZED_SIZE)
+                        {
+                            using SKData data_skp = displayList.picture.Serialize();
+                            Log.d("RECORD", "SKPicture total serialized size:      " + data_skp.Size);
+                        }
+
+                        if (REENCODE_SKPICTURE_TO_COMMAND_BUFFER)
+                        {
+                            using RecordingCanvas2.CommandBuffer cmd = ((RecordingCanvas2)recorder).GetCommandBuffer();
+                            cmd.Playback(drawingCanvas);
+                            if (LOG_SERIALIZED_SIZE)
+                            {
+                                Log.d("RECORD", "Command Buffer total serialized size: " + cmd.mem.Length);
+                            }
+                        }
+                        recorder.Dispose();
+                    }
+                }
             }
             view.mRecreateDisplayList = false;
         }
@@ -2722,6 +2915,7 @@ namespace AndroidUI.Widgets
 
         private void DO_TRAVERSAL_INTERNAL(Canvas canvas)
         {
+            canvas.context = Context;
             if (DEBUG_MEASURE_LAYOUT_DRAW_TIME)
             {
                 long s = NanoTime.currentTimeMillis();

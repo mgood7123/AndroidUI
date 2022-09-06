@@ -7706,9 +7706,25 @@ namespace AndroidUI.Widgets
 
 
 
+        internal class InternalPicture : Disposable
+        {
+            public SKPicture picture;
+            public RecordingCanvas2.CommandBuffer commandBuffer;
 
+            public InternalPicture(SKPicture picture, RecordingCanvas2.CommandBuffer commandBuffer)
+            {
+                this.picture = picture;
+                this.commandBuffer = commandBuffer;
+            }
 
-        SKPicture mRenderNode;
+            protected override void OnDispose()
+            {
+                picture?.Dispose();
+                commandBuffer?.Dispose();
+            }
+        }
+
+        InternalPicture mRenderNode;
 
         /**
          * This method is used to cause children of this View to restore or recreate their
@@ -7770,7 +7786,7 @@ namespace AndroidUI.Widgets
          * Gets the RenderNode for the view, and updates its DisplayList (if needed and supported)
          * @hide
          */
-        internal SKPicture updateDisplayListIfDirty(Canvas hardwareCanvas)
+        internal InternalPicture updateDisplayListIfDirty(Canvas hardwareCanvas)
         {
             //if (!canHaveDisplayList())
             //{
@@ -7831,9 +7847,27 @@ namespace AndroidUI.Widgets
                 //renderNode.clearStretch();
 
                 if (mRenderNode != null) mRenderNode.Dispose();
-                RecordingCanvas canvas = new(Context);
-                canvas.BeginRecording(width, height);
-                canvas.AdoptHardwareAcceleratedCanvas(hardwareCanvas, width, height);
+
+                Canvas canvas;
+                RecordingCanvas recordingCanvas = null;
+                RecordingCanvas2 recordingCanvas2 = null;
+
+                if (ViewRootImpl.REPLACE_SKPICTURE_WITH_COMMAND_BUFFER)
+                {
+                    recordingCanvas2 = new RecordingCanvas2(Context, width, height);
+                    var callback = new SKCallbackCanvasForwarder(recordingCanvas2, true, width, height);
+                    canvas = new Canvas(Context, callback, true);
+                    canvas.LogMethods = ViewRootImpl.LOG_COMMANDS;
+                    canvas.AdoptHardwareAcceleratedCanvas(hardwareCanvas, width, height);
+                }
+                else
+                {
+                    recordingCanvas = new RecordingCanvas(Context);
+                    canvas = recordingCanvas;
+                    canvas.LogMethods = ViewRootImpl.LOG_COMMANDS;
+                    ((RecordingCanvas)canvas).BeginRecording(width, height);
+                    canvas.AdoptHardwareAcceleratedCanvas(hardwareCanvas, width, height);
+                }
 
                 try
                 {
@@ -7880,7 +7914,14 @@ namespace AndroidUI.Widgets
                 }
                 finally
                 {
-                    mRenderNode = canvas.EndRecording();
+                    if (recordingCanvas == null)
+                    {
+                        mRenderNode = new(null, recordingCanvas2.GetCommandBuffer());
+                    }
+                    else
+                    {
+                        mRenderNode = new(recordingCanvas.EndRecording(), null);
+                    }
                     canvas.Dispose();
                     setDisplayListProperties(mRenderNode);
                 }
@@ -7897,7 +7938,7 @@ namespace AndroidUI.Widgets
          * This method is called by getDisplayList() when a display list is recorded for a View.
          * It pushes any properties to the RenderNode that aren't managed by the RenderNode.
          */
-        void setDisplayListProperties(SKPicture renderNode)
+        void setDisplayListProperties(InternalPicture renderNode)
         {
             if (renderNode != null)
             {
@@ -13615,7 +13656,7 @@ namespace AndroidUI.Widgets
             }
 
             // we cannot dispose this since we require it for drawing
-            SKPicture renderNode = null;
+            InternalPicture renderNode = null;
             SKBitmap cache = null;
             //int layerType = getLayerType(); // TODO: signify cache state with just 'cache' local
             //if (layerType == LAYER_TYPE_SOFTWARE || !drawingWithRenderNode)
@@ -13642,6 +13683,10 @@ namespace AndroidUI.Widgets
                 //    renderNode = null;
                 //    drawingWithRenderNode = false;
                 //}
+                if (renderNode == null)
+                {
+                    drawingWithRenderNode = false;
+                }
             }
 
             int sx = 0;
@@ -13821,7 +13866,17 @@ namespace AndroidUI.Widgets
                     {
                         sparePaint.setAlpha(alpha.ToColorInt());
                     }
-                    canvas.DrawPicture(renderNode, getX(), getY(), sparePaint);
+                    if (renderNode.picture == null)
+                    {
+                        canvas.SaveLayer(sparePaint);
+                        canvas.Translate(getX(), getY());
+                        renderNode.commandBuffer.Playback(canvas);
+                        canvas.Restore();
+                    }
+                    else
+                    {
+                        canvas.DrawPicture(renderNode.picture, getX(), getY(), sparePaint);
+                    }
                 }
                 else
                 {

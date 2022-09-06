@@ -27,6 +27,11 @@ namespace AndroidUI.Graphics
             throw new NotSupportedException();
         }
 
+        public override void SetNativeObject(SKCanvas canvas, bool ownsCanvas)
+        {
+            throw new NotSupportedException();
+        }
+
         public override SKCanvas ReleaseNativeObject()
         {
             throw new NotSupportedException();
