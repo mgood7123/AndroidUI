@@ -1,5 +1,4 @@
-﻿using AndroidUI.Extensions;
-using AndroidUI.Input;
+﻿using AndroidUI.Input;
 using SkiaSharp;
 
 namespace AndroidUI.Applications
@@ -54,7 +53,10 @@ namespace AndroidUI.Applications
         public ApplicationDelegate()
         {
             multiTouch = new Touch();
+
+            // change this if you want to support more or less touches
             multiTouch.MaxSupportedTouches = 10;
+
             multiTouch.throw_on_error = false;
         }
         
