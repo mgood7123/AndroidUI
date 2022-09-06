@@ -2,10 +2,8 @@
  * this contains some basic test applications that test basic components of AndroidUI
  */
 
-using AndroidUI.Extensions;
 using AndroidUI.Graphics;
 using AndroidUI.Widgets;
-using SkiaSharp;
 
 namespace AndroidUI.Applications
 {

@@ -6,7 +6,6 @@ using AndroidUI.Graphics;
 using AndroidUI.Input;
 using AndroidUI.Utils.Input;
 using AndroidUI.Widgets;
-using SkiaSharp;
 
 namespace AndroidUI.Applications
 {
