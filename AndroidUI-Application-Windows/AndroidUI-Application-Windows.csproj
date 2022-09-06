@@ -48,7 +48,7 @@
 		<Reference Include="$(RootFolder)\prebuilt\debug\AndroidUI\AndroidUI.dll" />
 		<Reference Include="$(RootFolder)\prebuilt\debug\AndroidUI\ApplicationHost-Windows.dll" />
 		-->
-		<PackageReference Include="AndroidUI.Native.Nuget" Version="0.0.114" />
+		<PackageReference Include="AndroidUI.Native.Nuget" Version="0.0.118" />
 		
 		<!-- do not touch these
 		

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-    <LangVersion>10.0</LangVersion>
+	<LangVersion>preview</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <OutputType>Library</OutputType>
     <AssemblyName>AndroidUI</AssemblyName>
@@ -13,22 +13,23 @@
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)$(Platform)'=='Debug|AnyCPU'">
 	  <!-- 'embedded' is required for Android, however 'full' is required for Windows -->
-    <DebugType>embedded</DebugType>
+    <DebugType Condition="'$(TargetFramework)'=='Debug|net6.0-android'">embedded</DebugType>
+	<DebugType Condition="'$(TargetFramework)'!='net6.0-android'">full</DebugType>
   </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DebugType>none</DebugType>
+	
+  <PropertyGroup Condition="'$(Configuration)$(Platform)'=='Release|AnyCPU'">
+	<DebugType>none</DebugType>
   </PropertyGroup>
-
+	
   <ItemGroup>
     <None Include="..\.editorconfig" Link=".editorconfig" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AndroidUI.Native.Nuget" Version="0.0.114" />
-    <PackageReference Include="SkiaSharp" Version="2.88.1-preview.3316" />
+    <PackageReference Include="AndroidUI.Native.Nuget" Version="0.0.118" />
+    <PackageReference Include="SkiaSharp" Version="2.88.1-preview.3659" />
     <PackageReference Include="SkiaSharp.HarfBuzz" Version="2.88.1-preview.3223" />
     <PackageReference Include="SkiaSharp.Views" Version="2.88.1-preview.3223" />
     <PackageReference Include="System.IO.Pipelines" Version="7.0.0-preview.4.22229.4" />
