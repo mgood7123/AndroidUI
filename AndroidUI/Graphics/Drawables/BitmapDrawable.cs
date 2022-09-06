@@ -15,13 +15,11 @@
  */
 
 using SkiaSharp;
-using AndroidUI.Extensions;
 using AndroidUI.Utils;
 using AndroidUI.Utils.Widgets;
 using AndroidUI.Graphics.Shaders;
 using AndroidUI.Graphics.Filters;
 using AndroidUI.Applications;
-using System.Drawing;
 
 namespace AndroidUI.Graphics.Drawables
 {
