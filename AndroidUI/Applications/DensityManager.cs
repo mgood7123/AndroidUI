@@ -2,6 +2,9 @@
 {
     public class DensityManager
     {
+        public const float DEFAULT_SCREEN_DENSITY = 1.0f;
+        public const int DEFAULT_SCREEN_DPI = 96;
+
         private float screenDensity;
         private int screenDpi;
 
@@ -18,7 +21,7 @@
             return (int)((px / ScreenDensity) - offset);
         }
 
-        public DensityManager() : this(1.0f, 96)
+        public DensityManager() : this(DEFAULT_SCREEN_DENSITY, DEFAULT_SCREEN_DPI)
         {
         }
 
