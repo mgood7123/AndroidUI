@@ -15,6 +15,10 @@ namespace AndroidUI.Graphics
         {
         }
 
+        public Canvas(Context context, SKCanvas canvas, bool ownsCanvas) : base(context, canvas, ownsCanvas)
+        {
+        }
+
         /// <summary>Draws a canvas on this canvas.</summary>
         public void DrawCanvas(BaseCanvas canvas, SKPaint paint = null) => DrawToCanvas(canvas, 0, 0, paint);
 
@@ -112,6 +116,11 @@ namespace AndroidUI.Graphics
         public void DrawRectLTRB(float left, float top, float right, float bottom, SKPaint paint)
         {
             DrawRect(SKRect.Create(left, top, right - left, bottom - top), paint);
+        }
+
+        public void ClipRect(float x, float y)
+        {
+            ClipRect(x, y, x + width, y + height);
         }
 
         public void ClipRect(float left, float top, float right, float bottom)
@@ -382,7 +391,7 @@ namespace AndroidUI.Graphics
         void drawBitmap(SKBitmap bitmap, ref SKMatrix matrix, SKPaint paint)
         {
             var image = bitmap.AsImage();
-            using AutoCanvasRestoreWrapper acr = new(this, true);
+            using SKAutoCanvasRestore acr = new(this, true);
             Concat(ref matrix);
             DrawImage(image, 0, 0, paint);
         }
