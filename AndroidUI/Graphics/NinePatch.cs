@@ -212,7 +212,7 @@ namespace AndroidUI.Graphics
          */
         public void draw(Canvas canvas, Rect location, Paint paint)
         {
-            canvas.DrawNinePatch(this, location, paint.getNativeInstance());
+            canvas.DrawNinePatch(this, location, paint?.getNativeInstance());
         }
 
         /**

@@ -2,8 +2,8 @@
 using AndroidUI.Graphics.Filters;
 using AndroidUI.Utils;
 using AndroidUI.Utils.Arrays;
+using AndroidUI.Utils.Graphics;
 using AndroidUI.Utils.Widgets;
-using SkiaSharp;
 
 namespace AndroidUI.Graphics
 {
@@ -999,7 +999,7 @@ namespace AndroidUI.Graphics
          * report, else a Region holding the parts of the Drawable's bounds that
          * are transparent.
          */
-        public SKRegion getTransparentRegion()
+        virtual public Region getTransparentRegion()
         {
             return null;
         }

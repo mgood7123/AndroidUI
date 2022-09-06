@@ -97,7 +97,7 @@ namespace AndroidUI.Graphics
         {
             fixed (void* data = dest)
             {
-                Native.Memcpy(mPatch, data, PatchSize);
+                Native.Memcpy(data, mPatch, PatchSize);
             }
         }
 
@@ -105,16 +105,16 @@ namespace AndroidUI.Graphics
         {
             fixed (void* data = dest)
             {
-                Native.Memcpy(mPatch, data, length);
+                Native.Memcpy(data, mPatch, length);
             }
         }
 
-        public nuint SerializedSize => Native.Additional.SkNinePatchGlue_serializedSize(mPatch);
+        public nuint SerializedSize => HasPatch ? Native.Additional.SkNinePatchGlue_serializedSize(mPatch) : 0;
 
         private void* mPatch = null;
         private nuint mPatchSize;
         private bool mHasInsets;
-        public bool HasPatch => mPatch == null;
+        public bool HasPatch => mPatch != null;
         public nuint PatchSize => mPatchSize;
         public bool HasInsets => mHasInsets;
         internal int[] mOpticalInsets = new int[4];
