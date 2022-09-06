@@ -5,6 +5,7 @@
 using AndroidUI.AnimationFramework.Animator;
 using AndroidUI.Graphics;
 using AndroidUI.Graphics.Drawables;
+using AndroidUI.Utils;
 using AndroidUI.Utils.Widgets;
 using AndroidUI.Widgets;
 using SkiaSharp;
@@ -15,13 +16,16 @@ namespace AndroidUI.Applications
     public partial class TestApp : Application
     {
         const string image_path = "K:/DESKTOP_BACKUP/Documents/2021-07-25 22.37.22.jpg";
+        const string image_path_NPatch = "K:/Images/9PNG/circle.9.png";
 
         public override void OnCreate()
         {
             TabView tabView = new();
 
             tabView.addTab("Flywheel", () => new FlywheelView());
+
             tabView.addTab("View", () => new View());
+
             tabView.addTab("Touch Info Linear Layout", () =>
             {
                 LinearLayout linearLayout = new();
@@ -34,7 +38,27 @@ namespace AndroidUI.Applications
                 linearLayout.addView(new TouchInfoView(), new LinearLayout.LayoutParams(View.LayoutParams.MATCH_PARENT, View.LayoutParams.MATCH_PARENT, 1.0f));
                 return linearLayout;
             });
+
             tabView.addTab("Bitmap", () => new A());
+
+            tabView.addTab("NinePatch Bitmap", () =>
+            {
+                var image = new ImageView();
+                image.setScaleType(ImageView.ScaleType.FIT_XY);
+                var bm = BitmapFactory.decodeFile(Context, image_path_NPatch);
+                var chunks = bm?.getNinePatchChunk();
+                if (NinePatch.isNinePatchChunk(chunks))
+                {
+                    Log.d("NINEPATCH", "IS CHUNK YES");
+                    image.setImageDrawable(new NinePatchDrawable(bm, chunks, new Rect(), null));
+                } else
+                {
+                    Log.d("NINEPATCH", "IS CHUNK NO");
+                    image.setImageBitmap(bm);
+                }
+                return image;
+            });
+
             tabView.addTab("ColorView", () =>
             {
                 ColorView colorView = new ColorView();
@@ -48,6 +72,32 @@ namespace AndroidUI.Applications
                 });
                 return colorView;
             });
+            tabView.addTab("Layered ColorView", () =>
+            {
+                FrameLayout f = new FrameLayout();
+                View newColorView()
+                {
+                    ColorView colorView = new ColorView();
+                    colorView.setOnClickListener(v =>
+                    {
+                        colorView.Color = new SKColor(
+                            (byte)Random.Shared.Next(255),
+                            (byte)Random.Shared.Next(255),
+                            (byte)Random.Shared.Next(255)
+                        );
+                    });
+                    return colorView;
+                }
+
+                f.addView(newColorView(), MATCH_PARENT_W__MATCH_PARENT_H);
+                f.addView(newColorView(), MATCH_PARENT_W__MATCH_PARENT_H);
+                f.addView(newColorView(), MATCH_PARENT_W__MATCH_PARENT_H);
+                f.addView(newColorView(), MATCH_PARENT_W__MATCH_PARENT_H);
+                f.addView(newColorView(), MATCH_PARENT_W__MATCH_PARENT_H);
+                f.addView(newColorView(), MATCH_PARENT_W__MATCH_PARENT_H);
+                return f;
+            });
+
             tabView.addTab("Animation", () => 
             {
                 var color = new ColorView(Color.MAGENTA);
@@ -79,6 +129,7 @@ namespace AndroidUI.Applications
 
                 return color;
             });
+
             tabView.addTab("Z Ordering", () =>
             {
                 FrameLayout f = new FrameLayout();
@@ -91,6 +142,7 @@ namespace AndroidUI.Applications
                 f.addView(t);
                 return f;
             });
+
             tabView.addTab("Clicking", () =>
             {
                 var t = new Topten_RichTextKit_TextView();
@@ -98,6 +150,7 @@ namespace AndroidUI.Applications
                 t.setOnLongClickListener(v => { t.setText("Long clicked!"); return true; });
                 return t;
             });
+
             tabView.addTab("Adapter", () =>
             {
                 var av = new MyAdapterView();
@@ -106,6 +159,7 @@ namespace AndroidUI.Applications
                 av.getAdapter().notifyDataSetInvalidated();
                 return av;
             });
+
             tabView.addTab("TabView", () =>
             {
                 TabView tabView = new();
@@ -120,6 +174,7 @@ namespace AndroidUI.Applications
 
                 return tabView;
             });
+
             tabView.addTab("Linear Layout", () =>
             {
                 LinearLayout linearLayout = new();
@@ -144,6 +199,7 @@ namespace AndroidUI.Applications
 
                 return linearLayout;
             });
+
             tabView.addTab("Scrolling (Unbounded)", () =>
             {
                 var image = new ImageView();
@@ -157,6 +213,7 @@ namespace AndroidUI.Applications
                 s.addView(image);
                 return s;
             });
+
             tabView.addTab("Scrolling 2 (Bounded)", () =>
             {
                 var image = new ImageView();
@@ -170,6 +227,7 @@ namespace AndroidUI.Applications
                 scrollView.addView(image);
                 return scrollView;
             });
+
             tabView.addTab("Scrolling 2 (Unbounded)", () =>
             {
                 var image = new ImageView();
@@ -184,6 +242,7 @@ namespace AndroidUI.Applications
                 s.addView(image);
                 return s;
             });
+
             tabView.addTab("Scrolling 3 (large, clickable)", () =>
             {
                 ScrollView scrollView = new();
@@ -204,6 +263,7 @@ namespace AndroidUI.Applications
 
                 return scrollView;
             });
+
             tabView.addTab("Scrolling 3 (large, non-clickable)", () =>
             {
                 ScrollView scrollView = new();
