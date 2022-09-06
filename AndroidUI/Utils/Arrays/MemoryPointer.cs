@@ -282,6 +282,13 @@ namespace AndroidUI.Utils.Arrays
         {
             offset = 0;
         }
+
+        public MemoryPointer<R> CastToMemoryPointer<R>()
+        {
+            var m = new MemoryPointer<R>(CastToContiguousArray<R>());
+            m.offset = offset;
+            return m;
+        }
     }
 
     public static class MemoryPointer
@@ -294,6 +301,11 @@ namespace AndroidUI.Utils.Arrays
         public static MemoryPointer<T> ToMemoryPointer<T>(this ContiguousArray<T> a)
         {
             return new MemoryPointer<T>(a);
+        }
+
+        unsafe public static MemoryPointer<T> ToMemoryPointer<T>(this IntPtr ptr, int len) where T : unmanaged
+        {
+            return Arrays.AsArray<T>(ptr, len);
         }
     }
 }
