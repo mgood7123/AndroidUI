@@ -3,7 +3,6 @@ using AndroidUI.Extensions;
 using AndroidUI.Graphics;
 using AndroidUI.Input;
 using AndroidUI.Utils.Widgets;
-using SkiaSharp;
 
 namespace AndroidUI.Widgets
 {
