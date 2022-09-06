@@ -19,8 +19,6 @@ using AndroidUI.Input;
 using AndroidUI.Utils;
 using AndroidUI.Utils.Widgets;
 using AndroidUI.Widgets;
-using SkiaSharp;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace AndroidUI.Applications
 {
