@@ -19,6 +19,11 @@ namespace AndroidUI.Utils.Arrays
             return items;
         }
 
+        public unsafe static T[] AsArray<T>(IntPtr ptr, int len) where T : unmanaged
+        {
+            return new Span<T>(ptr.ToPointer(), len).ToArray();
+        }
+
         public static T[][] Create2DArray<T>(int a, int b) where T : new()
         {
             T[][] ar = new T[a][];
