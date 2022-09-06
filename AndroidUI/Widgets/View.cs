@@ -2834,6 +2834,14 @@ namespace AndroidUI.Widgets
             AddInvalidatedFlag(this);
         }
 
+        public void measure(int width, int width_mode, int height, int height_mode)
+        {
+            measure(
+                MeasureSpec.makeMeasureSpec(width, width_mode),
+                MeasureSpec.makeMeasureSpec(height, height_mode)
+            );
+        }
+
         public void measure(int widthMeasureSpec, int heightMeasureSpec)
         {
             // Suppress sign extension for the low bytes
