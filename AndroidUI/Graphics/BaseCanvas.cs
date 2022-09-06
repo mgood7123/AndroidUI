@@ -3,7 +3,7 @@ using SkiaSharp;
 
 namespace AndroidUI.Graphics
 {
-    public class BaseCanvas : CanvasWrapper
+    public class BaseCanvas : LoggingCanvas
     {
         internal Context context;
         internal int width, height;
@@ -29,15 +29,29 @@ namespace AndroidUI.Graphics
         public BaseCanvas(Context context, SKCanvas canvas) : base(canvas)
         {
             this.context = context;
+            if (canvas is BaseCanvas baseCanvas)
+            {
+                width = baseCanvas.width;
+                height = baseCanvas.height;
+            }
+            densityDPI = context.densityManager.ScreenDpi;
+        }
+
+        
+
+        public BaseCanvas(Context context, SKCanvas canvas, bool ownsCanvas) : base(canvas, ownsCanvas)
+        {
+            this.context = context;
+            if (canvas is BaseCanvas baseCanvas)
+            {
+                width = baseCanvas.width;
+                height = baseCanvas.height;
+            }
             densityDPI = context.densityManager.ScreenDpi;
         }
 
         public void SetContext(Context context)
         {
-            if (!paramaterlessConstructorCalled)
-            {
-                throw new InvalidOperationException("this method must only be called on a paramaterless constructor: BaseCanvas w = new(); w.SetContext(context); ");
-            }
             this.context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
@@ -151,7 +165,9 @@ namespace AndroidUI.Graphics
             }
 
             T c = new();
-            c.SetNativeObject(surface.Canvas);
+
+            // we do not own the surface canvas
+            c.SetNativeObject(surface.Canvas, false);
 
             c.setWidthHeight(width, height);
 
