@@ -1,5 +1,4 @@
-﻿using AndroidUI.Utils;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 
 namespace AndroidUI.Utils
 {
