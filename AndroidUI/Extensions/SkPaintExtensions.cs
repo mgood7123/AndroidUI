@@ -7,6 +7,22 @@ namespace AndroidUI.Extensions
 
     public static class SkPaintExtensions
     {
+        public static SKPaint ToPaint(this SKColor color)
+        {
+            return new SKPaint
+            {
+                Color = color
+            };
+        }
+
+        public static SKPaint ToPaint(this SKColorF color)
+        {
+            return new SKPaint
+            {
+                ColorF = color
+            };
+        }
+
         public static void SetToDefaultBlendMode(this SKPaint paint)
         {
             paint.BlendMode = SKBlendMode.SrcOver;
