@@ -1,6 +1,6 @@
 WindowsProject1
 
-#NOTE
+# NOTE
 
 a potential simpler implementation of RecyclerView could be https://github.com/Comcast/FreeFlow/blob/master/FreeFlow/src/com/comcast/freeflow/core/FreeFlowContainer.java
 
