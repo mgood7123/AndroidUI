@@ -1,4 +1,9 @@
-WindowsProject1
+99% implementation of Android View Subsystem
+
+missing:
+* proper implementation of AndroidX RecyclerView
+* proper implementation of ViewAdapter
+* full implementation of TextView
 
 # NOTE
 
