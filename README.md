@@ -1,9 +1,9 @@
-99% implementation of Android View Subsystem
+98% implementation of Android View Subsystem
 
 missing:
 * proper implementation of AndroidX RecyclerView
-* proper implementation of ViewAdapter
-* full implementation of TextView
+* proper implementation of AdapterView
+* full implementation of TextView, see https://github.com/mgood7123/AndroidUI/blob/master/AndroidUI/Widgets/Topten_RichTextKit_TextView.cs
 
 # NOTE
 
