@@ -191,7 +191,7 @@ namespace AndroidUI.Utils.Lists
             TryWithReadReturn(() => base.FindLastIndex(startIndex, count, match));
 
         public override void ForEach(Action<T> action) =>
-            TryWithWrite(() => base.ForEach(action));
+            TryWithRead(() => base.ForEach(action));
 
         public override EnumeratorWrapper GetEnumerator() =>
             TryWithReadReturn(() => new SynchronizedReadWriteNotifyListEnumerator(this));
